@@ -461,8 +461,18 @@
                                         </a>
                                     </div>
 
-                                    <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">Save</button>
-                                    <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">Submit for Review</button>
+                                    <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
+                                        Save
+                                    </button>
+                                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo">
+                                        <span class="fas fa-undo"></span> Undo
+                                    </button>
+                                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo">
+                                        Redo <span class="fas fa-redo"></span>
+                                    </button>
+                                    <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
+                                        Submit for Review
+                                    </button>
 
                                 {% elif transcription_status == 'submitted' %}
                                     {% if not user.is_authenticated %}
@@ -842,9 +852,9 @@
             crossOriginPolicy: "Anonymous"
         });
 
-                                                      // We need to define our own fullscreen function rather than using OpenSeadragon's
-                                                      // because the built-in fullscreen function overwrites the DOM with the viewer,
-                                                      // breaking our extra controls, such as the image filters.
+      // We need to define our own fullscreen function rather than using OpenSeadragon's
+      // because the built-in fullscreen function overwrites the DOM with the viewer,
+      // breaking our extra controls, such as the image filters.
         if (screenfull.isEnabled) {
             let fullscreenButton = document.querySelector("#viewer-fullscreen");
             fullscreenButton.addEventListener('click', function(event) {
@@ -858,14 +868,14 @@
             });
         }
 
-                                                                                          // The buttons configured as controls for the viewer don't properly get focus
-                                                                                          // when clicked. This mostly isn't a problem, but causes odd-looking behavior
-                                                                                          // when one of the extra buttons in the control bar is clicked (and therefore
-                                                                                          // focused) first--clicking the control button leaves the focus on the extra
-                                                                                          // button.
-                                                                                          // TODO: Attempting to add focus to the clicked button here doesn't consistently
-                                                                                          // work for unknown reasons, so it just removes focus from the extra buttons
-                                                                                          // for now
+      // The buttons configured as controls for the viewer don't properly get focus
+      // when clicked. This mostly isn't a problem, but causes odd-looking behavior
+      // when one of the extra buttons in the control bar is clicked (and therefore
+      // focused) first--clicking the control button leaves the focus on the extra
+      // button.
+      // TODO: Attempting to add focus to the clicked button here doesn't consistently
+      // work for unknown reasons, so it just removes focus from the extra buttons
+      // for now
         let viewerControlButtons = document.querySelectorAll('.viewer-control-button');
         viewerControlButtons.forEach(function(node){
             node.addEventListener('click', function(event){
@@ -934,18 +944,18 @@
             if(form){
                 form.addEventListener('change', updateFilters);
                 form.addEventListener('reset', function(){
-                                                                                          // We use setTimeout to push the updateFilters
-                                                                                          // call to the next event cycle in order to
-                                                                                          // call it after the form is reset, instead
-                                                                                          // of before, which is when this listener
-                                                                                          // triggers
+              // We use setTimeout to push the updateFilters
+              // call to the next event cycle in order to
+              // call it after the form is reset, instead
+              // of before, which is when this listener
+              // triggers
                     setTimeout(updateFilters);
                 });
             }
             input = document.getElementById(filterData.inputId)
             if(input){
-                                                                                          // We use debounce here so that updateFilters is only called once,
-                                                                                          // after the user stops typing or scrolling with their mousewheel
+              // We use debounce here so that updateFilters is only called once,
+              // after the user stops typing or scrolling with their mousewheel
                 input.addEventListener('keyup', debounce(() => updateFilters()));
                 input.addEventListener('wheel', debounce(() => updateFilters()));
             }
@@ -1064,10 +1074,10 @@
                 }
                 pageSplit = horizontalSplit();
                 setTimeout(function(){
-                                                // Some quirk in the viewer makes this
-                                                // sometimes not work depending on
-                                                // the rotation, unless it's delayed.
-                                                // Less than 10ms didn't reliable work.
+                    // Some quirk in the viewer makes this
+                    // sometimes not work depending on
+                    // the rotation, unless it's delayed.
+                    // Less than 10ms didn't reliable work.
                     seadragonViewer.viewport.zoomTo(1);
                 }, 10);
             }
@@ -1107,7 +1117,12 @@
 
     <script>
         let transcriptionForm = document.getElementById("transcription-editor");
+        let $transcriptionEditor = $("#transcription-editor");
         let ocrForm = document.getElementById("ocr-transcription-form");
+        let $ocrForm = $("#ocr-transcription-form");
+        let rollbackButton = document.getElementById("rollback-transcription-button");
+        let rollforwardButton = document.getElementById("rollforward-transcription-button");
+
         let formChanged = false;
         transcriptionForm.addEventListener('change', function(){
             formChanged = true;
@@ -1122,16 +1137,96 @@
         }
         window.addEventListener('beforeunload', function(event){
             if(formChanged){
-                                                                                  // Some browsers ignore this value and always display a built-in message instead
+              // Some browsers ignore this value and always display a built-in message instead
                 return event.returnValue = "The transcription you've started has not been saved.";
             }
         });
+
+        function rollTranscription(url){
+            lockControls($transcriptionEditor);
+            $.ajax({
+                url: url,
+                method: 'POST',
+                dataType: 'json',
+            })
+                .done(function (responseData) {
+                    displayMessage(
+                        'info',
+                        responseData.message,
+                        'transcription-save-result',
+                    );
+                    $transcriptionEditor.data({
+                        transcriptionId: responseData.id,
+                        unsavedChanges: false,
+                    });
+                    $transcriptionEditor
+                        .find('input[name="supersedes"]')
+                        .val(responseData.id);
+                    $transcriptionEditor.data(
+                        'submitUrl',
+                        responseData.submissionUrl,
+                    );
+                    $ocrForm
+                        .find('input[name="supersedes"]')
+                        .val(responseData.id);
+                    $transcriptionEditor
+                        .find('textarea[name="text"]')
+                        .val(responseData.text);
+                    $('#transcription-status-display')
+                        .children()
+                        .attr('hidden', 'hidden')
+                        .filter('#display-inprogress')
+                        .removeAttr('hidden');
+                    if(responseData.undo_available){
+                        $('#rollback-transcription-button').removeAttr('disabled');
+                    }
+                    if(responseData.redo_available){
+                        $('#rollforward-transcription-button').removeAttr('disabled');
+                    }
+                    let messageChildren = $('#transcription-status-message').children();
+                    messageChildren
+                        .attr('hidden', 'hidden')
+                        .filter('#message-inprogress')
+                        .removeAttr('hidden');
+                    messageChildren
+                        .filter('#message-contributors')
+                        .removeAttr('hidden')
+                        .find('#message-contributors-num')
+                        .html(responseData.asset.contributors);
+                    unlockControls($transcriptionEditor);
+                    $transcriptionEditor.trigger('update-ui-state');
+                })
+                .fail(function (jqXHR, textStatus, errorThrown) {
+                    displayMessage(
+                        'error',
+                        'Unable to save your work: ' +
+                        buildErrorMessage(
+                            jqXHR,
+                            textStatus,
+                            errorThrown,
+                        ),
+                        'transcription-save-result',
+                    );
+                    unlockControls($transcriptionEditor);
+                    $transcriptionEditor.trigger('update-ui-state');
+                });
+        }
+
+        rollbackButton.addEventListener('click', function(){
+            let url = "{% url 'rollback-transcription' asset_pk=asset.pk %}";
+            rollTranscription(url);
+        });
+
+        rollforwardButton.addEventListener('click', function(){
+            let url = "{% url 'rollforward-transcription' asset_pk=asset.pk %}";
+            rollTranscription(url);
+        })
     </script>
 
     <script>
-                                                                              /*
-                                                                              * Image filter form handling
-                                                                              */
+      /*
+      * Image filter form handling
+      */
         function stepUp(id){
             let input = document.getElementById(id);
             input.stepUp();
