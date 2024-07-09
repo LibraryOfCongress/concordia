@@ -464,10 +464,10 @@
                                     <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
                                         Save
                                     </button>
-                                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo">
+                                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
                                         <span class="fas fa-undo"></span> Undo
                                     </button>
-                                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo">
+                                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
                                         Redo <span class="fas fa-redo"></span>
                                     </button>
                                     <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
@@ -1120,8 +1120,6 @@
         let $transcriptionEditor = $("#transcription-editor");
         let ocrForm = document.getElementById("ocr-transcription-form");
         let $ocrForm = $("#ocr-transcription-form");
-        let rollbackButton = document.getElementById("rollback-transcription-button");
-        let rollforwardButton = document.getElementById("rollforward-transcription-button");
 
         let formChanged = false;
         transcriptionForm.addEventListener('change', function(){
@@ -1141,86 +1139,6 @@
                 return event.returnValue = "The transcription you've started has not been saved.";
             }
         });
-
-        function rollTranscription(url){
-            lockControls($transcriptionEditor);
-            $.ajax({
-                url: url,
-                method: 'POST',
-                dataType: 'json',
-            })
-                .done(function (responseData) {
-                    displayMessage(
-                        'info',
-                        responseData.message,
-                        'transcription-save-result',
-                    );
-                    $transcriptionEditor.data({
-                        transcriptionId: responseData.id,
-                        unsavedChanges: false,
-                    });
-                    $transcriptionEditor
-                        .find('input[name="supersedes"]')
-                        .val(responseData.id);
-                    $transcriptionEditor.data(
-                        'submitUrl',
-                        responseData.submissionUrl,
-                    );
-                    $ocrForm
-                        .find('input[name="supersedes"]')
-                        .val(responseData.id);
-                    $transcriptionEditor
-                        .find('textarea[name="text"]')
-                        .val(responseData.text);
-                    $('#transcription-status-display')
-                        .children()
-                        .attr('hidden', 'hidden')
-                        .filter('#display-inprogress')
-                        .removeAttr('hidden');
-                    if(responseData.undo_available){
-                        $('#rollback-transcription-button').removeAttr('disabled');
-                    }
-                    if(responseData.redo_available){
-                        $('#rollforward-transcription-button').removeAttr('disabled');
-                    }
-                    let messageChildren = $('#transcription-status-message').children();
-                    messageChildren
-                        .attr('hidden', 'hidden')
-                        .filter('#message-inprogress')
-                        .removeAttr('hidden');
-                    messageChildren
-                        .filter('#message-contributors')
-                        .removeAttr('hidden')
-                        .find('#message-contributors-num')
-                        .html(responseData.asset.contributors);
-                    unlockControls($transcriptionEditor);
-                    $transcriptionEditor.trigger('update-ui-state');
-                })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    displayMessage(
-                        'error',
-                        'Unable to save your work: ' +
-                        buildErrorMessage(
-                            jqXHR,
-                            textStatus,
-                            errorThrown,
-                        ),
-                        'transcription-save-result',
-                    );
-                    unlockControls($transcriptionEditor);
-                    $transcriptionEditor.trigger('update-ui-state');
-                });
-        }
-
-        rollbackButton.addEventListener('click', function(){
-            let url = "{% url 'rollback-transcription' asset_pk=asset.pk %}";
-            rollTranscription(url);
-        });
-
-        rollforwardButton.addEventListener('click', function(){
-            let url = "{% url 'rollforward-transcription' asset_pk=asset.pk %}";
-            rollTranscription(url);
-        })
     </script>
 
     <script>
