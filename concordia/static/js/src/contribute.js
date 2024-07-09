@@ -206,6 +206,12 @@ function setupPage() {
     var $ocrModal = $('#ocr-transcription-modal');
     var $languageModal = $('#language-selection-modal');
     var $ocrLoading = $('#ocr-loading');
+    var rollbackButton = document.getElementById(
+        'rollback-transcription-button',
+    );
+    var rollforwardButton = document.getElementById(
+        'rollforward-transcription-button',
+    );
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -500,6 +506,86 @@ function setupPage() {
             event.preventDefault();
             submitReview('reject');
         });
+
+    function rollTranscription(url) {
+        lockControls($transcriptionEditor);
+        $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'json',
+        })
+            .done(function (responseData) {
+                displayMessage(
+                    'info',
+                    responseData.message,
+                    'transcription-save-result',
+                );
+                $transcriptionEditor.data({
+                    transcriptionId: responseData.id,
+                    unsavedChanges: false,
+                });
+                $transcriptionEditor
+                    .find('input[name="supersedes"]')
+                    .val(responseData.id);
+                $transcriptionEditor.data(
+                    'submitUrl',
+                    responseData.submissionUrl,
+                );
+                $ocrForm.find('input[name="supersedes"]').val(responseData.id);
+                $transcriptionEditor
+                    .find('textarea[name="text"]')
+                    .val(responseData.text);
+                $('#transcription-status-display')
+                    .children()
+                    .attr('hidden', 'hidden')
+                    .filter('#display-inprogress')
+                    .removeAttr('hidden');
+                if (responseData.undo_available) {
+                    $('#rollback-transcription-button').removeAttr('disabled');
+                }
+                if (responseData.redo_available) {
+                    $('#rollforward-transcription-button').removeAttr(
+                        'disabled',
+                    );
+                }
+                let messageChildren = $(
+                    '#transcription-status-message',
+                ).children();
+                messageChildren
+                    .attr('hidden', 'hidden')
+                    .filter('#message-inprogress')
+                    .removeAttr('hidden');
+                messageChildren
+                    .filter('#message-contributors')
+                    .removeAttr('hidden')
+                    .find('#message-contributors-num')
+                    .html(responseData.asset.contributors);
+                unlockControls($transcriptionEditor);
+                $transcriptionEditor.trigger('update-ui-state');
+            })
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                displayMessage(
+                    'error',
+                    'Unable to save your work: ' +
+                        buildErrorMessage(jqXHR, textStatus, errorThrown),
+                    'transcription-save-result',
+                );
+                unlockControls($transcriptionEditor);
+                $transcriptionEditor.trigger('update-ui-state');
+            });
+    }
+
+    if (rollbackButton) {
+        rollbackButton.addEventListener('click', function () {
+            rollTranscription(this.dataset.url);
+        });
+    }
+
+    if (rollforwardButton) {
+        rollforwardButton.addEventListener('click', function () {
+            rollTranscription(this.dataset.url);
+        });
+    }
 
     var $tagEditor = $('#tag-editor'),
         $tagForm = $('#tag-form'),
