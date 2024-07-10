@@ -503,6 +503,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True, db_index=True)
 
