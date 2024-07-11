@@ -1043,12 +1043,12 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
 
 
-def transcribing_too_quickly(start):
-    return Transcription.objects.transcribing_too_quickly(start)
+def transcribing_too_quickly():
+    return Transcription.objects.transcribing_too_quickly()
 
 
-def reviewing_too_quickly(start):
-    return Transcription.objects.reviewing_too_quickly(start)
+def reviewing_too_quickly():
+    return Transcription.objects.reviewing_too_quickly()
 
 
 @celery_app.task(ignore_result=True)
@@ -1058,19 +1058,17 @@ def clear_sessions():
 
 
 @celery_app.task
-def unusual_activity(days=1):
+def unusual_activity():
     """
     Locate pages that were improperly transcribed or reviewed.
     """
-    now = timezone.now()
-    WINDOW = now - datetime.timedelta(days=days)
     site = Site.objects.get_current()
     context = {
         "title": "Unusual User Activity Report for "
-        + now.strftime("%b %d %Y, %I:%M %p"),
+        + timezone.now().strftime("%b %d %Y, %I:%M %p"),
         "domain": "https://" + site.domain,
-        "transcriptions": transcribing_too_quickly(WINDOW),
-        "reviews": reviewing_too_quickly(WINDOW),
+        "transcriptions": transcribing_too_quickly(),
+        "reviews": reviewing_too_quickly(),
     }
 
     text_body_template = loader.get_template("emails/unusual_activity.txt")
