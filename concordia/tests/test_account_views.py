@@ -98,6 +98,22 @@ class ConcordiaViewTests(
 
         self.assertEqual(data["username"], self.user.username)
 
+        self.assertFalse(any(link["title"] == "Admin Area" for link in data["links"]))
+
+    def test_ajax_session_status_staff(self):
+        self.login_user(is_staff=True, is_superuser=True)
+
+        response = self.client.get(reverse("ajax-session-status"))
+        self.assertCachePrivate(response)
+        data = self.assertValidJSON(response)
+
+        self.assertIn("links", data)
+        self.assertIn("username", data)
+
+        self.assertEqual(data["username"], self.user.username)
+
+        self.assertTrue(any(link["title"] == "Admin Area" for link in data["links"]))
+
     def test_ajax_messages(self):
         self.login_user()
 
