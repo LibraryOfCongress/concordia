@@ -113,7 +113,9 @@ Parameters:
 
 Resources:
     VPC:
+        UpdateReplacePolicy: Retain
         Type: AWS::CloudFormation::Stack
+        DeletionPolicy: Retain
         Properties:
             #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml'
@@ -159,7 +161,9 @@ Resources:
                     ]
 
     NetworkACL:
+        UpdateReplacePolicy: Retain
         Type: AWS::CloudFormation::Stack
+        DeletionPolicy: Retain
         Properties:
             #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml'
@@ -172,7 +176,9 @@ Resources:
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
     SecurityGroups:
+        UpdateReplacePolicy: Retain
         Type: AWS::CloudFormation::Stack
+        DeletionPolicy: Retain
         Properties:
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml'
             Parameters:
@@ -180,7 +186,9 @@ Resources:
                 VPC: !GetAtt VPC.Outputs.VPC
 
     RDS:
+        UpdateReplacePolicy: Retain
         Type: AWS::CloudFormation::Stack
+        DeletionPolicy: Retain
         Properties:
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
             Parameters:
@@ -191,7 +199,9 @@ Resources:
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
     ElastiCache:
+        UpdateReplacePolicy: Retain
         Type: AWS::CloudFormation::Stack
+        DeletionPolicy: Retain
         Properties:
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml'
             Parameters:
@@ -200,7 +210,9 @@ Resources:
                 PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
 
     FargateCluster:
+        UpdateReplacePolicy: Retain
         Type: AWS::CloudFormation::Stack
+        DeletionPolicy: Retain
         Properties:
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml'
             Parameters:
