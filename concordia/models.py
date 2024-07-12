@@ -29,7 +29,6 @@ User._meta.get_field("email").__dict__["_unique"] = True
 
 ONE_DAY = datetime.timedelta(days=1)
 ONE_DAY_AGO = timezone.now() - ONE_DAY
-WINDOW = 60
 
 
 def resource_file_upload_path(instance, filename):
@@ -796,36 +795,58 @@ class TranscriptionManager(models.Manager):
     def reviewing_too_quickly(self, start=ONE_DAY_AGO):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT u.id, u.username, COUNT(*)
+                f"""SELECT u.id, u.username, COUNT(*)
                 FROM concordia_transcription t1
                 JOIN concordia_transcription t2
                 ON t1.id < t2.id
+                JOIN concordia_transcription t3
+                ON t2.id < t3.id
                 AND t1.reviewed_by_id = t2.reviewed_by_id
-                AND t1.accepted >= %s
-                AND t2.accepted >= %s
-                AND ABS(EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))) < %s
+                AND t2.reviewed_by_id = t3.reviewed_by_id
+                AND t1.accepted >= '{start}'
+                AND t2.accepted >= '{start}'
+                AND t3.accepted >= '{start}'
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.updated_on - t3.updated_on))
+                ) < 60
+                AND ABS(EXTRACT(
+                    EPOCH FROM (t2.updated_on - t3.updated_on))
+                ) < 60
                 JOIN auth_user u on t1.reviewed_by_id = u.id
                 WHERE u.is_superuser = FALSE and u.is_staff = False
-                GROUP BY u.id, u.username""",
-                [start, start, WINDOW],
+                GROUP BY u.id, u.username"""  # nosec B608
             )
             return cursor.fetchall()
 
     def transcribing_too_quickly(self, start=ONE_DAY_AGO):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT u.id, u.username, COUNT(*)
+                f"""SELECT u.id, u.username, COUNT(*)
                 FROM concordia_transcription t1
                 JOIN concordia_transcription t2
                 ON t1.id < t2.id
+                JOIN concordia_transcription t3
+                ON t2.id < t3.id
                 AND t1.user_id = t2.user_id
-                AND t1.submitted >= %s
-                AND t2.submitted >= %s
-                AND ABS(EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))) < %s
+                AND t2.user_id = t3.user_id
+                AND t1.submitted >= '{start}'
+                AND t2.submitted >= '{start}'
+                AND t3.submitted >= '{start}'
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.created_on - t3.created_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t2.created_on - t3.created_on))
+                ) < 60
                 JOIN auth_user u on t1.user_id = u.id
                 WHERE u.is_superuser = FALSE and u.is_staff = False
-                GROUP BY u.id, u.username""",
-                [start, start, WINDOW],
+                GROUP BY u.id, u.username"""  # nosec B608
             )
             return cursor.fetchall()
 

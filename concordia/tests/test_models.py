@@ -177,12 +177,15 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         )
 
     def test_reviewing_too_quickly(self):
-        transcriptions = Transcription.objects.reviewing_too_quickly()
-        self.assertEqual(len(transcriptions), 0)
-
         self.transcription1.accepted = timezone.now()
         self.transcription1.reviewed_by = self.create_user(username="tester2")
         self.transcription1.save()
+        self.transcription2.accepted = self.transcription1.accepted
+        self.transcription2.reviewed_by = self.transcription1.reviewed_by
+        self.transcription2.save()
+        transcriptions = Transcription.objects.reviewing_too_quickly()
+        self.assertEqual(len(transcriptions), 0)
+
         transcription3 = create_transcription(
             asset=self.transcription1.asset,
             user=self.transcription1.user,
@@ -194,11 +197,14 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         self.assertEqual(transcriptions[0][0], transcription3.reviewed_by.id)
 
     def test_transcribing_too_quickly(self):
+        self.transcription1.submitted = timezone.now()
+        self.transcription1.save()
+        self.transcription2.submitted = self.transcription1.submitted
+        self.transcription2.user = self.transcription1.user
+        self.transcription2.save()
         transcriptions = Transcription.objects.transcribing_too_quickly()
         self.assertEqual(len(transcriptions), 0)
 
-        self.transcription1.submitted = timezone.now()
-        self.transcription1.save()
         transcription3 = create_transcription(
             asset=self.transcription1.asset,
             user=self.transcription1.user,
