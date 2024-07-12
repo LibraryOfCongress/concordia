@@ -121,7 +121,7 @@
                 <div class="col-12 col-lg mt-4">
                     <h3>Filter pages:</h2>
                 </div>
-                {% if user.is_authenticated and user.is_staff and show_radio %}
+                {% if user.is_authenticated and user.is_staff %}
                     <div class="mt-4">
                         <input type="radio" {% if filter_assets %}onclick="window.location='?{{ sublevel_querystring }}'"{% else %}checked{% endif %}>
                         <label>Show all</label>
@@ -166,6 +166,8 @@
                                 {% endif %}
                             </div>
                         </div>
+                    {% empty %}
+                        <div class="pt-3">There are no pages you can review. Click show all to see pages you can read or edit.</div>
                     {% endfor %}
                 </div>
             </div>

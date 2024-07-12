@@ -49,6 +49,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
 from django.utils.timezone import now
@@ -390,6 +391,7 @@ def AccountLetterView(request):
 def _get_pages(request):
     user = request.user
     activity = request.GET.get("activity", None)
+
     if activity == "transcribed":
         q = Q(user=user)
     elif activity == "reviewed":
@@ -398,12 +400,7 @@ def _get_pages(request):
         q = Q(user=user) | Q(reviewed_by=user)
     transcriptions = Transcription.objects.filter(q)
 
-    qId = request.GET.get("campaign_slug", None)
-
     assets = Asset.objects.filter(transcription__in=transcriptions)
-    if qId:
-        campaignSlug = qId
-        assets = Asset.objects.filter(item__project__campaign__pk=campaignSlug)
     status_list = request.GET.getlist("status")
     if status_list and status_list != []:
         if "completed" not in status_list:
@@ -436,11 +433,11 @@ def _get_pages(request):
     start_date = None
     start = request.GET.get("start", None)
     if start is not None and len(start) > 0:
-        start_date = datetime.datetime.strptime(start, fmt)
+        start_date = timezone.make_aware(datetime.datetime.strptime(start, fmt))
     end_date = None
     end = request.GET.get("end", None)
     if end is not None and len(end) > 0:
-        end_date = datetime.datetime.strptime(end, fmt)
+        end_date = timezone.make_aware(datetime.datetime.strptime(end, fmt))
     if start_date is not None and end_date is not None:
         end_date += datetime.timedelta(days=1)
         end = end_date.strftime(fmt)
@@ -491,6 +488,7 @@ def get_pages(request):
         context[param] = request.GET.get(param, None)
     campaign = request.GET.get("campaign", None)
     context["statuses"] = request.GET.getlist("status")
+
     if campaign is not None:
         context["campaign"] = Campaign.objects.get(pk=int(campaign))
 
@@ -856,7 +854,6 @@ def calculate_asset_stats(asset_qs, ctx):
 
     ctx["transcription_status_counts"] = labeled_status_counts = []
 
-    ctx["show_radio"] = False
     for status_key, status_label in TranscriptionStatus.CHOICES:
         value = status_counts_by_key.get(status_key, 0)
         if value:
@@ -867,8 +864,6 @@ def calculate_asset_stats(asset_qs, ctx):
         ctx[f"{status_key}_percent"] = pct
         ctx[f"{status_key}_count"] = value
         labeled_status_counts.append((status_key, status_label, value))
-        if status_key == "submitted" and value > 0:
-            ctx["show_radio"] = True
 
 
 def annotate_children_with_progress_stats(children):
@@ -1632,7 +1627,7 @@ def rollforward_transcription(request, *, asset_pk):
         transcription = asset.rollforward_transcription(user)
     except AttributeError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
-        return JsonResponse({"error": "No transcription to redo to"}, status=400)
+        return JsonResponse({"error": "No transcription to restore"}, status=400)
 
     return JsonResponse(
         {
@@ -1645,7 +1640,7 @@ def rollforward_transcription(request, *, asset_pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
-            "message": "Successfully rolled forward transcription to next version",
+            "message": "Successfully restored transcription to next version",
             "undo_available": transcription.asset.can_rollback()[0],
             "redo_available": transcription.asset.can_rollforward()[0],
         },
