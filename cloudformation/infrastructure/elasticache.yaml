@@ -20,12 +20,16 @@ Parameters:
 
 Resources:
     CachePrivateSubnetGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::ElastiCache::SubnetGroup
+        DeletionPolicy: Retain
         Properties:
             Description: Private subnet group
             SubnetIds: !Ref PrivateSubnets
     RedisService:
+        UpdateReplacePolicy: Retain
         Type: AWS::ElastiCache::CacheCluster
+        DeletionPolicy: Retain
         Properties:
             VpcSecurityGroupIds:
                 - !Ref 'SecurityGroup'

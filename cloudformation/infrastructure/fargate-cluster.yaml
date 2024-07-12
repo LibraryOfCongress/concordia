@@ -87,12 +87,14 @@ Parameters:
 
 Resources:
     ConcordiaS3BucketAccessPolicy:
+        UpdateReplacePolicy: Retain
         Type: AWS::IAM::Policy
         Metadata:
             cfn_nag:
                 rules_to_suppress:
                     - id: W12
                       reason: 'S3 buckets must be specified with /* after the bucket name'
+        DeletionPolicy: Retain
         Properties:
             PolicyName: !Sub ConcordiaServiceS3BucketAccess-${EnvironmentName}
             Roles:
@@ -114,7 +116,9 @@ Resources:
                           - !Sub 'arn:aws:s3:::crowd-${EnvironmentName}-export/*'
 
     ConcordiaKMSAccessPolicy:
+        UpdateReplacePolicy: Retain
         Type: AWS::IAM::Policy
+        DeletionPolicy: Retain
         Properties:
             PolicyName: !Sub ConcordiaServiceKMSAccess-${EnvironmentName}
             Roles:
@@ -136,7 +140,9 @@ Resources:
                           - 'arn:aws:kms:us-east-1:619333082511:key/d300e73d-9170-4001-933a-37af0bcdb956'
 
     ConcordiaServiceSecretAccessPolicy:
+        UpdateReplacePolicy: Retain
         Type: AWS::IAM::Policy
+        DeletionPolicy: Retain
         Properties:
             PolicyName: !Sub ConcordiaServiceSecretAccess-${EnvironmentName}
             Roles:
@@ -157,7 +163,9 @@ Resources:
                           - !Sub 'arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvName}/DB/MasterUserPassword-${DbSecretId}'
 
     ConcordiaEC2Role:
+        UpdateReplacePolicy: Retain
         Type: AWS::IAM::Role
+        DeletionPolicy: Retain
         Properties:
             Path: /
             AssumeRolePolicyDocument:
@@ -172,14 +180,18 @@ Resources:
                 - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
     ConcordiaInstanceProfile:
+        UpdateReplacePolicy: Retain
         Type: AWS::IAM::InstanceProfile
+        DeletionPolicy: Retain
         Properties:
             Path: /
             Roles:
                 - !Ref 'ConcordiaEC2Role'
 
     ConcordiaTaskRole:
+        UpdateReplacePolicy: Retain
         Type: AWS::IAM::Role
+        DeletionPolicy: Retain
         Properties:
             AssumeRolePolicyDocument:
                 Version: '2012-10-17'
@@ -194,13 +206,17 @@ Resources:
                 - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
     ConcordiaAppLogsGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::Logs::LogGroup
+        DeletionPolicy: Retain
         Properties:
             LogGroupName: !Ref AWS::StackName
             RetentionInDays: 30
 
     ConcordiaExternalTargetGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        DeletionPolicy: Retain
         Properties:
             HealthCheckIntervalSeconds: 30
             HealthCheckPath: /healthz
@@ -214,13 +230,17 @@ Resources:
             VpcId: !Ref VpcId
 
     LoadBalancer:
+        UpdateReplacePolicy: Retain
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        DeletionPolicy: Retain
         Properties:
             Subnets: !Ref PublicSubnets
             SecurityGroups:
                 - !Ref LoadBalancerSecurityGroup
 
     ExternalLoadBalancerListener:
+        UpdateReplacePolicy: Retain
+        DeletionPolicy: Retain
         Properties:
             DefaultActions:
                 # FIXME: When AWS CF supports it, redirect to https
@@ -233,6 +253,8 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::Listener
 
     SecureExternalLoadBalancerListener:
+        UpdateReplacePolicy: Retain
+        DeletionPolicy: Retain
         Properties:
             Certificates:
                 - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CanonicalHostName}'
@@ -245,12 +267,16 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::Listener
 
     ECSCluster:
+        UpdateReplacePolicy: Retain
         Type: AWS::ECS::Cluster
+        DeletionPolicy: Retain
         Properties:
             ClusterName: !Ref EnvironmentName
 
     ConcordiaTask:
+        UpdateReplacePolicy: Retain
         Type: AWS::ECS::TaskDefinition
+        DeletionPolicy: Retain
         Properties:
             Family: !Sub crowd-${EnvName}
             Cpu: '4096'
@@ -387,8 +413,10 @@ Resources:
                         Value: concordia.settings_ecs
 
     ConcordiaExternalService:
+        UpdateReplacePolicy: Retain
         Type: AWS::ECS::Service
         DependsOn: ExternalLoadBalancerListener
+        DeletionPolicy: Retain
         Properties:
             Cluster: !Ref ECSCluster
             LaunchType: FARGATE

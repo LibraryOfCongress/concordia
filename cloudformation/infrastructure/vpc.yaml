@@ -51,7 +51,9 @@ Parameters:
 
 Resources:
     VPC:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::VPC
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: !Ref VpcCIDR
             InstanceTenancy: default
@@ -62,25 +64,31 @@ Resources:
                   Value: !Ref EnvironmentName
 
     InternetGateway:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::InternetGateway
+        DeletionPolicy: Retain
         Properties:
             Tags:
                 - Key: Name
                   Value: !Ref EnvironmentName
 
     InternetGatewayAttachment:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::VPCGatewayAttachment
+        DeletionPolicy: Retain
         Properties:
             InternetGatewayId: !Ref InternetGateway
             VpcId: !Ref VPC
 
     PublicSubnet1:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Subnet
         Metadata:
             cfn_nag:
                 rules_to_suppress:
                     - id: W33
                       reason: "It's a public subnet"
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [!Ref AvailabilityZone1, !GetAZs '']
@@ -91,12 +99,14 @@ Resources:
                   Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
 
     PublicSubnet2:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Subnet
         Metadata:
             cfn_nag:
                 rules_to_suppress:
                     - id: W33
                       reason: "It's a public subnet"
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [!Ref AvailabilityZone2, !GetAZs '']
@@ -107,7 +117,9 @@ Resources:
                   Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
 
     PrivateSubnet1:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Subnet
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [!Ref AvailabilityZone1, !GetAZs '']
@@ -118,7 +130,9 @@ Resources:
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
 
     PrivateSubnet2:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Subnet
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             AvailabilityZone: !Select [!Ref AvailabilityZone2, !GetAZs '']
@@ -129,31 +143,41 @@ Resources:
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
 
     NatGateway1EIP:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::EIP
         DependsOn: InternetGatewayAttachment
+        DeletionPolicy: Retain
         Properties:
             Domain: vpc
 
     NatGateway2EIP:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::EIP
         DependsOn: InternetGatewayAttachment
+        DeletionPolicy: Retain
         Properties:
             Domain: vpc
 
     NatGateway1:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NatGateway
+        DeletionPolicy: Retain
         Properties:
             AllocationId: !GetAtt NatGateway1EIP.AllocationId
             SubnetId: !Ref PublicSubnet1
 
     NatGateway2:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NatGateway
+        DeletionPolicy: Retain
         Properties:
             AllocationId: !GetAtt NatGateway2EIP.AllocationId
             SubnetId: !Ref PublicSubnet2
 
     PublicRouteTable:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::RouteTable
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             Tags:
@@ -161,27 +185,35 @@ Resources:
                   Value: !Sub ${EnvironmentName} Public Routes
 
     DefaultPublicRoute:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Route
         DependsOn: InternetGatewayAttachment
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PublicRouteTable
             DestinationCidrBlock: 0.0.0.0/0
             GatewayId: !Ref InternetGateway
 
     PublicSubnet1RouteTableAssociation:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetRouteTableAssociation
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet1
 
     PublicSubnet2RouteTableAssociation:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetRouteTableAssociation
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet2
 
     PrivateRouteTable1:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::RouteTable
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             Tags:
@@ -189,20 +221,26 @@ Resources:
                   Value: !Sub ${EnvironmentName} Private Routes (AZ1)
 
     DefaultPrivateRoute1:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Route
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PrivateRouteTable1
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId: !Ref NatGateway1
 
     PrivateSubnet1RouteTableAssociation:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetRouteTableAssociation
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PrivateRouteTable1
             SubnetId: !Ref PrivateSubnet1
 
     PrivateRouteTable2:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::RouteTable
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             Tags:
@@ -210,14 +248,18 @@ Resources:
                   Value: !Sub ${EnvironmentName} Private Routes (AZ2)
 
     DefaultPrivateRoute2:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::Route
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PrivateRouteTable2
             DestinationCidrBlock: 0.0.0.0/0
             NatGatewayId: !Ref NatGateway2
 
     PrivateSubnet2RouteTableAssociation:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetRouteTableAssociation
+        DeletionPolicy: Retain
         Properties:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
