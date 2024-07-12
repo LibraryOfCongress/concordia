@@ -481,7 +481,8 @@ $card-progress-height: 12px;
     z-index: 3;
 
     /* stylelint-disable selector-class-pattern */
-    .view-transcriptions--item-detail & {
+    .view-transcriptions--item-detail &,
+    .view-transcriptions--filtered-item-detail & {
         top: 0;
     }
     /* stylelint-enable selector-class-pattern */
