@@ -41,11 +41,11 @@
             <div class="col-12 col-lg mt-4">
                 <h3>Filter pages:</h2>
             </div>
-            {% if user.is_authenticated and user.is_staff and show_radio %}
+            {% if user.is_authenticated and user.is_staff %}
                 <div class="mt-4">
-                    <input type="radio" {% if filter_assets %}onclick="window.location='{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}'"{% else %}checked{% endif %}>
+                    <input type="radio" {% if filter_assets %}onclick="window.location='{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}'"{% else %}checked{% endif %}>
                     <label>Show all</label>
-                    <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id %}'"{% endif %}>
+                    <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}'"{% endif %}>
                     <label>Show only reviewable by me</label>
                 </div>
             {% endif %}
@@ -82,6 +82,8 @@
                         </div>
                     </div>
                 </div>
+            {% empty %}
+                <div class="pt-3">There are no pages you can review. Click show all to see pages you can read or edit.</div>
             {% endfor %}
         </div>
         <div class="row mt-4">

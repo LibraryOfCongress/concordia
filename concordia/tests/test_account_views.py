@@ -8,7 +8,12 @@ from django.urls import reverse
 
 from concordia.models import ConcordiaUser, User
 
-from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
+from .utils import (
+    CacheControlAssertions,
+    CreateTestUsers,
+    JSONAssertMixin,
+    create_campaign,
+)
 
 
 @override_settings(RATELIMIT_ENABLE=False)
@@ -93,6 +98,22 @@ class ConcordiaViewTests(
 
         self.assertEqual(data["username"], self.user.username)
 
+        self.assertFalse(any(link["title"] == "Admin Area" for link in data["links"]))
+
+    def test_ajax_session_status_staff(self):
+        self.login_user(is_staff=True, is_superuser=True)
+
+        response = self.client.get(reverse("ajax-session-status"))
+        self.assertCachePrivate(response)
+        data = self.assertValidJSON(response)
+
+        self.assertIn("links", data)
+        self.assertIn("username", data)
+
+        self.assertEqual(data["username"], self.user.username)
+
+        self.assertTrue(any(link["title"] == "Admin Area" for link in data["links"]))
+
     def test_ajax_messages(self):
         self.login_user()
 
@@ -173,26 +194,23 @@ class ConcordiaViewTests(
 
     def test_get_pages(self):
         self.login_user()
+        create_campaign()
         url = reverse("get_pages")
 
-        response = self.client.get(url, kwargs={"activity": "transcribed"})
+        response = self.client.get(url, {"activity": "transcribed"})
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(
-            url, kwargs={"activity": "reviewed", "order_by": "date-ascending"}
+            url, {"activity": "reviewed", "order_by": "date-ascending"}
         )
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
-        response = self.client.get(url, kwargs={"campaign_slug": "slug"})
+        response = self.client.get(url, {"status": ["completed"], "campaign": 1})
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
-        response = self.client.get(url, kwargs={"status": ["completed"], "campaign": 1})
-        self.assertEqual(response.status_code, 200)
-        self.assertUncacheable(response)
-
-        response = self.client.get(url, kwargs={"status": ["in_progress", "submitted"]})
+        response = self.client.get(url, {"status": ["in_progress", "submitted"]})
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
@@ -202,12 +220,10 @@ class ConcordiaViewTests(
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
-        response = self.client.get(url, kwargs={"end": "1999-12-31"})
+        response = self.client.get(url, {"end": "1999-12-31"})
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
-        response = self.client.get(
-            url, kwargs={"start": "1900-01-01", "end": "1999-12-31"}
-        )
+        response = self.client.get(url, {"start": "1900-01-01", "end": "1999-12-31"})
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
