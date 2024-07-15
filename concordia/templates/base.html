@@ -90,17 +90,11 @@ for performance:
                                     <a class="dropdown-item" href="{% url 'transcriptions:completed-campaign-list' %}">Completed Campaigns</a>
                                 </div>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if PATH_LEVEL_1 == 'resources' %}active{% endif %}" href="{% url 'resources' %}">Resources</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   href="https://historyhub.history.gov/crowd-loc/" target="_blank">Discuss</a>
-                            </li>
                             <li id="topnav-help-dropdown" class="nav-item dropdown
                                                                  nav-dropdown">
                                 <a id="topnav-help-dropdown-toggle" class="nav-link
-                                                                           {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}" href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                                                           {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}"
+                                   href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu"
                                      aria-labelledby="topnav-help-dropdown-toggle">
@@ -112,6 +106,13 @@ for performance:
                                     <a class="dropdown-item" href="{% url 'how-to-tag' %}"
                                        rel="nofollow">Tag</a>
                                 </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if PATH_LEVEL_1 == 'resources' %}active{% endif %}" href="{% url 'resources' %}">Resources</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="https://historyhub.history.gov/crowd-loc/" target="_blank">Discuss</a>
                             </li>
                             <li id="topnav-account-dropdown" class="nav-item dropdown
                                                                     nav-dropdown authenticated-only" hidden>
