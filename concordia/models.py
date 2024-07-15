@@ -857,6 +857,24 @@ class TranscriptionManager(models.Manager):
             return cursor.fetchall()
 
 
+def incident_count(user_id):
+    transcriptions = Transcription.objects.filter(
+        user_id=user_id, submitted__gte=ONE_DAY_AGO
+    ).order_by("submitted")
+    incidents = 0
+    transcription = transcriptions.first()
+    remaining_transcriptions = transcriptions.exclude(id=transcription.id)
+    while remaining_transcriptions.count() > 0:
+        pass
+
+    return incidents
+
+
+def transcribing_too_quickly():
+    users = User.objects.filter(is_superuser=False, is_staff=False)
+    [incident_count(user_id) for user_id in users.values_list("id", flat=True)]
+
+
 class Transcription(MetricsModelMixin("transcription"), models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
