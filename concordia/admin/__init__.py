@@ -107,11 +107,13 @@ class ConcordiaUserAdmin(UserAdmin):
         "is_staff",
         "date_joined",
         "transcription_count",
+        "review_count",
     )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.annotate(Count("transcription"))
+        qs = qs.annotate(review_count=Count("transcription_reviewers"))
         return qs
 
     @admin.display(ordering="transcription__count")
@@ -448,7 +450,12 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 "<path:object_id>/item-import/",
                 self.admin_site.admin_view(self.item_import_view),
                 name=f"{app_label}_{model_name}_item-import",
-            )
+            ),
+            path(
+                "exportCSV/<path:project_slug>",
+                exporter_views.ExportProjectToCSV.as_view(),
+                name=f"{app_label}_{model_name}_export-csv",
+            ),
         ]
 
         return custom_urls + urls
