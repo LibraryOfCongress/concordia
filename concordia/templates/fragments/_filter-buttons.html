@@ -1,0 +1,8 @@
+{% if user.is_authenticated and user.is_staff %}
+    <div class="mt-4">
+        <input type="radio" {% if do_filter %}onclick="window.location='{{ all_url }}?{{ sublevel_qs }}'"{% else %}checked{% endif %}>
+        <label>Show all</label>
+        <input type="radio" {% if do_filter %}checked{% else %}onclick="window.location='{{ filtered_url }}?{{ sublevel_qs }}'"{% endif %}>
+        <label>Show only reviewable by me</label>
+    </div>
+{% endif %}

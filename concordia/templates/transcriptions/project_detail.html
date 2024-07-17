@@ -38,14 +38,9 @@
             <div class="col-12 col-lg mt-4">
                 <h3>Filter pages:</h2>
             </div>
-            {% if user.is_authenticated and user.is_staff %}
-                <div class="mt-4">
-                    <input type="radio" onclick="window.location='{% url 'transcriptions:project-detail' campaign.slug project.slug %}?{{ sublevel_querystring }}'" {% if not filter_assets %}checked{% endif %}>
-                    <label>Show all</label>
-                    <input type="radio" onclick="window.location='{% url 'transcriptions:filtered-project-detail' campaign.slug project.slug %}?{{ sublevel_querystring }}'" {% if filter_assets %}checked{% endif %}>
-                    <label>Show only reviewable by me</label>
-                </div>
-            {% endif %}
+            {% url 'transcriptions:project-detail' campaign.slug project.slug as all_assets %}
+            {% url 'transcriptions:filtered-project-detail' campaign.slug project.slug as filtered_assets %}
+            {% include "fragments/_filter-buttons.html" with do_filter=filter_assets all_url=all_assets filtered_url=filtered_assets sublevel_qs=sublevel_querystring %}
         </div>
         <div class="row">
             <div class="col-12 col-lg text-center">

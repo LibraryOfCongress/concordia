@@ -41,14 +41,9 @@
             <div class="col-12 col-lg mt-4">
                 <h3>Filter pages:</h2>
             </div>
-            {% if user.is_authenticated and user.is_staff %}
-                <div class="mt-4">
-                    <input type="radio" {% if filter_assets %}onclick="window.location='{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}'"{% else %}checked{% endif %}>
-                    <label>Show all</label>
-                    <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}'"{% endif %}>
-                    <label>Show only reviewable by me</label>
-                </div>
-            {% endif %}
+            {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as all_assets %}
+            {% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id as filtered_assets %}
+            {% include "fragments/_filter-buttons.html" with do_filter=filter_assets all_url=all_assets filtered_url=filtered_assets sublevel_qs=sublevel_querystring %}
         </div>
         <div class="row">
             <div class="col-12 col-lg text-center">
