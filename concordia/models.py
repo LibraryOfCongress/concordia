@@ -1117,6 +1117,7 @@ class SiteReport(models.Model):
 
     class Meta:
         ordering = ("-created_on",)
+        get_latest_by = "created_on"
 
     # We have several places where these are exported as CSV/Excel. By default
     # the ORM will be told to retrieve these fields & lookups:
