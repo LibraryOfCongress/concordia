@@ -1,3 +1,4 @@
+/* global */
 /* exported filterAssets */
 function filterAssets(filterAssets, url) {
     var button;
