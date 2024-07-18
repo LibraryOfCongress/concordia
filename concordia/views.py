@@ -46,7 +46,7 @@ from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import loader
+from django.template import Context, Template, loader
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -170,7 +170,7 @@ def healthz(request):
 
 
 @default_cache_control
-def simple_page(request, path=None, slug=None):
+def simple_page(request, path=None, slug=None, body_ctx=None):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -181,6 +181,9 @@ def simple_page(request, path=None, slug=None):
 
     if not path:
         path = request.path
+
+    if body_ctx is None:
+        body_ctx = {}
 
     page = get_object_or_404(SimplePage, path=path)
 
@@ -212,12 +215,42 @@ def simple_page(request, path=None, slug=None):
         html = page.body
     if "add_navigation" in ctx:
         ctx["guides"] = Guide.objects.order_by("order")
-    ctx["body"] = md.convert(html)
+    body = Template(md.convert(html))
+    ctx["body"] = body.render(Context(body_ctx))
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
     resp["Last-Modified"] = http_date(page.updated_on.timestamp())
     return resp
+
+
+@default_cache_control
+def about_simple_page(request, path=None, slug=None):
+    """
+    Adds additional context to the "about" SimplePage
+    """
+    context_cache_key = "about_simple_page-about_context"
+    about_context = cache.get(context_cache_key)
+    if not about_context:
+        active_campaigns = SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.TOTAL
+        ).latest()
+        retired_campaigns = SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL
+        ).latest()
+        about_context = {
+            "report_date": now() - datetime.timedelta(days=1),
+            "assets_published": active_campaigns.assets_published
+            + retired_campaigns.assets_published,
+            "assets_completed": active_campaigns.assets_completed
+            + retired_campaigns.assets_completed,
+            "assets_waiting_review": active_campaigns.assets_waiting_review
+            + retired_campaigns.assets_waiting_review,
+            "users_activated": active_campaigns.users_activated,
+        }
+        cache.set(context_cache_key, about_context, 60 * 60)
+
+    return simple_page(request, path, slug, about_context)
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
