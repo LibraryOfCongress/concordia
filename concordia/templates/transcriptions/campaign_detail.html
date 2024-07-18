@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% load static %}
 {% load staticfiles %}
 {% load humanize %}
 {% load concordia_text_tags %}
@@ -121,14 +122,9 @@
                 <div class="col-12 col-lg mt-4">
                     <h3>Filter pages:</h2>
                 </div>
-                {% if user.is_authenticated and user.is_staff %}
-                    <div class="mt-4">
-                        <input type="radio" {% if filter_assets %}onclick="window.location='?{{ sublevel_querystring }}'"{% else %}checked{% endif %}>
-                        <label>Show all</label>
-                        <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-campaign-detail' campaign.slug %}?{{ sublevel_querystring }}&show=reviewable'"{% endif %}>
-                        <label>Show only reviewable by me</label>
-                    </div>
-                {% endif %}
+                {% url 'transcriptions:campaign-detail' campaign.slug as all_assets %}
+                {% url 'transcriptions:filtered-campaign-detail' campaign.slug as filtered_assets %}
+                {% include "fragments/_filter-buttons.html" with do_filter=filter_assets all_url=all_assets filtered_url=filtered_assets sublevel_qs=sublevel_querystring %}
             </div>
             <div class="row">
                 <div class="col-12 col-lg text-center">
@@ -172,3 +168,7 @@
                 </div>
             </div>
 {% endblock main_content %}
+{% block body_scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/filter-assets.js' %}"></script>
+{% endblock body_scripts %}
