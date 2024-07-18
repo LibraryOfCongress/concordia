@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% load static %}
 {% load staticfiles %}
 {% load humanize %}
 {% load concordia_text_tags %}
@@ -167,3 +168,7 @@
                 </div>
             </div>
 {% endblock main_content %}
+{% block body_scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/src/filter-assets.js' %}"></script>
+{% endblock body_scripts %}
