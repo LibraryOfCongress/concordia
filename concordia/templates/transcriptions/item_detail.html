@@ -79,7 +79,9 @@
                     </div>
                 </div>
             {% empty %}
-                <div class="pt-3">There are no pages you can review. Click show all to see pages you can read or edit.</div>
+                {% if filter_assets %}
+                    <div class="pt-3">There are no pages you can review. Select "Show all" to see pages you can read or edit.</div>
+                {% endif %}
             {% endfor %}
         </div>
         <div class="row mt-4">
