@@ -240,6 +240,7 @@ def about_simple_page(request, path=None, slug=None):
         ).latest()
         about_context = {
             "report_date": now() - datetime.timedelta(days=1),
+            "campaigns_published": active_campaigns.campaigns_published,
             "assets_published": active_campaigns.assets_published
             + retired_campaigns.assets_published,
             "assets_completed": active_campaigns.assets_completed
