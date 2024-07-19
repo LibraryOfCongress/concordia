@@ -52,7 +52,11 @@
             {% for item in items %}
                 <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
                     <div class="h-100 concordia-object-card card border" data-transcription-status="{{ item.lowest_transcription_status }}">
-                        {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as item_url %}
+                        {% if filter_assets %}
+                            {% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id as item_url %}
+                        {% else %}
+                            {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as item_url %}
+                        {% endif %}
 
                         <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
                             <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}" />
