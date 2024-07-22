@@ -24,6 +24,7 @@
                     {% else %}
                         <li><a href="{% url 'maintenance_mode_frontend_available' %}">Enable Front-end During Maintenance Mode</a></li>
                     {% endif %}
+                    <li><a href="{% url 'admin:clear-cache' %}">Clear Caches</a></li>
                 {% endif %}
             </ul>
         </div>

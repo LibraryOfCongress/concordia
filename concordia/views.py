@@ -54,7 +54,7 @@ from django.utils.decorators import method_decorator
 from django.utils.http import http_date
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_control, never_cache
+from django.views.decorators.cache import cache_control, cache_page, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
@@ -1002,6 +1002,7 @@ class CampaignTopicListView(TemplateView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+@method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
 class TopicDetailView(APIDetailView):
     template_name = "transcriptions/topic_detail.html"
     context_object_name = "topic"
