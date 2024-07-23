@@ -1104,7 +1104,10 @@ class CampaignDetailView(APIDetailView):
                 }
             )
 
-            status = self.request.GET.get("transcription_status")
+            if filter_by_reviewable:
+                status = TranscriptionStatus.SUBMITTED
+            else:
+                status = self.request.GET.get("transcription_status")
             if status in TranscriptionStatus.CHOICE_MAP:
                 projects = projects.exclude(**{f"{status}_count": 0})
                 # We only want to pass specific QS parameters
@@ -1125,6 +1128,9 @@ class CampaignDetailView(APIDetailView):
                 campaign_assets = campaign_assets.exclude(
                     transcription__user=self.request.user.id
                 )
+                ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+            else:
+                ctx["transcription_status"] = status
 
             calculate_asset_stats(campaign_assets, ctx)
 
@@ -1193,7 +1199,11 @@ class ProjectDetailView(APIListView):
         )
 
         self.filters = {}
-        status = self.request.GET.get("transcription_status")
+
+        if filter_by_reviewable:
+            status = TranscriptionStatus.SUBMITTED
+        else:
+            status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             item_qs = item_qs.exclude(**{f"{status}_count": 0})
             # We only want to pass specific QS parameters to lower-level search
@@ -1220,6 +1230,9 @@ class ProjectDetailView(APIListView):
                 transcription__user=self.request.user.id
             )
             ctx["filter_assets"] = True
+            ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+        else:
+            ctx["transcription_status"] = self.request.GET.get("transcription_status")
 
         calculate_asset_stats(project_assets, ctx)
 
@@ -1287,7 +1300,10 @@ class ItemDetailView(APIListView):
         )
 
         self.filters = {}
-        status = self.request.GET.get("transcription_status")
+        if self.kwargs.get("filter_by_reviewable", False):
+            status = TranscriptionStatus.SUBMITTED
+        else:
+            status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             asset_qs = asset_qs.filter(transcription_status=status)
             # We only want to pass specific QS parameters to lower-level search
@@ -1312,6 +1328,9 @@ class ItemDetailView(APIListView):
         item_assets = self._get_assets()
         if self.kwargs.get("filter_by_reviewable", False):
             ctx["filter_assets"] = True
+            ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+        else:
+            ctx["transcription_status"] = self.request.GET.get("transcription_status")
 
         calculate_asset_stats(item_assets, ctx)
 

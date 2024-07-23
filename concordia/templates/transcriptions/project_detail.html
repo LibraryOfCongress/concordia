@@ -45,13 +45,19 @@
         </div>
         <div class="row">
             <div class="col-12 col-lg text-center">
-                {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
+                {% transcription_status_filters transcription_status_counts transcription_status "large" True %}
             </div>
         </div>
         <div class="row justify-content-center concordia-object-card-row">
             {% for item in items %}
                 <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
                     <div class="h-100 concordia-object-card card border" data-transcription-status="{{ item.lowest_transcription_status }}">
+                        {% if filter_assets %}
+                            {% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id as item_url %}
+                        {% else %}
+                            {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as item_url %}
+                        {% endif %}
+
                         <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
                             <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}" />
                         </a>
@@ -63,14 +69,14 @@
                         </div>
 
                         <h6 class="text-center primary-text m-0 concordia-object-card-title">
-                            <a{% if item.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}" class="campaign-image-link">
+                            <a{% if item.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ item_url }}?{{ sublevel_querystring }}" class="campaign-image-link">
                                 {{ item.title }}
                             </a>
                         </h6>
 
                         {% if item.lowest_transcription_status == 'completed' %}
                             <div class="card-actions">
-                                <a class="btn btn-sm btn-block btn-dark" href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
+                                <a class="btn btn-sm btn-block btn-dark" href="{{ item_url }}?{{ sublevel_querystring }}">
                                     <span class="fas fa-check tx-completed"></span>
                                     Complete
                                 </a>
