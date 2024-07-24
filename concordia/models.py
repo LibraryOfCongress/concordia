@@ -11,7 +11,7 @@ from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from django.db import connection, models
+from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
@@ -27,8 +27,10 @@ metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
 
+ONE_MINUTE = datetime.timedelta(minutes=1)
 ONE_DAY = datetime.timedelta(days=1)
 ONE_DAY_AGO = timezone.now() - ONE_DAY
+THRESHOLD = 3
 
 
 def resource_file_upload_path(instance, filename):
@@ -36,6 +38,19 @@ def resource_file_upload_path(instance, filename):
         return instance.path
     path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
     return time.strftime(path)
+
+
+class ConcordiaUserManager(models.Manager):
+    def review_incidents(self):
+        pass
+
+    def transcribe_incidents(self):
+        users = []
+        for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
+            incidents = user.transcribe_incidents()
+            if incidents > 3:
+                users.append((user.id, user.user_name, incidents))
+        return users
 
 
 class ConcordiaUser(User):
@@ -71,6 +86,45 @@ class ConcordiaUser(User):
 
     def validate_reconfirmation_email(self, email):
         return email == self.get_email_for_reconfirmation()
+
+    def review_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
+        transcriptions = Transcription.objects.filter(
+            user_id=self.id, submitted__gte=start
+        ).order_by("submitted")
+        incidents = 0
+        while transcriptions.count() > 0:
+            transcription = transcriptions.first()
+            if (
+                transcriptions.filter(
+                    submitted__lt=transcription.submitted + ONE_MINUTE
+                ).count()
+                >= threshold
+            ):
+                incidents += 1
+        return incidents
+
+    def transcribe_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
+        transcriptions = Transcription.objects.filter(
+            user_id=self.id, submitted__gte=start
+        ).order_by("submitted")
+        incidents = 0
+        transcription = transcriptions.first()
+        remaining_transcriptions = transcriptions
+        while remaining_transcriptions.count() > 0:
+            if (
+                remaining_transcriptions.filter(
+                    submitted__lt=transcription.submitted + ONE_MINUTE
+                ).count()
+                >= threshold
+            ):
+                incidents += 1
+            remaining_transcriptions = remaining_transcriptions.filter(
+                submitted__gte=transcription.submitted + ONE_MINUTE
+            )
+            transcription = remaining_transcriptions.first()
+        return incidents
+
+    objects = ConcordiaUserManager()
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
@@ -791,82 +845,6 @@ class TranscriptionManager(models.Manager):
     def recent_review_actions(self, days=1):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
-
-    def reviewing_too_quickly(self, start=ONE_DAY_AGO):
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""SELECT u.id, u.username, COUNT(*)
-                FROM concordia_transcription t1
-                JOIN concordia_transcription t2
-                ON t1.id < t2.id
-                JOIN concordia_transcription t3
-                ON t2.id < t3.id
-                AND t1.reviewed_by_id = t2.reviewed_by_id
-                AND t2.reviewed_by_id = t3.reviewed_by_id
-                AND t1.accepted >= '{start}'
-                AND t2.accepted >= '{start}'
-                AND t3.accepted >= '{start}'
-                AND ABS(
-                    EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))
-                ) < 60
-                AND ABS(
-                    EXTRACT(EPOCH FROM (t1.updated_on - t3.updated_on))
-                ) < 60
-                AND ABS(EXTRACT(
-                    EPOCH FROM (t2.updated_on - t3.updated_on))
-                ) < 60
-                JOIN auth_user u on t1.reviewed_by_id = u.id
-                WHERE u.is_superuser = FALSE and u.is_staff = False
-                GROUP BY u.id, u.username"""  # nosec B608
-            )
-            return cursor.fetchall()
-
-    def transcribing_too_quickly(self, start=ONE_DAY_AGO):
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""SELECT u.id, u.username, COUNT(*)
-                FROM concordia_transcription t1
-                JOIN concordia_transcription t2
-                ON t1.id < t2.id
-                JOIN concordia_transcription t3
-                ON t2.id < t3.id
-                AND t1.user_id = t2.user_id
-                AND t2.user_id = t3.user_id
-                AND t1.submitted >= '{start}'
-                AND t2.submitted >= '{start}'
-                AND t3.submitted >= '{start}'
-                AND ABS(
-                    EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))
-                ) < 60
-                AND ABS(
-                    EXTRACT(EPOCH FROM (t1.created_on - t3.created_on))
-                ) < 60
-                AND ABS(
-                    EXTRACT(EPOCH FROM (t2.created_on - t3.created_on))
-                ) < 60
-                JOIN auth_user u on t1.user_id = u.id
-                WHERE u.is_superuser = FALSE and u.is_staff = False
-                GROUP BY u.id, u.username"""  # nosec B608
-            )
-            return cursor.fetchall()
-
-
-def incident_count(user_id):
-    transcriptions = Transcription.objects.filter(
-        user_id=user_id, submitted__gte=ONE_DAY_AGO
-    ).order_by("submitted")
-    incidents = 0
-    transcription = transcriptions.first()
-    remaining_transcriptions = transcriptions.exclude(id=transcription.id)
-    while remaining_transcriptions.count() > 0:
-        pass
-
-    return incidents
-
-
-def transcribing_too_quickly():
-    users = User.objects.filter(is_superuser=False, is_staff=False)
-    [incident_count(user_id) for user_id in users.values_list("id", flat=True)]
 
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):
