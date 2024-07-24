@@ -42,7 +42,12 @@ def resource_file_upload_path(instance, filename):
 
 class ConcordiaUserManager(models.Manager):
     def review_incidents(self):
-        pass
+        users = []
+        for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
+            incidents = user.review_incidents()
+            if incidents > 3:
+                users.append((user.id, user.user_name, incidents))
+        return users
 
     def transcribe_incidents(self):
         users = []
@@ -89,18 +94,21 @@ class ConcordiaUser(User):
 
     def review_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
         transcriptions = Transcription.objects.filter(
-            user_id=self.id, submitted__gte=start
-        ).order_by("submitted")
+            user_id=self.id, accepted__gte=start
+        ).order_by("accepted")
         incidents = 0
         while transcriptions.count() > 0:
             transcription = transcriptions.first()
             if (
                 transcriptions.filter(
-                    submitted__lt=transcription.submitted + ONE_MINUTE
+                    accepted__lt=transcription.accepted + ONE_MINUTE
                 ).count()
                 >= threshold
             ):
                 incidents += 1
+            transcriptions = transcriptions.filter(
+                accepted__gte=transcription.accepted + ONE_MINUTE
+            )
         return incidents
 
     def transcribe_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
