@@ -9,7 +9,7 @@ register = template.Library()
 
 @register.inclusion_tag("fragments/transcription-status-filters.html")
 def transcription_status_filters(
-    status_counts, active_value, size="small", reversed_order=False
+    status_counts, active_value, size="small", reversed_order=False, url=""
 ):
     ctx = {}
     ctx["size"] = size
@@ -25,7 +25,7 @@ def transcription_status_filters(
     for key, label in statuses:
         status_choices.append(
             (
-                "?transcription_status=%s" % urlquote(key),
+                "%s?transcription_status=%s" % (url, urlquote(key)),
                 "active" if active_value == key else "",
                 key,
                 label,
