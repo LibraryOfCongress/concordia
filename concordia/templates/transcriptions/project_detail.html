@@ -58,7 +58,7 @@
                             {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as item_url %}
                         {% endif %}
 
-                        <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
+                        <a href="{{ item_url }}?{{ sublevel_querystring }}">
                             <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}" />
                         </a>
 
