@@ -83,11 +83,17 @@ class ConcordiaUserTestCase(CreateTestUsers, TestCase):
             asset=self.transcription1.asset,
             user=self.transcription1.user,
             reviewed_by=self.transcription1.reviewed_by,
-            accepted=transcription4.accepted + timedelta(seconds=59),
+            accepted=transcription4.accepted + timedelta(seconds=29),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=transcription4.accepted + timedelta(seconds=58),
         )
         users = ConcordiaUser.objects.review_incidents()
         self.assertEqual(len(users), 1)
-        self.assertEqual(users[self.transcription1.reviewed_by.id], 1)
+        self.assertEqual(users[self.transcription1.reviewed_by.id], 2)
 
     def test_transcribe_incidents(self):
         self.transcription1.submitted = timezone.now()
