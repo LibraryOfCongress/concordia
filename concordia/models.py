@@ -42,20 +42,24 @@ def resource_file_upload_path(instance, filename):
 
 class ConcordiaUserManager(models.Manager):
     def review_incidents(self):
-        users = []
+        user_incident_count = {}
+
         for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
-            incidents = user.review_incidents()
-            if incidents > 3:
-                users.append((user.id, user.user_name, incidents))
-        return users
+            incident_count = user.review_incidents()
+            if incident_count > 0:
+                user_incident_count[user.id] = incident_count
+
+        return user_incident_count
 
     def transcribe_incidents(self):
-        users = []
+        user_incident_count = {}
+
         for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
-            incidents = user.transcribe_incidents()
-            if incidents > 3:
-                users.append((user.id, user.user_name, incidents))
-        return users
+            incident_count = user.transcribe_incidents()
+            if incident_count > 0:
+                user_incident_count[user.id] = incident_count
+
+        return user_incident_count
 
 
 class ConcordiaUser(User):
@@ -93,43 +97,39 @@ class ConcordiaUser(User):
         return email == self.get_email_for_reconfirmation()
 
     def review_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
-        transcriptions = Transcription.objects.filter(
-            user_id=self.id, accepted__gte=start
+        recent_transcriptions = Transcription.objects.filter(
+            accepted__gte=start, reviewed_by=self
         ).order_by("accepted")
+        timestamps = recent_transcriptions.values_list("accepted", flat=True)
         incidents = 0
-        while transcriptions.count() > 0:
-            transcription = transcriptions.first()
-            if (
-                transcriptions.filter(
-                    accepted__lt=transcription.accepted + ONE_MINUTE
-                ).count()
-                >= threshold
-            ):
-                incidents += 1
-            transcriptions = transcriptions.filter(
-                accepted__gte=transcription.accepted + ONE_MINUTE
-            )
+        for i in range(len(timestamps)):
+            count = 1
+            for j in range(i + 1, len(timestamps)):
+                if (timestamps[j] - timestamps[i]).seconds <= 60:
+                    count += 1
+                    if count == threshold:
+                        incidents += 1
+                        break
+                else:
+                    break
         return incidents
 
     def transcribe_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
-        transcriptions = Transcription.objects.filter(
-            user_id=self.id, submitted__gte=start
+        recent_transcriptions = Transcription.objects.filter(
+            submitted__gte=start, user=self
         ).order_by("submitted")
+        timestamps = recent_transcriptions.values_list("submitted", flat=True)
         incidents = 0
-        transcription = transcriptions.first()
-        remaining_transcriptions = transcriptions
-        while remaining_transcriptions.count() > 0:
-            if (
-                remaining_transcriptions.filter(
-                    submitted__lt=transcription.submitted + ONE_MINUTE
-                ).count()
-                >= threshold
-            ):
-                incidents += 1
-            remaining_transcriptions = remaining_transcriptions.filter(
-                submitted__gte=transcription.submitted + ONE_MINUTE
-            )
-            transcription = remaining_transcriptions.first()
+        for i in range(len(timestamps)):
+            count = 1
+            for j in range(i + 1, len(timestamps)):
+                if (timestamps[j] - timestamps[i]).seconds <= 60:
+                    count += 1
+                    if count == threshold:
+                        incidents += 1
+                        break
+                else:
+                    break
         return incidents
 
     objects = ConcordiaUserManager()

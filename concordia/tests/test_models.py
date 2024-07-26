@@ -11,6 +11,7 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Campaign,
     CardFamily,
+    ConcordiaUser,
     Resource,
     Transcription,
     TranscriptionStatus,
@@ -38,6 +39,95 @@ from .utils import (
     create_transcription,
     create_user_profile_activity,
 )
+
+
+class ConcordiaUserTestCase(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.transcription1 = create_transcription(
+            user=self.create_user(username="tester1"),
+            rejected=timezone.now() - timedelta(days=2),
+        )
+        self.transcription2 = create_transcription(
+            asset=self.transcription1.asset, user=get_anonymous_user()
+        )
+
+    def test_review_incidents(self):
+        self.transcription1.accepted = timezone.now()
+        self.transcription1.reviewed_by = self.create_user(username="tester2")
+        self.transcription1.save()
+        self.transcription2.accepted = self.transcription1.accepted + timedelta(
+            seconds=29
+        )
+        self.transcription2.reviewed_by = self.transcription1.reviewed_by
+        self.transcription2.save()
+        users = ConcordiaUser.objects.review_incidents()
+        self.assertNotIn(self.transcription1.user.id, users)
+
+        transcription3 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=self.transcription1.accepted + timedelta(seconds=58),
+        )
+        transcription4 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=transcription3.accepted + timedelta(minutes=1, seconds=1),
+        )
+        users = ConcordiaUser.objects.review_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[self.transcription1.reviewed_by.id], 1)
+
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=transcription4.accepted + timedelta(seconds=59),
+        )
+        users = ConcordiaUser.objects.review_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[self.transcription1.reviewed_by.id], 1)
+
+    def test_transcribe_incidents(self):
+        self.transcription1.submitted = timezone.now()
+        self.transcription1.save()
+        self.transcription2.submitted = self.transcription1.submitted + timedelta(
+            seconds=29
+        )
+        self.transcription2.user = self.transcription1.user
+        self.transcription2.save()
+        users = ConcordiaUser.objects.transcribe_incidents()
+        self.assertEqual(len(users), 0)
+        self.assertNotIn(self.transcription1.user.id, users)
+
+        transcription3 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=self.transcription1.submitted + timedelta(seconds=58),
+        )
+        transcription4 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=transcription3.submitted + timedelta(minutes=1, seconds=1),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=transcription4.submitted + timedelta(seconds=59),
+        )
+        users = ConcordiaUser.objects.transcribe_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[self.transcription1.user.id], 1)
+
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=self.transcription1.submitted + timedelta(minutes=1, seconds=59),
+        )
+        users = ConcordiaUser.objects.transcribe_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[self.transcription1.user.id], 2)
 
 
 class AssetTestCase(CreateTestUsers, TestCase):
@@ -175,44 +265,6 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
             transcription3.status,
             TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED],
         )
-
-    def test_reviewing_too_quickly(self):
-        self.transcription1.accepted = timezone.now()
-        self.transcription1.reviewed_by = self.create_user(username="tester2")
-        self.transcription1.save()
-        self.transcription2.accepted = self.transcription1.accepted
-        self.transcription2.reviewed_by = self.transcription1.reviewed_by
-        self.transcription2.save()
-        transcriptions = Transcription.objects.reviewing_too_quickly()
-        self.assertEqual(len(transcriptions), 0)
-
-        transcription3 = create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            reviewed_by=self.transcription1.reviewed_by,
-            accepted=self.transcription1.accepted,
-        )
-        transcriptions = Transcription.objects.reviewing_too_quickly()
-        self.assertEqual(len(transcriptions), 1)
-        self.assertEqual(transcriptions[0][0], transcription3.reviewed_by.id)
-
-    def test_transcribing_too_quickly(self):
-        self.transcription1.submitted = timezone.now()
-        self.transcription1.save()
-        self.transcription2.submitted = self.transcription1.submitted
-        self.transcription2.user = self.transcription1.user
-        self.transcription2.save()
-        transcriptions = Transcription.objects.transcribing_too_quickly()
-        self.assertEqual(len(transcriptions), 0)
-
-        transcription3 = create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            submitted=self.transcription1.submitted,
-        )
-        transcriptions = Transcription.objects.transcribing_too_quickly()
-        self.assertEqual(len(transcriptions), 1)
-        self.assertEqual(transcriptions[0][0], transcription3.user.id)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
