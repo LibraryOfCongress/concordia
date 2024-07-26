@@ -97,10 +97,14 @@ class ConcordiaUser(User):
         return email == self.get_email_for_reconfirmation()
 
     def review_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
-        recent_transcriptions = Transcription.objects.filter(
+        recent_accepts = Transcription.objects.filter(
             accepted__gte=start, reviewed_by=self
-        ).order_by("accepted")
-        timestamps = recent_transcriptions.values_list("accepted", flat=True)
+        ).values_list("accepted", flat=True)
+        recent_rejects = Transcription.objects.filter(
+            rejected__gte=start, reviewed_by=self
+        ).values_list("rejected", flat=True)
+        timestamps = list(recent_accepts) + list(recent_rejects)
+        timestamps.sort()
         incidents = 0
         for i in range(len(timestamps)):
             count = 1
