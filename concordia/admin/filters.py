@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from ..models import Campaign, Project
+from ..models import Campaign, Project, Topic
 
 
 class NullableTimestampFilter(admin.SimpleListFilter):
@@ -89,6 +89,25 @@ class CardCampaignListFilter(admin.SimpleListFilter):
             else:
                 pks = card_family.cards.values_list("pk", flat=True)
             queryset = queryset.filter(id__in=pks)
+        return queryset
+
+
+class TopicListFilter(admin.SimpleListFilter):
+    """
+    Base class for admin topic filters
+    """
+
+    title = "Topic"
+    template = "admin/long_name_filter.html"
+    parameter_name = "topic__id__exact"
+
+    def lookups(self, request, model_admin):
+        queryset = Topic.objects.all()
+        return queryset.values_list("id", "title").order_by("title")
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(**{self.parameter_name: self.value()})
         return queryset
 
 

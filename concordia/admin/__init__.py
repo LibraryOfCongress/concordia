@@ -80,6 +80,7 @@ from .filters import (
     SubmittedFilter,
     TagCampaignListFilter,
     TagCampaignStatusListFilter,
+    TopicListFilter,
     TranscriptionCampaignListFilter,
     TranscriptionCampaignStatusListFilter,
     TranscriptionProjectListFilter,
@@ -360,8 +361,8 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_filter = (
         "resource_type",
         ResourceCampaignStatusListFilter,
+        TopicListFilter,
         ResourceCampaignListFilter,
-        "title",
     )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
