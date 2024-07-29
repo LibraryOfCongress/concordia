@@ -14,7 +14,7 @@
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
-    <li class="breadcrumb-item active" aria-current="page" title="{{ topic.title }}">{{ topic.title }}</li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ topic.title }}"><span class="text-truncate">{{ topic.title }}</span></li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
