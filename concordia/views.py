@@ -46,14 +46,15 @@ from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import loader
+from django.template import Context, Template, loader
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_control, never_cache
+from django.views.decorators.cache import cache_control, cache_page, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
@@ -169,7 +170,7 @@ def healthz(request):
 
 
 @default_cache_control
-def simple_page(request, path=None, slug=None):
+def simple_page(request, path=None, slug=None, body_ctx=None):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -180,6 +181,9 @@ def simple_page(request, path=None, slug=None):
 
     if not path:
         path = request.path
+
+    if body_ctx is None:
+        body_ctx = {}
 
     page = get_object_or_404(SimplePage, path=path)
 
@@ -211,12 +215,43 @@ def simple_page(request, path=None, slug=None):
         html = page.body
     if "add_navigation" in ctx:
         ctx["guides"] = Guide.objects.order_by("order")
-    ctx["body"] = md.convert(html)
+    body = Template(md.convert(html))
+    ctx["body"] = body.render(Context(body_ctx))
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
     resp["Last-Modified"] = http_date(page.updated_on.timestamp())
     return resp
+
+
+@default_cache_control
+def about_simple_page(request, path=None, slug=None):
+    """
+    Adds additional context to the "about" SimplePage
+    """
+    context_cache_key = "about_simple_page-about_context"
+    about_context = cache.get(context_cache_key)
+    if not about_context:
+        active_campaigns = SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.TOTAL
+        ).latest()
+        retired_campaigns = SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL
+        ).latest()
+        about_context = {
+            "report_date": now() - datetime.timedelta(days=1),
+            "campaigns_published": active_campaigns.campaigns_published,
+            "assets_published": active_campaigns.assets_published
+            + retired_campaigns.assets_published,
+            "assets_completed": active_campaigns.assets_completed
+            + retired_campaigns.assets_completed,
+            "assets_waiting_review": active_campaigns.assets_waiting_review
+            + retired_campaigns.assets_waiting_review,
+            "users_activated": active_campaigns.users_activated,
+        }
+        cache.set(context_cache_key, about_context, 60 * 60)
+
+    return simple_page(request, path, slug, about_context)
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -390,6 +425,7 @@ def AccountLetterView(request):
 def _get_pages(request):
     user = request.user
     activity = request.GET.get("activity", None)
+
     if activity == "transcribed":
         q = Q(user=user)
     elif activity == "reviewed":
@@ -398,12 +434,7 @@ def _get_pages(request):
         q = Q(user=user) | Q(reviewed_by=user)
     transcriptions = Transcription.objects.filter(q)
 
-    qId = request.GET.get("campaign_slug", None)
-
     assets = Asset.objects.filter(transcription__in=transcriptions)
-    if qId:
-        campaignSlug = qId
-        assets = Asset.objects.filter(item__project__campaign__pk=campaignSlug)
     status_list = request.GET.getlist("status")
     if status_list and status_list != []:
         if "completed" not in status_list:
@@ -436,11 +467,11 @@ def _get_pages(request):
     start_date = None
     start = request.GET.get("start", None)
     if start is not None and len(start) > 0:
-        start_date = datetime.datetime.strptime(start, fmt)
+        start_date = timezone.make_aware(datetime.datetime.strptime(start, fmt))
     end_date = None
     end = request.GET.get("end", None)
     if end is not None and len(end) > 0:
-        end_date = datetime.datetime.strptime(end, fmt)
+        end_date = timezone.make_aware(datetime.datetime.strptime(end, fmt))
     if start_date is not None and end_date is not None:
         end_date += datetime.timedelta(days=1)
         end = end_date.strftime(fmt)
@@ -491,6 +522,7 @@ def get_pages(request):
         context[param] = request.GET.get(param, None)
     campaign = request.GET.get("campaign", None)
     context["statuses"] = request.GET.getlist("status")
+
     if campaign is not None:
         context["campaign"] = Campaign.objects.get(pk=int(campaign))
 
@@ -970,6 +1002,7 @@ class CampaignTopicListView(TemplateView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+@method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
 class TopicDetailView(APIDetailView):
     template_name = "transcriptions/topic_detail.html"
     context_object_name = "topic"
@@ -1071,7 +1104,10 @@ class CampaignDetailView(APIDetailView):
                 }
             )
 
-            status = self.request.GET.get("transcription_status")
+            if filter_by_reviewable:
+                status = TranscriptionStatus.SUBMITTED
+            else:
+                status = self.request.GET.get("transcription_status")
             if status in TranscriptionStatus.CHOICE_MAP:
                 projects = projects.exclude(**{f"{status}_count": 0})
                 # We only want to pass specific QS parameters
@@ -1092,6 +1128,9 @@ class CampaignDetailView(APIDetailView):
                 campaign_assets = campaign_assets.exclude(
                     transcription__user=self.request.user.id
                 )
+                ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+            else:
+                ctx["transcription_status"] = status
 
             calculate_asset_stats(campaign_assets, ctx)
 
@@ -1160,7 +1199,11 @@ class ProjectDetailView(APIListView):
         )
 
         self.filters = {}
-        status = self.request.GET.get("transcription_status")
+
+        if filter_by_reviewable:
+            status = TranscriptionStatus.SUBMITTED
+        else:
+            status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             item_qs = item_qs.exclude(**{f"{status}_count": 0})
             # We only want to pass specific QS parameters to lower-level search
@@ -1187,6 +1230,9 @@ class ProjectDetailView(APIListView):
                 transcription__user=self.request.user.id
             )
             ctx["filter_assets"] = True
+            ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+        else:
+            ctx["transcription_status"] = self.request.GET.get("transcription_status")
 
         calculate_asset_stats(project_assets, ctx)
 
@@ -1254,7 +1300,10 @@ class ItemDetailView(APIListView):
         )
 
         self.filters = {}
-        status = self.request.GET.get("transcription_status")
+        if self.kwargs.get("filter_by_reviewable", False):
+            status = TranscriptionStatus.SUBMITTED
+        else:
+            status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             asset_qs = asset_qs.filter(transcription_status=status)
             # We only want to pass specific QS parameters to lower-level search
@@ -1279,6 +1328,9 @@ class ItemDetailView(APIListView):
         item_assets = self._get_assets()
         if self.kwargs.get("filter_by_reviewable", False):
             ctx["filter_assets"] = True
+            ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+        else:
+            ctx["transcription_status"] = self.request.GET.get("transcription_status")
 
         calculate_asset_stats(item_assets, ctx)
 
@@ -1457,6 +1509,9 @@ class AssetDetailView(APIDetailView):
 
         ctx["languages"] = list(settings.LANGUAGE_CODES.items())
 
+        ctx["undo_available"] = asset.can_rollback()[0] if transcription else False
+        ctx["redo_available"] = asset.can_rollforward()[0] if transcription else False
+
         return ctx
 
 
@@ -1564,6 +1619,84 @@ def generate_ocr_transcription(request, *, asset_pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
+            "undo_available": asset.can_rollback()[0],
+            "redo_available": asset.can_rollforward()[0],
+        },
+        status=201,
+    )
+
+
+@require_POST
+@validate_anonymous_captcha
+@atomic
+@ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
+def rollback_transcription(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    try:
+        transcription = asset.rollback_transcription(user)
+    except ValueError as e:
+        logger.exception("No previous transcription available for rollback", exc_info=e)
+        return JsonResponse(
+            {"error": "No previous transcription available"}, status=400
+        )
+
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "sent": time(),
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
+            },
+            "message": "Successfully rolled back transcription to previous version",
+            "undo_available": transcription.asset.can_rollback()[0],
+            "redo_available": transcription.asset.can_rollforward()[0],
+        },
+        status=201,
+    )
+
+
+@require_POST
+@validate_anonymous_captcha
+@atomic
+@ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
+def rollforward_transcription(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    try:
+        transcription = asset.rollforward_transcription(user)
+    except AttributeError as e:
+        logger.exception("No transcription available for rollforward", exc_info=e)
+        return JsonResponse({"error": "No transcription to restore"}, status=400)
+
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "sent": time(),
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
+            },
+            "message": "Successfully restored transcription to next version",
+            "undo_available": transcription.asset.can_rollback()[0],
+            "redo_available": transcription.asset.can_rollforward()[0],
         },
         status=201,
     )
@@ -1626,6 +1759,8 @@ def save_transcription(request, *, asset_pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
+            "undo_available": transcription.asset.can_rollback()[0],
+            "redo_available": transcription.asset.can_rollforward()[0],
         },
         status=201,
     )
@@ -1677,6 +1812,8 @@ def submit_transcription(request, *, pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
+            "undo_available": False,
+            "redo_available": False,
         },
         status=200,
     )
@@ -2185,9 +2322,32 @@ def filter_and_order_reviewable_assets(
     return potential_assets
 
 
+def find_reviewable_asset(campaign, user):
+    return (
+        Asset.objects.select_for_update(skip_locked=True, of=("self",))
+        .exclude(transcription__user=user.pk)
+        .filter(
+            campaign=campaign,
+            published=True,
+            transcription_status=TranscriptionStatus.SUBMITTED,
+        )
+        .exclude(
+            pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
+        )
+        .select_related("item", "item__project")
+        .order_by("sequence")
+        .first()
+    )
+
+
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
     campaign_ids = list(
         Campaign.objects.active()
         .listed()
@@ -2195,52 +2355,68 @@ def redirect_to_next_reviewable_asset(request):
         .get_next_review_campaigns()
         .values_list("id", flat=True)
     )
-    try:
-        campaign_id = random.choice(campaign_ids)  # nosec
-        campaign = Campaign.objects.get(id=campaign_id)
-    except IndexError:
-        campaign = Campaign.objects.active().listed().published().latest("launch_date")
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
 
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
+    asset = None
+    if campaign_ids:
+        random.shuffle(campaign_ids)  # nosec
     else:
-        user = request.user
+        logger.info("No configured reviewable campaigns")
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
+    for campaign_id in campaign_ids:
+        try:
+            campaign = Campaign.objects.get(id=campaign_id)
+        except IndexError:
+            logger.error("Next reviewable campaign %s not found", campaign_id)
+            continue
+        asset = find_reviewable_asset(campaign, user)
+        if asset:
+            break
+        else:
+            logger.info("No reviewable assets found in %s", campaign)
+
+    if not asset:
+        for campaign in (
+            Campaign.objects.active()
+            .listed()
+            .published()
+            .exclude(id__in=campaign_ids)
+            .order_by("launch_date")
+        ):
+            asset = find_reviewable_asset(campaign, user)
+            if asset:
+                break
+            else:
+                logger.info("No reviewable assets found in %s", campaign)
+
+    if asset:
+        return redirect(
+            "transcriptions:asset-detail",
+            asset.item.project.campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        messages.info(request, "There are no remaining pages to review")
+
+        return redirect("homepage")
+
+
+def find_transcribable_asset(campaign):
+    return (
+        Asset.objects.select_for_update(skip_locked=True, of=("self",))
+        .filter(
+            campaign=campaign,
+            published=True,
+            transcription_status=TranscriptionStatus.NOT_STARTED,
+        )
+        .exclude(
+            pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
+        )
+        .select_related("item", "item__project")
+        .order_by("sequence")
+        .first()
     )
-
-    potential_assets = filter_and_order_reviewable_assets(
-        potential_assets, project_slug, item_id, asset_id, request.user.pk
-    )
-
-    return redirect_to_next_asset(
-        potential_assets, "review", request, project_slug, user
-    )
-
-
-def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
-    # FIXME: if project is specified, the campaign can only be
-    # that project's campaign
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
-    )
-
-    return potential_assets
 
 
 @never_cache
@@ -2253,34 +2429,57 @@ def redirect_to_next_transcribable_asset(request):
         .get_next_transcription_campaigns()
         .values_list("id", flat=True)
     )
-    try:
-        campaign_id = random.choice(campaign_ids)  # nosec
-        campaign = Campaign.objects.get(id=campaign_id)
-    except IndexError:
-        campaign = Campaign.objects.active().listed().published().latest("launch_date")
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
 
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
+    asset = None
+    if campaign_ids:
+        random.shuffle(campaign_ids)  # nosec
     else:
-        user = request.user
+        logger.info("No configured reviewable campaigns")
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
-    )
+    for campaign_id in campaign_ids:
+        try:
+            campaign = Campaign.objects.get(id=campaign_id)
+        except IndexError:
+            logger.error("Next transcribable campaign %s not found", campaign_id)
+            continue
+        asset = find_transcribable_asset(campaign)
+        if asset:
+            break
+        else:
+            logger.info("No transcribable assets found in %s", campaign)
 
-    return redirect_to_next_asset(
-        potential_assets, "transcribe", request, project_slug, user
-    )
+    if not asset:
+        for campaign in (
+            Campaign.objects.active()
+            .listed()
+            .published()
+            .exclude(id__in=campaign_ids)
+            .order_by("-launch_date")
+        ):
+            asset = find_transcribable_asset(campaign)
+            if asset:
+                break
+            else:
+                logger.info("No transcribable assets found in %s", campaign)
+
+    if asset:
+        reservation_token = get_or_create_reservation_token(request)
+        res = AssetTranscriptionReservation(
+            asset=asset, reservation_token=reservation_token
+        )
+        res.full_clean()
+        res.save()
+        return redirect(
+            "transcriptions:asset-detail",
+            asset.item.project.campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        messages.info(request, "There are no remaining pages to transcribe")
+
+        return redirect("homepage")
 
 
 @never_cache

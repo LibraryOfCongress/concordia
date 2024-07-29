@@ -1,0 +1,39 @@
+{% extends "admin/base.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .message-error, .message-warning {
+            font-weight: bold;
+        }
+
+        .message-error {
+            color: #dc3545;
+        }
+
+        .message-warning {
+            color: #ffc107;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        <p>
+            Don't do this if you don't know what you're doing.
+        </p>
+        <p><strong>
+            Don't do this if you don't know what you're doing.
+        </strong>
+        </p>
+        <div>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="submit-row">
+                    <button type="submit">Clear Cache</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

@@ -17,7 +17,14 @@ function unlockControls($container) {
     // Unlocks all of the controls in the provided jQuery element
     $container.find('input, textarea').removeAttr('readonly');
     $container.find('input:checkbox').removeAttr('disabled');
-    $container.find('button').removeAttr('disabled');
+    // We exclude the rollback/forward buttons because the logic
+    // is handled in the template (both on first load and
+    // when updated via AJAX).
+    $container
+        .find('button')
+        .not('#rollback-transcription-button')
+        .not('#rollforward-transcription-button')
+        .removeAttr('disabled');
 }
 
 $(document).on('keydown', function (event) {
@@ -199,6 +206,12 @@ function setupPage() {
     var $ocrModal = $('#ocr-transcription-modal');
     var $languageModal = $('#language-selection-modal');
     var $ocrLoading = $('#ocr-loading');
+    var rollbackButton = document.getElementById(
+        'rollback-transcription-button',
+    );
+    var rollforwardButton = document.getElementById(
+        'rollforward-transcription-button',
+    );
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -299,30 +312,32 @@ function setupPage() {
             firstEditorUpdate = false;
         })
         .on('form-submit-success', function (event, extra) {
+            let responseData = extra.responseData;
             displayMessage(
                 'info',
                 "Successfully saved your work. Submit it for review when you're done",
                 'transcription-save-result',
             );
             $transcriptionEditor.data({
-                transcriptionId: extra.responseData.id,
+                transcriptionId: responseData.id,
                 unsavedChanges: false,
             });
             $transcriptionEditor
                 .find('input[name="supersedes"]')
-                .val(extra.responseData.id);
-            $transcriptionEditor.data(
-                'submitUrl',
-                extra.responseData.submissionUrl,
-            );
-            $ocrForm
-                .find('input[name="supersedes"]')
-                .val(extra.responseData.id);
+                .val(responseData.id);
+            $transcriptionEditor.data('submitUrl', responseData.submissionUrl);
+            $ocrForm.find('input[name="supersedes"]').val(responseData.id);
             $('#transcription-status-display')
                 .children()
                 .attr('hidden', 'hidden')
                 .filter('#display-inprogress')
                 .removeAttr('hidden');
+            if (responseData.undo_available) {
+                $('#rollback-transcription-button').removeAttr('disabled');
+            }
+            if (responseData.redo_available) {
+                $('#rollforward-transcription-button').removeAttr('disabled');
+            }
             let messageChildren = $('#transcription-status-message').children();
             messageChildren
                 .attr('hidden', 'hidden')
@@ -332,7 +347,7 @@ function setupPage() {
                 .filter('#message-contributors')
                 .removeAttr('hidden')
                 .find('#message-contributors-num')
-                .html(extra.responseData.asset.contributors);
+                .html(responseData.asset.contributors);
             $transcriptionEditor.trigger('update-ui-state');
         })
         .on('form-submit-failure', function (event, info) {
@@ -452,7 +467,6 @@ function setupPage() {
                     let messageChildren = $(
                         '#transcription-status-message',
                     ).children();
-                    console.log(messageChildren);
                     messageChildren
                         .attr('hidden', 'hidden')
                         .filter('#message-completed')
@@ -493,10 +507,91 @@ function setupPage() {
             submitReview('reject');
         });
 
+    function rollTranscription(url) {
+        lockControls($transcriptionEditor);
+        $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'json',
+        })
+            .done(function (responseData) {
+                displayMessage(
+                    'info',
+                    responseData.message,
+                    'transcription-save-result',
+                );
+                $transcriptionEditor.data({
+                    transcriptionId: responseData.id,
+                    unsavedChanges: false,
+                });
+                $transcriptionEditor
+                    .find('input[name="supersedes"]')
+                    .val(responseData.id);
+                $transcriptionEditor.data(
+                    'submitUrl',
+                    responseData.submissionUrl,
+                );
+                $ocrForm.find('input[name="supersedes"]').val(responseData.id);
+                $transcriptionEditor
+                    .find('textarea[name="text"]')
+                    .val(responseData.text);
+                $('#transcription-status-display')
+                    .children()
+                    .attr('hidden', 'hidden')
+                    .filter('#display-inprogress')
+                    .removeAttr('hidden');
+                if (responseData.undo_available) {
+                    $('#rollback-transcription-button').removeAttr('disabled');
+                }
+                if (responseData.redo_available) {
+                    $('#rollforward-transcription-button').removeAttr(
+                        'disabled',
+                    );
+                }
+                let messageChildren = $(
+                    '#transcription-status-message',
+                ).children();
+                messageChildren
+                    .attr('hidden', 'hidden')
+                    .filter('#message-inprogress')
+                    .removeAttr('hidden');
+                messageChildren
+                    .filter('#message-contributors')
+                    .removeAttr('hidden')
+                    .find('#message-contributors-num')
+                    .html(responseData.asset.contributors);
+                unlockControls($transcriptionEditor);
+                $transcriptionEditor.trigger('update-ui-state');
+            })
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                displayMessage(
+                    'error',
+                    'Unable to save your work: ' +
+                        buildErrorMessage(jqXHR, textStatus, errorThrown),
+                    'transcription-save-result',
+                );
+                unlockControls($transcriptionEditor);
+                $transcriptionEditor.trigger('update-ui-state');
+            });
+    }
+
+    if (rollbackButton) {
+        rollbackButton.addEventListener('click', function () {
+            rollTranscription(this.dataset.url);
+        });
+    }
+
+    if (rollforwardButton) {
+        rollforwardButton.addEventListener('click', function () {
+            rollTranscription(this.dataset.url);
+        });
+    }
+
     var $tagEditor = $('#tag-editor'),
         $tagForm = $('#tag-form'),
         $currentTagList = $tagEditor.find('#current-tags'),
         $newTagInput = $('#new-tag-input');
+
     const characterError =
         'Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces';
     const duplicateError =
@@ -506,6 +601,9 @@ function setupPage() {
         $newTagInput.get(0).setCustomValidity(''); // Resets custom validation
         const $form = $newTagInput.closest('form');
         $form.removeClass('was-validated');
+        $newTagInput.val(
+            $newTagInput.val().replace('‘', "'").replace('’', "'"),
+        );
         if (!$newTagInput.get(0).checkValidity()) {
             $form.find('.invalid-feedback').html(characterError);
             $form.addClass('was-validated');
@@ -601,20 +699,21 @@ function setupPage() {
                 $ocrLoading.removeAttr('hidden');
             })
             .on('form-submit-success', function (event, extra) {
+                let responseData = extra.responseData;
                 $transcriptionEditor.data({
-                    transcriptionId: extra.responseData.id,
+                    transcriptionId: responseData.id,
                     unsavedChanges: false,
                 });
                 $transcriptionEditor
                     .find('input[name="supersedes"]')
-                    .val(extra.responseData.id);
+                    .val(responseData.id);
                 $transcriptionEditor.data(
                     'submitUrl',
-                    extra.responseData.submissionUrl,
+                    responseData.submissionUrl,
                 );
                 $transcriptionEditor
                     .find('textarea[name="text"]')
-                    .val(extra.responseData.text);
+                    .val(responseData.text);
                 $ocrLoading.attr('hidden', 'hidden');
                 $('#transcription-status-display')
                     .children()
@@ -624,6 +723,14 @@ function setupPage() {
                 let messageChildren = $(
                     '#transcription-status-message',
                 ).children();
+                if (responseData.undo_available) {
+                    $('#rollback-transcription-button').removeAttr('disabled');
+                }
+                if (responseData.redo_available) {
+                    $('#rollforward-transcription-button').removeAttr(
+                        'disabled',
+                    );
+                }
                 messageChildren
                     .attr('hidden', 'hidden')
                     .filter('#message-inprogress')
@@ -632,11 +739,9 @@ function setupPage() {
                     .filter('#message-contributors')
                     .removeAttr('hidden')
                     .find('#message-contributors-num')
-                    .html(extra.responseData.asset.contributors);
+                    .html(responseData.asset.contributors);
                 $transcriptionEditor.trigger('update-ui-state');
-                $ocrForm
-                    .find('input[name="supersedes"]')
-                    .val(extra.responseData.id);
+                $ocrForm.find('input[name="supersedes"]').val(responseData.id);
             })
             .on('form-submit-failure', function (event, info) {
                 let errorMessage;

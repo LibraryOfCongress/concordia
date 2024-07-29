@@ -1,0 +1,38 @@
+<style type="text/css">
+
+    table, td { border: 1px solid black; border-collapse: collapse; }
+    td { padding: 7px; }
+
+</style>
+<h4>{{ title }}</h4>
+Incidents of two or more transcriptions submitted within a single minute:
+<table>
+    {% for row in transcriptions %}
+        <tr>
+            <td>
+                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">
+                    {{ row.1 }}
+                </a>
+            </td>
+            <td>{{ row.2 }}</td>
+        </tr>
+    {% empty %}
+        <tr><td>No transcriptions fell within the window.</td></tr>
+    {% endfor %}
+</table>
+<br/>
+Incidents of two or more transcriptions reviewed within a single minute:
+<table>
+    {% for row in reviews %}
+        <tr>
+            <td>
+                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">
+                    {{ row.1 }}
+                </a>
+            </td>
+            <td>{{ row.2 }}</td>
+        </tr>
+    {% empty %}
+        <tr><td>No reviews fell within the window.</td></tr>
+    {% endfor %}
+</table>

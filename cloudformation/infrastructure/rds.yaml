@@ -24,7 +24,9 @@ Parameters:
 
 Resources:
     PostgresSubnetGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::RDS::DBSubnetGroup
+        DeletionPolicy: Retain
         Properties:
             DBSubnetGroupDescription: Created from the RDS Management Console
             SubnetIds:
@@ -32,7 +34,9 @@ Resources:
                 - Ref: PrivateSubnet2
 
     PostgresService:
+        UpdateReplacePolicy: Retain
         Type: AWS::RDS::DBInstance
+        DeletionPolicy: Retain
         Properties:
             AllocatedStorage: '20'
             AllowMajorVersionUpgrade: false
@@ -46,10 +50,10 @@ Resources:
             MasterUsername: !Ref DbUsername
             MasterUserPassword: !Ref DbPassword
             PreferredBackupWindow: 03:47-04:17
-            PreferredMaintenanceWindow: sun:07:14-sun:07:44
+            PreferredMaintenanceWindow: tue:03:14-tue:03:44
             DBName: concordia
             Engine: postgres
-            EngineVersion: '12.11'
+            EngineVersion: '15.5'
             LicenseModel: postgresql-license
             DBSubnetGroupName:
                 Ref: PostgresSubnetGroup

@@ -311,3 +311,52 @@ class ExportCampaignToBagIt(TemplateView):
             prefix=export_filename_base
         ) as export_base_dir:
             return do_bagit_export(assets, export_base_dir, export_filename_base)
+
+
+class ExportProjectToCSV(TemplateView):
+    """
+    Exports the most recent transcription for each asset in a project
+    """
+
+    @method_decorator(staff_member_required)
+    def get(self, request, *args, **kwargs):
+        project = Project.objects.get(slug=self.kwargs["project_slug"])
+        campaign = project.campaign
+
+        asset_qs = Asset.objects.filter(item__project=project)
+        assets = get_latest_transcription_data(asset_qs)
+        assets = get_tag_values(assets)
+
+        headers, data = flatten_queryset(
+            assets,
+            field_names=[
+                "item__project__campaign__title",
+                "item__project__title",
+                "item__title",
+                "item__item_id",
+                "title",
+                "id",
+                "transcription_status",
+                "download_url",
+                "latest_transcription",
+                "tag_values",
+            ],
+            extra_verbose_names={
+                "item__project__campaign__title": "Campaign",
+                "item__project__title": "Project",
+                "item__title": "Item",
+                "item__item_id": "ItemId",
+                "item_id": "ItemId",
+                "title": "Asset",
+                "id": "AssetId",
+                "transcription_status": "AssetStatus",
+                "download_url": "DownloadUrl",
+                "latest_transcription": "Transcription",
+                "tag_values": "Tags",
+            },
+        )
+
+        logger.info("Exporting %s to csv", self.kwargs["project_slug"])
+        return export_to_csv_response(
+            f"{campaign.slug}-{project.slug}.csv", headers, data
+        )

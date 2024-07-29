@@ -17,7 +17,9 @@ Resources:
     # By default we're just allowing access from the load balancer.  If you want to SSH
     # into the hosts, or expose non-load balanced services you can open their ports here.
     ECSHostSecurityGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SecurityGroup
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
@@ -40,12 +42,14 @@ Resources:
                   Value: !Sub ${EnvironmentName}-ECS-Hosts
 
     LoadBalancerSecurityGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SecurityGroup
         Metadata:
             cfn_nag:
                 rules_to_suppress:
                     - id: W9
                       reason: 'The CIDR block should only allow 140.147.*.* IPs so it should end in /16'
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             GroupDescription: Access to the load balancer that sits in front of ECS
@@ -71,7 +75,9 @@ Resources:
                   Value: 'true'
 
     DatabaseSecurityGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SecurityGroup
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             GroupDescription: Access to the RDS Postgres database
@@ -87,12 +93,14 @@ Resources:
                   CidrIp: 0.0.0.0/0
 
     BastionHostSecurityGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SecurityGroup
         Metadata:
             cfn_nag:
                 rules_to_suppress:
                     - id: W9
                       reason: 'The CIDR block should only allow 140.147.*.* IPs so it should end in /16'
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             GroupDescription: Bastion hosts for ECS access
@@ -111,7 +119,9 @@ Resources:
                   Value: !Sub ${EnvironmentName}-BastionHosts
 
     CacheServiceSecurityGroup:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SecurityGroup
+        DeletionPolicy: Retain
         Properties:
             VpcId: !Ref VPC
             GroupDescription: Access to cache services for ECS hosts
@@ -121,11 +131,6 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 6379
                   ToPort: 6379
-                - Description: 'Memcached service access from container hosts'
-                  SourceSecurityGroupId: !Ref 'ECSHostSecurityGroup'
-                  IpProtocol: tcp
-                  FromPort: 11211
-                  ToPort: 11211
             SecurityGroupEgress:
                 - Description: 'Explicit outbound access'
                   IpProtocol: '-1'

@@ -18,6 +18,7 @@ from concordia.models import (
     Project,
     Resource,
     ResourceFile,
+    SimplePage,
     SiteReport,
     Tag,
     Topic,
@@ -67,6 +68,13 @@ def create_campaign(
     if do_save:
         campaign.save()
     return campaign
+
+
+def create_simple_page(*, do_save=True, **kwargs):
+    simple_page = SimplePage(**kwargs)
+    if do_save:
+        simple_page.save()
+    return simple_page
 
 
 def create_site_report(*, do_save=True, **kwargs):
@@ -177,6 +185,7 @@ def create_asset(
         item = create_item(published=published)
     asset = Asset(
         item=item,
+        campaign=item.project.campaign,
         title=title,
         slug=slug,
         media_type=media_type,
@@ -239,8 +248,8 @@ def create_card(*, title="Test Card", do_save=True, **kwargs):
     return card
 
 
-def create_card_family(*, do_save=True, **kwargs):
-    card_family = CardFamily(**kwargs)
+def create_card_family(*, slug="test-card-family", do_save=True, **kwargs):
+    card_family = CardFamily(slug=slug, **kwargs)
     if do_save:
         card_family.save()
     return card_family

@@ -481,7 +481,8 @@ $card-progress-height: 12px;
     z-index: 3;
 
     /* stylelint-disable selector-class-pattern */
-    .view-transcriptions--item-detail & {
+    .view-transcriptions--item-detail &,
+    .view-transcriptions--filtered-item-detail & {
         top: 0;
     }
     /* stylelint-enable selector-class-pattern */
@@ -739,6 +740,7 @@ $card-progress-height: 12px;
  */
 
 #contribute-main-content {
+    overflow: hidden;
     position: relative;
 }
 
@@ -826,6 +828,11 @@ $card-progress-height: 12px;
 
 #transcription-editor textarea {
     resize: none;
+}
+
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+    opacity: 0.2;
 }
 
 /* Help Center */
@@ -1134,7 +1141,7 @@ $card-progress-height: 12px;
     z-index: 1; /* Stay on top */
     top: 129px;
     right: 0;
-    overflow-x: hidden; /* Disable horizontal scroll */
+    overflow: hidden auto; /* Disable horizontal scrolling */
     transition: 0.3s;
     background-color: $white;
 }

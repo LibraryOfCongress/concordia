@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load humanize %}
+{% load static %}
 {% load staticfiles %}
 {% load concordia_filtering_tags %}
 {% load concordia_media_tags %}
@@ -41,18 +42,13 @@
             <div class="col-12 col-lg mt-4">
                 <h3>Filter pages:</h2>
             </div>
+            {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as all_assets %}
+            {% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id as filtered_assets %}
+            {% include "fragments/_filter-buttons.html" with do_filter=filter_assets all_url=all_assets filtered_url=filtered_assets sublevel_qs=sublevel_querystring %}
         </div>
-        {% if user.is_authenticated and user.is_staff %}
-            <div class="mt-4">
-                <input type="radio" {% if filter_assets %}onclick="window.location='{% url 'transcriptions:item-detail' campaign.slug project.slug item.id %}'"{% else %}checked{% endif %}>
-                <label>Show all</label>
-                <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.id %}'"{% endif %}>
-                <label>Show only reviewable by me</label>
-            </div>
-        {% endif %}
         <div class="row">
             <div class="col-12 col-lg text-center">
-                {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
+                {% transcription_status_filters transcription_status_counts transcription_status "large" True all_assets %}
             </div>
         </div>
         <div class="row justify-content-center concordia-object-card-row">
@@ -82,6 +78,10 @@
                         </div>
                     </div>
                 </div>
+            {% empty %}
+                {% if filter_assets %}
+                    <div class="pt-3">There are no pages you can review. Select "Show all" to see pages you can read or edit.</div>
+                {% endif %}
             {% endfor %}
         </div>
         <div class="row mt-4">
@@ -89,3 +89,7 @@
         </div>
     </div>
 {% endblock main_content %}
+{% block body_scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/filter-assets.js' %}"></script>
+{% endblock body_scripts %}

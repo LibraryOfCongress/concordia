@@ -8,14 +8,18 @@ from celery import Celery
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import permission_required, user_passes_test
+from django.core.cache import caches
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.views import View
 from django.views.decorators.cache import never_cache
+from django.views.generic.edit import FormView
 
 from concordia.models import (
     Asset,
@@ -35,7 +39,7 @@ from importer.tasks import (
 from importer.utils.excel import slurp_excel
 
 from ..models import Campaign, Project, SiteReport
-from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
+from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm, ClearCacheForm
 
 logger = logging.getLogger(__name__)
 
@@ -629,3 +633,24 @@ class SerializedObjectView(View):
             return JsonResponse({field_name: value})
         except model.DoesNotExist:
             return JsonResponse({"status": "false"}, status=HTTPStatus.NOT_FOUND)
+
+
+@method_decorator(never_cache, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class ClearCacheView(FormView):
+    form_class = ClearCacheForm
+    template_name = "admin/clear_cache.html"
+    success_url = reverse_lazy("admin:clear-cache")
+
+    def form_valid(self, form):
+        try:
+            cache_name = form.cleaned_data["cache_name"]
+            caches[cache_name].clear()
+            messages.success(self.request, f"Successfully cleared '{cache_name}' cache")
+        except Exception as err:
+            messages.error(
+                self.request,
+                f"Couldn't clear cache '{cache_name}', "
+                f"something went wrong. Received error: {err}",
+            )
+        return super().form_valid(form)

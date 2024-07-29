@@ -11,7 +11,7 @@ from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import connection, models
 from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
@@ -26,6 +26,9 @@ logger = getLogger(__name__)
 metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
+
+ONE_DAY = datetime.timedelta(days=1)
+ONE_DAY_AGO = timezone.now() - ONE_DAY
 
 
 def resource_file_upload_path(instance, filename):
@@ -498,6 +501,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     objects = AssetQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True, db_index=True)
 
@@ -556,6 +560,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         # This ensures all 'required' fields really are required
         # even when creating objects programmatically. Particularly,
         # we want to make sure we don't end up with an empty storage_image
+        if not self.campaign:
+            self.campaign = self.item.project.campaign
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -600,6 +606,155 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def turn_off_ocr(self):
         return self.disable_ocr or self.item.turn_off_ocr()
 
+    def can_rollback(self):
+        original_latest_transcription = latest_transcription = (
+            self.latest_transcription()
+        )
+        while latest_transcription.source:
+            latest_transcription = latest_transcription.source
+
+        transcriptions = (
+            self.transcription_set.exclude(rolled_forward=True)
+            .exclude(source_of__rolled_forward=True)
+            .exclude(rolled_back=True)
+            .exclude(pk__gte=latest_transcription.pk)
+            .order_by("-pk")
+        )
+        if not transcriptions:
+            return (
+                False,
+                (
+                    "Can not rollback transcription on an asset "
+                    "with no non-rollback transcriptions"
+                ),
+            )
+
+        transcription_to_rollback_to = None
+        for transcription in transcriptions:
+            if (
+                latest_transcription.rolled_back is False
+                or latest_transcription.supersedes != transcription
+            ):
+                transcription_to_rollback_to = transcription
+                break
+
+        if not transcription_to_rollback_to:
+            return (
+                False,
+                (
+                    "Can not rollback transcription on an asset with "
+                    "no non-rollback transcriptions"
+                ),
+            )
+
+        return True, transcription_to_rollback_to, original_latest_transcription
+
+    def rollback_transcription(self, user):
+        results = self.can_rollback()
+        if results[0] is not True:
+            raise ValueError(results[1])
+        transcription_to_rollback_to = results[1]
+        original_latest_transcription = results[2]
+
+        kwargs = {
+            "asset": self,
+            "user": user,
+            "supersedes": original_latest_transcription,
+            "text": transcription_to_rollback_to.text,
+            "rolled_back": True,
+            "source": transcription_to_rollback_to,
+        }
+        new_transcription = Transcription(**kwargs)
+        new_transcription.full_clean()
+        new_transcription.save()
+        return new_transcription
+
+    def can_rollforward(self):
+        # original_latest_transcription holds the actual latest transcription
+        # latest_transcription holds the most recent transcription. If it's a rolled
+        # forward transcription, we use it to find the most recent non-rolled-forward
+        # transcription
+
+        original_latest_transcription = latest_transcription = (
+            self.latest_transcription()
+        )
+
+        if latest_transcription.rolled_forward:
+
+            # We need to find the latest transcription that wasn't rolled forward
+            rolled_forward_count = 0
+            try:
+                while latest_transcription.rolled_forward:
+                    latest_transcription = latest_transcription.supersedes
+                    rolled_forward_count += 1
+            except AttributeError:
+                return (
+                    False,
+                    (
+                        "Can not rollforward transcription on an asset with no "
+                        "non-rollforward transcriptions"
+                    ),
+                )
+            # latest_transcription is now the most recent non-rolled-forward
+            # transcription, but we need to go back fruther based on the number
+            # of rolled-forward transcriptions we've seen to get to the actual
+            # rollback transcription we need to rollforward from
+            try:
+                while rolled_forward_count >= 1:
+                    latest_transcription = latest_transcription.supersedes
+                    rolled_forward_count -= 1
+            except AttributeError:
+                return (
+                    False,
+                    (
+                        "More rollforward transcription exist than non-roll-forward "
+                        "transcriptions, which shouldn't be possible. Possibly "
+                        "incorrectly modified transcriptions for this asset."
+                    ),
+                )
+
+        if latest_transcription.rolled_back:
+            transcription_to_rollforward = latest_transcription.supersedes
+        else:
+            return (
+                False,
+                (
+                    "Can not rollforward transcription on an asset if the latest "
+                    "non-rollforward transcription is not a rollback transcription"
+                ),
+            )
+
+        if not transcription_to_rollforward:
+            return (
+                False,
+                (
+                    "Can not rollforward transcription on an asset if the latest "
+                    "non-transcription did not supersede a previous transcription"
+                ),
+            )
+
+        return True, transcription_to_rollforward, original_latest_transcription
+
+    def rollforward_transcription(self, user):
+        results = self.can_rollforward()
+        if results[0] is not True:
+            raise ValueError(results[1])
+        transcription_to_rollforward = results[1]
+        original_latest_transcription = results[2]
+
+        kwargs = {
+            "asset": self,
+            "user": user,
+            "supersedes": original_latest_transcription,
+            "text": transcription_to_rollforward.text,
+            "rolled_forward": True,
+            "source": transcription_to_rollforward,
+        }
+        new_transcription = Transcription(**kwargs)
+        new_transcription.full_clean()
+        new_transcription.save()
+        return new_transcription
+
 
 class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _À-ž'\w]{1,50}$")
@@ -636,6 +791,64 @@ class TranscriptionManager(models.Manager):
     def recent_review_actions(self, days=1):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
+
+    def reviewing_too_quickly(self, start=ONE_DAY_AGO):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT u.id, u.username, COUNT(*)
+                FROM concordia_transcription t1
+                JOIN concordia_transcription t2
+                ON t1.id < t2.id
+                JOIN concordia_transcription t3
+                ON t2.id < t3.id
+                AND t1.reviewed_by_id = t2.reviewed_by_id
+                AND t2.reviewed_by_id = t3.reviewed_by_id
+                AND t1.accepted >= '{start}'
+                AND t2.accepted >= '{start}'
+                AND t3.accepted >= '{start}'
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.updated_on - t3.updated_on))
+                ) < 60
+                AND ABS(EXTRACT(
+                    EPOCH FROM (t2.updated_on - t3.updated_on))
+                ) < 60
+                JOIN auth_user u on t1.reviewed_by_id = u.id
+                WHERE u.is_superuser = FALSE and u.is_staff = False
+                GROUP BY u.id, u.username"""  # nosec B608
+            )
+            return cursor.fetchall()
+
+    def transcribing_too_quickly(self, start=ONE_DAY_AGO):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT u.id, u.username, COUNT(*)
+                FROM concordia_transcription t1
+                JOIN concordia_transcription t2
+                ON t1.id < t2.id
+                JOIN concordia_transcription t3
+                ON t2.id < t3.id
+                AND t1.user_id = t2.user_id
+                AND t2.user_id = t3.user_id
+                AND t1.submitted >= '{start}'
+                AND t2.submitted >= '{start}'
+                AND t3.submitted >= '{start}'
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.created_on - t3.created_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t2.created_on - t3.created_on))
+                ) < 60
+                JOIN auth_user u on t1.user_id = u.id
+                WHERE u.is_superuser = FALSE and u.is_staff = False
+                GROUP BY u.id, u.username"""  # nosec B608
+            )
+            return cursor.fetchall()
 
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):
@@ -682,6 +895,23 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     ocr_originated = models.BooleanField(
         default=False,
         help_text="Flags transcription as originated from an OCR transcription",
+    )
+
+    rolled_back = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as being the result of a rollback (undo)",
+    )
+    rolled_forward = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as being the result of a rollforward (redo)",
+    )
+    source = models.ForeignKey(
+        "self",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text="The transcription source for the roll back or roll forward",
+        related_name="source_of",
     )
 
     objects = TranscriptionManager()
@@ -887,6 +1117,7 @@ class SiteReport(models.Model):
 
     class Meta:
         ordering = ("-created_on",)
+        get_latest_by = "created_on"
 
     # We have several places where these are exported as CSV/Excel. By default
     # the ORM will be told to retrieve these fields & lookups:

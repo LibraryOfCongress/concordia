@@ -195,10 +195,22 @@ if REDIS_ADDRESS and REDIS_PORT:
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
-        }
+        },
+        "view_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/2",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
     }
 else:
-    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+        "view_cache": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
@@ -405,6 +417,7 @@ TINYMCE_DEFAULT_CONFIG = {
     "plugins": "link lists searchreplace wordcount",
     "browser_spellcheck": "true",
     "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
+    "width": 624,
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
 

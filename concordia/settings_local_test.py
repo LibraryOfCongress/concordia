@@ -5,7 +5,7 @@ DEBUG = False
 
 DATABASES["default"]["PORT"] = "54323"
 
-DEFAULT_TO_EMAIL = "rstorey@loc.gov"
+DEFAULT_TO_EMAIL = "rsar@loc.gov"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]  # nosec
 

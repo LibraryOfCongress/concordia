@@ -30,7 +30,9 @@ Parameters:
 
 Resources:
     NetworkAcl:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAcl
+        DeletionPolicy: Retain
         Properties:
             VpcId:
                 Ref: VPC
@@ -42,7 +44,9 @@ Resources:
     # NOTE: These rules are for dev / test / stage only
 
     acl4:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 0.0.0.0/0
             Egress: true
@@ -51,7 +55,9 @@ Resources:
             RuleNumber: 100
             NetworkAclId: !Ref NetworkAcl
     acl5:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 140.147.236.152/32
             Protocol: -1
@@ -59,7 +65,9 @@ Resources:
             RuleNumber: 10
             NetworkAclId: !Ref NetworkAcl
     acl6:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 140.147.236.214/32
             Protocol: -1
@@ -67,7 +75,9 @@ Resources:
             RuleNumber: 11
             NetworkAclId: !Ref NetworkAcl
     acl6b:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 140.147.236.213/32
             Protocol: -1
@@ -75,7 +85,9 @@ Resources:
             RuleNumber: 12
             NetworkAclId: !Ref NetworkAcl
     acl7:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 140.147.0.0/16
             Protocol: 6
@@ -87,7 +99,9 @@ Resources:
             NetworkAclId:
                 Ref: NetworkAcl
     acl8:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 0.0.0.0/0
             Protocol: 6
@@ -99,7 +113,9 @@ Resources:
             NetworkAclId:
                 Ref: NetworkAcl
     acl9:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 0.0.0.0/0
             Protocol: 6
@@ -110,7 +126,9 @@ Resources:
                 To: 80
             NetworkAclId: !Ref NetworkAcl
     acl10:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 0.0.0.0/0
             Protocol: 6
@@ -122,7 +140,9 @@ Resources:
             NetworkAclId: !Ref NetworkAcl
 
     acl11:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::NetworkAclEntry
+        DeletionPolicy: Retain
         Properties:
             CidrBlock: 0.0.0.0/0
             Protocol: -1
@@ -131,25 +151,33 @@ Resources:
             NetworkAclId: !Ref NetworkAcl
 
     subnetacl5:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetNetworkAclAssociation
+        DeletionPolicy: Retain
         Properties:
             NetworkAclId: !Ref NetworkAcl
             SubnetId: !Ref PrivateSubnet1
 
     subnetacl6:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetNetworkAclAssociation
+        DeletionPolicy: Retain
         Properties:
             NetworkAclId: !Ref NetworkAcl
             SubnetId: !Ref PrivateSubnet2
 
     subnetacl7:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetNetworkAclAssociation
+        DeletionPolicy: Retain
         Properties:
             NetworkAclId: !Ref NetworkAcl
             SubnetId: !Ref PublicSubnet1
 
     subnetacl8:
+        UpdateReplacePolicy: Retain
         Type: AWS::EC2::SubnetNetworkAclAssociation
+        DeletionPolicy: Retain
         Properties:
             NetworkAclId: !Ref NetworkAcl
             SubnetId: !Ref PublicSubnet2

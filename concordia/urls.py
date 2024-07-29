@@ -105,7 +105,7 @@ urlpatterns = [
     path("", views.HomeView.as_view(), name="homepage"),
     path("healthz", views.healthz, name="health-check"),
     path("letter", views.AccountLetterView, name="user-letter"),
-    path("about/", views.simple_page, name="about"),
+    path("about/", views.about_simple_page, name="about"),
     # These patterns are to make sure various links to help-center URLs don't break
     # when the URLs are changed to not include help-center and can be removed after
     # all links are updated.
@@ -213,6 +213,16 @@ urlpatterns = [
         "assets/<int:asset_pk>/transcriptions/generate-ocr/",
         views.generate_ocr_transcription,
         name="generate-ocr-transcription",
+    ),
+    path(
+        "assets/<int:asset_pk>/transcriptions/rollback/",
+        views.rollback_transcription,
+        name="rollback-transcription",
+    ),
+    path(
+        "assets/<int:asset_pk>/transcriptions/rollforward/",
+        views.rollforward_transcription,
+        name="rollforward-transcription",
     ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),

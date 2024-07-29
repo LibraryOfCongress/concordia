@@ -8,13 +8,18 @@ import requests
 from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count, F, Q
+from django.template import loader
 from django.utils import timezone
 from more_itertools.more import chunked
 
 from concordia.models import (
+    ONE_DAY,
+    ONE_DAY_AGO,
     Asset,
     AssetTranscriptionReservation,
     Campaign,
@@ -36,8 +41,6 @@ from concordia.utils import get_anonymous_user
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
-
-ONE_DAY = datetime.timedelta(days=1)
 
 
 @celery_app.task
@@ -102,7 +105,6 @@ def delete_old_tombstoned_reservations():
 
 
 def _recent_transcriptions():
-    ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
     return Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
@@ -1041,7 +1043,49 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
 
 
+def transcribing_too_quickly():
+    return Transcription.objects.transcribing_too_quickly()
+
+
+def reviewing_too_quickly():
+    return Transcription.objects.reviewing_too_quickly()
+
+
 @celery_app.task(ignore_result=True)
 def clear_sessions():
     # This clears expired Django sessions in the database
     call_command("clearsessions")
+
+
+@celery_app.task
+def unusual_activity():
+    """
+    Locate pages that were improperly transcribed or reviewed.
+    """
+    site = Site.objects.get_current()
+    context = {
+        "title": "Unusual User Activity Report for "
+        + timezone.now().strftime("%b %d %Y, %I:%M %p"),
+        "domain": "https://" + site.domain,
+        "transcriptions": transcribing_too_quickly(),
+        "reviews": reviewing_too_quickly(),
+    }
+
+    text_body_template = loader.get_template("emails/unusual_activity.txt")
+    text_body_message = text_body_template.render(context)
+
+    html_body_template = loader.get_template("emails/unusual_activity.html")
+    html_body_message = html_body_template.render(context)
+
+    to_email = ["rsar@loc.gov"]
+    if settings.DEFAULT_TO_EMAIL:
+        to_email.append(settings.DEFAULT_TO_EMAIL)
+    message = EmailMultiAlternatives(
+        subject=context["title"],
+        body=text_body_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=to_email,
+        reply_to=[settings.DEFAULT_FROM_EMAIL],
+    )
+    message.attach_alternative(html_body_message, "text/html")
+    message.send()
