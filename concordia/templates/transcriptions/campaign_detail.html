@@ -128,7 +128,7 @@
             </div>
             <div class="row">
                 <div class="col-12 col-lg text-center">
-                    {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
+                    {% transcription_status_filters transcription_status_counts transcription_status "large" True all_assets %}
                 </div>
             </div>
             <div class="row justify-content-center concordia-object-card-row">
@@ -136,7 +136,11 @@
                     {% for project in projects %}
                         <div class="col-6 concordia-object-card-col">
                             <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
-                                {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+                                {% if filter_assets %}
+                                    {% url 'transcriptions:filtered-project-detail' campaign.slug project.slug as project_url %}
+                                {% else %}
+                                    {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+                                {% endif %}
 
                                 <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
                                     <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">

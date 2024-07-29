@@ -54,7 +54,7 @@ from django.utils.decorators import method_decorator
 from django.utils.http import http_date
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_control, never_cache
+from django.views.decorators.cache import cache_control, cache_page, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
@@ -1002,6 +1002,7 @@ class CampaignTopicListView(TemplateView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+@method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
 class TopicDetailView(APIDetailView):
     template_name = "transcriptions/topic_detail.html"
     context_object_name = "topic"
@@ -1103,7 +1104,10 @@ class CampaignDetailView(APIDetailView):
                 }
             )
 
-            status = self.request.GET.get("transcription_status")
+            if filter_by_reviewable:
+                status = TranscriptionStatus.SUBMITTED
+            else:
+                status = self.request.GET.get("transcription_status")
             if status in TranscriptionStatus.CHOICE_MAP:
                 projects = projects.exclude(**{f"{status}_count": 0})
                 # We only want to pass specific QS parameters
@@ -1124,6 +1128,9 @@ class CampaignDetailView(APIDetailView):
                 campaign_assets = campaign_assets.exclude(
                     transcription__user=self.request.user.id
                 )
+                ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+            else:
+                ctx["transcription_status"] = status
 
             calculate_asset_stats(campaign_assets, ctx)
 
@@ -1192,7 +1199,11 @@ class ProjectDetailView(APIListView):
         )
 
         self.filters = {}
-        status = self.request.GET.get("transcription_status")
+
+        if filter_by_reviewable:
+            status = TranscriptionStatus.SUBMITTED
+        else:
+            status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             item_qs = item_qs.exclude(**{f"{status}_count": 0})
             # We only want to pass specific QS parameters to lower-level search
@@ -1219,6 +1230,9 @@ class ProjectDetailView(APIListView):
                 transcription__user=self.request.user.id
             )
             ctx["filter_assets"] = True
+            ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+        else:
+            ctx["transcription_status"] = self.request.GET.get("transcription_status")
 
         calculate_asset_stats(project_assets, ctx)
 
@@ -1286,7 +1300,10 @@ class ItemDetailView(APIListView):
         )
 
         self.filters = {}
-        status = self.request.GET.get("transcription_status")
+        if self.kwargs.get("filter_by_reviewable", False):
+            status = TranscriptionStatus.SUBMITTED
+        else:
+            status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             asset_qs = asset_qs.filter(transcription_status=status)
             # We only want to pass specific QS parameters to lower-level search
@@ -1311,6 +1328,9 @@ class ItemDetailView(APIListView):
         item_assets = self._get_assets()
         if self.kwargs.get("filter_by_reviewable", False):
             ctx["filter_assets"] = True
+            ctx["transcription_status"] = TranscriptionStatus.SUBMITTED
+        else:
+            ctx["transcription_status"] = self.request.GET.get("transcription_status")
 
         calculate_asset_stats(item_assets, ctx)
 

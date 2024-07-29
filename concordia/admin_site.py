@@ -7,42 +7,36 @@ class ConcordiaAdminSite(admin.AdminSite):
     site_title = "Concordia"
 
     def get_urls(self):
-        from concordia.admin.views import (
-            SerializedObjectView,
-            admin_bulk_import_review,
-            admin_bulk_import_view,
-            admin_retired_site_report_view,
-            admin_site_report_view,
-            celery_task_review,
-            project_level_export,
-            redownload_images_view,
-        )
+        from concordia.admin import views
 
         urls = super().get_urls()
 
         custom_urls = [
-            path("bulk-import/", admin_bulk_import_view, name="bulk-import"),
-            path("bulk-review/", admin_bulk_import_review, name="bulk-review"),
-            path("celery-review/", celery_task_review, name="celery-review"),
-            path("site-report/", admin_site_report_view, name="site-report"),
+            path("bulk-import/", views.admin_bulk_import_view, name="bulk-import"),
+            path("bulk-review/", views.admin_bulk_import_review, name="bulk-review"),
+            path("celery-review/", views.celery_task_review, name="celery-review"),
+            path("site-report/", views.admin_site_report_view, name="site-report"),
             path(
                 "retired-site-report/",
-                admin_retired_site_report_view,
+                views.admin_retired_site_report_view,
                 name="retired-site-report",
             ),
             path(
-                "redownload-images/", redownload_images_view, name="redownload-images"
+                "redownload-images/",
+                views.redownload_images_view,
+                name="redownload-images",
             ),
             path(
                 "project-level-export/",
-                project_level_export,
+                views.project_level_export,
                 name="project-level-export",
             ),
             path(
                 "serialized_object/",
-                SerializedObjectView.as_view(),
+                views.SerializedObjectView.as_view(),
                 name="serialized_object",
             ),
+            path("clear-cache/", views.ClearCacheView.as_view(), name="clear-cache"),
         ]
 
         return custom_urls + urls

@@ -1,5 +1,6 @@
 import nh3
 from django import forms
+from django.core.cache import caches
 from tinymce.widgets import TinyMCE
 
 from ..models import Campaign, Card, Guide, Project
@@ -123,3 +124,17 @@ class GuideAdminForm(forms.ModelForm):
             "body": TinyMCE(),
         }
         fields = "__all__"
+
+
+def get_cache_name_choices():
+    # We don't want the default cache to be cleared,
+    # since it's meant to contain semi-persistent data
+    return [
+        (name, f"{name} ({settings['BACKEND']})")
+        for name, settings in caches.settings.items()
+        if name != "default"
+    ]
+
+
+class ClearCacheForm(forms.Form):
+    cache_name = forms.ChoiceField(choices=get_cache_name_choices)
