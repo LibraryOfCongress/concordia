@@ -49,10 +49,17 @@ def ensure_filename(suffix):
 
 @ensure_filename("xlsx")
 def export_to_excel_action(
-    modeladmin, request, queryset, filename=None, field_names=None
+    modeladmin,
+    request,
+    queryset,
+    filename=None,
+    field_names=None,
+    extra_verbose_names=None,
 ):
     """Django admin action which exports selected records as an Excel XLSX download"""
-    headers, rows = flatten_queryset(queryset, field_names=field_names)
+    headers, rows = flatten_queryset(
+        queryset, field_names=field_names, extra_verbose_names=extra_verbose_names
+    )
     return export_to_excel_response(filename, headers, rows)
 
 
@@ -61,10 +68,17 @@ export_to_excel_action.short_description = _("Export to Excel")
 
 @ensure_filename("csv")
 def export_to_csv_action(
-    modeladmin, request, queryset, filename=None, field_names=None
+    modeladmin,
+    request,
+    queryset,
+    filename=None,
+    field_names=None,
+    extra_verbose_names=None,
 ):
     """Django admin action which exports the selected records as a CSV download"""
-    headers, rows = flatten_queryset(queryset, field_names=field_names)
+    headers, rows = flatten_queryset(
+        queryset, field_names=field_names, extra_verbose_names=extra_verbose_names
+    )
     return export_to_csv_response(filename, headers, rows)
 
 

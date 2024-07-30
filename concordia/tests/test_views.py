@@ -206,6 +206,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         response = self.client.get(reverse("topic-detail", args=(c.slug,)))
 
         self.assertEqual(response.status_code, 200)
+        print(response.content)
         self.assertTemplateUsed(
             response, template_name="transcriptions/topic_detail.html"
         )
@@ -577,8 +578,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # to edit it after logging in
 
         # 4 queries =
-        # 1 expiry + 1 acquire + 2 get user ID from request
-        with self.assertNumQueries(4):
+        # 1 expiry + 1 acquire + 2 get user ID + 2 get user profile from request
+        with self.assertNumQueries(6):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
