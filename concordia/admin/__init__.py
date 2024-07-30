@@ -94,8 +94,9 @@ from .forms import (
     CampaignAdminForm,
     CardAdminForm,
     GuideAdminForm,
+    ItemAdminForm,
     ProjectAdminForm,
-    SanitizedDescriptionAdminForm,
+    TopicAdminForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -399,7 +400,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    form = SanitizedDescriptionAdminForm
+    form = TopicAdminForm
 
     list_display = (
         "id",
@@ -526,6 +527,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
+    form = ItemAdminForm
     list_display = ("title", "item_id", "campaign_title", "project", "published")
     list_display_links = ("title", "item_id")
     search_fields = [
