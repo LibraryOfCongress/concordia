@@ -108,7 +108,6 @@ class ConcordiaUserAdmin(UserAdmin):
         "is_staff",
         "date_joined",
         "transcription_count",
-        "review_count",
     )
 
     def get_queryset(self, request):
