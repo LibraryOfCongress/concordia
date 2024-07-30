@@ -107,13 +107,11 @@ class ConcordiaUserAdmin(UserAdmin):
         "is_staff",
         "date_joined",
         "transcription_count",
-        "review_count",
     )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.annotate(Count("transcription"))
-        qs = qs.annotate(review_count=Count("transcription_reviewers"))
         return qs
 
     @admin.display(ordering="transcription__count")
