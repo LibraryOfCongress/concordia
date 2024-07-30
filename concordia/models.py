@@ -74,7 +74,13 @@ class ConcordiaUser(User):
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    transcribe_count = models.IntegerField(
+        default=0, verbose_name="transcription save/submit count"
+    )
+    review_count = models.IntegerField(
+        default=0, verbose_name="transcription review count"
+    )
 
 
 class OverlayPosition(object):
@@ -962,10 +968,13 @@ def on_transcription_save(sender, instance, **kwargs):
             user=user,
             campaign=instance.asset.item.project.campaign,
         )
+        profile, created = UserProfile.objects.get_or_create(user=user)
         if created:
             setattr(user_profile_activity, attr_name, 1)
+            setattr(profile, attr_name, 1)
         else:
             setattr(user_profile_activity, attr_name, F(attr_name) + 1)
+            setattr(profile, attr_name, F(attr_name) + 1)
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
         user_profile_activity.asset_count = (
             Asset.objects.filter(q)
@@ -974,6 +983,7 @@ def on_transcription_save(sender, instance, **kwargs):
             .count()
         )
         user_profile_activity.save()
+        profile.save()
 
 
 post_save.connect(on_transcription_save, sender=Transcription)

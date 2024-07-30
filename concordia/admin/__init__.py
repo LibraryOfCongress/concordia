@@ -9,7 +9,6 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
@@ -113,14 +112,18 @@ class ConcordiaUserAdmin(UserAdmin):
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        qs = qs.annotate(Count("transcription"))
-        qs = qs.annotate(review_count=Count("transcription_reviewers"))
+        qs = super().get_queryset(request).select_related("profile")
         return qs
 
-    @admin.display(ordering="transcription__count")
+    @admin.display(
+        description="Transcription Count", ordering="profile__transcribe_count"
+    )
     def transcription_count(self, obj):
-        return obj.transcription__count
+        return obj.profile.transcribe_count
+
+    @admin.display(description="Review Count", ordering="profile__review_count")
+    def review_count(self, obj):
+        return obj.profile.review_count
 
     EXPORT_FIELDS = (
         "username",
@@ -132,17 +135,31 @@ class ConcordiaUserAdmin(UserAdmin):
         "is_superuser",
         "date_joined",
         "last_login",
-        "transcription__count",
+        "profile__transcribe_count",
+        "profile__review_count",
     )
+
+    EXTRA_VERBOSE_NAMES = {
+        "profile__transcribe_count": "transcription count",
+        "profile__review_count": "review count",
+    }
 
     def export_users_as_csv(self, request, queryset):
         return export_to_csv_action(
-            self, request, queryset, field_names=self.EXPORT_FIELDS
+            self,
+            request,
+            queryset,
+            field_names=self.EXPORT_FIELDS,
+            extra_verbose_names=self.EXTRA_VERBOSE_NAMES,
         )
 
     def export_users_as_excel(self, request, queryset):
         return export_to_excel_action(
-            self, request, queryset, field_names=self.EXPORT_FIELDS
+            self,
+            request,
+            queryset,
+            field_names=self.EXPORT_FIELDS,
+            extra_verbose_names=self.EXTRA_VERBOSE_NAMES,
         )
 
     actions = (anonymize_action, export_users_as_csv, export_users_as_excel)

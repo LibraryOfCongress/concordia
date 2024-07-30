@@ -577,8 +577,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # to edit it after logging in
 
         # 4 queries =
-        # 1 expiry + 1 acquire + 2 get user ID from request
-        with self.assertNumQueries(4):
+        # 1 expiry + 1 acquire + 2 get user ID + 2 get user profile from request
+        with self.assertNumQueries(6):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -682,8 +682,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.client.logout()
 
-        # 1 reservation check + 1 acquire + 2 get user ID from request
-        expected_queries = 4
+        # 1 reservation check + 1 acquire + 2 get user ID
+        # + 2 get user profile from request
+        expected_queries = 6
         if settings.SESSION_ENGINE.endswith("db"):
             # + 1 session check
             expected_queries += 1
