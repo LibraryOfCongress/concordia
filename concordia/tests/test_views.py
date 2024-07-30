@@ -206,7 +206,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         response = self.client.get(reverse("topic-detail", args=(c.slug,)))
 
         self.assertEqual(response.status_code, 200)
-        print(response.content)
         self.assertTemplateUsed(
             response, template_name="transcriptions/topic_detail.html"
         )
@@ -683,8 +682,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.client.logout()
 
-        # 1 reservation check + 1 acquire + 2 get user ID from request
-        expected_queries = 4
+        # 1 reservation check + 1 acquire + 2 get user ID
+        # + 2 get user profile from request
+        expected_queries = 6
         if settings.SESSION_ENGINE.endswith("db"):
             # + 1 session check
             expected_queries += 1
