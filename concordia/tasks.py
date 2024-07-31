@@ -24,6 +24,7 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Campaign,
     CampaignRetirementProgress,
+    ConcordiaUser,
     Item,
     Project,
     ResourceFile,
@@ -1067,8 +1068,8 @@ def unusual_activity():
         "title": "Unusual User Activity Report for "
         + timezone.now().strftime("%b %d %Y, %I:%M %p"),
         "domain": "https://" + site.domain,
-        "transcriptions": transcribing_too_quickly(),
-        "reviews": reviewing_too_quickly(),
+        "transcriptions": ConcordiaUser.objects.transcribe_incidents(),
+        "reviews": ConcordiaUser.objects.review_incidents(),
     }
 
     text_body_template = loader.get_template("emails/unusual_activity.txt")
