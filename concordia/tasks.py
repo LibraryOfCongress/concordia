@@ -1044,14 +1044,6 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
 
 
-def transcribing_too_quickly():
-    return Transcription.objects.transcribing_too_quickly()
-
-
-def reviewing_too_quickly():
-    return Transcription.objects.reviewing_too_quickly()
-
-
 @celery_app.task(ignore_result=True)
 def clear_sessions():
     # This clears expired Django sessions in the database
