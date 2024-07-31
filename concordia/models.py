@@ -6,7 +6,7 @@ from logging import getLogger
 
 import pytesseract
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import BaseUserManager, User
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -40,7 +40,7 @@ def resource_file_upload_path(instance, filename):
     return time.strftime(path)
 
 
-class ConcordiaUserManager(models.Manager):
+class ConcordiaUserManager(BaseUserManager):
     def review_incidents(self):
         user_incident_count = {}
 
