@@ -42,22 +42,22 @@ def resource_file_upload_path(instance, filename):
 
 class ConcordiaUserManager(BaseUserManager):
     def review_incidents(self):
-        user_incident_count = {}
+        user_incident_count = []
 
         for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
             incident_count = user.review_incidents()
             if incident_count > 0:
-                user_incident_count[user.id] = incident_count
+                user_incident_count.append((user.id, user.username, incident_count))
 
         return user_incident_count
 
     def transcribe_incidents(self):
-        user_incident_count = {}
+        user_incident_count = []
 
         for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
             incident_count = user.transcribe_incidents()
             if incident_count > 0:
-                user_incident_count[user.id] = incident_count
+                user_incident_count.append((user.id, user.username, incident_count))
 
         return user_incident_count
 
