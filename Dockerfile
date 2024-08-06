@@ -20,7 +20,7 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
     libz-dev libfreetype6-dev \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
-    # Postgres client library to build psycopg2
+    # Postgres client library to build psycopg
     libpq-dev \
     locales \
     # Weasyprint requirements
