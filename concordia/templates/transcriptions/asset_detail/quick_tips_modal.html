@@ -1,0 +1,42 @@
+<div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h4>Campaign Tips</h4>
+                <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">x</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="card-carousel" class="carousel slide" data-interval="false">
+                    <div class="carousel-inner">
+                        {% for card in cards %}
+                            <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
+                                <div class="position-static d-flex flex-column justify-content-around">
+                                    {% if card.image %}
+                                        <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
+                                    {% endif %}
+                                    {% if card.display_heading %}
+                                        <h5>{{ card.display_heading }}</h5>
+                                    {% endif %}
+                                    <p>{{ card.body_text|safe }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                        <strong><u><&nbsp;Back</u></strong>
+                    </a>
+                    <ol class="carousel-indicators d-none d-lg-flex">
+                        {% for card in cards %}
+                            <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                        {% endfor %}
+                    </ol>
+                    <a id="next-card" href="#card-carousel" data-slide="next">
+                        <strong><u>Next&nbsp;></u></strong>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
