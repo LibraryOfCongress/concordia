@@ -11,7 +11,6 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Campaign,
     CardFamily,
-    ConcordiaUser,
     Resource,
     Transcription,
     TranscriptionStatus,
@@ -39,121 +38,6 @@ from .utils import (
     create_transcription,
     create_user_profile_activity,
 )
-
-
-class ConcordiaUserTestCase(CreateTestUsers, TestCase):
-    def setUp(self):
-        self.transcription1 = create_transcription(
-            user=self.create_user(username="tester1"),
-            rejected=timezone.now() - timedelta(days=2),
-        )
-        self.transcription2 = create_transcription(
-            asset=self.transcription1.asset, user=get_anonymous_user()
-        )
-
-    def test_review_incidents(self):
-        self.transcription1.accepted = timezone.now()
-        self.transcription1.reviewed_by = self.create_user(username="tester2")
-        self.transcription1.save()
-        self.transcription2.accepted = self.transcription1.accepted + timedelta(
-            seconds=29
-        )
-        self.transcription2.reviewed_by = self.transcription1.reviewed_by
-        self.transcription2.save()
-        users = ConcordiaUser.objects.review_incidents()
-        self.assertNotIn(self.transcription1.user.id, users)
-
-        transcription3 = create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            reviewed_by=self.transcription1.reviewed_by,
-            accepted=self.transcription1.accepted + timedelta(seconds=58),
-        )
-        transcription4 = create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            reviewed_by=self.transcription1.reviewed_by,
-            accepted=transcription3.accepted + timedelta(minutes=1, seconds=1),
-        )
-        users = ConcordiaUser.objects.review_incidents()
-        self.assertEqual(len(users), 1)
-        self.assertEqual(
-            users[0],
-            (
-                self.transcription1.reviewed_by.id,
-                self.transcription1.reviewed_by.username,
-                1,
-            ),
-        )
-
-        create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            reviewed_by=self.transcription1.reviewed_by,
-            accepted=transcription4.accepted + timedelta(seconds=29),
-        )
-        create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            reviewed_by=self.transcription1.reviewed_by,
-            accepted=transcription4.accepted + timedelta(seconds=58),
-        )
-        users = ConcordiaUser.objects.review_incidents()
-        self.assertEqual(len(users), 1)
-        self.assertEqual(
-            users[0],
-            (
-                self.transcription1.reviewed_by.id,
-                self.transcription1.reviewed_by.username,
-                2,
-            ),
-        )
-
-    def test_transcribe_incidents(self):
-        self.transcription1.submitted = timezone.now()
-        self.transcription1.save()
-        self.transcription2.submitted = self.transcription1.submitted + timedelta(
-            seconds=29
-        )
-        self.transcription2.user = self.transcription1.user
-        self.transcription2.save()
-        users = ConcordiaUser.objects.transcribe_incidents()
-        self.assertEqual(len(users), 0)
-        self.assertNotIn(self.transcription1.user.id, users)
-
-        transcription3 = create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            submitted=self.transcription1.submitted + timedelta(seconds=58),
-        )
-        transcription4 = create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            submitted=transcription3.submitted + timedelta(minutes=1, seconds=1),
-        )
-        create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            submitted=transcription4.submitted + timedelta(seconds=59),
-        )
-        users = ConcordiaUser.objects.transcribe_incidents()
-        self.assertEqual(len(users), 1)
-        self.assertEqual(
-            users[0],
-            (self.transcription1.user.id, self.transcription1.user.username, 1),
-        )
-
-        create_transcription(
-            asset=self.transcription1.asset,
-            user=self.transcription1.user,
-            submitted=self.transcription1.submitted + timedelta(minutes=1, seconds=59),
-        )
-        users = ConcordiaUser.objects.transcribe_incidents()
-        self.assertEqual(len(users), 1)
-        self.assertEqual(
-            users[0],
-            (self.transcription1.user.id, self.transcription1.user.username, 2),
-        )
 
 
 class AssetTestCase(CreateTestUsers, TestCase):
@@ -229,6 +113,110 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
         start = timezone.now() - timedelta(days=5)
         end = timezone.now() - timedelta(days=1)
         self.assertEqual(Transcription.objects.review_actions(start, end).count(), 1)
+
+    def test_review_incidents(self):
+        self.transcription1.accepted = timezone.now()
+        self.transcription1.reviewed_by = self.create_user(username="tester2")
+        self.transcription1.save()
+        self.transcription2.accepted = self.transcription1.accepted + timedelta(
+            seconds=29
+        )
+        self.transcription2.reviewed_by = self.transcription1.reviewed_by
+        self.transcription2.save()
+        users = Transcription.objects.review_incidents()
+        self.assertNotIn(self.transcription1.user.id, users)
+
+        transcription3 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=self.transcription1.accepted + timedelta(seconds=58),
+        )
+        transcription4 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=transcription3.accepted + timedelta(minutes=1, seconds=1),
+        )
+        users = Transcription.objects.review_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(
+            users[0],
+            (
+                self.transcription1.reviewed_by.id,
+                self.transcription1.reviewed_by.username,
+                1,
+            ),
+        )
+
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=transcription4.accepted + timedelta(seconds=29),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=transcription4.accepted + timedelta(seconds=58),
+        )
+        users = Transcription.objects.review_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(
+            users[0],
+            (
+                self.transcription1.reviewed_by.id,
+                self.transcription1.reviewed_by.username,
+                2,
+            ),
+        )
+
+    def test_transcribe_incidents(self):
+        self.transcription1.submitted = timezone.now()
+        self.transcription1.save()
+        self.transcription2.submitted = self.transcription1.submitted + timedelta(
+            seconds=29
+        )
+        self.transcription2.user = self.transcription1.user
+        self.transcription2.save()
+        users = Transcription.objects.transcribe_incidents()
+        self.assertEqual(len(users), 0)
+        self.assertNotIn(self.transcription1.user.id, users)
+
+        transcription3 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=self.transcription1.submitted + timedelta(seconds=58),
+        )
+        transcription4 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=transcription3.submitted + timedelta(minutes=1, seconds=1),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=transcription4.submitted + timedelta(seconds=59),
+        )
+        users = Transcription.objects.transcribe_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(
+            users[0],
+            (self.transcription1.user.id, self.transcription1.user.username, 1),
+        )
+
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=self.transcription1.submitted + timedelta(minutes=1, seconds=59),
+        )
+        users = Transcription.objects.transcribe_incidents()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(
+            users[0],
+            (self.transcription1.user.id, self.transcription1.user.username, 2),
+        )
 
 
 class TranscriptionTestCase(CreateTestUsers, TestCase):

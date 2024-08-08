@@ -1,5 +1,5 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
-/* exported attemptToReserveAsset */
+/* exported attemptToReserveAsset reserveAssetForEditing */
 
 const assetData = document.currentScript.dataset;
 
@@ -98,8 +98,14 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     });
 }
 
+function reserveAssetForEditing() {
+    if (assetData.reserveAssetUrl) {
+        attemptToReserveAsset(assetData.reserveAssetUrl, '', 'transcribe');
+    }
+}
+
 jQuery(function () {
     if (assetData.reserveForEditing) {
-        attemptToReserveAsset(assetData.reserveAssetUrl, '', 'transcribe');
+        reserveAssetForEditing();
     }
 });

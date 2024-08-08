@@ -1,0 +1,118 @@
+<div class="flex-grow-1 d-flex d-print-block flex-column">
+    <div id="transcription-status-display">
+        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+            <span class="fas fa-list"></span>
+            Needs review
+        </h2>
+        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+            <span class="fas fa-check"></span>
+            Completed
+        </h2>
+        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
+            <span class="fas fa-edit"></span>
+            Not started
+        </h2>
+        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+            <span class="fas fa-edit"></span>
+            In progress
+        </h2>
+        <span id="display-conflict" hidden>
+            <span class="fas fa-exclamation-triangle"></span>
+            Another user is transcribing this page
+        </span>
+    </div>
+
+    <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
+        {% csrf_token %}
+        <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+
+        <div class="row justify-content-sm-between px-3">
+            <span id="transcription-status-message">
+                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                    Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                </h2>
+                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                    Transcribe this page.
+                </span>
+                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                    Someone started this transcription. Can you finish it?
+                </span>
+                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                    Check this transcription thoroughly. Accept if correct!
+                </span>
+                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                    This transcription is finished! You can read and add tags.
+                </span>
+            </span>
+            <div class="align-items-center align-self-end btn-group">
+                <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                    <u>Campaign Tips</u>
+                </a>
+            </div>
+        </div>
+
+        {% spaceless %}
+            <div id="loading-container" class="pb-2">
+                <div id="ocr-loading" class="spinner-border" role="status" aria-hidden="true" hidden>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            <div class="d-flex flex-column flex-grow-1" id="transcription-input-container">
+                <textarea readonly class="form-control rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                    {{ transcription.text }}
+                </textarea>
+                {% if guides %}
+                    <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
+                    {% include "fragments/_how-to-guide.html" %}
+                {% endif %}
+            </div>
+
+            <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
+
+            <div class="my-3 d-print-none d-flex flex-wrap justify-content-center align-items-center">
+                {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
+                    <div class="form-check w-100 text-center mt-0 mb-3">
+                        <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
+                        <label class="form-check-label" for="nothing-to-transcribe">
+                            Nothing to transcribe
+                        </label>
+
+                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Nothing to transcribe?" data-html="true" data-content="If there is no text to transcribe, check this box and click &quot;Submit&quot;. Learn more about what to transcribe and what to skip in &quot;How To.&quot;">
+                            <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                        </a>
+                    </div>
+
+                    <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
+                        Save
+                    </button>
+                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
+                        <span class="fas fa-undo"></span> Undo
+                    </button>
+                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
+                        Redo <span class="fas fa-redo"></span>
+                    </button>
+                    <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
+                        Submit for Review
+                    </button>
+
+                {% elif transcription_status == 'submitted' %}
+                    {% if not user.is_authenticated %}
+                        <p class="help-text">
+                            <a href="{% url 'registration_register' %}">Register</a>
+                            or
+                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                            to help review
+                        </p>
+                    {% else %}
+                        <button id="reject-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Correct errors you see in the text">Edit</button>
+                        {% if transcription.user.pk == user.pk %}
+                            <p class="help-text mt-2">You submitted this transcription. You can re-open it for editing if you wish to make changes before another volunteer reviews it.</p>
+                        {% else %}
+                            <button id="accept-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Confirm that the text is accurately transcribed">Accept</button>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endspaceless %}
+    </form>
+</div>

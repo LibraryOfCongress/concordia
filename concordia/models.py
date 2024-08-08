@@ -6,7 +6,7 @@ from logging import getLogger
 
 import pytesseract
 from django.conf import settings
-from django.contrib.auth.models import BaseUserManager, User
+from django.contrib.auth.models import User
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -38,28 +38,6 @@ def resource_file_upload_path(instance, filename):
         return instance.path
     path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
     return time.strftime(path)
-
-
-class ConcordiaUserManager(BaseUserManager):
-    def review_incidents(self):
-        user_incident_count = []
-
-        for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
-            incident_count = user.review_incidents()
-            if incident_count > 0:
-                user_incident_count.append((user.id, user.username, incident_count))
-
-        return user_incident_count
-
-    def transcribe_incidents(self):
-        user_incident_count = []
-
-        for user in self.get_queryset().filter(is_superuser=False, is_staff=False):
-            incident_count = user.transcribe_incidents()
-            if incident_count > 0:
-                user_incident_count.append((user.id, user.username, incident_count))
-
-        return user_incident_count
 
 
 class ConcordiaUser(User):
@@ -96,14 +74,14 @@ class ConcordiaUser(User):
     def validate_reconfirmation_email(self, email):
         return email == self.get_email_for_reconfirmation()
 
-    def review_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
-        recent_accepts = Transcription.objects.filter(
-            accepted__gte=start, reviewed_by=self
-        ).values_list("accepted", flat=True)
-        recent_rejects = Transcription.objects.filter(
-            rejected__gte=start, reviewed_by=self
-        ).values_list("rejected", flat=True)
-        timestamps = list(recent_accepts) + list(recent_rejects)
+    def review_incidents(self, recent_accepts, recent_rejects, threshold=THRESHOLD):
+        accepts = recent_accepts.filter(reviewed_by=self).values_list(
+            "accepted", flat=True
+        )
+        rejects = recent_rejects.filter(reviewed_by=self).values_list(
+            "rejected", flat=True
+        )
+        timestamps = list(accepts) + list(rejects)
         timestamps.sort()
         incidents = 0
         for i in range(len(timestamps)):
@@ -118,10 +96,8 @@ class ConcordiaUser(User):
                     break
         return incidents
 
-    def transcribe_incidents(self, start=ONE_DAY_AGO, threshold=THRESHOLD):
-        recent_transcriptions = Transcription.objects.filter(
-            submitted__gte=start, user=self
-        ).order_by("submitted")
+    def transcribe_incidents(self, transcriptions, threshold=THRESHOLD):
+        recent_transcriptions = transcriptions.filter(user=self).order_by("submitted")
         timestamps = recent_transcriptions.values_list("submitted", flat=True)
         incidents = 0
         for i in range(len(timestamps)):
@@ -135,8 +111,6 @@ class ConcordiaUser(User):
                 else:
                     break
         return incidents
-
-    objects = ConcordiaUserManager()
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
@@ -863,6 +837,50 @@ class TranscriptionManager(models.Manager):
     def recent_review_actions(self, days=1):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
+
+    def review_incidents(self):
+        user_incident_count = []
+        recent_accepts = self.filter(
+            accepted__gte=ONE_DAY_AGO,
+            reviewed_by__is_superuser=False,
+            reviewed_by__is_staff=False,
+        )
+        recent_rejects = self.filter(
+            rejected__gte=ONE_DAY_AGO,
+            reviewed_by__is_superuser=False,
+            reviewed_by__is_staff=False,
+        )
+        recent_actions = recent_accepts.union(recent_rejects)
+        user_ids = set(
+            recent_actions.order_by("reviewed_by").values_list("reviewed_by", flat=True)
+        )
+
+        for user_id in user_ids:
+            user = ConcordiaUser.objects.get(id=user_id)
+            incident_count = user.review_incidents(recent_accepts, recent_rejects)
+            if incident_count > 0:
+                user_incident_count.append((user.id, user.username, incident_count))
+
+        return user_incident_count
+
+    def transcribe_incidents(self):
+        user_incident_count = []
+        transcriptions = self.get_queryset().filter(
+            submitted__gte=ONE_DAY_AGO, user__is_superuser=False, user__is_staff=False
+        )
+        user_ids = (
+            transcriptions.order_by("user")
+            .distinct("user")
+            .values_list("user", flat=True)
+        )
+
+        for user_id in user_ids:
+            user = ConcordiaUser.objects.get(id=user_id)
+            incident_count = user.transcribe_incidents(transcriptions)
+            if incident_count > 0:
+                user_incident_count.append((user.id, user.username, incident_count))
+
+        return user_incident_count
 
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):
