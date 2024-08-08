@@ -22,6 +22,11 @@ if os.getenv("AWS"):
 
     DATABASES["default"].update({"PASSWORD": postgres_secret["password"]})
 
+    cf_turnstile_secret_json = get_secret("crowd/%s/Turnstile" % ENV_NAME)
+    cf_turnstile_secret = json.loads(cf_turnstile_secret_json)
+    TURNSTILE_SITEKEY = cf_turnstile_secret["TurnstileSiteKey"]
+    TURNSTILE_SECRET = cf_turnstile_secret["TurnstileSecret"]
+
     smtp_secret_json = get_secret("concordia/SMTP")
     smtp_secret = json.loads(smtp_secret_json)
     EMAIL_HOST = smtp_secret["Hostname"]
