@@ -115,6 +115,7 @@ INSTALLED_APPS = [
     "exporter",
     "importer",
     "captcha",
+    "turnstile",
     "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
@@ -161,6 +162,7 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
                 "concordia.context_processors.maintenance_mode_frontend_available",
+                "concordia.context_processors.turnstile_default_settings",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
@@ -316,6 +318,15 @@ PASSWORD_COMPLEXITY = {
 AUTHENTICATION_BACKENDS = [
     "concordia.authentication_backends.EmailOrUsernameModelBackend"
 ]
+
+# Turnstile settings
+TURN_JS_API_URL = os.environ.get("TURN_JS_API_URL", "")
+TURN_VERIFY_URL = os.environ.get("TURN_VERIFY_URL", "")
+TURN_SITEKEY = os.environ.get("TURN_SITEKEY", "")
+TURN_SECRET = os.environ.get("TURN_SECRET", "")
+TURN_TIMEOUT = os.environ.get("TURN_TIMEOUT", "")
+TURN_DEFAULT_CONFIG = os.environ.get("TURN_DEFAULT_CONFIG", "")
+TURN_PROXIES = os.environ.get("TURN_PROXIES", "")
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 #: Anonymous sessions require captcha validation every day by default:
