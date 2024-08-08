@@ -32,3 +32,32 @@ def site_navigation(request):
 def maintenance_mode_frontend_available(request):
     value = cache.get("maintenance_mode_frontend_available", False)
     return {"maintenance_mode_frontend_available": value}
+
+
+def turnstile_default_settings(request):
+    """
+    Expose turnstile default settings to the default template context
+    - Cloudflare Turnstile
+    """
+
+    return {
+        "TURN_JS_API_URL": getattr(
+            settings,
+            "TURNSTILE_JS_API_URL",
+            "https://challenges.cloudflare.com/turnstile/v0/api.js",
+        ),
+        "TURN_VERIFY_URL": getattr(
+            settings,
+            "TURNSTILE_VERIFY_URL",
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        ),
+        "TURN_SITEKEY": getattr(
+            settings, "TURNSTILE_SITEKEY", "1x00000000000000000000AA"
+        ),
+        "TURN_SECRET": getattr(
+            settings, "TURNSTILE_SECRET", "1x0000000000000000000000000000000AA"
+        ),
+        "TURN_TIMEOUT": getattr(settings, "TURNSTILE_TIMEOUT", 5),
+        "TURN_DEFAULT_CONFIG": getattr(settings, "TURNSTILE_DEFAULT_CONFIG", {}),
+        "TURN_PROXIES": getattr(settings, "TURNSTILE_PROXIES", {}),
+    }
