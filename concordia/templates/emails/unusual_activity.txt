@@ -6,7 +6,7 @@ Incidents of two or more transcriptions submitted within a single minute:
     No transcriptions fell within the window.
 {% endfor %}
 Incidents of two or more transcriptions reviewed within a single minute:
-{% for row in reviews %}
+{% for row in reviews_by %}
     {{ row.1 }} | {{ row.2 }}
 {% empty %}
     No reviews fell within the window.

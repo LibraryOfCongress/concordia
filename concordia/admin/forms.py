@@ -3,7 +3,7 @@ from django import forms
 from django.core.cache import caches
 from tinymce.widgets import TinyMCE
 
-from ..models import Campaign, Card, Guide, Item, Project, Topic
+from ..models import Campaign, Card, Guide, Project
 
 FRAGMENT_ALLOWED_TAGS = {
     "a",
@@ -90,15 +90,6 @@ class SanitizedDescriptionAdminForm(forms.ModelForm):
         )
 
 
-class TopicAdminForm(SanitizedDescriptionAdminForm):
-    class Meta(SanitizedDescriptionAdminForm.Meta):
-        model = Topic
-        widgets = {
-            "description": TinyMCE(),
-            "short_description": TinyMCE(),
-        }
-
-
 class CampaignAdminForm(SanitizedDescriptionAdminForm):
     class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Campaign
@@ -115,13 +106,6 @@ class ProjectAdminForm(SanitizedDescriptionAdminForm):
         widgets = {
             "description": TinyMCE(),
         }
-
-
-class ItemAdminForm(forms.ModelForm):
-    class Meta:
-        model = Item
-        widgets = {"description": TinyMCE()}
-        fields = "__all__"
 
 
 class CardAdminForm(forms.ModelForm):

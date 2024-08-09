@@ -79,9 +79,9 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(len(content), 4)  # Includes empty line at the end of the file
         test_data = [
             b"username,email address,first name,last name,active,staff status,"
-            + b"superuser status,last login,transcription count,review count",
-            b"testsuperuser,testsuperuser@example.com,,,True,True,True,,0,0",
-            b"testuser,testuser@example.com,,,True,False,False,,0,0",
+            + b"superuser status,last login,transcription__count",
+            b"testsuperuser,testsuperuser@example.com,,,True,True,True,,0",
+            b"testuser,testuser@example.com,,,True,False,False,,0",
             b"",
         ]
         self.assertEqual(content, test_data)

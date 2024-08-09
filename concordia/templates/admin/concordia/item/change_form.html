@@ -29,3 +29,18 @@
     {% endif %}
     {{ block.super }}
 {% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+
+    {% include 'fragments/codemirror.html' %}
+{% endblock extrahead %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <script>
+        setupCodeMirror(document.getElementById('id_description'), 'html');
+    </script>
+{% endblock content %}

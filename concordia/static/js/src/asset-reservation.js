@@ -1,7 +1,5 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
-/* exported attemptToReserveAsset reserveAssetForEditing */
-
-const assetData = document.currentScript.dataset;
+/* exported attemptToReserveAsset */
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     var $transcriptionEditor = jQuery('#transcription-editor');
@@ -97,15 +95,3 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         }
     });
 }
-
-function reserveAssetForEditing() {
-    if (assetData.reserveAssetUrl) {
-        attemptToReserveAsset(assetData.reserveAssetUrl, '', 'transcribe');
-    }
-}
-
-jQuery(function () {
-    if (assetData.reserveForEditing) {
-        reserveAssetForEditing();
-    }
-});

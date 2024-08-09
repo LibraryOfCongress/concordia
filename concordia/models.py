@@ -11,7 +11,7 @@ from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import connection, models
 from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
@@ -27,10 +27,8 @@ metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
 
-ONE_MINUTE = datetime.timedelta(minutes=1)
 ONE_DAY = datetime.timedelta(days=1)
 ONE_DAY_AGO = timezone.now() - ONE_DAY
-THRESHOLD = 3
 
 
 def resource_file_upload_path(instance, filename):
@@ -74,53 +72,9 @@ class ConcordiaUser(User):
     def validate_reconfirmation_email(self, email):
         return email == self.get_email_for_reconfirmation()
 
-    def review_incidents(self, recent_accepts, recent_rejects, threshold=THRESHOLD):
-        accepts = recent_accepts.filter(reviewed_by=self).values_list(
-            "accepted", flat=True
-        )
-        rejects = recent_rejects.filter(reviewed_by=self).values_list(
-            "rejected", flat=True
-        )
-        timestamps = list(accepts) + list(rejects)
-        timestamps.sort()
-        incidents = 0
-        for i in range(len(timestamps)):
-            count = 1
-            for j in range(i + 1, len(timestamps)):
-                if (timestamps[j] - timestamps[i]).seconds <= 60:
-                    count += 1
-                    if count == threshold:
-                        incidents += 1
-                        break
-                else:
-                    break
-        return incidents
-
-    def transcribe_incidents(self, transcriptions, threshold=THRESHOLD):
-        recent_transcriptions = transcriptions.filter(user=self).order_by("submitted")
-        timestamps = recent_transcriptions.values_list("submitted", flat=True)
-        incidents = 0
-        for i in range(len(timestamps)):
-            count = 1
-            for j in range(i + 1, len(timestamps)):
-                if (timestamps[j] - timestamps[i]).seconds <= 60:
-                    count += 1
-                    if count == threshold:
-                        incidents += 1
-                        break
-                else:
-                    break
-        return incidents
-
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    transcribe_count = models.IntegerField(
-        default=0, verbose_name="transcription save/submit count"
-    )
-    review_count = models.IntegerField(
-        default=0, verbose_name="transcription review count"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class OverlayPosition(object):
@@ -838,49 +792,63 @@ class TranscriptionManager(models.Manager):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
 
-    def review_incidents(self):
-        user_incident_count = []
-        recent_accepts = self.filter(
-            accepted__gte=ONE_DAY_AGO,
-            reviewed_by__is_superuser=False,
-            reviewed_by__is_staff=False,
-        )
-        recent_rejects = self.filter(
-            rejected__gte=ONE_DAY_AGO,
-            reviewed_by__is_superuser=False,
-            reviewed_by__is_staff=False,
-        )
-        recent_actions = recent_accepts.union(recent_rejects)
-        user_ids = set(
-            recent_actions.order_by("reviewed_by").values_list("reviewed_by", flat=True)
-        )
+    def reviewing_too_quickly(self, start=ONE_DAY_AGO):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT u.id, u.username, COUNT(*)
+                FROM concordia_transcription t1
+                JOIN concordia_transcription t2
+                ON t1.id < t2.id
+                JOIN concordia_transcription t3
+                ON t2.id < t3.id
+                AND t1.reviewed_by_id = t2.reviewed_by_id
+                AND t2.reviewed_by_id = t3.reviewed_by_id
+                AND t1.accepted >= '{start}'
+                AND t2.accepted >= '{start}'
+                AND t3.accepted >= '{start}'
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.updated_on - t3.updated_on))
+                ) < 60
+                AND ABS(EXTRACT(
+                    EPOCH FROM (t2.updated_on - t3.updated_on))
+                ) < 60
+                JOIN auth_user u on t1.reviewed_by_id = u.id
+                WHERE u.is_superuser = FALSE and u.is_staff = False
+                GROUP BY u.id, u.username"""  # nosec B608
+            )
+            return cursor.fetchall()
 
-        for user_id in user_ids:
-            user = ConcordiaUser.objects.get(id=user_id)
-            incident_count = user.review_incidents(recent_accepts, recent_rejects)
-            if incident_count > 0:
-                user_incident_count.append((user.id, user.username, incident_count))
-
-        return user_incident_count
-
-    def transcribe_incidents(self):
-        user_incident_count = []
-        transcriptions = self.get_queryset().filter(
-            submitted__gte=ONE_DAY_AGO, user__is_superuser=False, user__is_staff=False
-        )
-        user_ids = (
-            transcriptions.order_by("user")
-            .distinct("user")
-            .values_list("user", flat=True)
-        )
-
-        for user_id in user_ids:
-            user = ConcordiaUser.objects.get(id=user_id)
-            incident_count = user.transcribe_incidents(transcriptions)
-            if incident_count > 0:
-                user_incident_count.append((user.id, user.username, incident_count))
-
-        return user_incident_count
+    def transcribing_too_quickly(self, start=ONE_DAY_AGO):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT u.id, u.username, COUNT(*)
+                FROM concordia_transcription t1
+                JOIN concordia_transcription t2
+                ON t1.id < t2.id
+                JOIN concordia_transcription t3
+                ON t2.id < t3.id
+                AND t1.user_id = t2.user_id
+                AND t2.user_id = t3.user_id
+                AND t1.submitted >= '{start}'
+                AND t2.submitted >= '{start}'
+                AND t3.submitted >= '{start}'
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t1.created_on - t3.created_on))
+                ) < 60
+                AND ABS(
+                    EXTRACT(EPOCH FROM (t2.created_on - t3.created_on))
+                ) < 60
+                JOIN auth_user u on t1.user_id = u.id
+                WHERE u.is_superuser = FALSE and u.is_staff = False
+                GROUP BY u.id, u.username"""  # nosec B608
+            )
+            return cursor.fetchall()
 
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):
@@ -994,13 +962,10 @@ def on_transcription_save(sender, instance, **kwargs):
             user=user,
             campaign=instance.asset.item.project.campaign,
         )
-        profile, created = UserProfile.objects.get_or_create(user=user)
         if created:
             setattr(user_profile_activity, attr_name, 1)
-            setattr(profile, attr_name, 1)
         else:
             setattr(user_profile_activity, attr_name, F(attr_name) + 1)
-            setattr(profile, attr_name, F(attr_name) + 1)
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
         user_profile_activity.asset_count = (
             Asset.objects.filter(q)
@@ -1009,7 +974,6 @@ def on_transcription_save(sender, instance, **kwargs):
             .count()
         )
         user_profile_activity.save()
-        profile.save()
 
 
 post_save.connect(on_transcription_save, sender=Transcription)

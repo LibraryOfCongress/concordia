@@ -1043,6 +1043,14 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
 
 
+def transcribing_too_quickly():
+    return Transcription.objects.transcribing_too_quickly()
+
+
+def reviewing_too_quickly():
+    return Transcription.objects.reviewing_too_quickly()
+
+
 @celery_app.task(ignore_result=True)
 def clear_sessions():
     # This clears expired Django sessions in the database
@@ -1059,8 +1067,8 @@ def unusual_activity():
         "title": "Unusual User Activity Report for "
         + timezone.now().strftime("%b %d %Y, %I:%M %p"),
         "domain": "https://" + site.domain,
-        "transcriptions": Transcription.objects.transcribe_incidents(),
-        "reviews": Transcription.objects.review_incidents(),
+        "transcriptions": transcribing_too_quickly(),
+        "reviews": reviewing_too_quickly(),
     }
 
     text_body_template = loader.get_template("emails/unusual_activity.txt")
