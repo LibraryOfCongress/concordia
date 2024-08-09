@@ -1,0 +1,35 @@
+<div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Nice Job!</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>
+                This page has been submitted for review.
+            </p>
+            <p>
+                What do you want to do next?
+            </p>
+        </div>
+        <div class="modal-footer d-block text-center">
+            <p>
+                <a class="btn btn-primary" href="{{ next_review_asset_url }}">
+                    Review a new page
+                </a>
+            </p>
+            <p>
+                <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                    Transcribe a new page
+                </a>
+            </p>
+            <p>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">
+                    Add Tags
+                </button>
+            </p>
+        </div>
+    </div>
+</div>

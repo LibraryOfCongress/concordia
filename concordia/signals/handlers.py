@@ -14,7 +14,7 @@ from django.template import loader
 from django_registration.signals import user_activated, user_registered
 from flags.state import flag_enabled
 
-from ..models import Asset, Transcription, TranscriptionStatus
+from ..models import Asset, Transcription, TranscriptionStatus, UserProfile
 from ..tasks import calculate_difficulty_values
 from .signals import reservation_obtained, reservation_released
 
@@ -191,3 +191,9 @@ def send_asset_reservation_message(
 @receiver(post_delete, sender=Asset)
 def remove_file_from_s3(sender, instance, using, **kwargs):
     instance.storage_image.delete(save=False)
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, *args, **kwargs):
+    if not hasattr(instance, "profile"):
+        UserProfile.objects.create(user=instance)

@@ -9,7 +9,6 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
@@ -80,6 +79,7 @@ from .filters import (
     SubmittedFilter,
     TagCampaignListFilter,
     TagCampaignStatusListFilter,
+    TopicListFilter,
     TranscriptionCampaignListFilter,
     TranscriptionCampaignStatusListFilter,
     TranscriptionProjectListFilter,
@@ -93,8 +93,9 @@ from .forms import (
     CampaignAdminForm,
     CardAdminForm,
     GuideAdminForm,
+    ItemAdminForm,
     ProjectAdminForm,
-    SanitizedDescriptionAdminForm,
+    TopicAdminForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -110,13 +111,18 @@ class ConcordiaUserAdmin(UserAdmin):
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        qs = qs.annotate(Count("transcription"))
+        qs = super().get_queryset(request).select_related("profile")
         return qs
 
-    @admin.display(ordering="transcription__count")
+    @admin.display(
+        description="Transcription Count", ordering="profile__transcribe_count"
+    )
     def transcription_count(self, obj):
-        return obj.transcription__count
+        return obj.profile.transcribe_count
+
+    @admin.display(description="Review Count", ordering="profile__review_count")
+    def review_count(self, obj):
+        return obj.profile.review_count
 
     EXPORT_FIELDS = (
         "username",
@@ -128,17 +134,31 @@ class ConcordiaUserAdmin(UserAdmin):
         "is_superuser",
         "date_joined",
         "last_login",
-        "transcription__count",
+        "profile__transcribe_count",
+        "profile__review_count",
     )
+
+    EXTRA_VERBOSE_NAMES = {
+        "profile__transcribe_count": "transcription count",
+        "profile__review_count": "review count",
+    }
 
     def export_users_as_csv(self, request, queryset):
         return export_to_csv_action(
-            self, request, queryset, field_names=self.EXPORT_FIELDS
+            self,
+            request,
+            queryset,
+            field_names=self.EXPORT_FIELDS,
+            extra_verbose_names=self.EXTRA_VERBOSE_NAMES,
         )
 
     def export_users_as_excel(self, request, queryset):
         return export_to_excel_action(
-            self, request, queryset, field_names=self.EXPORT_FIELDS
+            self,
+            request,
+            queryset,
+            field_names=self.EXPORT_FIELDS,
+            extra_verbose_names=self.EXTRA_VERBOSE_NAMES,
         )
 
     actions = (anonymize_action, export_users_as_csv, export_users_as_excel)
@@ -358,8 +378,8 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_filter = (
         "resource_type",
         ResourceCampaignStatusListFilter,
+        TopicListFilter,
         ResourceCampaignListFilter,
-        "title",
     )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -396,7 +416,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    form = SanitizedDescriptionAdminForm
+    form = TopicAdminForm
 
     list_display = (
         "id",
@@ -523,6 +543,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
+    form = ItemAdminForm
     list_display = ("title", "item_id", "campaign_title", "project", "published")
     list_display_links = ("title", "item_id")
     search_fields = [
