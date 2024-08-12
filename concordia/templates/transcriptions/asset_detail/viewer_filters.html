@@ -1,0 +1,125 @@
+<div id="image-filters" class="m-1 text-center d-print-none collapse">
+    <hr class="m-0" />
+    <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
+                Brightness
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
+                Invert
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
+                Contrast
+            </button>
+        </li>
+    </ul>
+    <div class="btn-group m-1">
+        <button id="viewer-reset" class="btn" title="Reset all filters" onclick="resetImageFilterForms()">
+            Reset All
+        </button>
+    </div>
+    <div id="filter-tabs" class="tab-content">
+        <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
+            <form id="gamma-form" class="form-inline" onsubmit="return false;">
+                <div class="row ml-0 mr-3 number-input">
+                    <div class="col p-1">
+                        <input
+                            type="number"
+                            id="gamma"
+                            name="gamma"
+                            min="0"
+                            max="5"
+                            step="0.01"
+                            value="1.00"
+                        />
+                        <label class="visually-hidden" for="gamma">Gamma</label>
+                    </div>
+                    <div class="col p-0">
+                        <div class="row m-0">
+                            <button type="button" class="arrow-button" onclick="stepUp('gamma')">
+                                <span class="fas fa-chevron-up" />
+                                <span class="visually-hidden">Increase</span>
+                            </button>
+                        </div>
+                        <div class="row m-0">
+                            <button type="button" class="arrow-button" onclick="stepDown('gamma')">
+                                <span class="fas fa-chevron-down" />
+                                <span class="visually-hidden">Decrease</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <input
+                    type="range"
+                    id="gamma-range"
+                    name="gamma-range"
+                    min="0"
+                    max="5"
+                    step="0.01"
+                    value="1.00"
+                    class="filter-slider flex-grow-1"
+                />
+                <label class="visually-hidden" for="gamma-range">Gamma</label>
+                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+            </form>
+        </div>
+        <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
+            <form id="invert-form" onsubmit="return false;">
+                <label class="ml-2 align-middle">Off</label>
+                <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
+                    <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
+                    <label class="custom-control-label" for="invert"><span class="visually-hidden">Invert</span></label>
+                </div>
+                <label class="align-middle">On</label>
+            </form>
+        </div>
+        <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
+            <form id="threshold-form" class="form-inline" onsubmit="return false;">
+                <div class="row ml-0 mr-3 number-input">
+                    <div class="col p-1">
+                        <input
+                            type="number"
+                            id="threshold"
+                            name="threshold"
+                            min="0"
+                            max="255"
+                            step="1"
+                            value="0"
+                        />
+                        <label class="visually-hidden" for="threshold">Threshold</label>
+                    </div>
+                    <div class="col p-0">
+                        <div class="row m-0">
+                            <button type="button" class="arrow-button" onclick="stepUp('threshold')">
+                                <span class="fas fa-chevron-up" />
+                                <span class="visually-hidden">Increase</span>
+                            </button>
+                        </div>
+                        <div class="row m-0">
+                            <button type="button" class="arrow-button" onclick="stepDown('threshold')">
+                                <span class="fas fa-chevron-down" />
+                                <span class="visually-hidden">Decrease</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <input
+                    type="range"
+                    id="threshold-range"
+                    name="threshold-range"
+                    min="0"
+                    max="255"
+                    step="1"
+                    value="0"
+                    class="filter-slider flex-grow-1"
+                />
+                <label class="visually-hidden" for="threshold-range">Threshold</label>
+                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+            </form>
+        </div>
+    </div>
+</div>

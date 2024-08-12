@@ -15,6 +15,7 @@ rules:
     'unicorn/prefer-query-selector': off # See https://github.com/sindresorhus/eslint-plugin-unicorn/issues/276
     'unicorn/prefer-node-append': off
     'unicorn/prefer-ternary': off
+    'unicorn/no-lonely-if': off
 env:
     browser: true
     es2024: true
