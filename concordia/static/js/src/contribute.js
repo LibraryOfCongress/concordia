@@ -768,27 +768,4 @@ function setupPage() {
     }
 }
 
-let transcriptionForm = document.getElementById('transcription-editor');
-let ocrForm = document.getElementById('ocr-transcription-form');
-
-let formChanged = false;
-transcriptionForm.addEventListener('change', function () {
-    formChanged = true;
-});
-transcriptionForm.addEventListener('submit', function () {
-    formChanged = false;
-});
-if (ocrForm) {
-    ocrForm.addEventListener('submit', function () {
-        formChanged = false;
-    });
-}
-window.addEventListener('beforeunload', function (event) {
-    if (formChanged) {
-        // Some browsers ignore this value and always display a built-in message instead
-        return (event.returnValue =
-            "The transcription you've started has not been saved.");
-    }
-});
-
 setupPage();

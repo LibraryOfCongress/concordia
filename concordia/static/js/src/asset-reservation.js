@@ -1,8 +1,12 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
+<<<<<<< HEAD
 
 const assetReservationData = document.getElementById(
     'asset-reservation-data',
 ).dataset;
+=======
+/* exported attemptToReserveAsset */
+>>>>>>> Revert "Merge branch 'main' into release" (#2486)
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     let $transcriptionEditor = jQuery('#transcription-editor');
@@ -98,6 +102,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         }
     });
 }
+<<<<<<< HEAD
 
 function reserveAssetForEditing() {
     if (assetReservationData.reserveAssetUrl) {
@@ -116,3 +121,5 @@ jQuery(function () {
 });
 
 export {reserveAssetForEditing};
+=======
+>>>>>>> Revert "Merge branch 'main' into release" (#2486)

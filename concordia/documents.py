@@ -41,7 +41,6 @@ class SiteReportDocument(Document):
 
         fields = [
             "created_on",
-            "report_name",
             "assets_total",
             "assets_published",
             "assets_not_started",
@@ -55,14 +54,12 @@ class SiteReportDocument(Document):
             "projects_unpublished",
             "anonymous_transcriptions",
             "transcriptions_saved",
-            "daily_review_actions",
             "distinct_tags",
             "tag_uses",
             "campaigns_published",
             "campaigns_unpublished",
             "users_registered",
             "users_activated",
-            "registered_contributors",
             "daily_active_users",
         ]
 

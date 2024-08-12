@@ -14,12 +14,12 @@
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
-    <li class="breadcrumb-item active" aria-current="page" title="{{ topic.title }}"><span class="text-truncate">{{ topic.title }}</span></li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ topic.title }}">{{ topic.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
     <div class="container py-3">
-        <div class="row mb-4">
+        <div class="row">
             <div class="col-md-9">
                 <h1>{{ topic.title }}</h1>
                 <div class="hero-text">{{ topic.description|safe }}</div>

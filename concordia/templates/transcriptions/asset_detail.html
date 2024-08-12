@@ -64,13 +64,330 @@
 
     <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
-            {% include "transcriptions/asset_detail/navigation.html" %}
+            <nav id="asset-navigation" class="d-flex flex-wrap flex-grow-1 justify-content-sm-between align-items-center d-print-block" role="navigation">
+                <div class="d-flex align-items-center">
+                    <form class="p-1" onsubmit="document.location.href = encodeURI(document.getElementById('asset-selection').value); return false">
+                        <div class="input-group input-group-sm flex-nowrap">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text p-0 pr-1 border-0" for="asset-selection">Page</label>
+                            </div>
+                            <select id="asset-selection" class="custom-select custom-select-sm">
+                                {% for sequence, slug in asset_navigation %}
+                                    <option {% if sequence == asset.sequence %}selected{% endif %} value="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id slug %}">{{ sequence }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-primary">Go</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="btn-group btn-group-sm p-1">
+                        <a class="btn btn-primary {% if not previous_asset_url %}disabled{% endif %}" {% if previous_asset_url %}href="{{ previous_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                            <span class="fas fa-chevron-left"></span>
+                            <span class="sr-only">Previous Page</span>
+                        </a>
+                        <a class="btn btn-primary {% if not next_asset_url %}disabled{% endif %}" {% if next_asset_url %}href="{{ next_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                            <span class="fas fa-chevron-right"></span>
+                            <span class="sr-only">Next Page</span>
+                        </a>
+                    </div>
+
+                    <div class="btn-group btn-group-sm p-1">
+                        <button hidden id="go-fullscreen" class="btn btn-primary text-nowrap" data-target="contribute-main-content">
+                            <span class="fas fa-arrows-alt"></span>
+                            Fullscreen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="btn-group align-self-end">
+                    {% if asset.resource_url %}
+                        <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
+                            <a class="btn btn-outline-primary text-nowrap" target="_blank" rel=noopener title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                        </div>
+                    {% endif %}
+
+                    <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the next editable page">
+                        <a class="btn btn-outline-primary text-nowrap" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
+                    </div>
+                </div>
+            </nav>
         </div>
         <div id="contribute-container" class="d-flex flex-grow-1 d-print-block border">
             <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block flex-column">
-                {% include "transcriptions/asset_detail/viewer.html" %}
-                {% include "transcriptions/asset_detail/ocr_help_modal.html" %}
-                {% include "transcriptions/asset_detail/viewer_filters.html" %}
+                <div id="viewer-controls" class="m-1 text-center d-print-none">
+                    <div class="d-inline-flex justify-content-between">
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-layout-vertical" class="btn btn-dark viewer-control-button" title="Vertical Layout">
+                                <span class="fas fa-grip-lines"></span>
+                            </button>
+                            <button id="viewer-layout-horizontal" class="btn btn-dark" title="Horizontal Layout">
+                                <span class="fas fa-grip-lines-vertical"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
+                                <span class="fas fa-compress"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-zoom-in" class="btn btn-dark viewer-control-button" title="Zoom In">
+                                <span class="fas fa-search-plus"></span>
+                            </button>
+                            <button id="viewer-zoom-out" class="btn btn-dark" title="Zoom Out">
+                                <span class="fas fa-search-minus"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-rotate-left" class="btn btn-dark viewer-control-button" title="Rotate Left">
+                                <span class="fas fa-undo"></span>
+                            </button>
+                            <button id="viewer-rotate-right" class="btn btn-dark viewer-control-button" title="Rotate Right">
+                                <span class="fas fa-redo"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-flip" class="btn btn-dark viewer-control-button" title="Flip">
+                                <span class="fas fa-exchange-alt"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button type="button" class="btn btn-dark extra-control-button" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
+                                <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button type="button" id="viewer-fullscreen" class="btn btn-dark extra-control-button" title="View Full Screen" data-target="#viewer-column">
+                                <span class="fas fa-expand"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button type="button" class="btn btn-dark extra-control-button" title="Viewer keyboard shortcuts" data-toggle="modal" data-target="#keyboard-help-modal">
+                                <span class="fas fa-question-circle" aria-label="Viewer keyboard shortcuts"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Keyboard Shortcuts</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h6>Viewer Shortcuts</h6>
+                                <table class="table table-compact table-responsive">
+                                    <tr>
+                                        <th><kbd>w</kbd>, up arrow</th>
+                                        <td>Scroll the viewport up</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>s</kbd>, down arrow</th>
+                                        <td>Scroll the viewport down</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>a</kbd>, left arrow</th>
+                                        <td>Scroll the viewport left</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>d</kbd>, right arrow </th>
+                                        <td>Scroll the viewport right</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>0</kbd></th>
+                                        <td>Fit the entire image to the viewport</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                                        <td>Zoom the viewport out</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                                        <td>Scroll the viewport in</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>r</kbd></th>
+                                        <td>Rotate the viewport clockwise</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>R</kbd></th>
+                                        <td>Rotate the viewport counterclockwise</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>f</kbd></th>
+                                        <td>Flip the viewport horizontally</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="ocr-help-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">About Transcribe with OCR</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h6 class="modal-title">What is OCR?</h6>
+                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract print text from some documents.</p>
+                                <h6>When will OCR work well?</h6>
+                                <p>OCR does not work on handwriting. It only works for printed or typed text, meaning text created by a typewriter, printing press, or other mechanical means. OCR will do best on consistent and clear images of modern typefaces.</p>
+                                <h6>Do I still need to review pages started with OCR?</h6>
+                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you start a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
+                                <h6>Who can use "Transcribe with OCR"?</h6>
+                                <p><a href="{% url 'registration_register' %}">Register for an account</a> and <a href="{% url 'registration_login' %}?next={{ request.path }}">log in</a> to use this feature.</p>
+                                <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
+                                <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection of handwritten and print materials, or printed on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="image-filters" class="m-1 text-center d-print-none collapse">
+                    <hr class="m-0" />
+                    <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
+                                Brightness
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
+                                Invert
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
+                                Contrast
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="btn-group m-1">
+                        <button id="viewer-reset" class="btn" title="Reset all filters" onclick="resetImageFilterForms()">
+                            Reset All
+                        </button>
+                    </div>
+                    <div id="filter-tabs" class="tab-content">
+                        <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
+                            <form id="gamma-form" class="form-inline" onsubmit="return false;">
+                                <div class="row ml-0 mr-3 number-input">
+                                    <div class="col p-1">
+                                        <input
+                                            type="number"
+                                            id="gamma"
+                                            name="gamma"
+                                            min="0"
+                                            max="5"
+                                            step="0.01"
+                                            value="1.00"
+                                        />
+                                        <label class="visually-hidden" for="gamma">Gamma</label>
+                                    </div>
+                                    <div class="col p-0">
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepUp('gamma')">
+                                                <span class="fas fa-chevron-up" />
+                                                <span class="visually-hidden">Increase</span>
+                                            </button>
+                                        </div>
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepDown('gamma')">
+                                                <span class="fas fa-chevron-down" />
+                                                <span class="visually-hidden">Decrease</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input
+                                    type="range"
+                                    id="gamma-range"
+                                    name="gamma-range"
+                                    min="0"
+                                    max="5"
+                                    step="0.01"
+                                    value="1.00"
+                                    class="filter-slider flex-grow-1"
+                                />
+                                <label class="visually-hidden" for="gamma-range">Gamma</label>
+                                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                            </form>
+                        </div>
+                        <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
+                            <form id="invert-form" onsubmit="return false;">
+                                <label class="ml-2 align-middle">Off</label>
+                                <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
+                                    <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
+                                    <label class="custom-control-label" for="invert"><span class="visually-hidden">Invert</span></label>
+                                </div>
+                                <label class="align-middle">On</label>
+                            </form>
+                        </div>
+                        <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
+                            <form id="threshold-form" class="form-inline" onsubmit="return false;">
+                                <div class="row ml-0 mr-3 number-input">
+                                    <div class="col p-1">
+                                        <input
+                                            type="number"
+                                            id="threshold"
+                                            name="threshold"
+                                            min="0"
+                                            max="255"
+                                            step="1"
+                                            value="0"
+                                        />
+                                        <label class="visually-hidden" for="threshold">Threshold</label>
+                                    </div>
+                                    <div class="col p-0">
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepUp('threshold')">
+                                                <span class="fas fa-chevron-up" />
+                                                <span class="visually-hidden">Increase</span>
+                                            </button>
+                                        </div>
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepDown('threshold')">
+                                                <span class="fas fa-chevron-down" />
+                                                <span class="visually-hidden">Decrease</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input
+                                    type="range"
+                                    id="threshold-range"
+                                    name="threshold-range"
+                                    min="0"
+                                    max="255"
+                                    step="1"
+                                    value="0"
+                                    class="filter-slider flex-grow-1"
+                                />
+                                <label class="visually-hidden" for="threshold-range">Threshold</label>
+                                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
                 {% if not disable_ocr %}
                     <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
@@ -89,8 +406,172 @@
             </div>
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
-                {% include "transcriptions/asset_detail/editor.html" %}
-                {% include "transcriptions/asset_detail/tags.html" %}
+                <div class="flex-grow-1 d-flex d-print-block flex-column">
+                    <div id="transcription-status-display">
+                        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                            <span class="fas fa-list"></span>
+                            Needs review
+                        </h2>
+                        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                            <span class="fas fa-check"></span>
+                            Completed
+                        </h2>
+                        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                            <span class="fas fa-edit"></span>
+                            Not started
+                        </h2>
+                        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                            <span class="fas fa-edit"></span>
+                            In progress
+                        </h2>
+                        <span id="display-conflict" hidden>
+                            <span class="fas fa-exclamation-triangle"></span>
+                            Another user is transcribing this page
+                        </span>
+                    </div>
+
+                    <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
+                        {% csrf_token %}
+                        <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+
+                        <div class="row justify-content-sm-between px-3">
+                            <span id="transcription-status-message">
+                                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                                    Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                                </h2>
+                                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                                    Transcribe this page.
+                                </span>
+                                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                                    Someone started this transcription. Can you finish it?
+                                </span>
+                                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                                    Check this transcription thoroughly. Accept if correct!
+                                </span>
+                                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                                    This transcription is finished! You can read and add tags.
+                                </span>
+                            </span>
+                            <div class="align-items-center align-self-end btn-group">
+                                <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                    <u>Quick Tips</u>
+                                </a>
+                            </div>
+                        </div>
+
+                        {% spaceless %}
+                            <div id="loading-container" class="pb-2">
+                                <div id="ocr-loading" class="spinner-border" role="status" aria-hidden="true" hidden>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column flex-grow-1" id="transcription-input-container">
+                                <textarea readonly class="form-control rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                                    {{ transcription.text }}
+                                </textarea>
+                                {% if guides %}
+                                    <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
+                                    {% include "fragments/_how-to-guide.html" %}
+                                {% endif %}
+                            </div>
+
+                            <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
+
+                            <div class="my-3 d-print-none d-flex flex-wrap justify-content-center align-items-center">
+                                {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
+                                    <div class="form-check w-100 text-center mt-0 mb-3">
+                                        <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
+                                        <label class="form-check-label" for="nothing-to-transcribe">
+                                            Nothing to transcribe
+                                        </label>
+
+                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Nothing to transcribe?" data-html="true" data-content="If there is no text to transcribe, check this box and click &quot;Submit&quot;. Learn more about what to transcribe and what to skip in &quot;How To.&quot;">
+                                            <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                        </a>
+                                    </div>
+
+                                    <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
+                                        Save
+                                    </button>
+                                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
+                                        <span class="fas fa-undo"></span> Undo
+                                    </button>
+                                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
+                                        Redo <span class="fas fa-redo"></span>
+                                    </button>
+                                    <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
+                                        Submit for Review
+                                    </button>
+
+                                {% elif transcription_status == 'submitted' %}
+                                    {% if not user.is_authenticated %}
+                                        <p class="help-text">
+                                            <a href="{% url 'registration_register' %}">Register</a>
+                                            or
+                                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                                            to help review
+                                        </p>
+                                    {% else %}
+                                        <button id="reject-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Correct errors you see in the text">Edit</button>
+                                        {% if transcription.user.pk == user.pk %}
+                                            <p class="help-text mt-2">You submitted this transcription. You can re-open it for editing if you wish to make changes before another volunteer reviews it.</p>
+                                        {% else %}
+                                            <button id="accept-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Confirm that the text is accurately transcribed">Accept</button>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        {% endspaceless %}
+                    </form>
+
+                </div>
+                <div id="tag-editor" class="flex-shrink-1">
+                    <h2 id="tag-label" class="border-top pt-3 pb-2"><a
+                        data-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
+                        aria-controls="tag-form"><i class="fas fa-plus-square"></i> <span
+                            id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
+                    <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
+                        {% csrf_token %}
+                        <div class="d-print-none">
+                            {% if user.is_authenticated %}
+                                <div class="form-row">
+                                    <div class="col input-group">
+                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[\- _À-ž'\w]{1,50}">
+                                        <div class="input-group-append">
+                                            <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="help-text anonymous-only text-center d-print-none">
+                                    Want to tag this page?
+
+                                    <a href="{% url 'registration_register' %}">Register</a>
+                                    or
+                                    <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                                    to add tags.
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0 d-print-block">
+                            {% for tag in tags %}
+                                <li class="btn btn-outline-dark btn-sm">
+                                    <label class="m-0">
+                                        <input type="hidden" name="tags" value="{{ tag }}" />
+                                        {{ tag }}
+                                    </label>
+                                    <button type="button" class="close authenticated-only" data-dismiss="alert" aria-label="Remove previous tag" hidden>
+                                        <span aria-hidden="true" class="fas fa-times"></span>
+                                    </button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </form>
+                </div>
             </div>
         </div>
         <div id="help-container" class="mt-1 d-print-none">
@@ -107,26 +588,739 @@
             </div>
         </div>
         <div id="asset-reservation-failure-modal" class="modal" tabindex="-1" role="dialog">
-            {% include "transcriptions/asset_detail/asset_reservation_failure_modal.html" %}
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Someone else is already transcribing this page</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>You can help by transcribing a new page, adding tags to this page, or coming back later to review this page's transcription.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                            Find new page
+                        </a>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="successful-submission-modal" class="modal" tabindex="-1" role="dialog">
-            {% include "transcriptions/asset_detail/successful_submission_modal.html" %}
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nice Job!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            This page has been submitted for review.
+                        </p>
+                        <p>
+                            What do you want to do next?
+                        </p>
+                    </div>
+                    <div class="modal-footer d-block text-center">
+                        <p>
+                            <a class="btn btn-primary" href="{{ next_review_asset_url }}">
+                                Review a new page
+                            </a>
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                                Transcribe a new page
+                            </a>
+                        </p>
+                        <p>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">
+                                Add Tags
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="review-accepted-modal" class="modal" tabindex="-1" role="dialog">
-            {% include "transcriptions/asset_detail/review_accepted_modal.html" %}
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nice Job!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            Thanks for your help - we've saved your decision.
+                        </p>
+                        <p>
+                            What do you want to do next?
+                        </p>
+                    </div>
+                    <div class="modal-footer d-block text-center">
+                        <p>
+                            <a class="btn btn-primary" href="{{ next_review_asset_url }}">
+                                Review a new page
+                            </a>
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                                Transcribe a new page
+                            </a>
+                        </p>
+                        <p>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">
+                                Add Tags
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="captcha-modal" class="modal" tabindex="-1" role="alertdialog" aria-labeledby="captcha-modal-title" aria-describedby="captcha-modal-description">
-            {% include "transcriptions/asset_detail/captcha_modal.html" %}
+            <form action="{% url 'ajax-captcha' %}" class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 id="captcha-modal-title" class="modal-title">Please confirm you are not a robot</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div id="captcha-modal-description" class="help-text">
+                                <p class="sr-only">
+                                    To prevent abuse non-logged in users are
+                                    required to solve a captcha periodically. An
+                                    audio alternative is under development. You may
+                                    also avoid this challenge by
+                                    <a href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">logging in</a>.
+                                </p>
+                                Before continuing please enter the letters in the image
+                                below so we know you are a human:
+                            </div>
+                            <img id="captcha-image" class="d-block my-3 mx-auto border rounded" alt="Type the letters in the image">
+                        </div>
+                        <div class="form-row">
+                            <input name="response" class="form-control" autocomplete="off" aria-label="Please enter the letters in the image below">
+                        </div>
+                        <input type="hidden" name="key"/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class='btn btn-secondary js-captcha-refresh'>
+                            Show me another image
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
         <div id="ocr-transcription-modal" class="modal" tabindex="-1" role="dialog">
-            {% include "transcriptions/asset_detail/ocr_transcription_modal.html" %}
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true" class="text-primary">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="bg-light p-3">
+                            <h5 class="modal-title mb-3">Are you sure?</h5>
+                            <p>Clicking "Transcribe with OCR" will remove all existing transcription text and replace it with automatically generated text. We recommend saving existing text in a separate document if you may want to revisit it.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                        {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                            <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top"  id="select-language-button" onclick="selectLanguage()">
+                                <span class="underline-link font-weight-bold">Yes, Select Language</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="language-selection-modal" class="modal" tabindex="-1" role="dialog">
-            {% include "transcriptions/asset_detail/language_selection_modal.html" %}
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true" class="text-primary">&times;</span>
+                        </button>
+                    </div>
+                    <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
+                        <div class="modal-body">
+                            <div class="bg-light p-3">
+                                <h5 class="modal-title mb-3">Select language</h5>
+                                <p>Select the language the transcription is in from the list below.</p>
+                                <div class="text-center pb-1">
+                                    <select id="language" name="language" size="7">
+                                        {% for language in languages %}
+                                            <option value="{{ language.0 }}"{% if language.0 == "eng" %} selected="selected"{% endif %}>
+                                                {{ language.1 }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                                <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                                <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Replace Text</button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
     {% if cards %}
-        {% include "transcriptions/asset_detail/quick_tips_modal.html" %}
+        <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom-0">
+                        <h4>Quick Tips</h4>
+                        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">x</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="card-carousel" class="carousel slide" data-interval="false">
+                            <div class="carousel-inner">
+                                {% for card in cards %}
+                                    <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
+                                        <div class="position-static d-flex flex-column justify-content-around">
+                                            {% if card.image %}
+                                                <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
+                                            {% endif %}
+                                            {% if card.display_heading %}
+                                                <h5>{{ card.display_heading }}</h5>
+                                            {% endif %}
+                                            <p>{{ card.body_text|safe }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                <strong><u><&nbsp;Back</u></strong>
+                            </a>
+                            <ol class="carousel-indicators d-none d-lg-flex">
+                                {% for card in cards %}
+                                    <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                                {% endfor %}
+                            </ol>
+                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                <strong><u>Next&nbsp;></u></strong>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock main_content %}
+
+{% block body_scripts %}
+    <script src="{% static 'split.js/dist/split.min.js' %}"></script>
+    <script src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
+    <script src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
+    <script src="{% static 'js/contribute.js' %}"></script>
+    <script src="{% static 'js/asset-reservation.js' %}"></script>
+    <script>
+        if (typeof(Storage) !== "undefined") {
+            if (!(window.screen.width < 1024 || window.screen.height < 768)) {
+                for(var i in localStorage)
+                {
+                    if (i.startsWith("banner-")) {
+                        if ($('#' + i).hasClass("alert")) {
+                            $('#' + i).attr("hidden", true);
+                        }
+                    }
+                }
+            }
+        }
+        $("#no-interface-banner").click(function(event) {
+            localStorage.setItem(event.target.parentElement.id, true);
+            $('#' + event.target.parentElement.id).attr("hidden", true);
+        });
+    </script>
+
+    <script>
+        var seadragonViewer = OpenSeadragon({
+            id: "asset-image",
+            prefixUrl:
+                "{% static 'openseadragon/build/openseadragon/images/' %}",
+            tileSources: {
+                type: "image",
+                url: "{% asset_media_url asset %}?canvas"
+            },
+            gestureSettingsTouch: {
+                pinchRotate: true
+            },
+            showNavigator:  true,
+            showRotationControl: true,
+            showFlipControl: true,
+            toolbar: "viewer-controls",
+            zoomInButton: "viewer-zoom-in",
+            zoomOutButton: "viewer-zoom-out",
+            homeButton: "viewer-home",
+            rotateLeftButton: "viewer-rotate-left",
+            rotateRightButton: "viewer-rotate-right",
+            flipButton: "viewer-flip",
+            crossOriginPolicy: "Anonymous"
+        });
+
+      // We need to define our own fullscreen function rather than using OpenSeadragon's
+      // because the built-in fullscreen function overwrites the DOM with the viewer,
+      // breaking our extra controls, such as the image filters.
+        if (screenfull.isEnabled) {
+            let fullscreenButton = document.querySelector("#viewer-fullscreen");
+            fullscreenButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                let targetElement = document.querySelector(fullscreenButton.dataset.target);
+                if(screenfull.isFullscreen){
+                    screenfull.exit();
+                } else {
+                    screenfull.request(targetElement);
+                }
+            });
+        }
+
+      // The buttons configured as controls for the viewer don't properly get focus
+      // when clicked. This mostly isn't a problem, but causes odd-looking behavior
+      // when one of the extra buttons in the control bar is clicked (and therefore
+      // focused) first--clicking the control button leaves the focus on the extra
+      // button.
+      // TODO: Attempting to add focus to the clicked button here doesn't consistently
+      // work for unknown reasons, so it just removes focus from the extra buttons
+      // for now
+        let viewerControlButtons = document.querySelectorAll('.viewer-control-button');
+        viewerControlButtons.forEach(function(node){
+            node.addEventListener('click', function(event){
+                focusedButton = document.querySelector('.extra-control-button:focus');
+                if(focusedButton){
+                    focusedButton.blur();
+                }
+
+            })
+        });
+
+                                                                                          /*
+                                                                                          * Image filter handling
+                                                                                          */
+
+        let availableFilters = [
+            {
+                formId: 'gamma-form',
+                inputId: 'gamma',
+                getFilter: function () {
+                    value = document.getElementById(this.inputId).value;
+                    if(!Number.isNaN(value) && value != 1 && value >= 0 && value <= 5){
+                        return OpenSeadragon.Filters.GAMMA(value);
+                    }
+                },
+            },
+            {
+                formId: 'invert-form',
+                inputId: 'invert',
+                getFilter: function() {
+                    value = document.getElementById(this.inputId).checked;
+                    if(value){
+                        return OpenSeadragon.Filters.INVERT();
+                    }
+                }
+            },
+            {
+                formId: 'threshold-form',
+                inputId: 'threshold',
+                getFilter: function() {
+                    value = document.getElementById(this.inputId).value;
+                    if(!Number.isNaN(value) && value > 0 && value <= 255){
+                        return OpenSeadragon.Filters.THRESHOLDING(value);
+                    }
+                }
+            }
+        ];
+
+        function updateFilters() {
+            let filters = [];
+            availableFilters.forEach(function (filterData) {
+                let filter = filterData.getFilter();
+                if(filter){
+                    filters.push(filter);
+                }
+            });
+            seadragonViewer.setFilterOptions({
+                filters: {
+                    processors: filters,
+                },
+            });
+        }
+
+        availableFilters.forEach(function (filterData) {
+            form = document.getElementById(filterData.formId)
+            if(form){
+                form.addEventListener('change', updateFilters);
+                form.addEventListener('reset', function(){
+              // We use setTimeout to push the updateFilters
+              // call to the next event cycle in order to
+              // call it after the form is reset, instead
+              // of before, which is when this listener
+              // triggers
+                    setTimeout(updateFilters);
+                });
+            }
+            input = document.getElementById(filterData.inputId)
+            if(input){
+              // We use debounce here so that updateFilters is only called once,
+              // after the user stops typing or scrolling with their mousewheel
+                input.addEventListener('keyup', debounce(() => updateFilters()));
+                input.addEventListener('wheel', debounce(() => updateFilters()));
+            }
+        });
+    </script>
+
+    <script>
+        let pageSplit;
+        let contributeContainer = document.getElementById("contribute-container");
+        let ocrSection = document.getElementById("ocr-section");
+        let editorColumn = document.getElementById("editor-column");
+        let viewerColumn = document.getElementById("viewer-column");
+        let layoutColumns = ["#viewer-column", "#editor-column"];
+        let verticalKey = 'transcription-split-sizes-vertical';
+        let horizontalKey = 'transcription-split-sizes-horizontal';
+
+        let sizesVertical = localStorage.getItem(verticalKey);
+
+        if (sizesVertical) {
+            sizesVertical = JSON.parse(sizesVertical);
+        } else {
+            sizesVertical = [50, 50];
+        }
+
+        let sizesHorizontal = localStorage.getItem(horizontalKey);
+
+        if (sizesHorizontal) {
+            sizesHorizontal = JSON.parse(sizesHorizontal);
+        } else {
+            sizesHorizontal = [50, 50];
+        }
+
+        let splitDirection = localStorage.getItem("transcription-split-direction");
+
+        if (splitDirection){
+            splitDirection = JSON.parse(splitDirection);
+        } else {
+            splitDirection = "h";
+        }
+
+        function saveSizes(sizes){
+            let sizeKey;
+            if(splitDirection == "h"){
+                sizeKey = horizontalKey;
+                sizesHorizontal = sizes;
+            } else {
+                sizeKey = verticalKey;
+                sizesVertical = sizes;
+            }
+            localStorage.setItem(sizeKey, JSON.stringify(sizes));
+        }
+
+        function saveDirection(direction){
+            localStorage.setItem('transcription-split-direction', JSON.stringify(direction))
+        }
+
+        function verticalSplit(){
+            splitDirection = "v";
+            saveDirection(splitDirection);
+            contributeContainer.classList.remove("flex-row");
+            contributeContainer.classList.add("flex-column");
+            viewerColumn.classList.remove("h-100");
+            if(ocrSection != null){
+                editorColumn.prepend(ocrSection);
+            }
+
+            return Split(layoutColumns, {
+                sizes: sizesVertical,
+                minSize: 100,
+                gutterSize: 8,
+                direction: 'vertical',
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                },
+                onDragEnd: saveSizes,
+            });
+        }
+        function horizontalSplit(){
+            splitDirection = "h";
+            saveDirection(splitDirection);
+            contributeContainer.classList.remove("flex-column");
+            contributeContainer.classList.add("flex-row");
+            viewerColumn.classList.add("h-100");
+            if(ocrSection != null){
+                viewerColumn.append(ocrSection);
+            }
+            return Split(layoutColumns, {
+                sizes: sizesHorizontal,
+                minSize: 100,
+                gutterSize: 8,
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                },
+                onDragEnd: saveSizes,
+            });
+        }
+
+        document.getElementById("viewer-layout-horizontal").addEventListener('click', function(){
+            if(splitDirection != "h"){
+                if(pageSplit != null){
+                    pageSplit.destroy();
+                }
+                pageSplit = horizontalSplit();
+                setTimeout(function(){
+                    // Some quirk in the viewer makes this
+                    // sometimes not work depending on
+                    // the rotation, unless it's delayed.
+                    // Less than 10ms didn't reliable work.
+                    seadragonViewer.viewport.zoomTo(1);
+                }, 10);
+            }
+        });
+
+        document.getElementById("viewer-layout-vertical").addEventListener('click', function(){
+            if(splitDirection != "v"){
+                if(pageSplit != null){
+                    pageSplit.destroy();
+                }
+                pageSplit = verticalSplit();
+                setTimeout(function(){
+                    seadragonViewer.viewport.zoomTo(1);
+                }, 10);
+            }
+        });
+
+        if (splitDirection == "v") {
+            pageSplit = verticalSplit();
+        } else {
+            pageSplit = horizontalSplit();
+        }
+    </script>
+
+    <script>
+        function reserveAssetForEditing(){
+            attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}", "", "transcribe");
+        }
+        {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+            attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
+                "",
+                "transcribe");
+        {% elif user.is_authenticated %}
+            reserveAssetForEditing();
+        {% endif %}
+    </script>
+
+    <script>
+        let transcriptionForm = document.getElementById("transcription-editor");
+        let $transcriptionEditor = $("#transcription-editor");
+        let ocrForm = document.getElementById("ocr-transcription-form");
+        let $ocrForm = $("#ocr-transcription-form");
+
+        let formChanged = false;
+        transcriptionForm.addEventListener('change', function(){
+            formChanged = true;
+        });
+        transcriptionForm.addEventListener('submit', function(){
+            formChanged = false;
+        });
+        if(ocrForm){
+            ocrForm.addEventListener('submit', function(){
+                formChanged = false;
+            });
+        }
+        window.addEventListener('beforeunload', function(event){
+            if(formChanged){
+              // Some browsers ignore this value and always display a built-in message instead
+                return event.returnValue = "The transcription you've started has not been saved.";
+            }
+        });
+    </script>
+
+    <script>
+      /*
+      * Image filter form handling
+      */
+        function stepUp(id){
+            let input = document.getElementById(id);
+            input.stepUp();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            return false;
+        }
+
+        function stepDown(id){
+            let input = document.getElementById(id);
+            input.stepDown();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            return false;
+        }
+
+        function resetImageFilterForms(){
+            availableFilters.forEach(function (filterData) {
+                form = document.getElementById(filterData.formId);
+                form.reset();
+            });
+        }
+
+        let gammaNumber = document.getElementById("gamma");
+        let gammaRange = document.getElementById("gamma-range");
+
+        gammaNumber.addEventListener('input', function(){
+            gammaRange.value = gammaNumber.value;
+        });
+
+        gammaRange.addEventListener('input', function(){
+            gammaNumber.value = gammaRange.value;
+        });
+
+        let thresholdNumber = document.getElementById("threshold");
+        let thresholdRange = document.getElementById("threshold-range");
+
+        thresholdNumber.addEventListener('input', function(){
+            thresholdRange.value = thresholdNumber.value;
+        });
+
+        thresholdRange.addEventListener('input', function(){
+            thresholdNumber.value = thresholdRange.value;
+        });
+    </script>
+    <script>
+        function openOffcanvas() {
+            var guide = document.getElementById("guide-sidebar");
+            guide.classList.remove("offscreen");
+            guide.style.borderWidth = "0 0 thick thick";
+            guide.style.borderStyle = "solid";
+            guide.style.borderColor = "#0076ad";
+            document.getElementById("open-guide").style.display = "none";
+            document.addEventListener('keydown', function(e) {
+                if (e.key == "Escape") {
+                    closeOffcanvas();
+                }
+            });
+
+        }
+        function closeOffcanvas() {
+            var guide = document.getElementById("guide-sidebar");
+            guide.classList.add("offscreen");
+
+            guide.style.border = "none";
+            document.getElementById("open-guide").style.display = "block";
+        }
+
+        function showPane(elementId) {
+            document.getElementById(elementId).classList.add('show', 'active');
+            document.getElementById('guide-nav').classList.remove('show', 'active');
+        }
+        function hidePane(elementId) {
+            document.getElementById(elementId).classList.remove('show', 'active');
+            document.getElementById('guide-nav').classList.add('show', 'active');
+        }
+        $("#guide-carousel").carousel({
+            interval: false,
+            wrap: false
+        }).on('slide.bs.carousel', function (e) {
+            if (e.to == 0) {
+                $("#guide-bars").addClass("d-none");
+            }
+            else {
+                $("#guide-bars").removeClass("d-none");
+            }
+        });
+        $("#previous-card").hide();
+        $("#card-carousel").on("slid.bs.carousel", function () {
+            if ($("#card-carousel .carousel-item:first").hasClass("active")) {
+                $("#previous-card").hide();
+                $("#next-card").show();
+            } else if ($("#card-carousel .carousel-item:last").hasClass("active")) {
+                $("#previous-card").show();
+                $("#next-card").hide();
+            } else {
+                $("#previous-card").show();
+                $("#next-card").show();
+            }
+        });
+    </script>
+    <script>
+        $("#tutorial-popup").on("shown.bs.modal", function() {
+            setTutorialHeight();
+        });
+        function selectLanguage() {
+            $("#ocr-transcription-modal").modal("hide");
+            $("#language-selection-modal").modal("show");
+        }
+        var mainContentHeight = $("#contribute-main-content").height()
+        if (mainContentHeight < 710) {
+            $(".sidebar").height(mainContentHeight - 130);
+        }
+    </script>
+    <script>
+        function trackQuickTipsInteraction(element, label) {
+            trackUIInteraction(element, 'Quick Tips', 'click', label);
+        }
+        function trackHowToInteraction(element, label){
+            trackUIInteraction(element, 'How To Guide' , 'click', label);
+        }
+
+        $("#quick-tips").on("click", function(event) { trackQuickTipsInteraction($(this), "Open")});
+        $("#previous-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Back")});
+        $("#next-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Next")});
+        $(".carousel-indicators li").on("click", function(event){
+            let index = [...this.parentElement.children].indexOf(this)
+            trackQuickTipsInteraction($(this), `Carousel ${index}`)
+        });
+        $("#open-guide").on("click", function(event) { trackHowToInteraction($(this), "Open")});
+        $("#close-guide").on("click", function(event) { trackHowToInteraction($(this), "Close")});
+        $("#previous-guide").on("click", function(event) { trackHowToInteraction($(this), "Back")});
+        $("#next-guide").on("click", function(event) { trackHowToInteraction($(this), "Next")});
+        $("#guide-bars").on("click", function(event) { trackHowToInteraction($(this), "Hamburger Menu")});
+        $("#guide-sidebar .nav-link").on("click", function(event) {
+            let label = $(this).text().trim();
+            trackHowToInteraction($(this), label);
+        });
+        $("#tutorial-popup").on("hidden.bs.modal", function(){
+            // We're tracking whenever the popup closes, so we don't separately track the close button being clicked
+            trackUIInteraction($(this), 'Quick Tips', 'click', "Close");
+        });
+        $("#tutorial-popup").on("shown-on-load", function(){
+            // We set a timeout to make sure the analytics code is loaded before trying to track
+            setTimeout(function(){
+                trackUIInteraction($(this), 'Quick Tips', 'load', 'Open');
+            }, 1000);
+        });
+    </script>
+{% endblock body_scripts %}
