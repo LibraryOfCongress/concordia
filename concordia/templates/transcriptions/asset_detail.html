@@ -26,18 +26,23 @@
             {% endif %}
     ></script>
 
+    <script id="viewer-data"
+            data-prefix-url="{% static 'openseadragon/build/openseadragon/images/' %}"
+            data-tile-source-url="{% asset_media_url asset %}?canvas"
+    ></script>
+
     <script defer src="{% static 'split.js/dist/split.min.js' %}"></script>
     <script defer src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script defer src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
+
     <script type="module" src="{% static 'js/contribute.js' %}"></script>
-    <script defer src="{% static 'js/viewer-split.js' %}"></script>
+    <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
     <script type="module" src="{% static 'js/guide.js' %}"></script>
     <script type="module" src="{% static 'js/quick-tips-setup.js' %}"></script>
     <script type="module" src="{% static 'js/ocr.js' %}"></script>
     <script type="module" src="{% static 'js/asset-reservation.js' %}"></script>
-    <script defer src="{% static 'js/viewer.js' %}"
-            data-prefix-url="{% static 'openseadragon/build/openseadragon/images/' %}"
-            data-tile-source-url="{% asset_media_url asset %}?canvas"
+    <script type="module" src="{% static 'js/viewer.js' %}"
+
     ></script>
 {% endblock head_content %}
 

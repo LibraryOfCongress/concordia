@@ -1,9 +1,8 @@
 /* global OpenSeadragon screenfull debounce */
-/* exported seadragonView stepUp stepDown resetImageFilterForms */
 
-const viewerData = document.currentScript.dataset;
+const viewerData = document.getElementById('viewer-data').dataset;
 
-var seadragonViewer = OpenSeadragon({
+let seadragonViewer = OpenSeadragon({
     id: 'asset-image',
     prefixUrl: viewerData.prefixUrl,
     tileSources: {
@@ -188,6 +187,16 @@ gammaRange.addEventListener('input', function () {
     gammaNumber.value = gammaRange.value;
 });
 
+let gammaUp = document.getElementById('gamma-up');
+gammaUp.addEventListener('click', function () {
+    stepUp('gamma');
+});
+
+let gammaDown = document.getElementById('gamma-down');
+gammaDown.addEventListener('click', function () {
+    stepDown('gamma');
+});
+
 let thresholdNumber = document.getElementById('threshold');
 let thresholdRange = document.getElementById('threshold-range');
 
@@ -198,3 +207,18 @@ thresholdNumber.addEventListener('input', function () {
 thresholdRange.addEventListener('input', function () {
     thresholdNumber.value = thresholdRange.value;
 });
+
+let thresholdUp = document.getElementById('threshold-up');
+thresholdUp.addEventListener('click', function () {
+    stepUp('threshold');
+});
+
+let thresholdDown = document.getElementById('threshold-down');
+thresholdDown.addEventListener('click', function () {
+    stepDown('threshold');
+});
+
+let reset = document.getElementById('viewer-reset');
+reset.addEventListener('click', resetImageFilterForms);
+
+export {seadragonViewer};

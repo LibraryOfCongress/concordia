@@ -1,4 +1,6 @@
-/* global Split seadragonViewer */
+/* global Split */
+
+import {seadragonViewer} from './viewer.js';
 
 let pageSplit;
 let contributeContainer = document.getElementById('contribute-container');
