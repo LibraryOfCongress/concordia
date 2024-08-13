@@ -15,7 +15,7 @@
             <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
             {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
                 <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-                <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top"  id="select-language-button" onclick="selectLanguage()">
+                <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" id="select-language-button">
                     <span class="underline-link font-weight-bold">Yes, Select Language</span>
                 </a>
             {% endif %}
