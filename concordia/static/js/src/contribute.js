@@ -1,4 +1,6 @@
-/* global $ displayMessage buildErrorMessage reserveAssetForEditing */
+/* global $ displayMessage buildErrorMessage */
+
+import {reserveAssetForEditing} from './asset-reservation.js';
 
 function lockControls($container) {
     if (!$container) {
