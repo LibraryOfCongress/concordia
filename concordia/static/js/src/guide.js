@@ -7,7 +7,6 @@ function openOffcanvas() {
     guide.style.borderWidth = '0 0 thick thick';
     guide.style.borderStyle = 'solid';
     guide.style.borderColor = '#0076ad';
-    document.getElementById('open-guide').style.display = 'none';
     document.addEventListener('keydown', function (event) {
         if (event.key == 'Escape') {
             closeOffcanvas();
@@ -20,7 +19,6 @@ function closeOffcanvas() {
     guide.classList.add('offscreen');
 
     guide.style.border = 'none';
-    document.getElementById('open-guide').style.display = 'block';
 }
 
 function showPane(elementId) {
