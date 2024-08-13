@@ -44,11 +44,13 @@
                     This transcription is finished! You can read and add tags.
                 </span>
             </span>
-            <div class="align-items-center align-self-end btn-group">
-                <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
-                    <u>Campaign Tips</u>
-                </a>
-            </div>
+            {% if cards %}
+                <div class="align-items-center align-self-end btn-group">
+                    <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                        <u>Campaign Tips</u>
+                    </a>
+                </div>
+            {% endif %}
         </div>
 
         {% spaceless %}
