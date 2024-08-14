@@ -12,6 +12,8 @@ from django_registration.backends.activation.views import RegistrationView
 from django_registration.forms import RegistrationForm
 from django_registration.signals import user_activated
 
+from .turnstile.fields import TurnstileField
+
 User = get_user_model()
 
 
@@ -117,6 +119,10 @@ class AccountDeletionForm(forms.Form):
     def __init__(self, *, request, **kwargs):
         self.request = request
         super().__init__(**kwargs)
+
+
+class TurnstileForm(forms.Form):
+    turnstile = TurnstileField()
 
 
 class ContactUsForm(forms.Form):
