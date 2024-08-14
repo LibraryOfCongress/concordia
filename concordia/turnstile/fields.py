@@ -1,5 +1,5 @@
 # Originally from
-# https://github.com/AndrejZbin/django-hcaptcha/blob/master/hcaptcha/fields.py
+# https://github.com/zmh-program/django-turnstile/blob/main/turnstile/fields.py
 
 import inspect
 import json

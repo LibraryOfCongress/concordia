@@ -1,5 +1,5 @@
 # Originally from
-# https://github.com/AndrejZbin/django-hcaptcha/blob/master/hcaptcha/widgets.py
+# https://github.com/zmh-program/django-turnstile/blob/main/turnstile/fields.py
 
 from urllib.parse import urlencode
 
