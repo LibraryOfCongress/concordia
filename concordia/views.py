@@ -70,6 +70,7 @@ from concordia.forms import (
     ActivateAndSetPasswordForm,
     AllowInactivePasswordResetForm,
     ContactUsForm,
+    TurnstileForm,
     UserLoginForm,
     UserNameForm,
     UserProfileForm,
@@ -1511,6 +1512,8 @@ class AssetDetailView(APIDetailView):
 
         ctx["undo_available"] = asset.can_rollback()[0] if transcription else False
         ctx["redo_available"] = asset.can_rollforward()[0] if transcription else False
+
+        ctx["turnstile_form"] = TurnstileForm()
 
         return ctx
 

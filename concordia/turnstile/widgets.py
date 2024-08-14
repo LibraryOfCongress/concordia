@@ -4,7 +4,8 @@
 from urllib.parse import urlencode
 
 from django import forms
-from settings import TURN_JS_API_URL, TURN_SITEKEY
+
+from ..settings_template import TURN_JS_API_URL, TURN_SITEKEY
 
 
 class TurnstileWidget(forms.Widget):

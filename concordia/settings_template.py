@@ -115,7 +115,6 @@ INSTALLED_APPS = [
     "exporter",
     "importer",
     "captcha",
-    "turnstile",
     "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
@@ -325,8 +324,8 @@ TURN_VERIFY_URL = os.environ.get("TURN_VERIFY_URL", "")
 TURN_SITEKEY = os.environ.get("TURN_SITEKEY", "")
 TURN_SECRET = os.environ.get("TURN_SECRET", "")
 TURN_TIMEOUT = os.environ.get("TURN_TIMEOUT", "")
-TURN_DEFAULT_CONFIG = os.environ.get("TURN_DEFAULT_CONFIG", "")
-TURN_PROXIES = os.environ.get("TURN_PROXIES", "")
+TURN_DEFAULT_CONFIG = os.environ.get("TURN_DEFAULT_CONFIG", {})
+TURN_PROXIES = os.environ.get("TURN_PROXIES", {})
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 #: Anonymous sessions require captcha validation every day by default:

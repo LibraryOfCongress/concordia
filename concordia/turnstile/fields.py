@@ -9,14 +9,15 @@ from urllib.request import ProxyHandler, Request, build_opener
 
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from settings import (
+
+from ..settings_template import (
     TURN_DEFAULT_CONFIG,
     TURN_PROXIES,
     TURN_SECRET,
     TURN_TIMEOUT,
     TURN_VERIFY_URL,
 )
-from turnstile.widgets import TurnstileWidget
+from ..turnstile.widgets import TurnstileWidget
 
 
 class TurnstileField(forms.Field):
