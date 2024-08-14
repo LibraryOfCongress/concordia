@@ -1,4 +1,6 @@
-/* global $ displayMessage buildErrorMessage reserveAssetForEditing */
+/* global $ displayMessage buildErrorMessage */
+
+import {reserveAssetForEditing} from './asset-reservation.js';
 
 function lockControls($container) {
     if (!$container) {
@@ -117,11 +119,11 @@ function setupPage() {
         $form.on('submit', function (event) {
             event.preventDefault();
 
-            var data = $form.data();
+            var eventData = $form.data();
 
             lockControls($form);
-            if (data.lockElement) {
-                lockControls($(data.lockElement));
+            if (eventData.lockElement) {
+                lockControls($(eventData.lockElement));
             }
 
             var formData = $form.serializeArray();
@@ -140,8 +142,8 @@ function setupPage() {
                         $form: $form,
                     });
                     unlockControls($form);
-                    if (data.lockElement) {
-                        unlockControls($(data.lockElement));
+                    if (eventData.lockElement) {
+                        unlockControls($(eventData.lockElement));
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
@@ -163,8 +165,8 @@ function setupPage() {
                             jqXHR: jqXHR,
                         });
                         unlockControls($form);
-                        if (data.lockElement) {
-                            unlockControls($(data.lockElement));
+                        if (eventData.lockElement) {
+                            unlockControls($(eventData.lockElement));
                         }
                     }
                 });

@@ -280,27 +280,6 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
 
         {% include "fragments/common-scripts.html" %}
 
-        <script type="text/javascript">
-            function setTutorialHeight() {
-                var $carouselItems = $("#card-carousel .carousel-item");
-                var heights = $carouselItems.map(function() {
-                    var height = $(this).height();
-                    if (height <= 0) {
-                        var firstChild = $(this).children[0];
-                        if (firstChild) {
-                            height = firstChild.offsetHeight + 48;
-                        } else {
-                            return 517.195;
-                        }
-                    }
-                    return height;
-                });
-                var maxHeight = Math.max.apply(this, heights);
-                $carouselItems.height(maxHeight);
-            }
-        </script>
-
-
         {% block body_scripts %}{% endblock body_scripts %}
 
         <script type="text/javascript">
@@ -313,7 +292,9 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
             }
         </script>
 
-        <script>
+        <script type="module">
+            import { setTutorialHeight } from "{% static 'js/modules/quick-tips.js' %}";
+
             function clearCache() {
                 for(var i in localStorage) {
                     if (i.startsWith("campaign-")) {
@@ -321,6 +302,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                     }
                 }
             }
+
             if (typeof(Storage) !== "undefined") {
                 {% if campaign %}
                     const keyName = "campaign-{{ campaign.slug }}";

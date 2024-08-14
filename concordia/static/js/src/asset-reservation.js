@@ -1,10 +1,11 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
-/* exported attemptToReserveAsset reserveAssetForEditing */
 
-const assetData = document.currentScript.dataset;
+const assetReservationData = document.getElementById(
+    'asset-reservation-data',
+).dataset;
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
-    var $transcriptionEditor = jQuery('#transcription-editor');
+    let $transcriptionEditor = jQuery('#transcription-editor');
 
     jQuery
         .ajax({
@@ -77,7 +78,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         });
 
     window.addEventListener('beforeunload', function () {
-        var payload = {
+        let payload = {
             release: true,
             csrfmiddlewaretoken: jQuery(
                 'input[name="csrfmiddlewaretoken"]',
@@ -99,13 +100,19 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
 }
 
 function reserveAssetForEditing() {
-    if (assetData.reserveAssetUrl) {
-        attemptToReserveAsset(assetData.reserveAssetUrl, '', 'transcribe');
+    if (assetReservationData.reserveAssetUrl) {
+        attemptToReserveAsset(
+            assetReservationData.reserveAssetUrl,
+            '',
+            'transcribe',
+        );
     }
 }
 
 jQuery(function () {
-    if (assetData.reserveForEditing) {
+    if (assetReservationData.reserveForEditing) {
         reserveAssetForEditing();
     }
 });
+
+export {reserveAssetForEditing};
