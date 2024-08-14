@@ -12,13 +12,15 @@ function openOffcanvas() {
             closeOffcanvas();
         }
     });
+    document.getElementById('open-guide').style.background = '#002347';
 }
 
 function closeOffcanvas() {
     var guide = document.getElementById('guide-sidebar');
     guide.classList.add('offscreen');
-
     guide.style.border = 'none';
+
+    document.getElementById('open-guide').style.background = '#0076AD';
 }
 
 function showPane(elementId) {
