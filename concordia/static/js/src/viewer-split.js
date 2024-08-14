@@ -1,6 +1,5 @@
-/* global Split */
-
 import {seadragonViewer} from './viewer.js';
+import Split from '/static/split.js/dist/split.es.js';
 
 let pageSplit;
 let contributeContainer = document.getElementById('contribute-container');
@@ -109,6 +108,12 @@ function horizontalSplit() {
     });
 }
 
+if (splitDirection == 'v') {
+    pageSplit = verticalSplit();
+} else {
+    pageSplit = horizontalSplit();
+}
+
 document
     .getElementById('viewer-layout-horizontal')
     .addEventListener('click', function () {
@@ -140,9 +145,3 @@ document
             }, 10);
         }
     });
-
-if (splitDirection == 'v') {
-    pageSplit = verticalSplit();
-} else {
-    pageSplit = horizontalSplit();
-}

@@ -31,9 +31,8 @@
             data-tile-source-url="{% asset_media_url asset %}?canvas"
     ></script>
 
-    <script defer src="{% static 'split.js/dist/split.min.js' %}"></script>
-    <script defer src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
-    <script defer src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
+    <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
+    <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
 
     <script type="module" src="{% static 'js/contribute.js' %}"></script>
     <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
