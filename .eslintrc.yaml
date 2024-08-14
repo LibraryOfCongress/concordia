@@ -20,5 +20,5 @@ env:
     browser: true
     es2024: true
 parserOptions:
-    sourceType: script
+    sourceType: module
     ecmaVersion: latest

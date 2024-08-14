@@ -18,7 +18,7 @@
         </li>
     </ul>
     <div class="btn-group m-1">
-        <button id="viewer-reset" class="btn" title="Reset all filters" onclick="resetImageFilterForms()">
+        <button id="viewer-reset" class="btn" title="Reset all filters">
             Reset All
         </button>
     </div>
@@ -40,13 +40,13 @@
                     </div>
                     <div class="col p-0">
                         <div class="row m-0">
-                            <button type="button" class="arrow-button" onclick="stepUp('gamma')">
+                            <button id="gamma-up" type="button" class="arrow-button">
                                 <span class="fas fa-chevron-up" />
                                 <span class="visually-hidden">Increase</span>
                             </button>
                         </div>
                         <div class="row m-0">
-                            <button type="button" class="arrow-button" onclick="stepDown('gamma')">
+                            <button id="gamma-down" type="button" class="arrow-button">
                                 <span class="fas fa-chevron-down" />
                                 <span class="visually-hidden">Decrease</span>
                             </button>
@@ -94,13 +94,13 @@
                     </div>
                     <div class="col p-0">
                         <div class="row m-0">
-                            <button type="button" class="arrow-button" onclick="stepUp('threshold')">
+                            <button id="threshold-up" type="button" class="arrow-button">
                                 <span class="fas fa-chevron-up" />
                                 <span class="visually-hidden">Increase</span>
                             </button>
                         </div>
                         <div class="row m-0">
-                            <button type="button" class="arrow-button" onclick="stepDown('threshold')">
+                            <button id="threshold-down" type="button" class="arrow-button">
                                 <span class="fas fa-chevron-down" />
                                 <span class="visually-hidden">Decrease</span>
                             </button>

@@ -44,14 +44,16 @@
                     This transcription is finished! You can read and add tags.
                 </span>
             </span>
-            <div class="align-items-center align-self-end btn-group">
-                <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
-                    <u>Campaign Tips</u>
-                </a>
-                {% if guides %}
-                    <button id="open-guide" class="btn btn-primary mx-1" type="button" onclick="openOffcanvas()">How-To Guide</button>
-                {% endif %}
-            </div>
+            {% if cards %}
+                <div class="align-items-center align-self-end btn-group">
+                    <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                        <u>Campaign Tips</u>
+                    </a>
+                    {% if guides %}
+                        <button id="open-guide" class="btn btn-primary" type="button">How-To Guide</button>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
 
         {% spaceless %}
@@ -65,7 +67,7 @@
                     {{ transcription.text }}
                 </textarea>
                 {% if guides %}
-                    {% include "fragments/_how-to-guide.html" %}
+                    {% include "transcriptions/asset_detail/guide.html" %}
                 {% endif %}
             </div>
 

@@ -19,23 +19,29 @@
     <meta property="og.type" content="website" />
     <meta property="og.image" content="{{ thumbnail_url }}" />
 
-    <script defer src="{% static 'split.js/dist/split.min.js' %}"></script>
-    <script defer src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
-    <script defer src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
-    <script defer src="{% static 'js/contribute.js' %}"></script>
-    <script defer src="{% static 'js/viewer-split.js' %}"></script>
-    <script defer src="{% static 'js/guide.js' %}"></script>
-    <script defer src="{% static 'js/quick-tips.js' %}"></script>
-    <script defer src="{% static 'js/ocr.js' %}"></script>
-    <script defer src="{% static 'js/asset-reservation.js' %}"
+    <script id="asset-reservation-data"
             data-reserve-asset-url="{% url 'reserve-asset' asset.pk %}"
             {% if transcription_status == "not_started" or transcription_status == "in_progress" or user.is_authenticated%}
                 data-reserve-for-editing=1
             {% endif %}
     ></script>
-    <script defer src="{% static 'js/viewer.js' %}"
+
+    <script id="viewer-data"
             data-prefix-url="{% static 'openseadragon/build/openseadragon/images/' %}"
             data-tile-source-url="{% asset_media_url asset %}?canvas"
+    ></script>
+
+    <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
+    <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
+
+    <script type="module" src="{% static 'js/contribute.js' %}"></script>
+    <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
+    <script type="module" src="{% static 'js/guide.js' %}"></script>
+    <script type="module" src="{% static 'js/quick-tips-setup.js' %}"></script>
+    <script type="module" src="{% static 'js/ocr.js' %}"></script>
+    <script type="module" src="{% static 'js/asset-reservation.js' %}"></script>
+    <script type="module" src="{% static 'js/viewer.js' %}"
+
     ></script>
 {% endblock head_content %}
 
