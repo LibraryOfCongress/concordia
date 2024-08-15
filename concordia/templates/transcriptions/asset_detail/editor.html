@@ -49,6 +49,9 @@
                     <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
+                    {% if guides %}
+                        <button id="open-guide" class="btn btn-primary mx-1" type="button">How-To Guide</button>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
@@ -64,7 +67,6 @@
                     {{ transcription.text }}
                 </textarea>
                 {% if guides %}
-                    <button id="open-guide" class="btn btn-primary" type="button">How-To Guide</button>
                     {% include "transcriptions/asset_detail/guide.html" %}
                 {% endif %}
             </div>

@@ -1116,16 +1116,8 @@ $card-progress-height: 12px;
 
 /* How to Guide */
 #open-guide {
-    transform: rotate(-90deg) translateY(-50%);
-    position: absolute;
     border-radius: 0;
-    right: 0;
-    font-size: 0.75rem;
-    margin-right: -55px;
-    margin-top: 39px;
-    max-height: 32px;
     white-space: nowrap;
-    width: 110px;
 }
 
 #close-guide {
@@ -1139,7 +1131,7 @@ $card-progress-height: 12px;
     width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
-    top: 129px;
+    top: 135px;
     right: 0;
     overflow: hidden auto; /* Disable horizontal scrolling */
     transition: 0.3s;
