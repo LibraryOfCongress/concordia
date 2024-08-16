@@ -1379,6 +1379,14 @@ class AssetDetailView(APIDetailView):
             )
             return redirect(campaign)
 
+    def post(self, request, *args, **kwargs):
+        if request.method == "POST":
+            form = TurnstileForm(request.POST)
+            if form.is_valid():
+                return self.form_valid(form)
+            else:
+                return self.form_valid(form)
+
     def get_queryset(self):
         asset_qs = Asset.objects.published().filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
