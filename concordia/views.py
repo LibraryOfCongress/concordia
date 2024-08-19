@@ -1379,14 +1379,6 @@ class AssetDetailView(APIDetailView):
             )
             return redirect(campaign)
 
-    def post(self, request, *args, **kwargs):
-        if request.method == "POST":
-            form = TurnstileForm(request.POST)
-            if form.is_valid():
-                return self.form_valid(form)
-            else:
-                return self.form_valid(form)
-
     def get_queryset(self):
         asset_qs = Asset.objects.published().filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
@@ -1724,6 +1716,19 @@ def save_transcription(request, *, asset_pk):
         user = get_anonymous_user()
     else:
         user = request.user
+
+    # Turnstile
+    if request.method == "POST":
+        form = TurnstileForm(request.POST)
+        if form.is_valid():
+            return TurnstileForm()
+        else:
+            return JsonResponse(
+                {
+                    "error": "Turnstile form invalid...."
+                    "I don't know what to tell you yet...."
+                }
+            )
 
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
