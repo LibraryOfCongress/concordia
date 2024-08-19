@@ -52,7 +52,7 @@ def turnstile_default_settings(request):
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         ),
         "TURN_SITEKEY": getattr(
-            settings, "TURNSTILE_SITEKEY", "1x00000000000000000000AA"
+            settings, "TURNSTILE_SITEKEY", "1x00000000000000000000BB"
         ),
         "TURN_SECRET": getattr(
             settings, "TURNSTILE_SECRET", "1x0000000000000000000000000000000AA"
