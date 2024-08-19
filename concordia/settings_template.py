@@ -319,13 +319,17 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Turnstile settings
-TURN_JS_API_URL = os.environ.get("TURN_JS_API_URL", "")
-TURN_VERIFY_URL = os.environ.get("TURN_VERIFY_URL", "")
-TURN_SITEKEY = os.environ.get("TURN_SITEKEY", "")
-TURN_SECRET = os.environ.get("TURN_SECRET", "")
-TURN_TIMEOUT = os.environ.get("TURN_TIMEOUT", "")
-TURN_DEFAULT_CONFIG = os.environ.get("TURN_DEFAULT_CONFIG", {})
-TURN_PROXIES = os.environ.get("TURN_PROXIES", {})
+TURN_JS_API_URL = {
+    "TURNSTILE_JS_API_URL": "https://challenges.cloudflare.com/turnstile/v0/api.js"
+}
+TURN_VERIFY_URL = {
+    "TURNSTILE_VERIFY_URL": "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+}
+TURN_SITEKEY = {"TURNSTILE_SITEKEY": "1x00000000000000000000AA"}
+TURN_SECRET = {"TURNSTILE_SECRET": "1x0000000000000000000000000000000AA"}
+TURN_TIMEOUT = {"TURNSTILE_TIMEOUT": 5}
+TURN_DEFAULT_CONFIG = {"TURNSTILE_DEFAULT_CONFIG": {}}
+TURN_PROXIES = {"TURNSTILE_PROXIES": {}}
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 #: Anonymous sessions require captcha validation every day by default:
