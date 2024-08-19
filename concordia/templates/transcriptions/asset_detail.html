@@ -34,7 +34,6 @@
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
 
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script type="module" src="{% static 'js/contribute.js' %}"></script>
     <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
     <script type="module" src="{% static 'js/guide.js' %}"></script>
@@ -58,10 +57,7 @@
 
 {% block main_content %}
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
-    <!-- <form class="form" method="POST">
-        {% csrf_token %}
-        {{ turnstile_form }}
-    </form> -->
+
     <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
             {% include "transcriptions/asset_detail/navigation.html" %}
