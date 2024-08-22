@@ -41,23 +41,23 @@ def turnstile_default_settings(request):
     """
 
     return {
-        "TURN_JS_API_URL": getattr(
+        "TURNSTILE_JS_API_URL": getattr(
             settings,
-            "TURNSTILE_JS_API_URL",
+            "TURN_JS_API_URL",
             "https://challenges.cloudflare.com/turnstile/v0/api.js",
         ),
-        "TURN_VERIFY_URL": getattr(
+        "TURNSTILE_VERIFY_URL": getattr(
             settings,
             "TURNSTILE_VERIFY_URL",
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         ),
-        "TURN_SITEKEY": getattr(
+        "TURNSTILE_SITEKEY": getattr(
             settings, "TURNSTILE_SITEKEY", "1x00000000000000000000BB"
         ),
-        "TURN_SECRET": getattr(
+        "TURNSTILE_SECRET": getattr(
             settings, "TURNSTILE_SECRET", "1x0000000000000000000000000000000AA"
         ),
-        "TURN_TIMEOUT": getattr(settings, "TURNSTILE_TIMEOUT", 5),
-        "TURN_DEFAULT_CONFIG": getattr(settings, "TURNSTILE_DEFAULT_CONFIG", {}),
-        "TURN_PROXIES": getattr(settings, "TURNSTILE_PROXIES", {}),
+        "TURNSTILE_TIMEOUT": getattr(settings, "TURNSTILE_TIMEOUT", 5),
+        "TURNSTILE_DEFAULT_CONFIG": getattr(settings, "TURNSTILE_DEFAULT_CONFIG", {}),
+        "TURNSTILE_PROXIES": getattr(settings, "TURNSTILE_PROXIES", {}),
     }

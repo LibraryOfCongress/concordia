@@ -319,13 +319,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Turnstile settings
-TURN_JS_API_URL = os.environ.get("TURN_JS_API_URL", "")
-TURN_VERIFY_URL = os.environ.get("TURN_VERIFY_URL", "")
-TURN_SITEKEY = os.environ.get("TURN_SITEKEY", "")
-TURN_SECRET = os.environ.get("TURN_SECRET", "")
-TURN_TIMEOUT = os.environ.get("TURN_TIMEOUT", "")
-TURN_DEFAULT_CONFIG = os.environ.get("TURN_DEFAULT_CONFIG", {})
-TURN_PROXIES = os.environ.get("TURN_PROXIES", {})
+TURNSTILE_JS_API_URL = os.environ.get("TURNSTILE_JS_API_URL", "")
+TURNSTILE_VERIFY_URL = os.environ.get("TURNSTILE_VERIFY_URL", "")
+TURNSTILE_SITEKEY = os.environ.get("TURNSTILE_SITEKEY", "")
+TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET", "")
+TURNSTILE_TIMEOUT = os.environ.get("TURNSTILE_TIMEOUT", 5)
+TURNSTILE_DEFAULT_CONFIG = os.environ.get("TURNSTILE_DEFAULT_CONFIG", {})
+TURNSTILE_PROXIES = os.environ.get("TURNSTILE_PROXIES", {})
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 #: Anonymous sessions require captcha validation every day by default:
