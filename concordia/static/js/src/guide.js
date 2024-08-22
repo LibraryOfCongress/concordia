@@ -2,16 +2,20 @@
 
 function openOffcanvas() {
     let guide = document.getElementById('guide-sidebar');
-    guide.classList.remove('offscreen');
-    guide.style.borderWidth = '0 0 thick thick';
-    guide.style.borderStyle = 'solid';
-    guide.style.borderColor = '#0076ad';
-    document.addEventListener('keydown', function (event) {
-        if (event.key == 'Escape') {
-            closeOffcanvas();
-        }
-    });
-    document.getElementById('open-guide').style.background = '#002347';
+    if (guide.classList.contains('offscreen')) {
+        guide.classList.remove('offscreen');
+        guide.style.borderWidth = '0 0 thick thick';
+        guide.style.borderStyle = 'solid';
+        guide.style.borderColor = '#0076ad';
+        document.addEventListener('keydown', function (event) {
+            if (event.key == 'Escape') {
+                closeOffcanvas();
+            }
+        });
+        document.getElementById('open-guide').style.background = '#002347';
+    } else {
+        closeOffcanvas();
+    }
 }
 
 function closeOffcanvas() {
