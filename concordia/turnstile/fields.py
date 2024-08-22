@@ -8,15 +8,9 @@ from urllib.parse import urlencode
 from urllib.request import ProxyHandler, Request, build_opener
 
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from ..settings_template import (
-    TURN_DEFAULT_CONFIG,
-    TURN_PROXIES,
-    TURN_SECRET,
-    TURN_TIMEOUT,
-    TURN_VERIFY_URL,
-)
 from ..turnstile.widgets import TurnstileWidget
 
 
@@ -31,7 +25,7 @@ class TurnstileField(forms.Field):
     def __init__(self, **kwargs):
         superclass_parameters = inspect.signature(super().__init__).parameters
         superclass_kwargs = {}
-        widget_settings = TURN_DEFAULT_CONFIG.copy()
+        widget_settings = settings.TURNSTILE_DEFAULT_CONFIG.copy()
         for key, value in kwargs.items():
             if key in superclass_parameters:
                 superclass_kwargs[key] = value
@@ -56,16 +50,16 @@ class TurnstileField(forms.Field):
 
     def validate(self, value):
         super().validate(value)
-        opener = build_opener(ProxyHandler(TURN_PROXIES))
+        opener = build_opener(ProxyHandler(settings.TURNSTILE_PROXIES))
         post_data = urlencode(
             {
-                "secret": TURN_SECRET,
+                "secret": settings.TURNSTILE_SECRET,
                 "response": value,
             }
         ).encode()
-        request = Request(TURN_VERIFY_URL, post_data)
+        request = Request(settings.TURNSTILE_VERIFY_URL, post_data)
         try:
-            response = opener.open(request, timeout=TURN_TIMEOUT)
+            response = opener.open(request, timeout=settings.TURNSTILE_TIMEOUT)
         except HTTPError as exc:
             raise forms.ValidationError(
                 self.error_messages["error_turnstile"], code="error_turnstile"

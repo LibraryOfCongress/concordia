@@ -1513,7 +1513,7 @@ class AssetDetailView(APIDetailView):
         ctx["undo_available"] = asset.can_rollback()[0] if transcription else False
         ctx["redo_available"] = asset.can_rollforward()[0] if transcription else False
 
-        ctx["turnstile_form"] = TurnstileForm()
+        ctx["turnstile_form"] = TurnstileForm(auto_id=False)
 
         return ctx
 
@@ -1546,14 +1546,14 @@ def ajax_captcha(request):
     )
 
 
-def validate_anonymous_captcha(view):
+def validate_anonymous_user(view):
     @wraps(view)
     @never_cache
     def inner(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            captcha_last_validated = request.session.get("captcha_validation_time", 0)
-            age = time() - captcha_last_validated
-            if age > settings.ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL:
+            last_validated = request.session.get("anonymous_validation_time", 0)
+            age = time() - last_validated
+            if age > settings.ANONYMOUS_VALIDATION_INTERVAL:
                 return ajax_captcha(request)
 
         return view(request, *args, **kwargs)
@@ -1583,7 +1583,7 @@ def get_transcription_superseded(asset, supersedes_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def generate_ocr_transcription(request, *, asset_pk):
@@ -1630,7 +1630,7 @@ def generate_ocr_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def rollback_transcription(request, *, asset_pk):
@@ -1669,7 +1669,7 @@ def rollback_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def rollforward_transcription(request, *, asset_pk):
@@ -1706,7 +1706,6 @@ def rollforward_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
@@ -1714,21 +1713,17 @@ def save_transcription(request, *, asset_pk):
 
     if request.user.is_anonymous:
         user = get_anonymous_user()
-    else:
-        user = request.user
-
-    # Turnstile
-    if request.method == "POST":
         form = TurnstileForm(request.POST)
-        if form.is_valid():
-            return TurnstileForm()
-        else:
+        if not form.is_valid():
             return JsonResponse(
                 {
                     "error": "Turnstile form invalid...."
                     "I don't know what to tell you yet...."
-                }
+                },
+                status=400,
             )
+    else:
+        user = request.user
 
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
@@ -1783,7 +1778,7 @@ def save_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
     asset = transcription.asset

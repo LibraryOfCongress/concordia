@@ -4,8 +4,7 @@
 from urllib.parse import urlencode
 
 from django import forms
-
-from ..settings_template import TURN_JS_API_URL, TURN_SITEKEY
+from django.conf import settings
 
 
 class TurnstileWidget(forms.Widget):
@@ -20,12 +19,12 @@ class TurnstileWidget(forms.Widget):
 
     def build_attrs(self, base_attrs, extra_attrs=None):
         attrs = super().build_attrs(base_attrs, extra_attrs)
-        attrs["data-sitekey"] = TURN_SITEKEY
+        attrs["data-sitekey"] = settings.TURNSTILE_SITEKEY
         return attrs
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context["api_url"] = TURN_JS_API_URL
+        context["api_url"] = settings.TURNSTILE_JS_API_URL
         if self.extra_url:
             context["api_url"] += "?" + urlencode(self.extra_url)
         return context
