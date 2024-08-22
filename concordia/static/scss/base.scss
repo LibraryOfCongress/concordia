@@ -143,6 +143,14 @@ main {
     flex: 1 1 0%;
 }
 
+main a {
+    text-decoration: underline;
+}
+
+main a:hover {
+    text-decoration: none;
+}
+
 .close {
     opacity: 1;
 }
