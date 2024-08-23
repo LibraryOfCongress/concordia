@@ -956,6 +956,9 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     def __str__(self):
         return f"Transcription #{self.pk}"
 
+    def campaign_slug(self):
+        return self.asset.item.project.campaign.slug
+
     def clean(self):
         if (
             self.user
