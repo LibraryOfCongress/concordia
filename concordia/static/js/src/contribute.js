@@ -9,7 +9,7 @@ function lockControls($container) {
     // Locks all of the controls in the provided jQuery element
     $container.find('input, textarea').attr('readonly', 'readonly');
     $container.find('input:checkbox').attr('disabled', 'disabled');
-    $container.find('button').attr('disabled', 'disabled');
+    $container.find('button:not(#open-guide)').attr('disabled', 'disabled');
 }
 
 function unlockControls($container) {
