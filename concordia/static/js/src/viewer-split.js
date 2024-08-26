@@ -1,4 +1,4 @@
-import {seadragonViewer} from './viewer.js';
+import {seadragonViewer} from 'viewer';
 import Split from '/static/split.js/dist/split.es.js';
 
 let pageSplit;

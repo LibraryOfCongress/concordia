@@ -31,6 +31,14 @@
             data-tile-source-url="{% asset_media_url asset %}?canvas"
     ></script>
 
+    <script type="importmap">
+        {
+            "imports": {
+                "asset-reservation": "{% static 'js/asset-reservation.js' %}",
+                "viewer": "{% static 'js/viewer.js' %}"
+            }
+        }
+    </script>
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
 
@@ -39,10 +47,6 @@
     <script type="module" src="{% static 'js/guide.js' %}"></script>
     <script type="module" src="{% static 'js/quick-tips-setup.js' %}"></script>
     <script type="module" src="{% static 'js/ocr.js' %}"></script>
-    <script type="module" src="{% static 'js/asset-reservation.js' %}"></script>
-    <script type="module" src="{% static 'js/viewer.js' %}"
-
-    ></script>
 {% endblock head_content %}
 
 {% block breadcrumbs %}
