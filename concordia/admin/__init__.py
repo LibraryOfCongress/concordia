@@ -781,7 +781,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "user",
         "truncated_text",
         "created_on",
-        "updated_on",
+        "campaign_slug",
         "accepted",
         "rejected",
         "reviewed_by",

@@ -231,6 +231,11 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         )
         self.transcription2 = create_transcription(asset=self.asset, user=self.user2)
 
+    def test_campaign_slug(self):
+        self.assertEqual(
+            self.asset.item.project.campaign.slug, self.transcription1.campaign_slug()
+        )
+
     def test_clean(self):
         bad_transcription = Transcription(asset=self.asset, user=self.user)
         bad_transcription.clean()
