@@ -114,7 +114,6 @@ INSTALLED_APPS = [
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
-    "captcha",
     "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
@@ -326,13 +325,6 @@ TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET", "")
 TURNSTILE_TIMEOUT = os.environ.get("TURNSTILE_TIMEOUT", 5)
 TURNSTILE_DEFAULT_CONFIG = os.environ.get("TURNSTILE_DEFAULT_CONFIG", {})
 TURNSTILE_PROXIES = os.environ.get("TURNSTILE_PROXIES", {})
-
-CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
-#: Anonymous sessions require captcha validation every day by default:
-ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
-
-CAPTCHA_IMAGE_SIZE = [150, 100]
-CAPTCHA_FONT_SIZE = 40
 
 STORAGES = {
     "default": {

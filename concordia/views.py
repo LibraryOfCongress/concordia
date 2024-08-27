@@ -11,9 +11,6 @@ from time import time
 from urllib.parse import urlencode
 
 import markdown
-from captcha.fields import CaptchaField
-from captcha.helpers import captcha_image_url
-from captcha.models import CaptchaStore
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -340,32 +337,28 @@ class ConcordiaRegistrationView(RegistrationView):
 
 
 @method_decorator(never_cache, name="dispatch")
-@method_decorator(
-    ratelimit(
-        group="login", key="post:username", rate="3/15m", method="POST", block=False
-    ),
-    name="post",
-)
 class ConcordiaLoginView(LoginView):
     form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-
-        # This is set by the ratelimit decorator
-        # True if the request exceeds the rate limit
-        blocked = request.limited
-        recent_captcha = (
-            time() - request.session.get("captcha_validation_time", 0)
-        ) < 86400
-
-        if blocked and not recent_captcha:
-            form.fields["captcha"] = CaptchaField()
-
         if form.is_valid():
-            return self.form_valid(form)
+            turnstile_form = TurnstileForm(request.POST)
+            if turnstile_form.is_valid():
+                return self.form_valid(form)
+            else:
+                form.add_error(None, "Unable to validate user")
+                return self.form_invalid(form)
+
         else:
             return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        ctx["turnstile_form"] = TurnstileForm(auto_id=False)
+
+        return ctx
 
 
 def ratelimit_view(request, exception=None):
@@ -1518,44 +1511,17 @@ class AssetDetailView(APIDetailView):
         return ctx
 
 
-@never_cache
-def ajax_captcha(request):
-    if request.method == "POST":
-        response = request.POST.get("response")
-        key = request.POST.get("key")
-
-        if response and key:
-            CaptchaStore.remove_expired()
-
-            # Note that CaptchaStore displays the response in uppercase in the
-            # image and in the string representation of the object but the
-            # actual value stored in the database is lowercase!
-            deleted, _ = CaptchaStore.objects.filter(
-                response=response.lower(), hashkey=key
-            ).delete()
-
-            if deleted > 0:
-                request.session["captcha_validation_time"] = time()
-                return JsonResponse({"valid": True})
-
-    key = CaptchaStore.generate_key()
-    return JsonResponse(
-        {"key": key, "image": request.build_absolute_uri(captcha_image_url(key))},
-        status=401,
-        content_type="application/json",
-    )
-
-
 def validate_anonymous_user(view):
     @wraps(view)
     @never_cache
     def inner(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            last_validated = request.session.get("anonymous_validation_time", 0)
-            age = time() - last_validated
-            if age > settings.ANONYMOUS_VALIDATION_INTERVAL:
-                return ajax_captcha(request)
-
+        if not request.user.is_authenticated and request.method == "POST":
+            form = TurnstileForm(request.POST)
+            if not form.is_valid():
+                return JsonResponse(
+                    {"error": "Unable to validate user"},
+                    status=401,
+                )
         return view(request, *args, **kwargs)
 
     return inner
@@ -1583,7 +1549,7 @@ def get_transcription_superseded(asset, supersedes_pk):
 
 
 @require_POST
-@validate_anonymous_user
+@login_required
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def generate_ocr_transcription(request, *, asset_pk):
@@ -1706,6 +1672,7 @@ def rollforward_transcription(request, *, asset_pk):
 
 
 @require_POST
+@validate_anonymous_user
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
@@ -1713,15 +1680,6 @@ def save_transcription(request, *, asset_pk):
 
     if request.user.is_anonymous:
         user = get_anonymous_user()
-        form = TurnstileForm(request.POST)
-        if not form.is_valid():
-            return JsonResponse(
-                {
-                    "error": "Turnstile form invalid...."
-                    "I don't know what to tell you yet...."
-                },
-                status=400,
-            )
     else:
         user = request.user
 
