@@ -24,7 +24,10 @@ function unlockControls($container) {
     // listener on the transcription form and the form
     // results handlers.
     // The only buttons unlocked here are ones that should always be unlocked.
+    // TODO: Find a better way to handle this than hard-coding every button
+    // we want to unlock here
     $container.find('button#open-guide').removeAttr('disabled');
+    $container.find('button#ocr-transcription-button').removeAttr('disabled');
 }
 
 $(document).on('keydown', function (event) {
