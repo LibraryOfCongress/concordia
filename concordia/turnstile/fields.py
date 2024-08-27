@@ -50,6 +50,7 @@ class TurnstileField(forms.Field):
 
     def validate(self, value):
         super().validate(value)
+
         opener = build_opener(ProxyHandler(settings.TURNSTILE_PROXIES))
         post_data = urlencode(
             {
@@ -57,7 +58,9 @@ class TurnstileField(forms.Field):
                 "response": value,
             }
         ).encode()
+
         request = Request(settings.TURNSTILE_VERIFY_URL, post_data)
+
         try:
             response = opener.open(request, timeout=settings.TURNSTILE_TIMEOUT)
         except HTTPError as exc:
