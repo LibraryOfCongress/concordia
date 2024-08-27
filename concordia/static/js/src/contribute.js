@@ -16,17 +16,17 @@ function unlockControls($container) {
     if (!$container) {
         return;
     }
-    // Unlocks all of the controls in the provided jQuery element
+    // Unlocks all of the controls except buttons in the provided jQuery element
     $container.find('input, textarea').removeAttr('readonly');
     $container.find('input:checkbox').removeAttr('disabled');
-    // We exclude the rollback/forward buttons because the logic
-    // is handled in the template (both on first load and
-    // when updated via AJAX).
-    $container
-        .find('button')
-        .not('#rollback-transcription-button')
-        .not('#rollforward-transcription-button')
-        .removeAttr('disabled');
+
+    // Though we lock all buttons in lockControls, we don't automatically
+    // unlock most of them. Which buttons should be locked or unlocked
+    // is more complicated logic handled by the update-ui-state
+    // listener on the transcription form and the form
+    // results handlers.
+    // The only buttons unlocked here are ones that should always be unlocked.
+    $container.find('button#open-guide').removeAttr('disabled');
 }
 
 $(document).on('keydown', function (event) {
@@ -270,7 +270,8 @@ function setupPage() {
                 }
 
                 if (data.transcriptionId && !data.unsavedChanges) {
-                    // We have a transcription ID and it's not stale, so we can submit the transcription for review:
+                    // We have a transcription ID and it's not stale,
+                    // so we can submit the transcription for review and disable the save button:
                     $saveButton.attr('disabled', 'disabled');
                     $submitButton.removeAttr('disabled');
                     // We only want to do this the first time the editor ui is updated (i.e., on first load)
