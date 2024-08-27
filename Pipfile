@@ -54,7 +54,7 @@ pillow = "*"
 prometheus-client = "*"
 xlsxwriter = "*"
 blinker = "<1.8.0"
-psycopg = ">=3.2"
+psycopg-binary = ">=3.2"
 
 [dev-packages]
 invoke = "*"
