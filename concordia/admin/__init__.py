@@ -790,6 +790,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "reviewed_by",
         "supersedes",
         "text",
+        "source",
     )
 
     EXPORT_FIELDS = (
