@@ -606,7 +606,7 @@
             "index": "pypi",
             "version": "==0.1.1"
         },
-        "django-bootstrap4": {
+        "django-bootstrap5": {
             "hashes": [
                 "sha256:819bc0ba7b25fcdeb12eb04353962436dbe95b228ba4cf4b49f5d3fee53692e1",
                 "sha256:b555d87740a571036f100ad6026b1f62aabcb913404fb7f08f521881019b14bc"

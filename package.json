@@ -10,7 +10,7 @@
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
         "@fortawesome/fontawesome-free": "^5.15.1",
-        "bootstrap": "^4.5.3",
+        "bootstrap": "^5.3.3",
         "codemirror": "^5.58.2",
         "gulp": "^5.0.0",
         "gulp-rename": "^2.0.0",

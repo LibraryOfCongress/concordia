@@ -12,8 +12,8 @@ $theme-colors: (
     'primary': $primary,
 );
 
-$link-color: theme-color('primary');
-$link-hover-color: darken($link-color, 15%);
+$link-color: map.get($theme-colors, 'primary');
+$link-hover-color: color.adjust($link-color, $lightness: 15%);
 
 $kbd-color: $gray-900;
 $kbd-bg: $gray-200;

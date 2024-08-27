@@ -147,7 +147,7 @@ def export_to_debug_html_response(filename, headers, rows):
         # Note the use of bytestrings to avoid unnecessary Unicode-bytes cycles:
         yield b"<!DOCTYPE html><html>"
         yield b'<head><meta charset="utf-8"><title>TABULAR DEBUG</title>'
-        yield b'<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">'  # noqa
+        yield b'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">'  # noqa
         yield b"</head>"
         yield b'<body class="container-fluid"><div class="table-responsive"><table class="table table-striped">'  # noqa
         yield b"<thead><tr><th>"
