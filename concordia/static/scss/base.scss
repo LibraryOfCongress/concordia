@@ -117,7 +117,7 @@ $alert-padding-x: 1rem;
 $bg-completed: $dark;
 $bg-submitted: $primary;
 /* stylelint-disable-next-line scss/no-global-function-names */
-$bg-in-progress: lighten($primary, 30%);
+$bg-in-progress: tint-color($primary, 30%);
 $bg-not-started: #fff;
 
 // shadow
