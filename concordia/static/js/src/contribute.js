@@ -28,6 +28,7 @@ function unlockControls($container) {
     // we want to unlock here
     $container.find('button#open-guide').removeAttr('disabled');
     $container.find('button#ocr-transcription-button').removeAttr('disabled');
+    $container.find('button#close-guide').removeAttr('disabled');
 }
 
 $(document).on('keydown', function (event) {
