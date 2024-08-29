@@ -65,7 +65,7 @@
         <div id="homepage-carousel" class="carousel slide container" data-ride="carousel" data-pause="hover">
             <ol class="carousel-indicators d-none d-lg-flex">
                 {% for slide in slides %}
-                    <li data-target="#homepage-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                    <li data-bs-target="#homepage-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
                 {% endfor %}
             </ol>
 
@@ -94,12 +94,12 @@
     {% else %}
         <div id="homepage-carousel" class="carousel slide container" data-ride="carousel" data-pause="hover">
             <ol class="carousel-indicators d-none d-lg-flex">
-                <li data-target="#homepage-carousel" data-slide-to="0" class="active"></li>
-                <li data-target="#homepage-carousel" data-slide-to="1"></li>
-                <li data-target="#homepage-carousel" data-slide-to="2"></li>
-                <li data-target="#homepage-carousel" data-slide-to="3"></li>
+                <li data-bs-target="#homepage-carousel" data-slide-to="0" class="active"></li>
+                <li data-bs-target="#homepage-carousel" data-slide-to="1"></li>
+                <li data-bs-target="#homepage-carousel" data-slide-to="2"></li>
+                <li data-bs-target="#homepage-carousel" data-slide-to="3"></li>
                 {% if ADVERTISE_ACTIVITY_UI %}
-                    <li data-target="#homepage-carousel" data-slide-to="4"></li>
+                    <li data-bs-target="#homepage-carousel" data-slide-to="4"></li>
                 {% endif %}
             </ol>
             <div class="carousel-inner">
@@ -169,10 +169,10 @@
             <h2 class="col-md-auto text-center text-nowrap px-5 py-3 m-0">Surprise me!</h2>
             <ul class="col-md-auto row list-unstyled m-0">
                 <li class="col text-center text-bold px-5 py-3">
-                    <a href="{% url 'redirect-to-next-transcribable-asset' %}"><span class="d-block text-dark font-weight-bold">Jump into</span> <span class="d-block text-nowrap h2">a transcription</span></a>
+                    <a href="{% url 'redirect-to-next-transcribable-asset' %}"><span class="d-block text-dark fw-bold">Jump into</span> <span class="d-block text-nowrap h2">a transcription</span></a>
                 </li>
                 <li class="col text-center text-bold px-5 py-3">
-                    <a href="{% url 'redirect-to-next-reviewable-asset' %}"><span class="d-block text-dark font-weight-bold">Jump into</span> <span class="d-block text-nowrap h2">a review</span></a>
+                    <a href="{% url 'redirect-to-next-reviewable-asset' %}"><span class="d-block text-dark fw-bold">Jump into</span> <span class="d-block text-nowrap h2">a review</span></a>
                 </li>
             </ul>
         </div>

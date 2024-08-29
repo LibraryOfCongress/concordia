@@ -174,12 +174,34 @@ h1,
     font-weight: bold;
 }
 
-p a {
+li a {
+    text-decoration: none;
+}
+
+li a:hover {
     text-decoration: underline;
 }
 
-p a:hover {
+.text-dark {
+    color: $gray-800 !important;
+}
+
+p a,
+.simple-page a {
+    text-decoration: underline;
+}
+
+p a:hover,
+.simple-page a:hover {
     text-decoration: none;
+}
+
+.input-group-prepend {
+    margin-right: -1px;
+}
+
+.input-group-append {
+    margin-left: -1px;
 }
 
 a .campaign-title:hover,

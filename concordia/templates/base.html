@@ -70,7 +70,7 @@ for performance:
                         </h1>
                     </div>
                     <button class="navbar-toggler navbar-light border-0 d-print-none"
-                            type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu"
+                            type="button" data-bs-toggle="collapse" data-bs-target="#nav-menu" aria-controls="nav-menu"
                             aria-expanded="false" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                         <span class="sr-only">Menu</span>
@@ -83,7 +83,7 @@ for performance:
                             </li>
                             <li class="nav-item dropdown nav-dropdown">
                                 <a id="topnav-campaigns-dropdown-toggle" class="nav-link
-                                                                                {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-toggle="dropdown" aria-haspopup="true"
+                                                                                {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">Campaigns <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu" aria-labelledby="topnav-campaigns-dropdown-toggle">
                                     <a class="dropdown-item" href="{% url 'campaign-topic-list' %}">All Campaigns</a>
@@ -94,7 +94,7 @@ for performance:
                                                                  nav-dropdown">
                                 <a id="topnav-help-dropdown-toggle" class="nav-link
                                                                            {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}"
-                                   href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                   href="{% url 'help-center' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu"
                                      aria-labelledby="topnav-help-dropdown-toggle">
@@ -117,7 +117,7 @@ for performance:
                             <li id="topnav-account-dropdown" class="nav-item dropdown
                                                                     nav-dropdown authenticated-only" hidden>
                                 <a id="topnav-account-dropdown-toggle" class="nav-link
-                                                                              {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                                                              {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">Account <span class="fa fa-chevron-down text-primary"></a>
                                     <div class="dropdown-menu"
                                          aria-labelledby="topnav-account-dropdown-toggle">
@@ -217,7 +217,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                             </ul>
                         </div>
                         <div class="footer-links col-12 col-lg">
-                            <ul class="list-unstyled list-inline small font-weight-bold mb-0
+                            <ul class="list-unstyled list-inline small fw-bold mb-0
                                        text-center text-lg-left">
                                 <li class="list-inline-item mb-1"><a
                                     href="/for-educators/">For Educators</a></li>
@@ -314,8 +314,10 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                             {% endif %}
                             {% if asset %}
                                 setTutorialHeight();
-                                $('#tutorial-popup').modal('show');
-                                $('#tutorial-popup').trigger('shown-on-load');
+                                $(function () {
+                                    $('#tutorial-popup').modal('show');
+                                    $('#tutorial-popup').trigger('shown-on-load');
+                                })
                                 localStorage.setItem(keyName, "true");
                             {% endif %}
                         }

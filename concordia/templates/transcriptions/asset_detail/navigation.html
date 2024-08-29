@@ -5,7 +5,7 @@
                 <div class="input-group-prepend">
                     <label class="input-group-text p-0 pr-1 border-0" for="asset-selection">Page</label>
                 </div>
-                <select id="asset-selection" class="custom-select custom-select-sm">
+                <select id="asset-selection" class="form-select form-select-sm">
                     {% for sequence, slug in asset_navigation %}
                         <option {% if sequence == asset.sequence %}selected{% endif %} value="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id slug %}">{{ sequence }}</option>
                     {% endfor %}
@@ -28,7 +28,7 @@
         </div>
 
         <div class="btn-group btn-group-sm p-1">
-            <button hidden id="go-fullscreen" class="btn btn-primary text-nowrap" data-target="contribute-main-content">
+            <button hidden id="go-fullscreen" class="btn btn-primary text-nowrap" data-bs-target="contribute-main-content">
                 <span class="fas fa-arrows-alt"></span>
                 Fullscreen
             </button>

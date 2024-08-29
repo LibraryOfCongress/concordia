@@ -1,6 +1,6 @@
 <div id="tag-editor" class="flex-shrink-1">
     <h2 id="tag-label" class="border-top pt-3 pb-2"><a
-        data-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
+        data-bs-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
         aria-controls="tag-form"><i class="fas fa-plus-square"></i> <span
             id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
     <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
