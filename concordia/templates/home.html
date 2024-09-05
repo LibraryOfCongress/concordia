@@ -14,13 +14,13 @@
 
     {% if SHOW_BANNER and banner %}
         <div id="homepage-contribute-container" class="container my-4">
-            <div class="px-default ml-md-3 mb-5">
+            <div class="px-default ms-md-3 mb-5">
                 <div class="alert {{ banner.alert_class }} alert-dismissible w-100 text-center" id="banner-{{ banner.slug }}" role="alert">
                     <a class="btn {{ banner.btn_class }}" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
                         {{ banner.text }}
                     </a>
                     <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -29,7 +29,7 @@
     {% endif %}
 
     <div id="homepage-contribute-container" class="container my-4">
-        <div class="px-default ml-md-3 mb-5">
+        <div class="px-default ms-md-3 mb-5">
             <h2 class="text-center font-serif">Be a virtual volunteer!</h2>
             <p class="text-center px-md-5 mx-md-5">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
         </div>

@@ -2,12 +2,12 @@
     <div class="modal-content">
         <div class="modal-header">
             <h5 id="captcha-modal-title" class="modal-title">Please confirm you are not a robot</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
         <div class="modal-body">
-            <div class="form-row">
+            <div class="row">
                 <div id="captcha-modal-description" class="help-text">
                     <p class="sr-only">
                         To prevent abuse non-logged in users are
@@ -21,7 +21,7 @@
                 </div>
                 <img id="captcha-image" class="d-block my-3 mx-auto border rounded" alt="Type the letters in the image">
             </div>
-            <div class="form-row">
+            <div class="row">
                 <input name="response" class="form-control" autocomplete="off" aria-label="Please enter the letters in the image below">
             </div>
             <input type="hidden" name="key"/>

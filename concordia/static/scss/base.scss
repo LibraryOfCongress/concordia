@@ -136,11 +136,23 @@ body {
     border-top: 4px solid $accent;
     display: flex;
     flex-direction: column;
+    font-family: 'Open Sans', arial, helvetica, sans-serif !important;
     min-height: 100vh;
 }
 
 main {
     flex: 1 1 0%;
+}
+
+.container,
+.col-md-2 {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+.row {
+    margin-left: -15px !important;
+    margin-right: -15px !important;
 }
 
 .close {
@@ -171,7 +183,31 @@ main {
 h1,
 .h1 {
     font-family: $font-family-serif;
-    font-weight: bold;
+    font-weight: bold !important;
+}
+
+body h2 {
+    font-size: $h2-font-size;
+    font-weight: $headings-font-weight !important;
+}
+
+h3 {
+    font-size: $h3-font-size !important;
+    font-weight: $headings-font-weight !important;
+}
+
+body h4 {
+    font-size: $h4-font-size;
+    font-weight: $headings-font-weight;
+}
+
+body h5 {
+    font-size: $h5-font-size;
+    font-weight: $headings-font-weight;
+}
+
+body a {
+    color: $blue;
 }
 
 li a {
@@ -196,12 +232,58 @@ p a:hover,
     text-decoration: none;
 }
 
+.row > * {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 .input-group-prepend {
     margin-right: -1px;
 }
 
 .input-group-append {
     margin-left: -1px;
+}
+
+.btn {
+    font-weight: $btn-font-weight !important;
+}
+
+button.btn-close-blue {
+    background: transparent
+        url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230076ad'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e")
+        center/1em auto no-repeat;
+    opacity: 1;
+}
+
+.btn-primary {
+    background-color: $blue !important;
+    border-color: $blue !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover {
+    background-color: #005c87;
+}
+
+a.btn-dark {
+    color: #fff !important;
+}
+
+a.btn-outline-dark {
+    color: $gray-800 !important;
+}
+
+a.btn-outline-dark.active {
+    color: #fff !important;
+}
+
+a.btn-outline-dark:hover {
+    color: #fff !important;
+}
+
+.btn-light {
+    color: $gray-800 !important;
 }
 
 a .campaign-title:hover,
@@ -222,21 +304,25 @@ p.hero-secondary.offwhite-text {
     color: #fff;
 }
 
-.bg-completed {
+span.text-primary {
+    color: $blue !important;
+}
+
+.row .bg-completed {
     background-color: $bg-completed;
 }
 
-.bg-submitted {
+.row .bg-submitted {
     background-color: $bg-submitted;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */
-.bg-in_progress {
+.row .bg-in_progress {
     background-color: $bg-in-progress;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */
-.bg-not_started {
+.row .bg-not_started {
     background-color: $bg-not-started;
     border: 1px solid $primary;
 }
@@ -322,6 +408,10 @@ ul.nav-secondary {
 
 .border-left-home-contribute {
     border-left: solid 0.0675rem $gray-100;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: $gray-800 !important;
 }
 
 .navbar-nav {
@@ -422,11 +512,24 @@ $card-progress-height: 12px;
     font-size: 13px;
 }
 
+.breadcrumb {
+    margin-bottom: 0 !important;
+    padding: 7px 0 !important;
+}
+
 .breadcrumb-item {
     max-width: 20em;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+}
+
+.breadcrumb-item + .breadcrumb-item {
+    padding-left: 0.25rem !important;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    padding-right: 0.25rem !important;
 }
 
 .section-link {
@@ -557,12 +660,20 @@ $card-progress-height: 12px;
 }
 
 .campaign-page-progress {
-    height: 2.5rem;
+    height: 2.5rem !important;
 }
 
 .campaign-progress {
     height: 35px;
     margin-top: 20px;
+}
+
+.page-link:hover {
+    text-decoration: none;
+}
+
+a.page-link {
+    color: $blue;
 }
 
 .page-item.disabled .page-link {
@@ -864,6 +975,15 @@ $card-progress-height: 12px;
     resize: none;
 }
 
+a.btn-outline-primary {
+    border-color: $blue;
+    color: $blue;
+}
+
+a.btn-outline-primary:hover {
+    background-color: $blue;
+}
+
 .btn-outline-primary.disabled,
 .btn-outline-primary:disabled {
     opacity: 0.2;
@@ -1131,7 +1251,14 @@ $card-progress-height: 12px;
     text-align: center;
 }
 
-#card-carousel .carousel-indicators > li.active {
+#card-carousel .carousel-indicators > button {
+    border: 1px solid $gray-800;
+    border-radius: 100%;
+    height: 14px;
+    width: 14px;
+}
+
+#card-carousel .carousel-indicators .active {
     background-color: #007bff;
     border-color: #007bff;
 }
@@ -1152,6 +1279,7 @@ $card-progress-height: 12px;
 #open-guide {
     border-radius: 0;
     margin: -14px 5px 0 9px;
+    width: 100px;
     white-space: nowrap;
 }
 

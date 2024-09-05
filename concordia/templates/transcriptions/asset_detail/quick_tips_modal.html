@@ -3,8 +3,7 @@
         <div class="modal-content">
             <div class="modal-header border-bottom-0">
                 <h4>Campaign Tips</h4>
-                <button type="button" class="btn-close close text-primary" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">x</span>
+                <button type="button" class="btn-close btn-close-blue close" data-bs-dismiss="modal" aria-label="Close">
                 </button>
             </div>
             <div class="modal-body">
@@ -14,7 +13,7 @@
                             <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
                                 <div class="position-static d-flex flex-column justify-content-around">
                                     {% if card.image %}
-                                        <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
+                                        <img src="i{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
                                     {% endif %}
                                     {% if card.display_heading %}
                                         <h5>{{ card.display_heading }}</h5>
@@ -27,11 +26,11 @@
                     <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
                         <strong><u><&nbsp;Back</u></strong>
                     </a>
-                    <ol class="carousel-indicators d-none d-lg-flex">
+                    <div class="carousel-indicators d-none d-lg-flex">
                         {% for card in cards %}
-                            <li data-bs-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                            <button type="button" data-bs-target="#card-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></button>
                         {% endfor %}
-                    </ol>
+                    </div>
                     <a id="next-card" href="#card-carousel" data-slide="next">
                         <strong><u>Next&nbsp;></u></strong>
                     </a>
