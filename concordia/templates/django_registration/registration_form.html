@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% load static %}
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 
 {% block title %}Registration{% endblock title %}
 
@@ -26,11 +26,7 @@
 
                     {% bootstrap_form form %}
 
-                    {% buttons %}
-                        <button type="submit" class="btn btn-primary justify-content-center ">
-                            Register
-                        </button>
-                    {% endbuttons %}
+                    {% bootstrap_button "Register" button_type="submit" button_class="btn-primary" extra_classes="btn justify-content-center" %}
                     <div class="d-flex col mx-auto">
                         <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
                     </div>
