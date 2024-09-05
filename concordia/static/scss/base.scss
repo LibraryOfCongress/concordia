@@ -75,6 +75,7 @@ $list-inline-padding: 12px;
 // variables that are placed below dependent on bootstrap variables
 @import '../../../node_modules/bootstrap/scss/functions';
 @import '../../../node_modules/bootstrap/scss/variables';
+@import '../../../node_modules/bootstrap/scss/mixins';
 
 // navbar
 $navbar-toggler-font-size: 32px;
@@ -111,7 +112,12 @@ $alert-color-level: -12;
 $alert-padding-y: 9px;
 $alert-padding-x: 1rem;
 
-@import '../../../node_modules/bootstrap/scss/bootstrap';
+@import '../../../node_modules/bootstrap/scss/map';
+@import '../../../node_modules/bootstrap/scss/root';
+@import '../../../node_modules/bootstrap/scss/reboot';
+@import '../../../node_modules/bootstrap/scss/containers';
+@import '../../../node_modules/bootstrap/scss/grid';
+@import '../../../node_modules/bootstrap/scss/buttons';
 
 // progress
 $bg-completed: $dark;
