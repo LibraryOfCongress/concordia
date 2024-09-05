@@ -18,13 +18,13 @@
     <div class="container bg-main profile-page">
         <ul class="nav nav-tabs mb-4" id="nav-tab" role="tablist">
             <li class="nav-item">
-                <a class="nav-link font-weight-bold{% if active_tab == 'contributions' %} active{% endif %}" aria-selected="{% if active_tab == 'contributions' %}true{% else %}false{% endif %}" id="contributions-tab" data-toggle="tab" data-target="#contributions" type="button" role="tab">My Contributions</a>
+                <a class="nav-link fw-bold{% if active_tab == 'contributions' %} active{% endif %}" aria-selected="{% if active_tab == 'contributions' %}true{% else %}false{% endif %}" id="contributions-tab" data-bs-toggle="tab" data-bs-target="#contributions" type="button" role="tab">My Contributions</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link font-weight-bold{% if active_tab == 'recent' %} active" aria-selected="true"{% else %} aria-selected="false"{% endif %} id="recent-tab" data-toggle="tab" data-target="#recent" type="button" role="tab" aria-controls="recent" href="#recent">Recent Pages Worked On</a>
+                <a class="nav-link fw-bold{% if active_tab == 'recent' %} active" aria-selected="true"{% else %} aria-selected="false"{% endif %} id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent" type="button" role="tab" aria-controls="recent" href="#recent">Recent Pages Worked On</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link font-weight-bold{% if active_tab == 'account' %} active" aria-selected="true"{% else %} aria-selected="false"{% endif %} id="account-tab" data-toggle="tab" data-target="#account" type="button" role="tab" href="#account">Account Settings</a>
+                <a class="nav-link fw-bold{% if active_tab == 'account' %} active" aria-selected="true"{% else %} aria-selected="false"{% endif %} id="account-tab" data-bs-toggle="tab" data-bs-target="#account" type="button" role="tab" href="#account">Account Settings</a>
             </li>
         </ul>
         <div class="tab-content" id="nav-tabContent">
@@ -33,16 +33,16 @@
                     <div class="col-12 col-md-10">
                         <h2>Account Settings</h2>
                         <div class="mb-2">
-                            <span class="font-weight-bold">Username</span>: {{ user.username }}
+                            <span class="fw-bold">Username</span>: {{ user.username }}
                         </div>
                     </div>
                     <div class="col-12 col-md-10 py-3 change-options">
                         <div class="mt-1 mb-3">
-                            <span class="font-weight-bold">Email address</span>: {{ user.email }}
+                            <span class="fw-bold">Email address</span>: {{ user.email }}
                         </div>
                         {% if unconfirmed_email %}
                             <div class="mt-1 mb-3">
-                                <span class="font-weight-bold">Unconfirmed email address</span>: {{ unconfirmed_email }}
+                                <span class="fw-bold">Unconfirmed email address</span>: {{ unconfirmed_email }}
                             </div>
                         {% endif %}
                         <form class="form needs-validation" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data" novalidate>
@@ -50,7 +50,7 @@
 
                             <div class="input-group mb-3 user-fields">
                                 <label for="id_email"><span class="visually-hidden">Email</span></label>
-                                <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email" required>
+                                <input type="email" name="email" placeholder="Change your email address" class="form-control fst-italic" title="" required="" id="id_email" required>
                                 <div class="input-group-append">
                                     {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" name="submit_email" %}
                                 </div>
@@ -77,13 +77,13 @@
                             {% csrf_token %}
                             <div class="mb-3 user-fields">
                                 <label class="d-flex mb-2">
-                                    <span class="font-weight-bold">First Name</span>: {{ user.first_name }}
+                                    <span class="fw-bold">First Name</span>: {{ user.first_name }}
                                 </label>
-                                <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
+                                <input name="first_name" placeholder="Enter your first name" class="form-control fst-italic">
                                 <label class="mt-2">
-                                    <span class="font-weight-bold">Last Name</span>: {{ user.last_name }}
+                                    <span class="fw-bold">Last Name</span>: {{ user.last_name }}
                                 </label>
-                                <input name="last_name" placeholder="Enter your last name" class="form-control font-italic">
+                                <input name="last_name" placeholder="Enter your last name" class="form-control fst-italic">
                             </div>
                             <div class="input-group-append">
                                 {% bootstrap_button "Save Changes" button_type="submit" button_class="btn btn-primary rounded-0" name="submit_name" %}

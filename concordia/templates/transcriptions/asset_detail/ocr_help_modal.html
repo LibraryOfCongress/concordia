@@ -3,8 +3,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">About Transcribe with OCR</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+
                 </button>
             </div>
             <div class="modal-body">
@@ -16,11 +16,11 @@
                 <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you start a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
                 <h6>Who can use "Transcribe with OCR"?</h6>
                 <p><a href="{% url 'registration_register' %}">Register for an account</a> and <a href="{% url 'registration_login' %}?next={{ request.path }}">log in</a> to use this feature.</p>
-                <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
+                <h6>Why does <span class="fst-italic">By the People</span> have this feature?</h6>
                 <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection of handwritten and print materials, or printed on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
             </div>
             <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

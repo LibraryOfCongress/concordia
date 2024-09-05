@@ -87,7 +87,7 @@
         <h2>All the pages contributed to in the last 6 months</h2>
         <table>
             <thead>
-                <tr class="text-left">
+                <tr class="text-start">
                     <th>Row</th>
                     <th>Date</th>
                     <th>Page</th>
@@ -101,7 +101,7 @@
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td class="col-md-3">{{ asset.latest_activity }}</td>
-                        <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                        <td class="text-end"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
                         <td>{{ asset.item.title }}</td>
                         <td>{% if asset.last_reviewed %}Reviewed{% else %}Transcribed{% endif %}</td>
                         <td>{{ asset.get_transcription_status_display }}</td>

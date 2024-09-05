@@ -67,21 +67,21 @@
             {% include "transcriptions/asset_detail/navigation.html" %}
         </div>
         <div id="contribute-container" class="d-flex flex-grow-1 d-print-block border">
-            <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block flex-column">
+            <div id="viewer-column" class="ps-0 d-flex align-items-stretch bg-dark d-print-block flex-column">
                 {% include "transcriptions/asset_detail/viewer.html" %}
                 {% include "transcriptions/asset_detail/ocr_help_modal.html" %}
                 {% include "transcriptions/asset_detail/viewer_filters.html" %}
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
                 {% if not disable_ocr %}
-                    <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
-                        <div class="d-flex flex-row align-items-center align-content-end ml-auto mr-3 mt-1">
-                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
-                                <span class="underline-link font-weight-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
+                    <div id="ocr-section" class="row ps-3 pb-4 bg-white print-none">
+                        <div class="d-flex flex-row align-items-center align-content-end ms-auto me-3 mt-1">
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-bs-placement="top" data-bs-trigger="focus click hover" title="When to use OCR"  data-bs-toggle="modal" data-bs-target="#ocr-help-modal">
+                                <span class="underline-link fw-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                             </a>
                             {% if user.is_authenticated %}
-                                <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                                <a role="button" data-bs-placement="top" data-bs-trigger="click" title="Transcribe with OCR" data-bs-toggle="modal" data-bs-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
                             {% else %}
-                                <a role="button" data-placement="top" title='Log in to use "Transcribe with OCR"' id="ocr-transcription-link" class="btn btn-primary mx-1 disabled" disabled>Transcribe with OCR</a>
+                                <a role="button" data-bs-placement="top" title='Log in to use "Transcribe with OCR"' id="ocr-transcription-link" class="btn btn-primary mx-1 disabled" disabled>Transcribe with OCR</a>
                             {% endif %}
                         </div>
                     </div>
@@ -95,9 +95,9 @@
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             <div class="row p-3 bg-light justify-content-sm-between">
-                <div class="d-flex align-items-center pl-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
+                <div class="d-flex align-items-center ps-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
                 <div class="btn-group align-items-center align-self-end">
-                    <p class="ml-1 mr-2 my-0">Need help?</p>
+                    <p class="ms-1 me-2 my-0">Need help?</p>
 
                     <a class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
                         Contact us

@@ -65,25 +65,25 @@ for performance:
                         <h1 class="logo-by-the-people m-0 -d-flex -align-items-center">
                             <a class="d-flex" href="/" title="By the People">
                                 <img class="img-fluid" src="{% static 'img/logo-by-the-people.svg' %}" width="260" height="27" alt="" aria-hidden="true">
-                                <span class="sr-only">By The People</span>
+                                <span class="visually-hidden">By The People</span>
                             </a>
                         </h1>
                     </div>
                     <button class="navbar-toggler navbar-light border-0 d-print-none"
-                            type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu"
+                            type="button" data-bs-toggle="collapse" data-bs-target="#nav-menu" aria-controls="nav-menu"
                             aria-expanded="false" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
-                        <span class="sr-only">Menu</span>
+                        <span class="visually-hidden">Menu</span>
                     </button>
                     <div class="collapse navbar-collapse text-center d-print-none"
                          id="nav-menu">
-                        <ul class="navbar-nav ml-auto d-print-none small">
+                        <ul class="navbar-nav ms-auto d-print-none small">
                             <li class="nav-item">
                                 <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                             </li>
                             <li class="nav-item dropdown nav-dropdown">
                                 <a id="topnav-campaigns-dropdown-toggle" class="nav-link
-                                                                                {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-toggle="dropdown" aria-haspopup="true"
+                                                                                {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">Campaigns <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu" aria-labelledby="topnav-campaigns-dropdown-toggle">
                                     <a class="dropdown-item" href="{% url 'campaign-topic-list' %}">All Campaigns</a>
@@ -94,7 +94,7 @@ for performance:
                                                                  nav-dropdown">
                                 <a id="topnav-help-dropdown-toggle" class="nav-link
                                                                            {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}"
-                                   href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                   href="{% url 'help-center' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu"
                                      aria-labelledby="topnav-help-dropdown-toggle">
@@ -117,7 +117,7 @@ for performance:
                             <li id="topnav-account-dropdown" class="nav-item dropdown
                                                                     nav-dropdown authenticated-only" hidden>
                                 <a id="topnav-account-dropdown-toggle" class="nav-link
-                                                                              {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                                                              {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">Account <span class="fa fa-chevron-down text-primary"></a>
                                     <div class="dropdown-menu"
                                          aria-labelledby="topnav-account-dropdown-toggle">
@@ -167,7 +167,7 @@ for performance:
                             {% comment %} This is a hidden <div> rather than <template>
 because it's not worth dealing with IE11 compatibility {% endcomment %}
                             <div class="alert alert-dismissible mx-3 my-2" role="alert">
-                                <button type="button" class="close" data-dismiss="alert"
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
                                         aria-label="Close">
                                     <!--span aria-hidden="true">&times;</span-->
                                     <span aria-hidden="true" class="fas fa-times"></span>
@@ -191,10 +191,10 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                 <div class="container">
                     <div class="row">
                         <div class="col-12 col-lg-auto">
-                            <h2 class="h3 font-weight-normal text-center text-lg-left">Follow
+                            <h2 class="h3 fw-normal text-center text-lg-start">Follow
                                 Us</h2>
                             <ul class="list-unstyled list-inline mb-0 text-center
-                                       text-lg-left">
+                                       text-lg-start">
                                 <li class="list-inline-item link-github">
                                     <a href="https://github.com/LibraryOfCongress/concordia"
                                        title="GitHub">
@@ -217,8 +217,8 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                             </ul>
                         </div>
                         <div class="footer-links col-12 col-lg">
-                            <ul class="list-unstyled list-inline small font-weight-bold mb-0
-                                       text-center text-lg-left">
+                            <ul class="list-unstyled list-inline small fw-bold mb-0
+                                       text-center text-lg-start">
                                 <li class="list-inline-item mb-1"><a
                                     href="/for-educators/">For Educators</a></li>
                                 <li class="list-inline-item mb-1"><a
@@ -231,7 +231,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                         </div>
                         <div class="col-12 col-lg-auto align-self-center">
                             <ul class="list-unstyled list-inline small text-center
-                                       text-lg-left">
+                                       text-lg-start">
                                 <li class="list-inline-item"><a
                                     href="https://www.loc.gov/accessibility/">Accessibility</a></li>
                                 <li class="list-inline-item"><a
@@ -244,11 +244,11 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                                     Disclaimer</a></li>
                             </ul>
                             <ul class="list-unstyled list-inline mb-0 text-center
-                                       text-lg-left">
+                                       text-lg-start">
                                 <li class="list-inline-item intersites-link-congress"><a
-                                    href="https://www.congress.gov/"><span class="sr-only">Congress.gov</span></a></li>
+                                    href="https://www.congress.gov/"><span class="visually-hidden">Congress.gov</span></a></li>
                                 <li class="list-inline-item intersites-link-copyright"><a
-                                    href="https://copyright.gov"><span class="sr-only">Copyright.gov</span></a></li>
+                                    href="https://copyright.gov"><span class="visually-hidden">Copyright.gov</span></a></li>
                             </ul>
                         </div>
                     </div>
