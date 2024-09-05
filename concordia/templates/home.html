@@ -63,11 +63,11 @@
 
     {% if CAROUSEL_CMS %}
         <div id="homepage-carousel" class="carousel slide container" data-ride="carousel" data-pause="hover">
-            <ol class="carousel-indicators d-none d-lg-flex">
+            <div class="carousel-indicators d-none d-lg-flex">
                 {% for slide in slides %}
-                    <li data-bs-target="#homepage-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                    <button type="button" data-bs-target="#homepage-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></button>
                 {% endfor %}
-            </ol>
+            </div>
 
             <div class="carousel-inner">
                 {% for slide in slides %}
