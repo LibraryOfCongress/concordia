@@ -1,4 +1,6 @@
-/* global $ displayMessage buildErrorMessage reserveAssetForEditing */
+/* global $ displayMessage buildErrorMessage */
+
+import {reserveAssetForEditing} from 'asset-reservation';
 
 function lockControls($container) {
     if (!$container) {
@@ -7,7 +9,7 @@ function lockControls($container) {
     // Locks all of the controls in the provided jQuery element
     $container.find('input, textarea').attr('readonly', 'readonly');
     $container.find('input:checkbox').attr('disabled', 'disabled');
-    $container.find('button').attr('disabled', 'disabled');
+    $container.find('button:not(#open-guide)').attr('disabled', 'disabled');
 }
 
 function unlockControls($container) {
@@ -24,8 +26,6 @@ function unlockControls($container) {
     // listener on the transcription form and the form
     // results handlers.
     // The only buttons unlocked here are ones that should always be unlocked.
-    // TODO: Find a better way to handle this than hard-coding every button
-    // we want to unlock here
     $container.find('button#open-guide').removeAttr('disabled');
     $container.find('button#ocr-transcription-button').removeAttr('disabled');
     $container.find('button#close-guide').removeAttr('disabled');
@@ -121,11 +121,11 @@ function setupPage() {
         $form.on('submit', function (event) {
             event.preventDefault();
 
-            var data = $form.data();
+            var eventData = $form.data();
 
             lockControls($form);
-            if (data.lockElement) {
-                lockControls($(data.lockElement));
+            if (eventData.lockElement) {
+                lockControls($(eventData.lockElement));
             }
 
             var formData = $form.serializeArray();
@@ -144,8 +144,8 @@ function setupPage() {
                         $form: $form,
                     });
                     unlockControls($form);
-                    if (data.lockElement) {
-                        unlockControls($(data.lockElement));
+                    if (eventData.lockElement) {
+                        unlockControls($(eventData.lockElement));
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
@@ -167,8 +167,8 @@ function setupPage() {
                             jqXHR: jqXHR,
                         });
                         unlockControls($form);
-                        if (data.lockElement) {
-                            unlockControls($(data.lockElement));
+                        if (eventData.lockElement) {
+                            unlockControls($(eventData.lockElement));
                         }
                     }
                 });
