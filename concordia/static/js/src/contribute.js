@@ -793,5 +793,9 @@ window.addEventListener('beforeunload', function (event) {
             "The transcription you've started has not been saved.");
     }
 });
+$('#asset-reservation-failure-modal').click(function () {
+    document.getElementById('transcription-input').placeholder =
+        'Someone else is already transcribing this page';
+});
 
 setupPage();
