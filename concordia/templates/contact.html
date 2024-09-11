@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 
 {% block main_content %}
     <div class="container">
@@ -19,11 +19,7 @@
 
                     {% bootstrap_form form %}
 
-                    {% buttons %}
-                        <button type="submit" class="btn btn-primary">
-                            Send Message
-                        </button>
-                    {% endbuttons %}
+                    {% bootstrap_button "Send Message" button_type="submit" button_class="btn-primary" extra_classes="btn" %}
                 </form>
             </div>
         </div>
