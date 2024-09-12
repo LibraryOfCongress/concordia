@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header border-bottom-0">
                 <h4>Campaign Tips</h4>
-                <button type="button" class="close text-primary" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="btn-close btn-close-blue close text-primary" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">x</span>
                 </button>
             </div>
@@ -27,11 +27,11 @@
                     <a id="previous-card" href="#card-carousel" role="button" data-bs-slide="prev">
                         <strong><u><&nbsp;Back</u></strong>
                     </a>
-                    <ol class="carousel-indicators d-none d-lg-flex">
+                    <div class="carousel-indicators d-none d-lg-flex">
                         {% for card in cards %}
-                            <li data-bs-target="#card-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                            <button type="button" data-bs-target="#card-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></button>
                         {% endfor %}
-                    </ol>
+                    </div>
                     <a id="next-card" href="#card-carousel" data-bs-slide="next">
                         <strong><u>Next&nbsp;></u></strong>
                     </a>
