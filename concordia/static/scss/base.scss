@@ -223,6 +223,7 @@ body h2 {
     font-weight: $headings-font-weight;
 }
 
+body .h3,
 h3 {
     font-size: $h3-font-size;
     font-weight: $headings-font-weight;
@@ -322,9 +323,22 @@ body .btn-link {
     color: $blue;
 }
 
+body .btn-link:hover {
+    color: #004261;
+}
+
+body .btn-primary:hover {
+    background-color: #004261;
+}
+
 body .btn:disabled,
+body .btn-primary.disabled,
 body .btn-primary {
     border-color: $blue;
+}
+
+body .btn-primary.disabled {
+    background-color: $blue;
 }
 
 body .btn-primary:disabled,
@@ -361,6 +375,12 @@ a.btn-outline-dark:hover {
 
 .btn-light {
     color: $gray-800;
+}
+
+body .btn-group > .btn:not(:last-child),
+body .btn-group > .btn:not(.dropdown-toggle),
+body .btn-group > :not(.btn-check) + .btn {
+    border-radius: 0.25rem;
 }
 
 body .form-check-input {
@@ -621,6 +641,10 @@ $card-progress-height: 12px;
 
 .underline-link {
     text-decoration: underline;
+}
+
+.underline-link:hover {
+    color: $blue;
 }
 
 /*
@@ -998,6 +1022,10 @@ a.page-link {
     }
 }
 
+body .help-buttons {
+    padding-left: 75px;
+}
+
 @include media-breakpoint-down(sm) {
     #contribute-container {
         flex-direction: column !important;
@@ -1075,6 +1103,7 @@ a.btn-outline-primary {
 
 a.btn-outline-primary:hover {
     background-color: $blue;
+    border-color: $blue;
 }
 
 .btn-outline-primary.disabled,
@@ -1243,6 +1272,10 @@ a.btn-outline-primary:hover {
         border: none;
         padding: 0;
     }
+}
+
+#ocr-section div {
+    width: 97.75%;
 }
 
 #ocr-transcription-link {

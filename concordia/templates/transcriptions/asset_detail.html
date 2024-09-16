@@ -74,7 +74,7 @@
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
                 {% if not disable_ocr %}
                     <div id="ocr-section" class="row ps-3 pb-4 bg-white print-none">
-                        <div class="d-flex flex-row align-items-center align-content-end ms-auto me-3 mt-1">
+                        <div class="d-flex flex-row align-items-center justify-content-end mt-1">
                             <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-bs-placement="top" data-bs-trigger="focus click hover" title="When to use OCR"  data-bs-toggle="modal" data-bs-target="#ocr-help-modal">
                                 <span class="underline-link fw-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                             </a>
@@ -95,13 +95,15 @@
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             <div class="row p-3 bg-light justify-content-sm-between">
-                <div class="d-flex align-items-center ps-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
-                <div class="btn-group align-items-center align-self-end">
+                <div class="d-flex align-items-center ps-1 col">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
+                <div class="btn-group align-items-center col-3 help-buttons">
                     <p class="ms-1 me-2 my-0">Need help?</p>
 
-                    <a class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
-                        Contact us
-                    </a>
+                    <div class="d-grid gap-2 d-md-block">
+                        <a class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
+                            Contact us
+                        </a>
+                    </div>
 
                 </div>
             </div>
