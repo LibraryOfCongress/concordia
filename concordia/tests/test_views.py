@@ -1,9 +1,10 @@
 from datetime import date, timedelta
 from unittest.mock import patch
 
-from captcha.models import CaptchaStore
+from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
 from django.test import (
     Client,
@@ -31,7 +32,6 @@ from concordia.utils import get_anonymous_user, get_or_create_reservation_token
 from concordia.views import (
     AccountProfileView,
     CompletedCampaignListView,
-    ConcordiaLoginView,
     ratelimit_view,
     registration_rate,
 )
@@ -112,6 +112,12 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
 
     def test_ratelimit_view(self):
         c = Client()
@@ -477,27 +483,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
 )
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
-    def completeCaptcha(self, key=None):
-        """Submit a CAPTCHA response using the provided challenge key"""
-
-        if key is None:
-            challenge_data = self.assertValidJSON(
-                self.client.get(reverse("ajax-captcha")), expected_status=401
-            )
-            self.assertIn("key", challenge_data)
-            self.assertIn("image", challenge_data)
-            key = challenge_data["key"]
-
-        self.assertValidJSON(
-            self.client.post(
-                reverse("ajax-captcha"),
-                data={
-                    "key": key,
-                    "response": CaptchaStore.objects.get(hashkey=key).response,
-                },
-            )
-        )
-
     def test_asset_reservation(self):
         """
         Test the basic Asset reservation process
@@ -749,74 +734,67 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertEqual(reservation.reservation_token, data["reservation_token"])
         self.assertEqual(reservation.tombstoned, False)
 
-    def test_anonymous_transcription_save_captcha(self):
-        asset = create_asset()
-
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
-        )
-        data = self.assertValidJSON(resp, expected_status=401)
-        self.assertIn("key", data)
-        self.assertIn("image", data)
-
-        self.completeCaptcha(data["key"])
-
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
-        )
-        data = self.assertValidJSON(resp, expected_status=201)
-
     def test_transcription_save(self):
         asset = create_asset()
 
-        # We're not testing the CAPTCHA here so we'll complete it:
-        self.completeCaptcha()
+        with patch("concordia.turnstile.fields.TurnstileField.validate") as mock:
+            mock.side_effect = forms.ValidationError(
+                "Testing error", code="invalid_turnstile"
+            )
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+            )
+            data = self.assertValidJSON(resp, expected_status=401)
+            self.assertIn("error", data)
 
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
-        )
-        data = self.assertValidJSON(resp, expected_status=201)
-        self.assertIn("submissionUrl", data)
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+            )
+            data = self.assertValidJSON(resp, expected_status=201)
+            self.assertIn("submissionUrl", data)
 
-        # Test attempts to create a second transcription without marking that it
-        # supersedes the previous one:
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
-        )
-        data = self.assertValidJSON(resp, expected_status=409)
-        self.assertIn("error", data)
+            # Test attempts to create a second transcription without marking that it
+            # supersedes the previous one:
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+            )
+            data = self.assertValidJSON(resp, expected_status=409)
+            self.assertIn("error", data)
 
-        # This should work with the chain specified:
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)),
-            data={"text": "test", "supersedes": asset.transcription_set.get().pk},
-        )
-        data = self.assertValidJSON(resp, expected_status=201)
-        self.assertIn("submissionUrl", data)
+            # This should work with the chain specified:
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={"text": "test", "supersedes": asset.transcription_set.get().pk},
+            )
+            data = self.assertValidJSON(resp, expected_status=201)
+            self.assertIn("submissionUrl", data)
 
-        # We should see an error if you attempt to supersede a transcription
-        # which has already been superseded:
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)),
-            data={
-                "text": "test",
-                "supersedes": asset.transcription_set.order_by("pk").first().pk,
-            },
-        )
-        data = self.assertValidJSON(resp, expected_status=409)
-        self.assertIn("error", data)
+            # We should see an error if you attempt to supersede a transcription
+            # which has already been superseded:
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={
+                    "text": "test",
+                    "supersedes": asset.transcription_set.order_by("pk").first().pk,
+                },
+            )
+            data = self.assertValidJSON(resp, expected_status=409)
+            self.assertIn("error", data)
 
-        # A logged in user can take over from an anonymous user:
-        self.login_user()
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)),
-            data={
-                "text": "test",
-                "supersedes": asset.transcription_set.order_by("pk").last().pk,
-            },
-        )
-        data = self.assertValidJSON(resp, expected_status=201)
-        self.assertIn("submissionUrl", data)
+            # A logged in user can take over from an anonymous user:
+            self.login_user()
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={
+                    "text": "test",
+                    "supersedes": asset.transcription_set.order_by("pk").last().pk,
+                },
+            )
+            data = self.assertValidJSON(resp, expected_status=201)
+            self.assertIn("submissionUrl", data)
 
     def test_anonymous_transcription_submission(self):
         asset = create_asset()
@@ -826,36 +804,48 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         transcription.full_clean()
         transcription.save()
 
-        resp = self.client.post(
-            reverse("submit-transcription", args=(transcription.pk,))
-        )
+        with patch("concordia.turnstile.fields.TurnstileField.validate") as mock:
+            mock.side_effect = forms.ValidationError(
+                "Testing error", code="invalid_turnstile"
+            )
+            resp = self.client.post(
+                reverse("submit-transcription", args=(transcription.pk,))
+            )
         data = self.assertValidJSON(resp, expected_status=401)
-        self.assertIn("key", data)
-        self.assertIn("image", data)
+        self.assertIn("error", data)
 
         self.assertFalse(Transcription.objects.filter(submitted__isnull=False).exists())
 
-        self.completeCaptcha(data["key"])
-        self.client.post(reverse("submit-transcription", args=(transcription.pk,)))
-        self.assertTrue(Transcription.objects.filter(submitted__isnull=False).exists())
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            self.client.post(
+                reverse("submit-transcription", args=(transcription.pk,)),
+            )
+            self.assertTrue(
+                Transcription.objects.filter(submitted__isnull=False).exists()
+            )
 
     def test_transcription_submission(self):
         asset = create_asset()
 
-        # We're not testing the CAPTCHA here so we'll complete it:
-        self.completeCaptcha()
-
-        resp = self.client.post(
-            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
-        )
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+            )
         data = self.assertValidJSON(resp, expected_status=201)
 
         transcription = Transcription.objects.get()
         self.assertIsNone(transcription.submitted)
 
-        resp = self.client.post(
-            reverse("submit-transcription", args=(transcription.pk,))
-        )
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            resp = self.client.post(
+                reverse("submit-transcription", args=(transcription.pk,))
+            )
         data = self.assertValidJSON(resp, expected_status=200)
         self.assertIn("id", data)
         self.assertEqual(data["id"], transcription.pk)
@@ -865,9 +855,6 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
     def test_stale_transcription_submission(self):
         asset = create_asset()
-
-        # We're not testing the CAPTCHA here so we'll complete it:
-        self.completeCaptcha()
 
         anon = get_anonymous_user()
 
@@ -879,9 +866,12 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.full_clean()
         t2.save()
 
-        resp = self.client.post(reverse("submit-transcription", args=(t1.pk,)))
-        data = self.assertValidJSON(resp, expected_status=400)
-        self.assertIn("error", data)
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            resp = self.client.post(reverse("submit-transcription", args=(t1.pk,)))
+            data = self.assertValidJSON(resp, expected_status=400)
+            self.assertIn("error", data)
 
     def test_transcription_review(self):
         asset = create_asset()
@@ -1538,18 +1528,34 @@ class RateLimitTests(TestCase):
         self.assertNotEqual(response["Retry-After"], 0)
 
 
-class CaptchaTests(TestCase):
+class LoginTests(TestCase, CreateTestUsers):
     def setUp(self):
-        self.request_factory = RequestFactory()
+        self.user = self.create_user("test-user")
 
     def test_ConcordiaLoginView(self):
-        request = self.request_factory.post("/")
-        request.session = {}
-        view = setup_view(ConcordiaLoginView(), request)
-        response = view.post(request)
-        self.assertNotContains(response, "captcha")
+        with patch("concordia.turnstile.fields.TurnstileField.validate") as mock:
+            mock.side_effect = forms.ValidationError(
+                "Testing error", code="invalid_turnstile"
+            )
+            response = self.client.post(
+                reverse("registration_login"),
+                data={"username": self.user.username, "password": self.user._password},
+            )
+        self.assertIn("user", response.context)
+        self.assertFalse(response.context["user"].is_authenticated)
 
-        request.limited = True
-        view = setup_view(ConcordiaLoginView(), request)
-        response = view.post(request)
-        self.assertContains(response, "captcha")
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            response = self.client.post(
+                reverse("registration_login"),
+                data={"username": self.user.username, "password": self.user._password},
+                follow=True,
+            )
+        self.assertRedirects(
+            response,
+            expected_url=reverse("homepage"),
+            target_status_code=200,
+        )
+        self.assertIn("user", response.context)
+        self.assertTrue(response.context["user"].is_authenticated)
