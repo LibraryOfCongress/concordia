@@ -63,18 +63,20 @@
                             #{{ a.sequence }}
                         </a>
                         <div class="card-actions">
-                            <a class="btn btn-sm btn-block {% if a.transcription_status != 'completed' %}btn-primary{% else %}btn-dark{% endif %}" href="{{ asset_detail_url }}">
-                                {% if a.transcription_status == 'submitted' %}
-                                    <span class="fas fa-list tx-submitted"></span>
-                                    Review
-                                {% elif a.transcription_status == 'completed' %}
-                                    <span class="fas fa-check tx-completed"></span>
-                                    Complete
-                                {% else %}
-                                    <span class="fas fa-edit tx-edit"></span>
-                                    Transcribe
-                                {% endif %}
-                            </a>
+                            <div class="d-grid">
+                                <a class="btn btn-sm btn-block {% if a.transcription_status != 'completed' %}btn-primary{% else %}btn-dark{% endif %}" href="{{ asset_detail_url }}">
+                                    {% if a.transcription_status == 'submitted' %}
+                                        <span class="fas fa-list tx-submitted"></span>
+                                        Review
+                                    {% elif a.transcription_status == 'completed' %}
+                                        <span class="fas fa-check tx-completed"></span>
+                                        Complete
+                                    {% else %}
+                                        <span class="fas fa-edit tx-edit"></span>
+                                        Transcribe
+                                    {% endif %}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

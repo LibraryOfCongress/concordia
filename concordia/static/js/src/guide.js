@@ -38,9 +38,9 @@ $(function () {
         })
         .on('slide.bs.carousel', function (event) {
             if (event.to == 0) {
-                $('#guide-bars').addClass('d-none');
+                $('#guide-bars-col').addClass('d-none');
             } else {
-                $('#guide-bars').removeClass('d-none');
+                $('#guide-bars-col').removeClass('d-none');
             }
         });
 });

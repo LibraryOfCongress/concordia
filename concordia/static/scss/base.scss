@@ -163,16 +163,22 @@ main {
     flex: 1 1 0%;
 }
 
-a {
+body a {
+    color: $blue;
     text-decoration: none;
 }
 
-a:hover {
+body a:hover {
+    color: #004261;
     text-decoration: underline;
 }
 
 body .container,
-.col-md-2 {
+.col-md-2,
+.col-md-3,
+.row .col-12,
+.row .col-lg,
+.row .col-lg-auto {
     padding-left: 15px;
     padding-right: 15px;
 }
@@ -212,7 +218,7 @@ body .row > * {
     font-family: $font-family-serif;
 }
 
-h1,
+body h1,
 .h1 {
     font-family: $font-family-serif;
     font-weight: bold;
@@ -224,7 +230,7 @@ body h2 {
 }
 
 body .h3,
-h3 {
+body h3 {
     font-size: $h3-font-size;
     font-weight: $headings-font-weight;
 }
@@ -237,10 +243,6 @@ body h4 {
 body h5 {
     font-size: $h5-font-size;
     font-weight: $headings-font-weight;
-}
-
-body a {
-    color: $blue;
 }
 
 li a {
@@ -319,11 +321,13 @@ button.btn-close-blue {
     opacity: 1;
 }
 
-body .btn-link {
+body .btn-link,
+li .nav-link {
     color: $blue;
 }
 
-body .btn-link:hover {
+body .btn-link:hover,
+body .nav-link:hover {
     color: #004261;
 }
 
@@ -387,6 +391,11 @@ body .form-check-input {
     border-color: $gray-800;
 }
 
+.form-check .form-check-input:disabled ~ .form-check-label,
+.form-check-input[disabled] ~ .form-check-label {
+    opacity: 1;
+}
+
 a .campaign-title:hover,
 .hero-text a:hover {
     color: $dark;
@@ -407,6 +416,10 @@ p.hero-secondary.offwhite-text {
 
 body .text-primary {
     color: $blue !important;
+}
+
+body .bg-primary {
+    background-color: $blue !important;
 }
 
 .row .bg-completed {
@@ -588,6 +601,14 @@ $card-progress-height: 12px;
     margin-bottom: 0.5rem;
 }
 
+a.card-title {
+    color: $blue;
+}
+
+a.card-title.text-dark {
+    color: $gray-800;
+}
+
 .img-project {
     min-height: 13.125rem;
 }
@@ -764,7 +785,7 @@ $card-progress-height: 12px;
     }
 }
 
-.campaign-page-progress {
+body .campaign-page-progress {
     height: 2.5rem;
 }
 
@@ -779,6 +800,10 @@ $card-progress-height: 12px;
 
 a.page-link {
     color: $blue;
+}
+
+body .disabled > .page-link {
+    background-color: #fff;
 }
 
 .page-item.disabled .page-link {
@@ -918,10 +943,12 @@ a.page-link {
 }
 
 .carousel .carousel-indicators {
-    > li {
+    > button {
         border-radius: 50%;
         border: 1px solid $dark;
+        height: 12px;
         opacity: 1;
+        width: 12px;
 
         &.active {
             background-color: $accent;
@@ -935,7 +962,7 @@ a.page-link {
     text-align: center;
 }
 
-.carousel .carousel-indicators > button {
+#card-carousel .carousel-indicators > button {
     border: 1px solid $gray-800;
     border-radius: 100%;
     height: 14px;
@@ -1460,6 +1487,12 @@ a.btn-outline-primary:hover {
     padding-right: 0;
 }
 
+.prev-guide,
+.next-guide {
+    flex: 0 0 auto;
+    width: 10px;
+}
+
 /*
  * Campaign Resources Panel
  */
@@ -1467,6 +1500,10 @@ a.btn-outline-primary:hover {
 div.related-links {
     background-color: #ddd;
     border: #000 1px solid;
+}
+
+.list-inline .list-inline-item:not(:last-child) {
+    margin-right: $list-inline-padding;
 }
 
 .related-links .list-group-item {
