@@ -347,7 +347,9 @@ class ConcordiaLoginView(LoginView):
             if turnstile_form.is_valid():
                 return self.form_valid(form)
             else:
-                form.add_error(None, "Unable to validate user")
+                form.add_error(
+                    None, "Unable to validate. Please login or complete the challenge."
+                )
                 return self.form_invalid(form)
 
         else:
@@ -1519,7 +1521,10 @@ def validate_anonymous_user(view):
             form = TurnstileForm(request.POST)
             if not form.is_valid():
                 return JsonResponse(
-                    {"error": "Unable to validate user"},
+                    {
+                        "error": "Unable to validate. "
+                        "Please login or complete the challenge."
+                    },
                     status=401,
                 )
         return view(request, *args, **kwargs)
