@@ -25,7 +25,7 @@ on:
             - kibana-proxy/**
             - postgresql/**
     pull_request:
-        branches: [main]
+        branches: [main, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
