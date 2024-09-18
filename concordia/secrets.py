@@ -26,9 +26,19 @@ def get_secret(secret_name):
                 "The requested secret " + secret_name + " was not found"
             ) from e
         elif e.response["Error"]["Code"] == "InvalidRequestException":
-            raise Exception("The request was invalid due to:", e) from e
+            raise Exception(
+                "The request for " + secret_name + "was invalid due to:", e
+            ) from e
         elif e.response["Error"]["Code"] == "InvalidParameterException":
-            raise Exception("The request had invalid params:", e) from e
+            raise Exception(
+                "The request for " + secret_name + "had invalid params:", e
+            ) from e
+        elif e.response["Error"]["Code"] == "DecryptionFailure":
+            raise Exception(
+                "The request failed to decrypt the value for " + secret_name + ":", e
+            ) from e
+        else:
+            raise Exception("Unknown exception:", e) from e
     else:
         # Decrypted secret using the associated KMS CMK Depending on whether the
         # secret was a string or binary, one of these fields will be populated
