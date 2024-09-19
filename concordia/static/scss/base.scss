@@ -1374,6 +1374,7 @@ a.btn-outline-primary:hover {
 }
 
 #tutorial-popup .close {
+    font-size: 10px;
     position: absolute;
     right: 1rem;
     top: 0.75rem;
@@ -1422,6 +1423,7 @@ a.btn-outline-primary:hover {
 }
 
 #close-guide {
+    font-size: 10px;
     height: 30.5px;
     margin: 0 1rem -1rem auto;
     padding-top: 0.5rem;
@@ -1485,12 +1487,6 @@ a.btn-outline-primary:hover {
 
 #guide-carousel .container {
     padding-right: 0;
-}
-
-.prev-guide,
-.next-guide {
-    flex: 0 0 auto;
-    width: 10px;
 }
 
 /*
