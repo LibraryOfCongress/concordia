@@ -755,7 +755,7 @@ window.addEventListener('beforeunload', function (event) {
 });
 $('#asset-reservation-failure-modal').click(function () {
     document.getElementById('transcription-input').placeholder =
-        'Someone else is already transcribing this page';
+        "Someone else is already transcribing this page.\n\nYou can help by transcribing a new page, adding tags to this page, or coming back later to review this page's transcription.";
 });
 
 setupPage();
