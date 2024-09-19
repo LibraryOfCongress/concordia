@@ -160,7 +160,7 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
                 "concordia.context_processors.maintenance_mode_frontend_available",
-                "concordia.context_processors.turnstile_default_settings",
+                "concordia.turnstile.context_processors.turnstile_default_settings",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
@@ -318,8 +318,12 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Turnstile settings
-TURNSTILE_JS_API_URL = os.environ.get("TURNSTILE_JS_API_URL", "")
-TURNSTILE_VERIFY_URL = os.environ.get("TURNSTILE_VERIFY_URL", "")
+TURNSTILE_JS_API_URL = os.environ.get(
+    "TURNSTILE_JS_API_URL", "https://challenges.cloudflare.com/turnstile/v0/api.js"
+)
+TURNSTILE_VERIFY_URL = os.environ.get(
+    "TURNSTILE_VERIFY_URL", "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+)
 TURNSTILE_SITEKEY = os.environ.get("TURNSTILE_SITEKEY", "")
 TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET", "")
 TURNSTILE_TIMEOUT = os.environ.get("TURNSTILE_TIMEOUT", 5)
