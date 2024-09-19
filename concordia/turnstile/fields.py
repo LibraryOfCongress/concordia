@@ -3,6 +3,7 @@
 
 import inspect
 import json
+from logging import getLogger
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import ProxyHandler, Request, build_opener
@@ -12,6 +13,8 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from ..turnstile.widgets import TurnstileWidget
+
+logger = getLogger(__name__)
 
 
 class TurnstileField(forms.Field):
@@ -64,6 +67,7 @@ class TurnstileField(forms.Field):
         try:
             response = opener.open(request, timeout=settings.TURNSTILE_TIMEOUT)
         except HTTPError as exc:
+            logger.exception("HTTPError received from Turnstile: ", exc, exc_info=exc)
             raise forms.ValidationError(
                 self.error_messages["error_turnstile"], code="error_turnstile"
             ) from exc
@@ -71,6 +75,11 @@ class TurnstileField(forms.Field):
         response_data = json.loads(response.read().decode("utf-8"))
 
         if not response_data.get("success"):
+            logger.exception(
+                "Failure received from Turnstile. Error codes: %s. Messages: %s",
+                response_data.get("error-codes"),
+                response_data.get("messages"),
+            )
             raise forms.ValidationError(
                 self.error_messages["invalid_turnstile"], code="invalid_turnstile"
             )
