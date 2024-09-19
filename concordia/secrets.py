@@ -37,6 +37,10 @@ def get_secret(secret_name):
             raise Exception(
                 "The request failed to decrypt the value for " + secret_name + ":", e
             ) from e
+        elif e.response["Error"]["Code"] == "AccessDeniedException":
+            raise Exception(
+                "The request was denied access to " + secret_name + ":", e
+            ) from e
         else:
             raise Exception("Unknown exception:", e) from e
     else:

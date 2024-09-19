@@ -160,7 +160,7 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
                 "concordia.context_processors.maintenance_mode_frontend_available",
-                "concordia.context_processors.turnstile_default_settings",
+                "concordia.turnstile.context_processors.turnstile_default_settings",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",

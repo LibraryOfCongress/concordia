@@ -22,10 +22,14 @@ if os.getenv("AWS"):
 
     DATABASES["default"].update({"PASSWORD": postgres_secret["password"]})
 
-    cf_turnstile_secret_json = get_secret("crowd/%s/Turnstile" % ENV_NAME)
-    cf_turnstile_secret = json.loads(cf_turnstile_secret_json)
-    TURNSTILE_SITEKEY = cf_turnstile_secret["TurnstileSiteKey"]
-    TURNSTILE_SECRET = cf_turnstile_secret["TurnstileSecret"]
+    try:
+        cf_turnstile_secret_json = get_secret("crowd/%s/Turnstile" % ENV_NAME)
+        cf_turnstile_secret = json.loads(cf_turnstile_secret_json)
+        TURNSTILE_SITEKEY = cf_turnstile_secret["TurnstileSiteKey"]
+        TURNSTILE_SECRET = cf_turnstile_secret["TurnstileSecret"]
+    except Exception:
+        # Leave the turnstile settings to the default
+        pass  # nosec
 
     smtp_secret_json = get_secret("concordia/SMTP")
     smtp_secret = json.loads(smtp_secret_json)
