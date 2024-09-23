@@ -3,7 +3,7 @@
         <form class="p-1" onsubmit="document.location.href = encodeURI(document.getElementById('asset-selection').value); return false">
             <div class="input-group input-group-sm flex-nowrap">
                 <div class="input-group-prepend">
-                    <label class="input-group-text p-0 pe-1 border-0" for="asset-selection">Page</label>
+                    <label class="input-group-text mt-1 p-0 pe-1 border-0" for="asset-selection">Page</label>
                 </div>
                 <select id="asset-selection" class="form-select form-select-sm">
                     {% for sequence, slug in asset_navigation %}
@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <div class="btn-group align-self-end">
+    <div class="btn-group align-self-end" style="margin-right: -8px">
         {% if asset.resource_url %}
             <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
                 <a class="btn btn-outline-primary text-nowrap" target="_blank" rel=noopener title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>

@@ -1,11 +1,15 @@
 <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header border-bottom-0">
-                <h4>Campaign Tips</h4>
-                <button type="button" class="close text-primary" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">x</span>
-                </button>
+            <div class="modal-header border-bottom-0 row">
+                <div class="col ps-3">
+                    <h4>Campaign Tips</h4>
+                </div>
+                <div class="col-1" id="close-tutorial">
+                    <a data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">x</span>
+                    </a>
+                </div>
             </div>
             <div class="modal-body">
                 <div id="card-carousel" class="carousel slide" data-bs-interval="false">
@@ -27,11 +31,11 @@
                     <a id="previous-card" href="#card-carousel" role="button" data-bs-slide="prev">
                         <strong><u><&nbsp;Back</u></strong>
                     </a>
-                    <ol class="carousel-indicators d-none d-lg-flex">
+                    <div class="carousel-indicators d-none d-lg-flex">
                         {% for card in cards %}
-                            <li data-bs-target="#card-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                            <button type="button" data-bs-target="#card-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></button>
                         {% endfor %}
-                    </ol>
+                    </div>
                     <a id="next-card" href="#card-carousel" data-bs-slide="next">
                         <strong><u>Next&nbsp;></u></strong>
                     </a>

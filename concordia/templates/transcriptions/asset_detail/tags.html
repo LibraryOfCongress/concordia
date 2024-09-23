@@ -5,7 +5,7 @@
             id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
     <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
         {% csrf_token %}
-        <div class="d-print-none">
+        <div class="d-print-none grid">
             {% if user.is_authenticated %}
                 <div class="row">
                     <div class="col input-group">

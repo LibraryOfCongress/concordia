@@ -30,18 +30,20 @@ $('#open-guide').on('click', openOffcanvas);
 
 $('#close-guide').on('click', closeOffcanvas);
 
-$('#guide-carousel')
-    .carousel({
-        interval: false,
-        wrap: false,
-    })
-    .on('slide.bs.carousel', function (event) {
-        if (event.to == 0) {
-            $('#guide-bars').addClass('d-none');
-        } else {
-            $('#guide-bars').removeClass('d-none');
-        }
-    });
+$(function () {
+    $('#guide-carousel')
+        .carousel({
+            interval: false,
+            wrap: false,
+        })
+        .on('slide.bs.carousel', function (event) {
+            if (event.to == 0) {
+                $('#guide-bars-col').addClass('d-none');
+            } else {
+                $('#guide-bars-col').removeClass('d-none');
+            }
+        });
+});
 
 $('#previous-card').hide();
 

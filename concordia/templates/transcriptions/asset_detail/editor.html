@@ -27,31 +27,34 @@
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
         <div class="row justify-content-sm-between px-3">
-            <span id="transcription-status-message">
-                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
-                    Registered Contributors: <span id="message-contributors-num" class="fw-normal">{{ registered_contributors }}</span>
-                </h2>
-                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
-                    Transcribe this page.
+            <div class="col-4">
+                <span id="transcription-status-message">
+                    <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                        Registered Contributors: <span id="message-contributors-num" class="fw-normal">{{ registered_contributors }}</span>
+                    </h2>
+                    <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                        Transcribe this page.
+                    </span>
+                    <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                        Someone started this transcription. Can you finish it?
+                    </span>
+                    <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                        Check this transcription thoroughly. Accept if correct!
+                    </span>
+                    <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        This transcription is finished! You can read and add tags.
+                    </span>
                 </span>
-                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
-                    Someone started this transcription. Can you finish it?
-                </span>
-                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-                    Check this transcription thoroughly. Accept if correct!
-                </span>
-                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-                    This transcription is finished! You can read and add tags.
-                </span>
-            </span>
+            </div>
             {% if cards %}
-                <div class="align-items-center align-self-end btn-group">
+                <div class="align-items-center align-self-end btn-group col-6">
                     <a class="fw-bold" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
                     {% if guides %}
-                        <button id="open-guide" class="btn btn-primary" type="button">How-To Guide</button>
-                    {% endif %}
+                        <div>
+                            <button id="open-guide" class="btn btn-primary" type="button">How-To Guide</button>
+                        </div>{% endif %}
                 </div>
             {% endif %}
         </div>
@@ -75,7 +78,7 @@
 
             <div class="my-3 d-print-none d-flex flex-wrap justify-content-center align-items-center">
                 {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
-                    <div class="form-check w-100 text-center mt-0 mb-3">
+                    <div class="form-check mt-0 mb-3">
                         <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
                         <label class="form-check-label" for="nothing-to-transcribe">
                             Nothing to transcribe
@@ -86,18 +89,20 @@
                         </a>
                     </div>
 
-                    <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
-                        Save
-                    </button>
-                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
-                        <span class="fas fa-undo"></span> Undo
-                    </button>
-                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
-                        Redo <span class="fas fa-redo"></span>
-                    </button>
-                    <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
-                        Submit for Review
-                    </button>
+                    <div class="btn-group">
+                        <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
+                            Save
+                        </button>
+                        <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
+                            <span class="fas fa-undo"></span> Undo
+                        </button>
+                        <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
+                            Redo <span class="fas fa-redo"></span>
+                        </button>
+                        <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
+                            Submit for Review
+                        </button>
+                    </div>
 
                 {% elif transcription_status == 'submitted' %}
                     {% if not user.is_authenticated %}
