@@ -383,10 +383,10 @@ BOOTSTRAP4 = {"required_css_class": "form-group-required", "set_placeholder": Fa
 TRANSCRIPTION_RESERVATION_SECONDS = 15 * 60
 
 #: Number of hours until an asset reservation is tombstoned
-TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 72
+TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 24
 
 #: Number of hours until a tombstoned reservation is deleted
-TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS = 48
+TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS = 24
 
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
