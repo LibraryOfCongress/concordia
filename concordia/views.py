@@ -1760,7 +1760,7 @@ def submit_transcription(request, *, pk):
                 "record: submitted: %s pk: %d"
             ),
             str(transcription.submitted),
-            pk,
+            str(pk).replace('\n', '').replace('\r', ''),
         )
         return JsonResponse(
             {
