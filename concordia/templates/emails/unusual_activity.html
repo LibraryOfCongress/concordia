@@ -26,7 +26,7 @@ Incidents of two or more transcriptions reviewed within a single minute:
     {% for row in reviews %}
         <tr>
             <td>
-                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">
+                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?reviewed_by__id__exact={{ row.0 }}">
                     {{ row.1 }}
                 </a>
             </td>
