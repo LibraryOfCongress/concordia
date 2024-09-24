@@ -662,7 +662,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         transcriptions = (
             self.transcription_set.exclude(rolled_forward=True)
             .exclude(source_of__rolled_forward=True)
-            .exclude(rolled_back=True)
             .exclude(pk__gte=latest_transcription.pk)
             .order_by("-pk")
         )
@@ -677,9 +676,13 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         transcription_to_rollback_to = None
         for transcription in transcriptions:
+            if transcription.source:
+                transcription_to_check = transcription.source
+            else:
+                transcription_to_check = transcription
             if (
                 latest_transcription.rolled_back is False
-                or latest_transcription.supersedes != transcription
+                or latest_transcription.supersedes != transcription_to_check
             ):
                 transcription_to_rollback_to = transcription
                 break
