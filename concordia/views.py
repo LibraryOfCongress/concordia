@@ -1568,8 +1568,21 @@ def generate_ocr_transcription(request, *, asset_pk):
     supersedes_pk = request.POST.get("supersedes")
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
-    if superseded and isinstance(superseded, HttpResponse):
-        return superseded
+    if superseded:
+        if isinstance(superseded, HttpResponse):
+            return superseded
+    else:
+        # This means this is the first transcription on this asset
+        # to enable undoing of the OCR transcription, we create
+        # an empty transcription for the OCR transcription to supersede
+        superseded = Transcription(
+            asset=asset,
+            user=get_anonymous_user(),
+            text="",
+        )
+        superseded.full_clean()
+        superseded.save()
+
     transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
         asset=asset,
