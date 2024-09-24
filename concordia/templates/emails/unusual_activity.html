@@ -10,6 +10,7 @@ Incidents of two or more transcriptions submitted within a single minute:
     <tr>
         <th>User</th>
         <th>Transc. Incidents</th>
+        <th>User transcriptions</th>
     </tr>
     {% for row in transcriptions %}
         <tr>
@@ -19,6 +20,7 @@ Incidents of two or more transcriptions submitted within a single minute:
                 </a>
             </td>
             <td>{{ row.2 }}</td>
+            <td>{{ row.3 }}</td>
         </tr>
     {% empty %}
         <tr><td>No transcriptions fell within the window.</td></tr>
@@ -28,8 +30,9 @@ Incidents of two or more transcriptions submitted within a single minute:
 Incidents of two or more transcriptions reviewed within a single minute:
 <table>
     <tr>
-        <td>User</td>
-        <td>Review Incidents</td>
+        <th>User</th>
+        <th>Review Incidents</th>
+        <th>User reviews</th>
     </tr>
     {% for row in reviews %}
         <tr>
@@ -39,6 +42,7 @@ Incidents of two or more transcriptions reviewed within a single minute:
                 </a>
             </td>
             <td>{{ row.2 }}</td>
+            <td>{{ row.3 }}</td>
         </tr>
     {% empty %}
         <tr><td>No reviews fell within the window.</td></tr>
