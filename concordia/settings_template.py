@@ -327,7 +327,9 @@ TURNSTILE_VERIFY_URL = os.environ.get(
 TURNSTILE_SITEKEY = os.environ.get("TURNSTILE_SITEKEY", "")
 TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET", "")
 TURNSTILE_TIMEOUT = os.environ.get("TURNSTILE_TIMEOUT", 5)
-TURNSTILE_DEFAULT_CONFIG = os.environ.get("TURNSTILE_DEFAULT_CONFIG", {})
+TURNSTILE_DEFAULT_CONFIG = os.environ.get(
+    "TURNSTILE_DEFAULT_CONFIG", {"appearance": "interaction-only"}
+)
 TURNSTILE_PROXIES = os.environ.get("TURNSTILE_PROXIES", {})
 
 STORAGES = {
