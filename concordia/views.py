@@ -1518,15 +1518,23 @@ def validate_anonymous_user(view):
     @never_cache
     def inner(request, *args, **kwargs):
         if not request.user.is_authenticated and request.method == "POST":
-            form = TurnstileForm(request.POST)
-            if not form.is_valid():
-                return JsonResponse(
-                    {
-                        "error": "Unable to validate. "
-                        "Please login or complete the challenge."
-                    },
-                    status=401,
-                )
+            # First check if the user has already been validated within the time limit
+            # If so, validation can be skipped
+            turnstile_last_validated = request.session.get(
+                "turnstile_last_validated", 0
+            )
+            age = time() - turnstile_last_validated
+            if age > settings.ANONYMOUS_USER_VALIDATION_INTERVAL:
+                form = TurnstileForm(request.POST)
+                if not form.is_valid():
+                    return JsonResponse(
+                        {"error": "Unable to validate. " "Please try again or login."},
+                        status=401,
+                    )
+                else:
+                    # User has been validated, so we'll cache the time in their session
+                    request.session["turnstile_last_validated"] = time()
+
         return view(request, *args, **kwargs)
 
     return inner

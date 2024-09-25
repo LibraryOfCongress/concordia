@@ -331,6 +331,7 @@ TURNSTILE_DEFAULT_CONFIG = os.environ.get(
     "TURNSTILE_DEFAULT_CONFIG", {"appearance": "interaction-only"}
 )
 TURNSTILE_PROXIES = os.environ.get("TURNSTILE_PROXIES", {})
+ANONYMOUS_USER_VALIDATION_INTERVAL = 86400
 
 STORAGES = {
     "default": {
