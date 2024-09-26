@@ -146,7 +146,7 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
                 self.transcription1.reviewed_by.id,
                 self.transcription1.reviewed_by.username,
                 1,
-                2,
+                4,
             ),
         )
 
@@ -170,7 +170,7 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
                 self.transcription1.reviewed_by.id,
                 self.transcription1.reviewed_by.username,
                 2,
-                2,
+                6,
             ),
         )
 
@@ -205,7 +205,7 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
         self.assertEqual(len(users), 1)
         self.assertEqual(
             users[0],
-            (self.transcription1.user.id, self.transcription1.user.username, 1, 4),
+            (self.transcription1.user.id, self.transcription1.user.username, 1, 5),
         )
 
         create_transcription(
@@ -217,7 +217,7 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
         self.assertEqual(len(users), 1)
         self.assertEqual(
             users[0],
-            (self.transcription1.user.id, self.transcription1.user.username, 2, 5),
+            (self.transcription1.user.id, self.transcription1.user.username, 2, 6),
         )
 
 
