@@ -1,6 +1,7 @@
 /* global $ displayMessage buildErrorMessage */
 
 import {reserveAssetForEditing} from 'asset-reservation';
+import {resetTurnstile} from 'turnstile';
 
 function lockControls($container) {
     if (!$container) {
@@ -298,6 +299,7 @@ function setupPage() {
             if (responseData.redo_available) {
                 $('#rollforward-transcription-button').removeAttr('disabled');
             }
+            resetTurnstile();
             let messageChildren = $('#transcription-status-message').children();
             messageChildren
                 .attr('hidden', 'hidden')
@@ -321,6 +323,7 @@ function setupPage() {
                     ),
                 'transcription-save-result',
             );
+            resetTurnstile();
             $transcriptionEditor.trigger('update-ui-state');
         });
 
