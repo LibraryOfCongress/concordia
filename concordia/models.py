@@ -862,8 +862,9 @@ class TranscriptionManager(models.Manager):
             user = ConcordiaUser.objects.get(id=user_id)
             incident_count = user.review_incidents(recent_accepts, recent_rejects)
             if incident_count > 0:
+                review_count = Transcription.objects.filter(reviewed_by=user).count()
                 user_incident_count.append(
-                    (user.id, user.username, incident_count, user.profile.review_count)
+                    (user.id, user.username, incident_count, review_count)
                 )
 
         return user_incident_count
@@ -883,12 +884,13 @@ class TranscriptionManager(models.Manager):
             user = ConcordiaUser.objects.get(id=user_id)
             incident_count = user.transcribe_incidents(transcriptions)
             if incident_count > 0:
+                transcribe_count = Transcription.objects.filter(user=user).count()
                 user_incident_count.append(
                     (
                         user.id,
                         user.username,
                         incident_count,
-                        user.profile.transcribe_count,
+                        transcribe_count,
                     )
                 )
 
