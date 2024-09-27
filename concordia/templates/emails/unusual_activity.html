@@ -1,15 +1,15 @@
 <style type="text/css">
 
     table, td { border: 1px solid black; border-collapse: collapse; }
-    td { padding: 7px; }
+    th, td { padding: 7px; }
 
 </style>
 <h4>{{ title }}</h4>
-Incidents of two or more transcriptions submitted within a single minute:
+Transcription Incidents: 2 or more transcriptions submitted in 1 minute.
 <table>
     <tr>
         <th>User</th>
-        <th>Transc. Incidents</th>
+        <th>Incidents</th>
         <th>User transcriptions</th>
     </tr>
     {% for row in transcriptions %}
@@ -27,11 +27,11 @@ Incidents of two or more transcriptions submitted within a single minute:
     {% endfor %}
 </table>
 <br/>
-Incidents of two or more transcriptions reviewed within a single minute:
+Review Incidents: 2 or more transcriptions reviewed in 1 minute.
 <table>
     <tr>
         <th>User</th>
-        <th>Review Incidents</th>
+        <th>Incidents</th>
         <th>User reviews</th>
     </tr>
     {% for row in reviews %}
