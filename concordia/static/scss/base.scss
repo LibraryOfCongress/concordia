@@ -91,6 +91,7 @@ $form-group-margin-bottom: 1.5rem;
 
 // buttons
 $btn-font-weight: $font-weight-bold;
+$btn-border-radius: 0.25rem;
 
 // headings
 $h1-font-size: $font-size-base * 2.5;
@@ -1136,7 +1137,7 @@ $card-progress-height: 12px;
 
 /* How to Guide */
 #open-guide {
-    border-radius: 0;
+    border-radius: $btn-border-radius;
     margin: -14px 5px 0 9px;
     white-space: nowrap;
 }
@@ -1391,6 +1392,15 @@ table.table thead.border-y {
 .btn-xs .btn {
     font-size: 14px;
     padding: 0 0.12rem;
+}
+
+.btn-group-sm > .btn {
+    border-radius: $btn-border-radius;
+}
+
+#contact-us {
+    border-top-left-radius: $btn-border-radius;
+    border-bottom-left-radius: $btn-border-radius;
 }
 
 #current-filters li .btn {
