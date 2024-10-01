@@ -1,0 +1,81 @@
+name: 'CodeQL Advanced'
+
+on:
+    push:
+        branches: [release]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
+    pull_request:
+        branches: [main, 'feature-*', 'jkueloc-patch-1']
+        paths-ignore:
+            - docs/**
+            - README.md
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
+    schedule:
+        - cron: '20 23 * * 2'
+
+jobs:
+    analyze:
+        name: Analyze (${{ matrix.language }})
+        runs-on: ubuntu-latest
+
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+            packages: read
+
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - language: javascript-typescript
+                      build-mode: none
+                    - language: python
+                      build-mode: none
+
+        steps:
+            - name: Install system packages
+              run: |
+                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
+                  libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
+                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
+
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - if: matrix.language == 'python'
+              name: Setup python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.10'
+
+            # Initializes the CodeQL tools for scanning.
+            - name: Initialize CodeQL
+              uses: github/codeql-action/init@v3
+              with:
+                  languages: ${{ matrix.language }}
+                  build-mode: ${{ matrix.build-mode }}
+
+            - if: matrix.language == 'python'
+              run: |
+                  pip install -U packaging
+                  pip install -U setuptools
+                  pip install pipenv
+                  pipenv install --dev --deploy
+
+            - name: Perform CodeQL Analysis
+              uses: github/codeql-action/analyze@v3
+              with:
+                  category: '/language:${{matrix.language}}'
