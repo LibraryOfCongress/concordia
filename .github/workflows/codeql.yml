@@ -2,18 +2,17 @@ name: 'CodeQL Advanced'
 
 on:
     push:
-        branches: [release]
+        branches: [main, release, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
-            - .github/**
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
             - kibana-proxy/**
             - postgresql/**
     pull_request:
-        branches: [main, 'feature-*', 'jkueloc-patch-1']
+        branches: [main, release, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
