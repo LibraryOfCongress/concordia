@@ -1,7 +1,6 @@
 name: 'CodeQL Advanced'
 
 on:
-    workflow_dispatch:
     push:
         branches: [release]
         paths-ignore:
