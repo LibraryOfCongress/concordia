@@ -27,7 +27,7 @@
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
         <div class="row justify-content-sm-between px-3">
-            <div id="transcription-status-message" class="col px-0">
+            <div id="transcription-status-message">
                 <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
                     Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
                 </h2>
@@ -45,7 +45,7 @@
                 </span>
             </div>
             {% if cards %}
-                <div class="align-items-center align-self-end btn-group col px-0">
+                <div class="d-flex align-items-center">
                     <a class="font-weight-bold mt-3" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
