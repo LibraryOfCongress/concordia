@@ -42,7 +42,9 @@
     </script>
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
-    <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
+    {% if anonymous_user_validation_required %}
+        <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
+    {% endif %}
 
     <script type="module" src="{% static 'js/contribute.js' %}"></script>
     <script type="module" src="{% static 'js/viewer-split.js' %}"></script>

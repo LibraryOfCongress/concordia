@@ -150,6 +150,49 @@ def user_cache_control(view_function):
     return inner
 
 
+def validate_anonymous_user(view):
+    @wraps(view)
+    @never_cache
+    def inner(request, *args, **kwargs):
+        if not request.user.is_authenticated and request.method == "POST":
+            # First check if the user has already been validated within the time limit
+            # If so, validation can be skipped
+            turnstile_last_validated = request.session.get(
+                "turnstile_last_validated", 0
+            )
+            age = time() - turnstile_last_validated
+            if age > settings.ANONYMOUS_USER_VALIDATION_INTERVAL:
+                form = TurnstileForm(request.POST)
+                if not form.is_valid():
+                    return JsonResponse(
+                        {"error": "Unable to validate. " "Please try again or login."},
+                        status=401,
+                    )
+                else:
+                    # User has been validated, so we'll cache the time in their session
+                    request.session["turnstile_last_validated"] = time()
+
+        return view(request, *args, **kwargs)
+
+    return inner
+
+
+class AnonymousUserValidationCheckMixin:
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if not self.request.user.is_authenticated:
+            turnstile_last_validated = self.request.session.get(
+                "turnstile_last_validated", 0
+            )
+            age = time() - turnstile_last_validated
+            context["anonymous_user_validation_required"] = (
+                age > settings.ANONYMOUS_USER_VALIDATION_INTERVAL
+            )
+        else:
+            context["anonymous_user_validation_required"] = False
+        return context
+
+
 @never_cache
 def healthz(request):
     status = {
@@ -1358,7 +1401,7 @@ class FilteredItemDetailView(ItemDetailView):
 
 
 @method_decorator(never_cache, name="dispatch")
-class AssetDetailView(APIDetailView):
+class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
@@ -1511,33 +1554,6 @@ class AssetDetailView(APIDetailView):
         ctx["turnstile_form"] = TurnstileForm(auto_id=False)
 
         return ctx
-
-
-def validate_anonymous_user(view):
-    @wraps(view)
-    @never_cache
-    def inner(request, *args, **kwargs):
-        if not request.user.is_authenticated and request.method == "POST":
-            # First check if the user has already been validated within the time limit
-            # If so, validation can be skipped
-            turnstile_last_validated = request.session.get(
-                "turnstile_last_validated", 0
-            )
-            age = time() - turnstile_last_validated
-            if age > settings.ANONYMOUS_USER_VALIDATION_INTERVAL:
-                form = TurnstileForm(request.POST)
-                if not form.is_valid():
-                    return JsonResponse(
-                        {"error": "Unable to validate. " "Please try again or login."},
-                        status=401,
-                    )
-                else:
-                    # User has been validated, so we'll cache the time in their session
-                    request.session["turnstile_last_validated"] = time()
-
-        return view(request, *args, **kwargs)
-
-    return inner
 
 
 def get_transcription_superseded(asset, supersedes_pk):
