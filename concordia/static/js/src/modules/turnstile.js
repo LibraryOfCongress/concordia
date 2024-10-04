@@ -3,7 +3,11 @@
 function resetTurnstile(widgetId) {
     // widgetId is optional. If not provided, the latest
     // turnstile widget is used automatically
-    if (turnstile && typeof turnstile.reset === 'function') {
+    if (
+        typeof turnstile !== 'undefined' &&
+        turnstile !== null &&
+        typeof turnstile.reset === 'function'
+    ) {
         turnstile.reset(widgetId);
     } else {
         console.error(
