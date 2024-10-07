@@ -203,8 +203,9 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "title",
         "status",
         "published",
-        "unlisted",
-        "display_on_homepage",
+        "homepage",
+        "next_transcribable",
+        "next_reviewable",
         "ordering",
         "launch_date",
         "completed_date",
@@ -252,6 +253,18 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     )
 
     actions = (publish_action, unpublish_action)
+
+    @admin.display(description="Homepage", ordering="display_on_homepage")
+    def homepage(self, obj):
+        return obj.display_on_homepage
+
+    @admin.display(description="N. Transc.", ordering="next_transcription_campaign")
+    def next_transcribable(self, obj):
+        return obj.next_transcription_campaign
+
+    @admin.display(description="N. Review", ordering="next_review_campaign")
+    def next_reviewable(self, obj):
+        return obj.next_review_campaign
 
     def get_urls(self):
         urls = super().get_urls()
