@@ -1,13 +1,13 @@
 {{ title }}
-Incidents of two or more transcriptions submitted within a single minute:
+Transcription Incidents: 2 or more transcriptions submitted in 1 minute.
 {% for row in transcriptions %}
-    * {{ row.1 }} | {{ row.2 }}
+    * {{ row.1 }} | {{ row.2 }} || {{ row.3 }}
 {% empty %}
     No transcriptions fell within the window.
 {% endfor %}
-Incidents of two or more transcriptions reviewed within a single minute:
+Review Incidents: 2 or more transcriptions reviewed in 1 minute.
 {% for row in reviews %}
-    {{ row.1 }} | {{ row.2 }}
+    {{ row.1 }} | {{ row.2 }} | {{ row.3 }}
 {% empty %}
     No reviews fell within the window.
 {% endfor %}

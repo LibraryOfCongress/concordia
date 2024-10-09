@@ -1,52 +1,54 @@
 <div class="flex-grow-1 d-flex d-print-block flex-column">
-    <div id="transcription-status-display">
-        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-            <span class="fas fa-list"></span>
-            Needs review
-        </h2>
-        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-            <span class="fas fa-check"></span>
-            Completed
-        </h2>
-        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
-            <span class="fas fa-edit"></span>
-            Not started
-        </h2>
-        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
-            <span class="fas fa-edit"></span>
-            In progress
-        </h2>
-        <span id="display-conflict" hidden>
-            <span class="fas fa-exclamation-triangle"></span>
-            Another user is transcribing this page
-        </span>
-    </div>
-
     <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
         {% csrf_token %}
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-        <div class="row justify-content-sm-between px-3">
-            <span id="transcription-status-message">
-                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
-                    Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
-                </h2>
-                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
-                    Transcribe this page.
-                </span>
-                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
-                    Someone started this transcription. Can you finish it?
-                </span>
-                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-                    Check this transcription thoroughly. Accept if correct!
-                </span>
-                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-                    This transcription is finished! You can read and add tags.
-                </span>
-            </span>
+        <div class="row justify-content-sm-between ml-0 px-3">
+            <div id="transcription-status-message" class="row">
+                <div id="transcription-status-display">
+                    <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                        <span class="fas fa-list"></span>
+                        Needs review
+                    </h2>
+                    <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        <span class="fas fa-check"></span>
+                        Completed
+                    </h2>
+                    <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                        <span class="fas fa-edit"></span>
+                        Not started
+                    </h2>
+                    <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        <span class="fas fa-edit"></span>
+                        In progress
+                    </h2>
+                    <span id="display-conflict" hidden>
+                        <span class="fas fa-exclamation-triangle"></span>
+                        Another user is transcribing this page
+                    </span>
+                </div>
+
+                <div class="w-100">
+                    <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                        Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                    </h2>
+                    <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                        Transcribe this page.
+                    </span>
+                    <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                        Someone started this transcription. Can you finish it?
+                    </span>
+                    <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                        Check this transcription thoroughly. Accept if correct!
+                    </span>
+                    <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        This transcription is finished! You can read and add tags.
+                    </span>
+                </div>
+            </div>
             {% if cards %}
-                <div class="align-items-center align-self-end btn-group col-md">
-                    <a class="fw-bold" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
+                <div class="d-flex align-items-end">
+                    <a class="fw-bold mt-3" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
                     {% if guides %}
@@ -86,6 +88,7 @@
                         </a>
                     </div>
 
+
                     <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
                         Save
                     </button>
@@ -114,6 +117,11 @@
                         {% else %}
                             <button id="accept-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Confirm that the text is accurately transcribed">Accept</button>
                         {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if anonymous_user_validation_required %}
+                    {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
+                        <div class="w-100 text-center mt-1 mb-1">{{ turnstile_form.turnstile }}</div>
                     {% endif %}
                 {% endif %}
             </div>

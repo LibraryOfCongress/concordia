@@ -35,12 +35,16 @@
         {
             "imports": {
                 "asset-reservation": "{% static 'js/asset-reservation.js' %}",
-                "viewer": "{% static 'js/viewer.js' %}"
+                "viewer": "{% static 'js/viewer.js' %}",
+                "turnstile" : "{% static 'js/modules/turnstile.js' %}"
             }
         }
     </script>
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
+    {% if anonymous_user_validation_required %}
+        <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
+    {% endif %}
 
     <script type="module" src="{% static 'js/contribute.js' %}"></script>
     <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
@@ -99,7 +103,7 @@
                 <div class="btn-group align-items-center align-self-end">
                     <p class="ml-1 mr-2 my-0">Need help?</p>
 
-                    <a class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
+                    <a id="contact-us" class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
                         Contact us
                     </a>
 
@@ -114,9 +118,6 @@
         </div>
         <div id="review-accepted-modal" class="modal" tabindex="-1" role="dialog">
             {% include "transcriptions/asset_detail/review_accepted_modal.html" %}
-        </div>
-        <div id="captcha-modal" class="modal" tabindex="-1" role="alertdialog" aria-labeledby="captcha-modal-title" aria-describedby="captcha-modal-description">
-            {% include "transcriptions/asset_detail/captcha_modal.html" %}
         </div>
         <div id="ocr-transcription-modal" class="modal" tabindex="-1" role="dialog">
             {% include "transcriptions/asset_detail/ocr_transcription_modal.html" %}
