@@ -95,6 +95,7 @@ $form-group-margin-bottom: 1.5rem;
 
 // buttons
 $btn-font-weight: $font-weight-bold;
+$btn-border-radius: 0.375rem;
 
 // headings
 $h1-font-size: $font-size-base * 2.5;
@@ -1422,7 +1423,7 @@ a.btn-outline-primary:hover {
 
 /* How to Guide */
 #open-guide {
-    border-radius: 0;
+    border-radius: $btn-border-radius;
     margin: -14px 5px 0 9px;
     white-space: nowrap;
 }
