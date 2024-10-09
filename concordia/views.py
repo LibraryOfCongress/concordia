@@ -1125,8 +1125,10 @@ class CampaignDetailView(APIDetailView):
             ctx["filters"] = filters = {}
             filter_by_reviewable = kwargs.get("filter_by_reviewable", False)
             if filter_by_reviewable:
-                projects = projects.exclude(
-                    item__asset__transcription__user=self.request.user.id
+                projects = projects.filter(
+                    item__asset__transcription__id__in=Transcription.objects.exclude(
+                        user=self.request.user.id
+                    ).values_list("id", flat=True)
                 )
                 ctx["filter_assets"] = True
             projects = projects.annotate(
