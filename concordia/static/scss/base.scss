@@ -134,7 +134,7 @@ $alert-padding-x: 1rem;
 $bg-completed: $dark;
 $bg-submitted: $primary;
 /* stylelint-disable-next-line scss/no-global-function-names */
-$bg-in-progress: tint-color($primary, 30%);
+$bg-in-progress: tint-color($primary, 28%);
 $bg-not-started: #fff;
 
 // shadow
@@ -187,14 +187,17 @@ body .container,
     padding-right: 15px;
 }
 
-.row {
+div.row {
     margin-left: -15px;
     margin-right: -15px;
 }
 
-body .row > * {
-    padding-left: 0;
-    padding-right: 0;
+small {
+    font-weight: 400;
+}
+
+header.border-bottom {
+    border-bottom: 1px solid $border-color !important;
 }
 
 .close {
@@ -249,6 +252,10 @@ body h5 {
     font-weight: $headings-font-weight;
 }
 
+div h6 {
+    font-weight: $headings-font-weight;
+}
+
 li a {
     text-decoration: none;
 }
@@ -286,6 +293,10 @@ p a:hover,
 
 body .btn {
     font-weight: $btn-font-weight;
+}
+
+.btn-block {
+    width: 100%;
 }
 
 .input-group-sm > .input-group-prepend > .input-group-text {
@@ -650,6 +661,10 @@ a.card-title.text-dark {
     overflow: hidden;
 }
 
+li.breadcrumb-item.active {
+    color: $gray-800;
+}
+
 .breadcrumb .breadcrumb-item + .breadcrumb-item {
     padding-left: 0.25rem;
 }
@@ -793,7 +808,7 @@ body .campaign-page-progress {
     height: 2.5rem;
 }
 
-.campaign-progress {
+div.campaign-progress {
     height: 35px;
     margin-top: 20px;
 }
@@ -874,6 +889,10 @@ body .disabled > .page-link {
 
 #transcription-status-message {
     max-width: 270px;
+}
+
+.call-to-action {
+    min-width: 292px;
 }
 
 // Campaign small blocks
@@ -1051,10 +1070,6 @@ body .disabled > .page-link {
     @include media-breakpoint-up(md) {
         height: calc(100vh - 53px);
     }
-}
-
-body .help-buttons {
-    padding-left: 75px;
 }
 
 @include media-breakpoint-down(sm) {
@@ -1382,6 +1397,7 @@ a.btn-outline-primary:hover {
     right: 1rem;
     top: 0.375rem;
     color: $blue;
+    cursor: pointer;
     font-size: 1.5rem;
     font-weight: 700;
 }

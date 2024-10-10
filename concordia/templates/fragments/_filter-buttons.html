@@ -1,5 +1,5 @@
 {% if user.is_authenticated and user.is_staff %}
-    <div class="mt-4">
+    <div class="col-4 mt-4 ps-5">
         <input name="radioButtons" type="radio" id="show-all" {% if do_filter %}onclick="filterAssets(false, '{{ all_url }}?{{ sublevel_qs }}')"{% else %}checked{% endif %}>
         <label>Show all</label>
         <input name="radioButtons" type="radio" id="filter-assets" {% if do_filter %}checked{% else %}onclick="filterAssets(true, '{{ filtered_url }}?{{ sublevel_qs }}')"{% endif %}>
