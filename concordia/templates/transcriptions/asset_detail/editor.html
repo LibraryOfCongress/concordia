@@ -3,8 +3,8 @@
         {% csrf_token %}
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-        <div class="row justify-content-sm-between ml-0 px-3">
-            <div id="transcription-status-message" class="row">
+        <div class="row justify-content-sm-between mx-0 pl-0">
+            <div id="transcription-status-message" class="row ml-0">
                 <div id="transcription-status-display">
                     <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                         <span class="fas fa-list"></span>
