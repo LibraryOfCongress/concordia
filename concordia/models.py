@@ -294,14 +294,16 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     unlisted = models.BooleanField(default=False, blank=True, db_index=True)
     status = models.IntegerField(choices=Status.choices, default=Status.ACTIVE)
     next_transcription_campaign = models.BooleanField(
-        default=False, blank=True, db_index=True
+        default=False, blank=True, db_index=True, verbose_name="Next-tran."
     )
-    next_review_campaign = models.BooleanField(default=False, blank=True, db_index=True)
+    next_review_campaign = models.BooleanField(
+        default=False, blank=True, db_index=True, verbose_name="Next-rev."
+    )
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
     )
-    display_on_homepage = models.BooleanField(default=True)
+    display_on_homepage = models.BooleanField(default=True, verbose_name="Homepage")
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
