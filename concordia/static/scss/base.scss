@@ -58,6 +58,7 @@ $carousel-control-width: 8%;
 $carousel-control-opacity: 1;
 $carousel-indicator-width: 12px;
 $carousel-indicator-height: 12px;
+$carousel-control-icon-height: 3.5rem;
 $carousel-control-icon-width: 3.5rem;
 
 // dropdown
@@ -274,7 +275,8 @@ p a,
 }
 
 p a:hover,
-.simple-page a:hover {
+.simple-page a:hover,
+.btn:hover {
     text-decoration: none;
 }
 
@@ -394,12 +396,6 @@ a.btn-outline-dark:hover {
 
 .btn-light {
     color: $gray-800;
-}
-
-body .btn-group > .btn:not(:last-child),
-body .btn-group > .btn:not(.dropdown-toggle),
-body .btn-group > :not(.btn-check) + .btn {
-    border-radius: 0.25rem;
 }
 
 body .form-check-input {
@@ -891,10 +887,6 @@ body .disabled > .page-link {
     max-width: 270px;
 }
 
-.call-to-action {
-    min-width: 292px;
-}
-
 // Campaign small blocks
 
 .small-campaign-title {
@@ -963,6 +955,12 @@ body .disabled > .page-link {
     .carousel-control-prev:hover .carousel-control-prev-icon {
         background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2255%22%20viewBox%3D%220%200%2033%2055%22%20width%3D%2233%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22m100.946469%20372.85708c0%20.428571-.214286.910715-.535715%201.232144l-21.0535968%2021.053596%2021.0535968%2021.053597c.321429.321429.535715.803572.535715%201.232144s-.214286.910716-.535715%201.232145l-2.6785749%202.678574c-.321429.321429-.8035724.535715-1.2321444.535715-.4285719%200-.9107153-.214286-1.2321443-.535715l-24.9643155-24.964315c-.3214289-.321429-.5357149-.803573-.5357149-1.232145s.214286-.910715.5357149-1.232144l24.9643155-24.964315c.321429-.321429.8035724-.535715%201.2321443-.535715.428572%200%20.9107154.214286%201.2321444.535715l2.6785749%202.678574c.321429.321429.535715.750001.535715%201.232145z%22%20fill%3D%22%23FC4C02%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23fff%22%20stroke-width%3D%22.5%22%20transform%3D%22translate%28-69%20-368%29%22/%3E%3C/svg%3E');
     }
+}
+
+.carousel .carousel-control-next-icon,
+.carousel .carousel-control-prev-icon {
+    height: $carousel-control-icon-height;
+    width: $carousel-control-icon-width;
 }
 
 .carousel .carousel-indicators {
@@ -1142,12 +1140,14 @@ body .disabled > .page-link {
     resize: none;
 }
 
-a.btn-outline-primary {
+a.btn-outline-primary,
+button.btn-outline-primary {
     border-color: $blue;
     color: $blue;
 }
 
-a.btn-outline-primary:hover {
+a.btn-outline-primary:hover,
+button.btn-outline-primary:hover {
     background-color: $blue;
     border-color: $blue;
 }
