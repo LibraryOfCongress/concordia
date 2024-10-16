@@ -161,6 +161,8 @@ class ConcordiaViewTests(
                 concordia_user.get_email_for_reconfirmation(), email_data["email"]
             )
             confirmation_key = concordia_user.get_email_reconfirmation_key()
+
+            # Check if user failing validation is handled
             with patch("concordia.models.ConcordiaUser.full_clean") as mock:
                 mock.side_effect = forms.ValidationError("Testing error")
                 error_response = self.client.get(
@@ -174,6 +176,24 @@ class ConcordiaViewTests(
                     error_response, "account/email_reconfirmation_failed.html"
                 )
 
+            # Check if invalid data from confirmation key is handled
+            with patch("django.core.signing.loads") as mock:
+                mock.return_value = {
+                    "username": "bad-username",
+                    "email": "bad-email-address",
+                }
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
+            # Check if signing errors are handled
             with patch("django.core.signing.loads") as mock:
                 mock.side_effect = signing.BadSignature()
                 error_response = self.client.get(
