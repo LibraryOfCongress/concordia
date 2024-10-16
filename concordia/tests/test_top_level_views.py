@@ -180,3 +180,27 @@ class TopLevelViewTests(
         create_guide(page=l1)
         resp = self.client.get(reverse("welcome-guide"))
         self.assertEqual(200, resp.status_code)
+
+
+class HelpCenterRedirectTests(TestCase):
+    def test_HelpCenterRedirectView(self):
+        SimplePage.objects.create(
+            title="Get Started Page",
+            body="Page Body",
+            path="/get-started/page/",
+        )
+
+        self.assertRedirects(
+            self.client.get("/help-center/page/"), "/get-started/page/"
+        )
+
+    def test_HelpCenterSpanishRedirectView(self):
+        SimplePage.objects.create(
+            title="Get Started Page",
+            body="Page Body",
+            path="/get-started-esp/page-esp/",
+        )
+
+        self.assertRedirects(
+            self.client.get("/help-center/page-esp/"), "/get-started-esp/page-esp/"
+        )

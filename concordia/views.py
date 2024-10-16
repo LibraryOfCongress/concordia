@@ -2701,7 +2701,7 @@ class EmailReconfirmationView(TemplateView):
 class HelpCenterRedirectView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         path = kwargs["page_slug"]
-        return "/get-started/" + path
+        return "/get-started/" + path + "/"
 
 
 class HelpCenterSpanishRedirectView(RedirectView):
