@@ -2011,7 +2011,7 @@ class ContactUsView(FormView):
             )
         except SMTPException:
             logger.exception(
-                "Unable to send contact message to %s: %s",
+                "Unable to send contact message to %s",
                 form.cleaned_data["email"],
                 extra={"data": form.cleaned_data},
             )

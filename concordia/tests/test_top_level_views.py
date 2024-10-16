@@ -2,6 +2,10 @@
 Tests for for the top-level & “CMS” views
 """
 
+from smtplib import SMTPException
+from unittest.mock import patch
+
+from django.contrib.messages import get_messages
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -86,6 +90,18 @@ class TopLevelViewTests(
 
         self.assertEqual(response.status_code, 302)
         self.assertUncacheable(response)
+
+        with patch("django.core.mail.EmailMultiAlternatives.send") as mock:
+            mock.side_effect = SMTPException()
+            response = self.client.post(reverse("contact"), post_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertUncacheable(response)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertIn(
+            "Your message could not be sent. Our support team has been notified.",
+            messages,
+        )
 
     def test_contact_us_post_invalid(self):
         post_data = {
