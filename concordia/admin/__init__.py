@@ -203,15 +203,17 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "title",
         "status",
         "published",
-        "homepage",
-        "next_transcribable",
-        "next_reviewable",
+        "display_on_homepage",
+        "next_transcription_campaign",
+        "next_review_campaign",
         "ordering",
         "launch_date",
         "completed_date",
     )
     list_editable = (
         "display_on_homepage",
+        "next_transcription_campaign",
+        "next_review_campaign",
         "ordering",
         "published",
         "unlisted",
@@ -254,17 +256,14 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     actions = (publish_action, unpublish_action)
 
-    @admin.display(description="Homepage", ordering="display_on_homepage")
-    def homepage(self, obj):
-        return obj.display_on_homepage
-
-    @admin.display(description="N. Transc.", ordering="next_transcription_campaign")
-    def next_transcribable(self, obj):
-        return obj.next_transcription_campaign
-
-    @admin.display(description="N. Review", ordering="next_review_campaign")
-    def next_reviewable(self, obj):
-        return obj.next_review_campaign
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields["display_on_homepage"].label = "Dislay on homepage"
+        form.base_fields["next_transcription_campaign"].label = (
+            "Next transcription campaign"
+        )
+        form.base_fields["next_review_campaign"].label = "Next review campaign"
+        return form
 
     def get_urls(self):
         urls = super().get_urls()
