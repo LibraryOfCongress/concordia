@@ -5,7 +5,7 @@ Tests for user account-related views
 from unittest.mock import patch
 
 from django import forms
-from django.core import mail
+from django.core import mail, signing
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -163,6 +163,31 @@ class ConcordiaViewTests(
             confirmation_key = concordia_user.get_email_reconfirmation_key()
             with patch("concordia.models.ConcordiaUser.full_clean") as mock:
                 mock.side_effect = forms.ValidationError("Testing error")
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
+            with patch("django.core.signing.loads") as mock:
+                mock.side_effect = signing.BadSignature()
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
+                mock.side_effect = signing.SignatureExpired()
                 error_response = self.client.get(
                     reverse(
                         "email-reconfirmation",
