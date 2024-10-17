@@ -11,9 +11,6 @@ from time import time
 from urllib.parse import urlencode
 
 import markdown
-from captcha.fields import CaptchaField
-from captcha.helpers import captcha_image_url
-from captcha.models import CaptchaStore
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -70,6 +67,7 @@ from concordia.forms import (
     ActivateAndSetPasswordForm,
     AllowInactivePasswordResetForm,
     ContactUsForm,
+    TurnstileForm,
     UserLoginForm,
     UserNameForm,
     UserProfileForm,
@@ -150,6 +148,49 @@ def user_cache_control(view_function):
         return view_function(*args, **kwargs)
 
     return inner
+
+
+def validate_anonymous_user(view):
+    @wraps(view)
+    @never_cache
+    def inner(request, *args, **kwargs):
+        if not request.user.is_authenticated and request.method == "POST":
+            # First check if the user has already been validated within the time limit
+            # If so, validation can be skipped
+            turnstile_last_validated = request.session.get(
+                "turnstile_last_validated", 0
+            )
+            age = time() - turnstile_last_validated
+            if age > settings.ANONYMOUS_USER_VALIDATION_INTERVAL:
+                form = TurnstileForm(request.POST)
+                if not form.is_valid():
+                    return JsonResponse(
+                        {"error": "Unable to validate. " "Please try again or login."},
+                        status=401,
+                    )
+                else:
+                    # User has been validated, so we'll cache the time in their session
+                    request.session["turnstile_last_validated"] = time()
+
+        return view(request, *args, **kwargs)
+
+    return inner
+
+
+class AnonymousUserValidationCheckMixin:
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if not self.request.user.is_authenticated:
+            turnstile_last_validated = self.request.session.get(
+                "turnstile_last_validated", 0
+            )
+            age = time() - turnstile_last_validated
+            context["anonymous_user_validation_required"] = (
+                age > settings.ANONYMOUS_USER_VALIDATION_INTERVAL
+            )
+        else:
+            context["anonymous_user_validation_required"] = False
+        return context
 
 
 @never_cache
@@ -339,32 +380,30 @@ class ConcordiaRegistrationView(RegistrationView):
 
 
 @method_decorator(never_cache, name="dispatch")
-@method_decorator(
-    ratelimit(
-        group="login", key="post:username", rate="3/15m", method="POST", block=False
-    ),
-    name="post",
-)
 class ConcordiaLoginView(LoginView):
     form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-
-        # This is set by the ratelimit decorator
-        # True if the request exceeds the rate limit
-        blocked = request.limited
-        recent_captcha = (
-            time() - request.session.get("captcha_validation_time", 0)
-        ) < 86400
-
-        if blocked and not recent_captcha:
-            form.fields["captcha"] = CaptchaField()
-
         if form.is_valid():
-            return self.form_valid(form)
+            turnstile_form = TurnstileForm(request.POST)
+            if turnstile_form.is_valid():
+                return self.form_valid(form)
+            else:
+                form.add_error(
+                    None, "Unable to validate. Please login or complete the challenge."
+                )
+                return self.form_invalid(form)
+
         else:
             return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        ctx["turnstile_form"] = TurnstileForm(auto_id=False)
+
+        return ctx
 
 
 def ratelimit_view(request, exception=None):
@@ -1086,8 +1125,10 @@ class CampaignDetailView(APIDetailView):
             ctx["filters"] = filters = {}
             filter_by_reviewable = kwargs.get("filter_by_reviewable", False)
             if filter_by_reviewable:
-                projects = projects.exclude(
-                    item__asset__transcription__user=self.request.user.id
+                projects = projects.filter(
+                    item__asset__transcription__id__in=Transcription.objects.exclude(
+                        user=self.request.user.id
+                    ).values_list("id", flat=True)
                 )
                 ctx["filter_assets"] = True
             projects = projects.annotate(
@@ -1362,7 +1403,7 @@ class FilteredItemDetailView(ItemDetailView):
 
 
 @method_decorator(never_cache, name="dispatch")
-class AssetDetailView(APIDetailView):
+class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
@@ -1512,50 +1553,9 @@ class AssetDetailView(APIDetailView):
         ctx["undo_available"] = asset.can_rollback()[0] if transcription else False
         ctx["redo_available"] = asset.can_rollforward()[0] if transcription else False
 
+        ctx["turnstile_form"] = TurnstileForm(auto_id=False)
+
         return ctx
-
-
-@never_cache
-def ajax_captcha(request):
-    if request.method == "POST":
-        response = request.POST.get("response")
-        key = request.POST.get("key")
-
-        if response and key:
-            CaptchaStore.remove_expired()
-
-            # Note that CaptchaStore displays the response in uppercase in the
-            # image and in the string representation of the object but the
-            # actual value stored in the database is lowercase!
-            deleted, _ = CaptchaStore.objects.filter(
-                response=response.lower(), hashkey=key
-            ).delete()
-
-            if deleted > 0:
-                request.session["captcha_validation_time"] = time()
-                return JsonResponse({"valid": True})
-
-    key = CaptchaStore.generate_key()
-    return JsonResponse(
-        {"key": key, "image": request.build_absolute_uri(captcha_image_url(key))},
-        status=401,
-        content_type="application/json",
-    )
-
-
-def validate_anonymous_captcha(view):
-    @wraps(view)
-    @never_cache
-    def inner(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            captcha_last_validated = request.session.get("captcha_validation_time", 0)
-            age = time() - captcha_last_validated
-            if age > settings.ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL:
-                return ajax_captcha(request)
-
-        return view(request, *args, **kwargs)
-
-    return inner
 
 
 def get_transcription_superseded(asset, supersedes_pk):
@@ -1580,7 +1580,7 @@ def get_transcription_superseded(asset, supersedes_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@login_required
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def generate_ocr_transcription(request, *, asset_pk):
@@ -1594,8 +1594,21 @@ def generate_ocr_transcription(request, *, asset_pk):
     supersedes_pk = request.POST.get("supersedes")
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
-    if superseded and isinstance(superseded, HttpResponse):
-        return superseded
+    if superseded:
+        if isinstance(superseded, HttpResponse):
+            return superseded
+    else:
+        # This means this is the first transcription on this asset
+        # to enable undoing of the OCR transcription, we create
+        # an empty transcription for the OCR transcription to supersede
+        superseded = Transcription(
+            asset=asset,
+            user=get_anonymous_user(),
+            text="",
+        )
+        superseded.full_clean()
+        superseded.save()
+
     transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
         asset=asset,
@@ -1627,7 +1640,7 @@ def generate_ocr_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def rollback_transcription(request, *, asset_pk):
@@ -1666,7 +1679,7 @@ def rollback_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def rollforward_transcription(request, *, asset_pk):
@@ -1703,7 +1716,7 @@ def rollforward_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
@@ -1767,7 +1780,7 @@ def save_transcription(request, *, asset_pk):
 
 
 @require_POST
-@validate_anonymous_captcha
+@validate_anonymous_user
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
     asset = transcription.asset

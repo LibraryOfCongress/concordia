@@ -294,14 +294,16 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     unlisted = models.BooleanField(default=False, blank=True, db_index=True)
     status = models.IntegerField(choices=Status.choices, default=Status.ACTIVE)
     next_transcription_campaign = models.BooleanField(
-        default=False, blank=True, db_index=True
+        default=False, blank=True, db_index=True, verbose_name="Next-tran."
     )
-    next_review_campaign = models.BooleanField(default=False, blank=True, db_index=True)
+    next_review_campaign = models.BooleanField(
+        default=False, blank=True, db_index=True, verbose_name="Next-rev."
+    )
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
     )
-    display_on_homepage = models.BooleanField(default=True)
+    display_on_homepage = models.BooleanField(default=True, verbose_name="Homepage")
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
@@ -662,7 +664,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         transcriptions = (
             self.transcription_set.exclude(rolled_forward=True)
             .exclude(source_of__rolled_forward=True)
-            .exclude(rolled_back=True)
             .exclude(pk__gte=latest_transcription.pk)
             .order_by("-pk")
         )
@@ -677,9 +678,13 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         transcription_to_rollback_to = None
         for transcription in transcriptions:
+            if transcription.source:
+                transcription_to_check = transcription.source
+            else:
+                transcription_to_check = transcription
             if (
                 latest_transcription.rolled_back is False
-                or latest_transcription.supersedes != transcription
+                or latest_transcription.supersedes != transcription_to_check
             ):
                 transcription_to_rollback_to = transcription
                 break
@@ -859,7 +864,10 @@ class TranscriptionManager(models.Manager):
             user = ConcordiaUser.objects.get(id=user_id)
             incident_count = user.review_incidents(recent_accepts, recent_rejects)
             if incident_count > 0:
-                user_incident_count.append((user.id, user.username, incident_count))
+                review_count = Transcription.objects.filter(reviewed_by=user).count()
+                user_incident_count.append(
+                    (user.id, user.username, incident_count, review_count)
+                )
 
         return user_incident_count
 
@@ -878,7 +886,15 @@ class TranscriptionManager(models.Manager):
             user = ConcordiaUser.objects.get(id=user_id)
             incident_count = user.transcribe_incidents(transcriptions)
             if incident_count > 0:
-                user_incident_count.append((user.id, user.username, incident_count))
+                transcribe_count = Transcription.objects.filter(user=user).count()
+                user_incident_count.append(
+                    (
+                        user.id,
+                        user.username,
+                        incident_count,
+                        transcribe_count,
+                    )
+                )
 
         return user_incident_count
 

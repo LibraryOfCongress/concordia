@@ -1,6 +1,7 @@
 /* global $ displayMessage buildErrorMessage */
 
 import {reserveAssetForEditing} from 'asset-reservation';
+import {resetTurnstile} from 'turnstile';
 
 function lockControls($container) {
     if (!$container) {
@@ -62,40 +63,6 @@ $(document).on('keydown', function (event) {
 });
 
 function setupPage() {
-    var $captchaModal = $('#captcha-modal');
-    var $triggeringCaptchaForm = false;
-    var $captchaForm = $captchaModal
-        .find('form')
-        .on('submit', function (event) {
-            event.preventDefault();
-
-            var formData = $captchaForm.serializeArray();
-
-            $.ajax({
-                url: $captchaForm.attr('action'),
-                method: 'POST',
-                dataType: 'json',
-                data: $.param(formData),
-            })
-                .done(function () {
-                    $captchaModal.modal('hide');
-                    if ($triggeringCaptchaForm) {
-                        $triggeringCaptchaForm.submit();
-                    }
-                    $triggeringCaptchaForm = false;
-                })
-                .fail(function (jqXHR) {
-                    if (jqXHR.status == 401) {
-                        $captchaModal
-                            .find('[name=key]')
-                            .val(jqXHR.responseJSON.key);
-                        $captchaModal
-                            .find('#captcha-image')
-                            .attr('src', jqXHR.responseJSON.image);
-                    }
-                });
-        });
-
     $('form.ajax-submission').each(function (index, formElement) {
         /*
         Generic AJAX submission logic which takes a form and POSTs its data to the
@@ -149,27 +116,16 @@ function setupPage() {
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    if (jqXHR.status == 401) {
-                        $captchaModal
-                            .find('[name=key]')
-                            .val(jqXHR.responseJSON.key);
-                        $captchaModal
-                            .find('#captcha-image')
-                            .attr('src', jqXHR.responseJSON.image);
-                        $triggeringCaptchaForm = $form;
-                        $captchaModal.modal();
-                    } else {
-                        $form.trigger('form-submit-failure', {
-                            textStatus: textStatus,
-                            errorThrown: errorThrown,
-                            requestData: formData,
-                            $form: $form,
-                            jqXHR: jqXHR,
-                        });
-                        unlockControls($form);
-                        if (eventData.lockElement) {
-                            unlockControls($(eventData.lockElement));
-                        }
+                    $form.trigger('form-submit-failure', {
+                        textStatus: textStatus,
+                        errorThrown: errorThrown,
+                        requestData: formData,
+                        $form: $form,
+                        jqXHR: jqXHR,
+                    });
+                    unlockControls($form);
+                    if (eventData.lockElement) {
+                        unlockControls($(eventData.lockElement));
                     }
                 });
 
@@ -343,6 +299,7 @@ function setupPage() {
             if (responseData.redo_available) {
                 $('#rollforward-transcription-button').removeAttr('disabled');
             }
+            resetTurnstile();
             let messageChildren = $('#transcription-status-message').children();
             messageChildren
                 .attr('hidden', 'hidden')
@@ -366,6 +323,7 @@ function setupPage() {
                     ),
                 'transcription-save-result',
             );
+            resetTurnstile();
             $transcriptionEditor.trigger('update-ui-state');
         });
 
@@ -518,6 +476,11 @@ function setupPage() {
             url: url,
             method: 'POST',
             dataType: 'json',
+            data: {
+                'cf-turnstile-response': $transcriptionEditor
+                    .find('input[name="cf-turnstile-response"]')
+                    .val(),
+            },
         })
             .done(function (responseData) {
                 displayMessage(
@@ -792,6 +755,10 @@ window.addEventListener('beforeunload', function (event) {
         return (event.returnValue =
             "The transcription you've started has not been saved.");
     }
+});
+$('#asset-reservation-failure-modal').click(function () {
+    document.getElementById('transcription-input').placeholder =
+        "Someone else is already transcribing this page.\n\nYou can help by transcribing a new page, adding tags to this page, or coming back later to review this page's transcription.";
 });
 
 setupPage();

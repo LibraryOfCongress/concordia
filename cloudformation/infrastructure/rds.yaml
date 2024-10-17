@@ -41,10 +41,10 @@ Resources:
             AllocatedStorage: '20'
             AllowMajorVersionUpgrade: false
             AutoMinorVersionUpgrade: true
-            DBInstanceClass: db.t2.medium
+            DBInstanceClass: db.t4g.medium
             Port: '5432'
             PubliclyAccessible: false
-            StorageType: gp2
+            StorageType: gp3
             StorageEncrypted: True
             BackupRetentionPeriod: 31
             MasterUsername: !Ref DbUsername

@@ -37,6 +37,7 @@ jobs:
                   IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
                   CLUSTER: ${{ secrets.CLUSTER }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
+                  TARGET_SERVICE_B: ${{ secrets.TARGET_SERVICE_B }}
               run: |
                   docker pull $REGISTRY/concordia:$IMAGE_TAG_PULL
                   docker pull $REGISTRY/concordia/importer:$IMAGE_TAG_PULL
@@ -51,3 +52,4 @@ jobs:
                   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
+                  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE_B

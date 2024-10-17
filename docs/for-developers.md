@@ -77,6 +77,16 @@ virtualenv environment:
 1. Make sure that [redis](https://redis.io/docs/getting-started/) is installed and
    running.
 
+1. Configure Turnstile in your `.env` file. Unless specifically testing Turnstile,
+   you'll probably want the following settings:
+
+    ```bash
+    echo TURNSTILE_SITEKEY=1x00000000000000000000BB >> .env
+    echo TURNSTILE_SECRET=1x0000000000000000000000000000000AA >> .env
+    ```
+
+    Those two settings ensure all Turnstile tests pass. See [Turnstile Testing](https://developers.cloudflare.com/turnstile/troubleshooting/testing/) for other options.
+
 ### Local Development Environment
 
 You will likely want to run the Django development server on your localhost

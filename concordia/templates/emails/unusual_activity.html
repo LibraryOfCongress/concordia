@@ -1,12 +1,17 @@
 <style type="text/css">
 
     table, td { border: 1px solid black; border-collapse: collapse; }
-    td { padding: 7px; }
+    th, td { padding: 7px; }
 
 </style>
 <h4>{{ title }}</h4>
-Incidents of two or more transcriptions submitted within a single minute:
+Transcription Incidents: 2 or more transcriptions submitted in 1 minute.
 <table>
+    <tr>
+        <th>User</th>
+        <th>Incidents</th>
+        <th>User transcriptions</th>
+    </tr>
     {% for row in transcriptions %}
         <tr>
             <td>
@@ -15,22 +20,29 @@ Incidents of two or more transcriptions submitted within a single minute:
                 </a>
             </td>
             <td>{{ row.2 }}</td>
+            <td>{{ row.3 }}</td>
         </tr>
     {% empty %}
         <tr><td>No transcriptions fell within the window.</td></tr>
     {% endfor %}
 </table>
 <br/>
-Incidents of two or more transcriptions reviewed within a single minute:
+Review Incidents: 2 or more transcriptions reviewed in 1 minute.
 <table>
+    <tr>
+        <th>User</th>
+        <th>Incidents</th>
+        <th>User reviews</th>
+    </tr>
     {% for row in reviews %}
         <tr>
             <td>
-                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">
+                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?reviewed_by__id__exact={{ row.0 }}">
                     {{ row.1 }}
                 </a>
             </td>
             <td>{{ row.2 }}</td>
+            <td>{{ row.3 }}</td>
         </tr>
     {% empty %}
         <tr><td>No reviews fell within the window.</td></tr>

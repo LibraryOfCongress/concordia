@@ -1,5 +1,9 @@
 /* global $ trackUIInteraction */
 
+var height =
+    document.getElementById('transcription-status-message').offsetHeight + 97;
+document.getElementById('guide-sidebar').style.top = height.toString() + 'px';
+
 function openOffcanvas() {
     let guide = document.getElementById('guide-sidebar');
     if (guide.classList.contains('offscreen')) {
