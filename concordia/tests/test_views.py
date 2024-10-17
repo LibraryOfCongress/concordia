@@ -478,6 +478,33 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
 
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            ),
+            {"page": "not-an-int"},
+        )
+
+        ctx = response.context
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+        self.assertEqual(ctx["projects"].number, 1)
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            ),
+            {"page": 10000},
+        )
+
+        ctx = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+        self.assertEqual(ctx["projects"].number, 1)
+
 
 @override_settings(
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"

@@ -2,7 +2,11 @@
 Tests for user account-related views
 """
 
-from django.core import mail
+from unittest.mock import patch
+
+from django import forms
+from django.core import mail, signing
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -23,6 +27,12 @@ class ConcordiaViewTests(
     """
     This class contains the unit tests for the view in the concordia app.
     """
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
 
     def test_AccountProfileView_get(self):
         """
@@ -151,6 +161,64 @@ class ConcordiaViewTests(
                 concordia_user.get_email_for_reconfirmation(), email_data["email"]
             )
             confirmation_key = concordia_user.get_email_reconfirmation_key()
+
+            # Check if user failing validation is handled
+            with patch("concordia.models.ConcordiaUser.full_clean") as mock:
+                mock.side_effect = forms.ValidationError("Testing error")
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
+            # Check if invalid data from confirmation key is handled
+            with patch("django.core.signing.loads") as mock:
+                mock.return_value = {
+                    "username": "bad-username",
+                    "email": "bad-email-address",
+                }
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
+            # Check if signing errors are handled
+            with patch("django.core.signing.loads") as mock:
+                mock.side_effect = signing.BadSignature()
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
+                mock.side_effect = signing.SignatureExpired()
+                error_response = self.client.get(
+                    reverse(
+                        "email-reconfirmation",
+                        kwargs={"confirmation_key": confirmation_key},
+                    )
+                )
+                self.assertEqual(error_response.status_code, 403)
+                self.assertTemplateUsed(
+                    error_response, "account/email_reconfirmation_failed.html"
+                )
+
             confirmation_response = self.client.get(
                 reverse(
                     "email-reconfirmation",
