@@ -1,34 +1,33 @@
 <div class="flex-grow-1 d-flex d-print-block flex-column">
-    <div id="transcription-status-display">
-        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-            <span class="fas fa-list"></span>
-            Needs review
-        </h2>
-        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-            <span class="fas fa-check"></span>
-            Completed
-        </h2>
-        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
-            <span class="fas fa-edit"></span>
-            Not started
-        </h2>
-        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
-            <span class="fas fa-edit"></span>
-            In progress
-        </h2>
-        <span id="display-conflict" hidden>
-            <span class="fas fa-exclamation-triangle"></span>
-            Another user is transcribing this page
-        </span>
-    </div>
-
     <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
         {% csrf_token %}
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-        <div class="row justify-content-sm-between ps-3 pe-2">
+        <div class="row justify-content-sm-between align-items-end pe-2">
             <div class="col">
-                <span id="transcription-status-message">
+                <div id="transcription-status-message" class="">
+                    <div id="transcription-status-display" class="row">
+                        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                            <span class="fas fa-list"></span>
+                            Needs review
+                        </h2>
+                        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                            <span class="fas fa-check"></span>
+                            Completed
+                        </h2>
+                        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                            <span class="fas fa-edit"></span>
+                            Not started
+                        </h2>
+                        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                            <span class="fas fa-edit"></span>
+                            In progress
+                        </h2>
+                        <span id="display-conflict" hidden>
+                            <span class="fas fa-exclamation-triangle"></span>
+                            Another user is transcribing this page
+                        </span>
+                    </div>
                     <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
                         Registered Contributors: <span id="message-contributors-num" class="fw-normal">{{ registered_contributors }}</span>
                     </h2>
@@ -44,10 +43,10 @@
                     <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                         This transcription is finished! You can read and add tags.
                     </span>
-                </span>
+                </div>
             </div>
             {% if cards %}
-                <div class="align-items-end btn-group col call-to-action pe-0">
+                <div class="align-items-end btn-group pe-0 col">
                     <a class="fw-bold" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
@@ -89,7 +88,7 @@
                         </a>
                     </div>
 
-                    <div class="btn-group">
+                    <div>
                         <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
                             Save
                         </button>

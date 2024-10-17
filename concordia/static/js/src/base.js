@@ -156,7 +156,7 @@ if (screenfull.isEnabled) {
         .removeAttr('hidden')
         .on('click', function (event) {
             event.preventDefault();
-            var targetElement = document.getElementById(this.dataset.target);
+            var targetElement = document.getElementById(this.dataset.bsTarget);
 
             if (screenfull.isFullscreen) {
                 screenfull.exit();

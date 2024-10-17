@@ -65,7 +65,7 @@
         <div id="homepage-carousel" class="carousel slide container" data-bs-ride="carousel" data-bs-pause="hover">
             <div class="carousel-indicators d-none d-lg-flex">
                 {% for slide in slides %}
-                    <button type="button" data-bs-target="#homepage-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true" {% endif %}aria-label="Slide {{ forloop.counter }}">></button>
+                    <button type="button" data-bs-target="#homepage-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true" {% endif %}aria-label="Slide {{ forloop.counter }}"></button>
                 {% endfor %}
             </div>
 
