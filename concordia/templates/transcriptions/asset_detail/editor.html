@@ -3,9 +3,9 @@
         {% csrf_token %}
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-        <div class="row justify-content-sm-between align-items-end pe-2">
+        <div class="row justify-content-sm-between align-items-end mx-0 pe-0">
             <div class="col">
-                <div id="transcription-status-message" class="">
+                <div id="transcription-status-message">
                     <div id="transcription-status-display" class="row">
                         <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
@@ -28,6 +28,9 @@
                             Another user is transcribing this page
                         </span>
                     </div>
+                </div>
+
+                <div class="w-100">
                     <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
                         Registered Contributors: <span id="message-contributors-num" class="fw-normal">{{ registered_contributors }}</span>
                     </h2>
@@ -46,8 +49,8 @@
                 </div>
             </div>
             {% if cards %}
-                <div class="align-items-end btn-group pe-0 col">
-                    <a class="fw-bold" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
+                <div class="d-flex align-items-end">
+                    <a class="fw-bold mt-3" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
                     {% if guides %}
@@ -88,20 +91,18 @@
                         </a>
                     </div>
 
-                    <div>
-                        <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
-                            Save
-                        </button>
-                        <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
-                            <span class="fas fa-undo"></span> Undo
-                        </button>
-                        <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
-                            Redo <span class="fas fa-redo"></span>
-                        </button>
-                        <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
-                            Submit for Review
-                        </button>
-                    </div>
+                    <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1" title="Save the text you entered above">
+                        Save
+                    </button>
+                    <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
+                        <span class="fas fa-undo"></span> Undo
+                    </button>
+                    <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
+                        Redo <span class="fas fa-redo"></span>
+                    </button>
+                    <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Request another volunteer to review the text you entered above">
+                        Submit for Review
+                    </button>
 
                 {% elif transcription_status == 'submitted' %}
                     {% if not user.is_authenticated %}
@@ -118,6 +119,11 @@
                         {% else %}
                             <button id="accept-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Confirm that the text is accurately transcribed">Accept</button>
                         {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if anonymous_user_validation_required %}
+                    {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
+                        <div class="w-100 text-center mt-1 mb-1">{{ turnstile_form.turnstile }}</div>
                     {% endif %}
                 {% endif %}
             </div>

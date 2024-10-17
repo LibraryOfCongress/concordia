@@ -114,7 +114,6 @@ INSTALLED_APPS = [
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
-    "captcha",
     "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
@@ -161,6 +160,7 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
                 "concordia.context_processors.maintenance_mode_frontend_available",
+                "concordia.turnstile.context_processors.turnstile_default_settings",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
@@ -317,12 +317,21 @@ AUTHENTICATION_BACKENDS = [
     "concordia.authentication_backends.EmailOrUsernameModelBackend"
 ]
 
-CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
-#: Anonymous sessions require captcha validation every day by default:
-ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
-
-CAPTCHA_IMAGE_SIZE = [150, 100]
-CAPTCHA_FONT_SIZE = 40
+# Turnstile settings
+TURNSTILE_JS_API_URL = os.environ.get(
+    "TURNSTILE_JS_API_URL", "https://challenges.cloudflare.com/turnstile/v0/api.js"
+)
+TURNSTILE_VERIFY_URL = os.environ.get(
+    "TURNSTILE_VERIFY_URL", "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+)
+TURNSTILE_SITEKEY = os.environ.get("TURNSTILE_SITEKEY", "")
+TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET", "")
+TURNSTILE_TIMEOUT = os.environ.get("TURNSTILE_TIMEOUT", 5)
+TURNSTILE_DEFAULT_CONFIG = os.environ.get(
+    "TURNSTILE_DEFAULT_CONFIG", {"appearance": "interaction-only"}
+)
+TURNSTILE_PROXIES = os.environ.get("TURNSTILE_PROXIES", {})
+ANONYMOUS_USER_VALIDATION_INTERVAL = 86400
 
 STORAGES = {
     "default": {
@@ -377,10 +386,10 @@ BOOTSTRAP4 = {"required_css_class": "form-group-required", "set_placeholder": Fa
 TRANSCRIPTION_RESERVATION_SECONDS = 15 * 60
 
 #: Number of hours until an asset reservation is tombstoned
-TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 72
+TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 24
 
 #: Number of hours until a tombstoned reservation is deleted
-TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS = 48
+TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS = 24
 
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60

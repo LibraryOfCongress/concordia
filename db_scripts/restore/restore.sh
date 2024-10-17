@@ -31,7 +31,13 @@ pg_restore --create -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres -
 RETURNCODE=$?
 echo $RETURNCODE
 
-if [ $RETURNCODE = 0 ]; then
+if [ $RETURNCODE = 0 ] && [ $ENV_NAME = "test" ]; then
+    ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[1])')"
+    ECS_SERVICE_2="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[3].split("/")[2])')"
+
+    aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE}
+    aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE_2}
+elif [ $RETURNCODE = 0 ]; then
     ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[1])')"
     aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE}
 fi

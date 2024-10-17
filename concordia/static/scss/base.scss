@@ -1440,7 +1440,8 @@ button.btn-outline-primary:hover {
 /* How to Guide */
 #open-guide {
     border-radius: $btn-border-radius;
-    margin: -14px 5px 0 9px;
+    margin: 0 5px 0 9px;
+    max-width: 137px;
     white-space: nowrap;
 }
 
@@ -1459,7 +1460,6 @@ button.btn-outline-primary:hover {
     width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
-    top: 135px;
     right: 0;
     overflow: hidden auto; /* Disable horizontal scrolling */
     transition: 0.3s;
@@ -1704,6 +1704,15 @@ table.table thead.border-y {
 .btn-xs .btn {
     font-size: 14px;
     padding: 0 0.12rem;
+}
+
+.btn-group-sm > .btn {
+    border-radius: $btn-border-radius;
+}
+
+#contact-us {
+    border-top-left-radius: $btn-border-radius;
+    border-bottom-left-radius: $btn-border-radius;
 }
 
 #current-filters li .btn {
