@@ -6,8 +6,10 @@ from smtplib import SMTPException
 from unittest.mock import patch
 
 from django.contrib.messages import get_messages
+from django.core.cache import cache
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from maintenance_mode.core import get_maintenance_mode, set_maintenance_mode
 
 from concordia.models import Guide, SimplePage
 from concordia.views import simple_page
@@ -204,3 +206,135 @@ class HelpCenterRedirectTests(TestCase):
         self.assertRedirects(
             self.client.get("/help-center/page-esp/"), "/get-started-esp/page-esp/"
         )
+
+
+class MaintenanceModeTests(TestCase, CreateTestUsers):
+    def setUp(self):
+        cache.clear()
+        self.timestamp_value = 1
+        self.user = None
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_maintenance_mode_off(self):
+        self.user = self.create_super_user()
+        self.login_user()
+        set_maintenance_mode(True)
+
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_off")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(get_maintenance_mode(), False)
+
+        self.user = self.create_test_user()
+        self.login_user()
+        set_maintenance_mode(True)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_off")),
+                f"/?t={self.timestamp_value}",
+                target_status_code=503,
+            )
+        self.assertEqual(get_maintenance_mode(), True)
+
+    def test_maintenance_mode_on_without_frontend(self):
+        cache.set("maintenance_mode_frontend_available", False, None)
+
+        self.user = self.create_super_user()
+        self.login_user()
+        set_maintenance_mode(False)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_on")),
+                f"/?t={self.timestamp_value}",
+                target_status_code=503,
+            )
+        self.assertEqual(get_maintenance_mode(), True)
+
+        self.user = self.create_test_user()
+        self.login_user()
+        set_maintenance_mode(False)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_on")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(get_maintenance_mode(), False)
+
+    def test_maintenance_mode_on_with_frontend(self):
+        cache.set("maintenance_mode_frontend_available", True, None)
+
+        self.user = self.create_super_user()
+        self.login_user()
+        set_maintenance_mode(False)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_on")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(get_maintenance_mode(), True)
+
+        self.user = self.create_test_user()
+        self.login_user()
+        set_maintenance_mode(False)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_on")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(get_maintenance_mode(), False)
+
+    def test_maintenance_mode_frontend_available(self):
+        self.user = self.create_super_user()
+        self.login_user()
+        cache.set("maintenance_mode_frontend_available", False, None)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_frontend_available")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(cache.get("maintenance_mode_frontend_available"), True)
+
+        self.user = self.create_test_user()
+        self.login_user()
+        cache.set("maintenance_mode_frontend_available", False, None)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_frontend_available")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(cache.get("maintenance_mode_frontend_available"), False)
+
+    def test_maintenance_mode_frontend_unavailable(self):
+        self.user = self.create_super_user()
+        self.login_user()
+        cache.set("maintenance_mode_frontend_available", True, None)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_frontend_unavailable")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(cache.get("maintenance_mode_frontend_available"), False)
+
+        self.user = self.create_test_user()
+        self.login_user()
+        cache.set("maintenance_mode_frontend_available", True, None)
+        with patch("concordia.views.time") as mock:
+            mock.return_value = self.timestamp_value
+            self.assertRedirects(
+                self.client.get(reverse("maintenance_mode_frontend_unavailable")),
+                f"/?t={self.timestamp_value}",
+            )
+        self.assertEqual(cache.get("maintenance_mode_frontend_available"), True)
