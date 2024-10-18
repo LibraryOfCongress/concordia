@@ -1438,6 +1438,12 @@ button.btn-outline-primary:hover {
 }
 
 /* How to Guide */
+@media (width >= 965px) {
+    #instruction-buttons {
+        justify-content: flex-end;
+    }
+}
+
 #open-guide {
     border-radius: $btn-border-radius;
     margin: 0 5px 0 9px;
