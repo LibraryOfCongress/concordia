@@ -1437,14 +1437,12 @@ button.btn-outline-primary:hover {
     right: 0;
 }
 
-/* stylelint-disable */
 /* How to Guide */
-@media (min-width: 965px) {
+@media (width >= 965px) {
     #instruction-buttons {
         justify-content: flex-end;
     }
 }
-/* stylelint-enable */
 
 #open-guide {
     border-radius: $btn-border-radius;
