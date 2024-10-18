@@ -1,11 +1,10 @@
 <div class="flex-grow-1 d-flex d-print-block flex-column">
     <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
         {% csrf_token %}
-        <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-
-        <div class="row justify-content-sm-between align-items-end pe-2">
+        <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />   
+        <div class="row justify-content-sm-between align-items-end mx-0 pe-2">
             <div class="col">
-                <div id="transcription-status-message" class="">
+                <div id="transcription-status-message">
                     <div id="transcription-status-display" class="row">
                         <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
@@ -28,6 +27,8 @@
                             Another user is transcribing this page
                         </span>
                     </div>
+                </div>
+                <div class="w-100">
                     <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
                         Registered Contributors: <span id="message-contributors-num" class="fw-normal">{{ registered_contributors }}</span>
                     </h2>
@@ -46,8 +47,8 @@
                 </div>
             </div>
             {% if cards %}
-                <div class="align-items-end btn-group pe-0 col">
-                    <a class="fw-bold" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
+                <div class="d-flex align-items-end">
+                    <a class="fw-bold mt-3" id="quick-tips" data-bs-toggle="modal" data-bs-target="#tutorial-popup" role="button">
                         <u>Campaign Tips</u>
                     </a>
                     {% if guides %}
@@ -118,6 +119,11 @@
                         {% else %}
                             <button id="accept-transcription-button" disabled type="button" class="btn btn-primary mx-1" title="Confirm that the text is accurately transcribed">Accept</button>
                         {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if anonymous_user_validation_required %}
+                    {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
+                        <div class="w-100 text-center mt-1 mb-1">{{ turnstile_form.turnstile }}</div>
                     {% endif %}
                 {% endif %}
             </div>

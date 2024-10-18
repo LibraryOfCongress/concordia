@@ -5,6 +5,7 @@
 {% block head_content %}
     <meta name="robots" content="noindex">
     {{ block.super }}
+    <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
 {% endblock head_content %}
 
 {% block title %}Login{% endblock title %}
@@ -23,6 +24,7 @@
                     {% endif %}
 
                     {% bootstrap_form form %}
+                    <div class="w-100 text-center mt-0 mb-3">{{ turnstile_form.turnstile }}</div>
                     <p>
                         By using this system, you agree to comply with
                         <a href="https://www.loc.gov/legal/" target="_blank">the Library's
