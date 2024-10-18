@@ -1140,6 +1140,12 @@ body .disabled > .page-link {
     resize: none;
 }
 
+@media (width <= 1041px) {
+    #submit-transcription-button {
+        margin-top: 8px;
+    }
+}
+
 a.btn-outline-primary,
 button.btn-outline-primary {
     border-color: $blue;
