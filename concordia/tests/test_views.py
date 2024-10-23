@@ -1536,6 +1536,29 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         )
 
 
+class FilteredCampaignDetailViewTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_get_context_data(self):
+        campaign = create_campaign()
+        kwargs = {"slug": campaign.slug}
+        url = reverse("transcriptions:filtered-campaign-detail", kwargs=kwargs)
+        request = self.factory.get(url)
+
+        self.login_user(is_staff=False)
+        request = self.factory.get(url, kwargs)
+        request.user = self.user
+        response = self.client.get(url, kwargs)
+        self.assertFalse(response.context.get("filter_by_reviewable", False))
+        self.logout_user()
+
+        request.user = self.user = self.create_staff_user()
+        self.login_user()
+        response = self.client.get(url, kwargs)
+        self.assertTrue(response.context.get("filter_by_reviewable"))
+
+
 class RateLimitTests(TestCase):
     def setUp(self):
         self.request_factory = RequestFactory()
