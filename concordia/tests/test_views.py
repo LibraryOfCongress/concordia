@@ -32,6 +32,7 @@ from concordia.utils import get_anonymous_user, get_or_create_reservation_token
 from concordia.views import (
     AccountProfileView,
     CompletedCampaignListView,
+    FilteredProjectDetailView,
     ratelimit_view,
     registration_rate,
 )
@@ -46,6 +47,7 @@ from .utils import (
     create_item,
     create_project,
     create_topic,
+    create_transcription,
 )
 
 
@@ -1537,25 +1539,53 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
 
 class FilteredCampaignDetailViewTests(CreateTestUsers, TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-
     def test_get_context_data(self):
         campaign = create_campaign()
         kwargs = {"slug": campaign.slug}
         url = reverse("transcriptions:filtered-campaign-detail", kwargs=kwargs)
-        request = self.factory.get(url)
 
         self.login_user(is_staff=False)
-        request = self.factory.get(url, kwargs)
-        request.user = self.user
         response = self.client.get(url, kwargs)
         self.assertFalse(response.context.get("filter_by_reviewable", False))
         self.logout_user()
 
-        request.user = self.user = self.create_staff_user()
+        self.user = self.create_staff_user()
         self.login_user()
         response = self.client.get(url, kwargs)
+        self.assertTrue(response.context.get("filter_by_reviewable"))
+
+
+class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.project = create_project()
+        self.kwargs = {
+            "campaign_slug": self.project.campaign.slug,
+            "slug": self.project.slug,
+        }
+        self.url = reverse("transcriptions:filtered-project-detail", kwargs=self.kwargs)
+        self.login_user()
+
+    def test_get_queryset(self):
+        item1 = create_item(project=self.project, item_id="testitem.012345679")
+        asset1 = create_asset(item=item1)
+        create_transcription(asset=asset1, user=get_anonymous_user(), submitted=now())
+
+        item2 = create_item(
+            project=create_project(slug="project-two", campaign=self.project.campaign)
+        )
+        asset2 = create_asset(item=item2)
+        create_transcription(asset=asset2, user=self.user, submitted=now())
+
+        view = FilteredProjectDetailView()
+        view.kwargs = self.kwargs
+        view.request = RequestFactory().get(self.url, self.kwargs)
+        view.request.user = self.user
+        qs = view.get_queryset()
+        self.assertIn(item1, qs)
+        self.assertNotIn(item2, qs)
+
+    def test_get_context_data(self):
+        response = self.client.get(self.url, self.kwargs)
         self.assertTrue(response.context.get("filter_by_reviewable"))
 
 
