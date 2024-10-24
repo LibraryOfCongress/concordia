@@ -32,6 +32,7 @@ from concordia.utils import get_anonymous_user, get_or_create_reservation_token
 from concordia.views import (
     AccountProfileView,
     CompletedCampaignListView,
+    FilteredItemDetailView,
     FilteredProjectDetailView,
     ratelimit_view,
     registration_rate,
@@ -1583,6 +1584,37 @@ class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
         qs = view.get_queryset()
         self.assertIn(item1, qs)
         self.assertNotIn(item2, qs)
+
+    def test_get_context_data(self):
+        response = self.client.get(self.url, self.kwargs)
+        self.assertTrue(response.context.get("filter_by_reviewable"))
+
+
+class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.item = create_item()
+        self.kwargs = {
+            "campaign_slug": self.item.project.campaign.slug,
+            "project_slug": self.item.project.slug,
+            "item_id": self.item.item_id,
+        }
+        self.url = reverse("transcriptions:filtered-item-detail", kwargs=self.kwargs)
+        self.login_user()
+
+    def test_get_queryset(self):
+        asset1 = create_asset(item=self.item)
+        create_transcription(asset=asset1, user=get_anonymous_user(), submitted=now())
+
+        asset2 = create_asset(item=self.item, slug="asset-two")
+        create_transcription(asset=asset2, user=self.user, submitted=now())
+
+        view = FilteredItemDetailView()
+        view.kwargs = self.kwargs
+        view.request = RequestFactory().get(self.url, self.kwargs)
+        view.request.user = self.user
+        qs = view.get_queryset()
+        self.assertIn(asset1, qs)
+        self.assertNotIn(asset2, qs)
 
     def test_get_context_data(self):
         response = self.client.get(self.url, self.kwargs)
