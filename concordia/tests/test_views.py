@@ -1640,7 +1640,7 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
 
     def test_get_context_data(self):
         response = self.client.get(self.url, self.kwargs)
-        self.assertIsNone(response.context.get("filter_by_reviewable"))
+        self.assertTrue(response.context.get("filter_by_reviewable"))
 
 
 class RateLimitTests(TestCase):
