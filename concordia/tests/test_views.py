@@ -14,6 +14,7 @@ from django.test import (
     override_settings,
 )
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 
 from concordia.models import (
@@ -36,6 +37,7 @@ from concordia.views import (
     FilteredProjectDetailView,
     ratelimit_view,
     registration_rate,
+    user_cache_control,
 )
 
 from .utils import (
@@ -1537,6 +1539,26 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             ),
             in_progress_asset_in_item.get_absolute_url(),
         )
+
+
+class UserCacheControlTest(CreateTestUsers, TestCase):
+    """
+    Tests for the user_cache_control decorator
+    """
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = self.create_user("testuser")
+
+    def test_vary_on_cookie(self):
+        @method_decorator(user_cache_control, name="dispatch")
+        def a_view(request):
+            return HttpResponse()
+
+        request = self.factory.get("/rand")
+        request.user = self.user
+        resp = a_view(None, request)
+        self.assertEqual(resp.status_code, 200)
 
 
 class FilteredCampaignDetailViewTests(CreateTestUsers, TestCase):
