@@ -1399,6 +1399,7 @@ class FilteredItemDetailView(ItemDetailView):
 
     def get_context_data(self, **kwargs):
         self.kwargs["filter_by_reviewable"] = True
+        kwargs["filter_by_reviewable"] = True
         return super().get_context_data(**kwargs)
 
 
