@@ -261,6 +261,8 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                     integrity="sha384-PKOJCSVL6suo2Qz9Hs4hkrZqX7S6iLwadxXxBEa0h0ycsuoDNZCiAcHlPGHYxU6l"
                     crossorigin="anonymous"></script>
             <script>
+                // Don't load Sentry if this is the "always online" version of the page,
+                // which is the version CloudFlare serves if the actual site is down
                 if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
                     Sentry.init({
                         'dsn': '{{ SENTRY_FRONTEND_DSN }}',
@@ -268,7 +270,9 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                         'environment': '{{ CONCORDIA_ENVIRONMENT }}',
                         'blacklistUrls': [
                             /^moz-extension/
-                        ]
+                        ],
+                        // Turnstile 300xxx and 600xxx errors indicate the user failed validation. We don't want those in Sentry
+                        'ignoreErrors': ["[Cloudflare Turnstile] Error: 600", "[Cloudflare Turnstile] Error: 300"]
                     });
                 }
             </script>
