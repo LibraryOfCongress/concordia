@@ -1,4 +1,4 @@
-/* global OpenSeadragon screenfull debounce */
+/* global OpenSeadragon screenfull debounce displayMessage */
 
 const viewerData = document.getElementById('viewer-data').dataset;
 
@@ -220,5 +220,14 @@ thresholdDown.addEventListener('click', function () {
 
 let reset = document.getElementById('viewer-reset');
 reset.addEventListener('click', resetImageFilterForms);
+
+seadragonViewer.addHandler('open-failed', function (eventData) {
+    let message = eventData.message;
+    displayMessage(
+        'error',
+        'Unable to display image: ' + message,
+        'openseadragon-open-failed',
+    );
+});
 
 export {seadragonViewer};
