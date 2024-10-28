@@ -14,6 +14,7 @@ from django.test import (
     override_settings,
 )
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 
 from concordia.models import (
@@ -32,8 +33,11 @@ from concordia.utils import get_anonymous_user, get_or_create_reservation_token
 from concordia.views import (
     AccountProfileView,
     CompletedCampaignListView,
+    FilteredItemDetailView,
+    FilteredProjectDetailView,
     ratelimit_view,
     registration_rate,
+    user_cache_control,
 )
 
 from .utils import (
@@ -46,6 +50,7 @@ from .utils import (
     create_item,
     create_project,
     create_topic,
+    create_transcription,
 )
 
 
@@ -477,6 +482,33 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            ),
+            {"page": "not-an-int"},
+        )
+
+        ctx = response.context
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+        self.assertEqual(ctx["projects"].number, 1)
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            ),
+            {"page": 10000},
+        )
+
+        ctx = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+        self.assertEqual(ctx["projects"].number, 1)
 
 
 @override_settings(
@@ -1507,6 +1539,108 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             ),
             in_progress_asset_in_item.get_absolute_url(),
         )
+
+
+class UserCacheControlTest(CreateTestUsers, TestCase):
+    """
+    Tests for the user_cache_control decorator
+    """
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = self.create_user("testuser")
+
+    def test_vary_on_cookie(self):
+        @method_decorator(user_cache_control, name="dispatch")
+        def a_view(request):
+            return HttpResponse()
+
+        request = self.factory.get("/rand")
+        request.user = self.user
+        resp = a_view(None, request)
+        self.assertEqual(resp.status_code, 200)
+
+
+class FilteredCampaignDetailViewTests(CreateTestUsers, TestCase):
+    def test_get_context_data(self):
+        campaign = create_campaign()
+        kwargs = {"slug": campaign.slug}
+        url = reverse("transcriptions:filtered-campaign-detail", kwargs=kwargs)
+
+        self.login_user(is_staff=False)
+        response = self.client.get(url, kwargs)
+        self.assertFalse(response.context.get("filter_by_reviewable", False))
+        self.logout_user()
+
+        self.user = self.create_staff_user()
+        self.login_user()
+        response = self.client.get(url, kwargs)
+        self.assertTrue(response.context.get("filter_by_reviewable"))
+
+
+class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.project = create_project()
+        self.kwargs = {
+            "campaign_slug": self.project.campaign.slug,
+            "slug": self.project.slug,
+        }
+        self.url = reverse("transcriptions:filtered-project-detail", kwargs=self.kwargs)
+        self.login_user()
+
+    def test_get_queryset(self):
+        item1 = create_item(project=self.project, item_id="testitem.012345679")
+        asset1 = create_asset(item=item1)
+        create_transcription(asset=asset1, user=get_anonymous_user(), submitted=now())
+
+        item2 = create_item(
+            project=create_project(slug="project-two", campaign=self.project.campaign)
+        )
+        asset2 = create_asset(item=item2)
+        create_transcription(asset=asset2, user=self.user, submitted=now())
+
+        view = FilteredProjectDetailView()
+        view.kwargs = self.kwargs
+        view.request = RequestFactory().get(self.url, self.kwargs)
+        view.request.user = self.user
+        qs = view.get_queryset()
+        self.assertIn(item1, qs)
+        self.assertNotIn(item2, qs)
+
+    def test_get_context_data(self):
+        response = self.client.get(self.url, self.kwargs)
+        self.assertTrue(response.context.get("filter_by_reviewable"))
+
+
+class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.item = create_item()
+        self.kwargs = {
+            "campaign_slug": self.item.project.campaign.slug,
+            "project_slug": self.item.project.slug,
+            "item_id": self.item.item_id,
+        }
+        self.url = reverse("transcriptions:filtered-item-detail", kwargs=self.kwargs)
+        self.login_user()
+
+    def test_get_queryset(self):
+        asset1 = create_asset(item=self.item)
+        create_transcription(asset=asset1, user=get_anonymous_user(), submitted=now())
+
+        asset2 = create_asset(item=self.item, slug="asset-two")
+        create_transcription(asset=asset2, user=self.user, submitted=now())
+
+        view = FilteredItemDetailView()
+        view.kwargs = self.kwargs
+        view.request = RequestFactory().get(self.url, self.kwargs)
+        view.request.user = self.user
+        qs = view.get_queryset()
+        self.assertIn(asset1, qs)
+        self.assertNotIn(asset2, qs)
+
+    def test_get_context_data(self):
+        response = self.client.get(self.url, self.kwargs)
+        self.assertTrue(response.context.get("filter_by_reviewable"))
 
 
 class RateLimitTests(TestCase):

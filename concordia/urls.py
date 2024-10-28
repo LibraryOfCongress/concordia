@@ -156,6 +156,9 @@ urlpatterns = [
         views.simple_page,
         name="how-to-tag-spanish",
     ),
+    path(
+        "get-started-esp/<uslug:slug>/", views.simple_page, name="simple-page-spanish"
+    ),
     path("for-educators/", views.simple_page, name="for-educators"),
     path("for-staff/", views.simple_page, name="for-staff"),
     path("resources/", views.simple_page, name="resources"),

@@ -1399,6 +1399,7 @@ class FilteredItemDetailView(ItemDetailView):
 
     def get_context_data(self, **kwargs):
         self.kwargs["filter_by_reviewable"] = True
+        kwargs["filter_by_reviewable"] = True
         return super().get_context_data(**kwargs)
 
 
@@ -2011,7 +2012,7 @@ class ContactUsView(FormView):
             )
         except SMTPException:
             logger.exception(
-                "Unable to send contact message to %s: %s",
+                "Unable to send contact message to %s",
                 form.cleaned_data["email"],
                 extra={"data": form.cleaned_data},
             )
@@ -2701,7 +2702,7 @@ class EmailReconfirmationView(TemplateView):
 class HelpCenterRedirectView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         path = kwargs["page_slug"]
-        return "/get-started/" + path
+        return "/get-started/" + path + "/"
 
 
 class HelpCenterSpanishRedirectView(RedirectView):
