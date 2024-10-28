@@ -2,26 +2,32 @@
 Tests for user account-related views
 """
 
+from smtplib import SMTPException
 from unittest.mock import patch
 
 from django import forms
+from django.contrib.messages import get_messages
 from django.core import mail, signing
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.timezone import now
 
-from concordia.models import ConcordiaUser, User
+from concordia.models import ConcordiaUser, Transcription, User
+from concordia.utils import get_anonymous_user
 
 from .utils import (
     CacheControlAssertions,
     CreateTestUsers,
     JSONAssertMixin,
+    create_asset,
     create_campaign,
+    create_transcription,
 )
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class ConcordiaViewTests(
+class ConcordiaAccountViewTests(
     CreateTestUsers, JSONAssertMixin, CacheControlAssertions, TestCase
 ):
     """
@@ -42,14 +48,52 @@ class ConcordiaViewTests(
         self.login_user()
 
         response = self.client.get(reverse("user-profile"))
-
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
         self.assertTemplateUsed(response, template_name="account/profile.html")
-
         self.assertEqual(response.context["user"], self.user)
         self.assertContains(response, self.user.username)
         self.assertContains(response, self.user.email)
+
+        response = self.client.get(reverse("user-profile"), {"activity": "transcribed"})
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+        self.assertTemplateUsed(response, template_name="account/profile.html")
+        self.assertEqual(response.context["user"], self.user)
+        self.assertEqual(response.context["active_tab"], "recent")
+
+        response = self.client.get(reverse("user-profile"), {"status": "submitted"})
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+        self.assertTemplateUsed(response, template_name="account/profile.html")
+        self.assertEqual(response.context["user"], self.user)
+        self.assertEqual(response.context["active_tab"], "recent")
+        self.assertEqual(response.context["status_list"], ["submitted"])
+
+        response = self.client.get(
+            reverse("user-profile"), {"start": "1970-01-01", "end": "1970-01-02"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+        self.assertTemplateUsed(response, template_name="account/profile.html")
+        self.assertEqual(response.context["user"], self.user)
+        self.assertEqual(response.context["end"], "1970-01-02")
+        self.assertEqual(response.context["start"], "1970-01-01")
+
+        anon = get_anonymous_user()
+        asset = create_asset()
+        t = asset.transcription_set.create(asset=asset, user=anon)
+        t.submitted = now()
+        t.accepted = now()
+        t.reviewed_by = self.user
+        t.save()
+        response = self.client.get(reverse("user-profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+        self.assertTemplateUsed(response, template_name="account/profile.html")
+        self.assertEqual(response.context["user"], self.user)
+        self.assertEqual(response.context["totalReviews"], 1)
+        self.assertEqual(response.context["totalCount"], 1)
 
     def test_AccountProfileView_post(self):
         """
@@ -65,14 +109,43 @@ class ConcordiaViewTests(
                 reverse("user-profile"), {"email": test_email, "username": "tester"}
             )
 
-            self.assertEqual(response.status_code, 302)
-            self.assertUncacheable(response)
-            index = response.url.find("#")
-            self.assertEqual(response.url[:index], reverse("user-profile"))
+        self.assertEqual(response.status_code, 302)
+        self.assertUncacheable(response)
+        index = response.url.find("#")
+        self.assertEqual(response.url[:index], reverse("user-profile"))
 
-            # Verify the User was correctly updated
-            updated_user = User.objects.get(email=test_email)
-            self.assertEqual(updated_user.email, test_email)
+        # Verify the User was correctly updated
+        updated_user = User.objects.get(email=test_email)
+        self.assertEqual(updated_user.email, test_email)
+
+        # Test first/last name can be updated
+        self.assertNotEqual(updated_user.first_name, "Test")
+        self.assertNotEqual(updated_user.last_name, "User")
+        response = self.client.post(
+            reverse("user-profile"),
+            {"submit_name": True, "first_name": "Test", "last_name": "User"},
+        )
+
+        self.assertRedirects(response, reverse("user-profile"))
+        self.assertUncacheable(response)
+
+        updated_user = User.objects.get(email=test_email)
+        first_name = updated_user.first_name
+        last_name = updated_user.last_name
+        self.assertEqual(first_name, "Test")
+        self.assertEqual(last_name, "User")
+
+        # Test name form submission without valid data
+        # First/last names should stay the same after post
+        # The form can't really be invalid since even blank
+        # values just set the names to empty strings,
+        # so we need to mock an invalid response
+        with patch("concordia.forms.UserNameForm.is_valid") as mock:
+            mock.return_value = False
+            response = self.client.post(reverse("user-profile"), {"submit_name": True})
+        updated_user = User.objects.get(email=test_email)
+        self.assertEqual(updated_user.first_name, first_name)
+        self.assertEqual(updated_user.last_name, last_name)
 
     def test_AccountProfileView_post_invalid_form(self):
         """
@@ -145,6 +218,21 @@ class ConcordiaViewTests(
 
         with self.settings(REQUIRE_EMAIL_RECONFIRMATION=True):
             email_data = {"email": "change@example.com"}
+            with patch("django.core.mail.EmailMultiAlternatives.send") as mock:
+                mock.side_effect = SMTPException()
+                response = self.client.post(reverse("user-profile"), email_data)
+                self.assertRedirects(
+                    response, "{}#account".format(reverse("user-profile"))
+                )
+                messages = [
+                    str(message) for message in get_messages(response.wsgi_request)
+                ]
+                self.assertIn(
+                    "Email confirmation could not be sent.",
+                    messages,
+                )
+                self.assertEqual(len(mail.outbox), 0)
+
             response = self.client.post(reverse("user-profile"), email_data)
             self.assertRedirects(response, "{}#account".format(reverse("user-profile")))
             self.assertTemplateUsed(response, "emails/email_reconfirmation_subject.txt")
@@ -262,7 +350,7 @@ class ConcordiaViewTests(
 
     def test_get_pages(self):
         self.login_user()
-        create_campaign()
+        campaign = create_campaign()
         url = reverse("get_pages")
 
         response = self.client.get(url, {"activity": "transcribed"})
@@ -274,7 +362,9 @@ class ConcordiaViewTests(
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
-        response = self.client.get(url, {"status": ["completed"], "campaign": 1})
+        response = self.client.get(
+            url, {"status": ["completed"], "campaign": campaign.id}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
 
@@ -295,3 +385,51 @@ class ConcordiaViewTests(
         response = self.client.get(url, {"start": "1900-01-01", "end": "1999-12-31"})
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
+
+    def test_AccountDeletionView(self):
+        self.login_user()
+
+        response = self.client.get(reverse("account-deletion"))
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+        self.assertTemplateUsed(response, template_name="account/account_deletion.html")
+        self.assertEqual(response.context["user"], self.user)
+
+        response = self.client.post(reverse("account-deletion"))
+        self.assertRedirects(response, reverse("homepage"))
+        with self.assertRaises(User.DoesNotExist):
+            User.objects.get(id=self.user.id)
+        self.assertEqual(len(mail.outbox), 1)
+
+        mail.outbox = []
+        self.user = None
+        self.login_user()
+        with patch("django.core.mail.EmailMultiAlternatives.send") as mock:
+            mock.side_effect = SMTPException()
+            response = self.client.post(reverse("account-deletion"))
+            self.assertRedirects(response, reverse("homepage"))
+            messages = [str(message) for message in get_messages(response.wsgi_request)]
+            self.assertIn(
+                "Email confirmation of deletion could not be sent.",
+                messages,
+            )
+            self.assertEqual(len(mail.outbox), 0)
+
+        mail.outbox = []
+        self.user = None
+        self.login_user()
+        transcription = create_transcription(user=self.user)
+        response = self.client.post(reverse("account-deletion"))
+        self.assertRedirects(response, reverse("homepage"))
+        user = User.objects.get(id=self.user.id)
+        transcription = Transcription.objects.get(id=transcription.id)
+        self.assertEqual(transcription.user, user)
+        self.assertIn("Anonymized", user.username)
+        self.assertEqual(user.first_name, "")
+        self.assertEqual(user.last_name, "")
+        self.assertEqual(user.email, "")
+        self.assertFalse(user.has_usable_password())
+        self.assertFalse(user.is_staff)
+        self.assertFalse(user.is_superuser)
+        self.assertFalse(user.is_active)
+        self.assertEqual(len(mail.outbox), 1)

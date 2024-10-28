@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.cache import cache
+from django.core.cache import caches
 from django.http import HttpResponse, JsonResponse
 from django.test import (
     Client,
@@ -119,10 +119,12 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
 
     def setUp(self):
-        cache.clear()
+        for cache in caches.all():
+            cache.clear()
 
     def tearDown(self):
-        cache.clear()
+        for cache in caches.all():
+            cache.clear()
 
     def test_ratelimit_view(self):
         c = Client()
