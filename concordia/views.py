@@ -605,14 +605,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["object_list"] = object_list = []
-        campaignSlug = self.request.GET.get("campaign_slug", -1)
-
-        for asset in ctx.pop("object_list"):
-            if int(campaignSlug) == -1:
-                object_list.append((asset))
-            elif asset.item.project.campaign.id == int(campaignSlug):
-                object_list.append((asset))
 
         page = self.request.GET.get("page", None)
         campaign = self.request.GET.get("campaign", None)
@@ -623,7 +615,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         order_by = self.request.GET.get("order_by", None)
         if any([activity, campaign, page, status_list, start, end, order_by]):
             ctx["active_tab"] = "recent"
-            if status_list is not None:
+            if status_list:
                 ctx["status_list"] = status_list
             ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
         elif "active_tab" not in ctx:
@@ -734,6 +726,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 "Unable to send email reconfirmation to %s",
                 user.get_email_for_reconfirmation(),
             )
+            messages.error(
+                self.request,
+                _("Email confirmation could not be sent."),
+            )
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -755,7 +751,7 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
         self.delete_user(form.request.user, form.request)
         return super().form_valid(form)
 
-    def delete_user(self, user, request=None):
+    def delete_user(self, user, request):
         logger.info("Deletion request for %s", user)
         email = user.email
         if user.transcription_set.exists():
@@ -773,8 +769,7 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
             logger.info("Deleting %s", user)
             user.delete()
         self.send_deletion_email(email)
-        if request:
-            logout(request)
+        logout(request)
 
     def send_deletion_email(self, email):
         context = {}
@@ -801,6 +796,10 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
             logger.exception(
                 "Unable to send account deletion email to %s",
                 email,
+            )
+            messages.error(
+                self.request,
+                _("Email confirmation of deletion could not be sent."),
             )
 
 
