@@ -63,6 +63,10 @@ function displayHtmlMessage(level, message, uniqueId) {
         .removeAttr('id');
 
     $newMessage.addClass('alert-' + level);
+    if (level == 'error') {
+        /* class for red background */
+        $newMessage.addClass('alert-danger');
+    }
 
     if (uniqueId) {
         $('#' + uniqueId).remove();
