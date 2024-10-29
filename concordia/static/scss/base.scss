@@ -208,6 +208,15 @@ header.border-bottom {
 .alert {
     color: #fff;
 
+    &.alert-dismissible {
+        padding: 9px 1rem;
+    }
+
+    &.alert-info {
+        background-color: $blue;
+        color: #fff;
+    }
+
     .alert-link {
         color: #fff;
         text-decoration: underline;
