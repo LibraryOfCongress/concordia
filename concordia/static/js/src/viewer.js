@@ -221,11 +221,13 @@ thresholdDown.addEventListener('click', function () {
 let reset = document.getElementById('viewer-reset');
 reset.addEventListener('click', resetImageFilterForms);
 
-seadragonViewer.addHandler('open-failed', function (eventData) {
-    let message = eventData.message;
+seadragonViewer.addHandler('open-failed', function () {
+    // We don't use the eventData or error message
+    // because it contains the image URL, which we don't
+    // want to display
     displayMessage(
         'error',
-        'Unable to display image: ' + message,
+        'Unable to display image',
         'openseadragon-open-failed',
     );
 });
