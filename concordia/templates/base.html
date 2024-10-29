@@ -167,12 +167,12 @@ for performance:
                         <div hidden id="message-template">
                             {% comment %} This is a hidden <div> rather than <template>
 because it's not worth dealing with IE11 compatibility {% endcomment %}
-                            <div class="alert alert-dismissible mx-3 my-2" role="alert">
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                        aria-label="Close">
+                            <div class="alert alert-dismissible mx-3 my-2 d-flex justify-content-between" role="alert">
+                                <a type="button" data-bs-dismiss="alert"
+                                   aria-label="Close">
                                     <!--span aria-hidden="true">&times;</span-->
                                     <span aria-hidden="true" class="fas fa-times"></span>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
