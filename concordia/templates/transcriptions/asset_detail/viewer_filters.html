@@ -2,17 +2,17 @@
     <hr class="m-0" />
     <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
+            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-bs-toggle="tab" data-bs-target="#gamma-filter" role="tab">
                 Brightness
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
+            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-bs-toggle="tab" data-bs-target="#invert-filter" role="tab">
                 Invert
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
+            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-bs-toggle="tab" data-bs-target="#threshold-filter" role="tab">
                 Contrast
             </button>
         </li>
@@ -23,9 +23,9 @@
         </button>
     </div>
     <div id="filter-tabs" class="tab-content">
-        <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
-            <form id="gamma-form" class="form-inline" onsubmit="return false;">
-                <div class="row ml-0 mr-3 number-input">
+        <div id="gamma-filter" class="tab-pane pt-1 ps-3 show active" role="tabpanel">
+            <form id="gamma-form" class="d-flex align-items-center" onsubmit="return false;">
+                <div class="row ms-0 me-3 number-input">
                     <div class="col p-1">
                         <input
                             type="number"
@@ -64,22 +64,22 @@
                     class="filter-slider flex-grow-1"
                 />
                 <label class="visually-hidden" for="gamma-range">Gamma</label>
-                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                <input type="reset" class="btn btn-link underline-link fw-bold" value="Reset filter" />
             </form>
         </div>
         <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
             <form id="invert-form" onsubmit="return false;">
-                <label class="ml-2 align-middle">Off</label>
-                <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
-                    <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
-                    <label class="custom-control-label" for="invert"><span class="visually-hidden">Invert</span></label>
+                <label class="ms-2 align-middle">Off</label>
+                <div class="form-check form-switch custom-control-inline ms-1 me-2">
+                    <input type="checkbox" id="invert" name="invert" class="form-check-input" role="switch" />
+                    <label class="form-check-label" for="invert"><span class="visually-hidden">Invert</span></label>
                 </div>
                 <label class="align-middle">On</label>
             </form>
         </div>
-        <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
-            <form id="threshold-form" class="form-inline" onsubmit="return false;">
-                <div class="row ml-0 mr-3 number-input">
+        <div id="threshold-filter" class="tab-pane pt-1 ps-3" role="tabpanel">
+            <form id="threshold-form" class="d-flex align-items-center" onsubmit="return false;">
+                <div class="row ms-0 me-3 number-input">
                     <div class="col p-1">
                         <input
                             type="number"
@@ -118,7 +118,7 @@
                     class="filter-slider flex-grow-1"
                 />
                 <label class="visually-hidden" for="threshold-range">Threshold</label>
-                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                <input type="reset" class="btn btn-link underline-link fw-bold" value="Reset filter" />
             </form>
         </div>
     </div>

@@ -34,7 +34,7 @@
     ></div>
 </div>
 <div class="table-responsive-md">
-    <table id="progress-stats" class="table table-sm font-weight-light">
+    <table id="progress-stats" class="table table-sm fw-light">
         <tbody>
             {% for key, label, value in transcription_status_counts %}
                 <tr
@@ -48,7 +48,7 @@
                             {{ label }}
                         </a>
                     </th>
-                    <td class="text-right">
+                    <td class="text-end">
                         <a href="?transcription_status={{ key|urlencode }}">
                             <abbr title="{{ value|intcomma }} pages"
                             >{{ value|intcomma }}</abbr

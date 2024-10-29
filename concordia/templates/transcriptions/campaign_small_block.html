@@ -10,7 +10,7 @@
         <span class="d-block h4 mt-2 small-campaign-title">{{ campaign.title }}</span>
     </a>
     {% if campaign.completed_date %}
-        <p><span class="font-weight-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}</p>
+        <p><span class="fw-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}</p>
     {% endif %}
     {% if show_description %}
         <p class="small-campaign-description">{{ campaign.short_description|striptags|truncatechars_on_word_break:160 }}</p>

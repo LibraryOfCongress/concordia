@@ -7,7 +7,7 @@ let child_process = require('child_process');
 let gulp = require('gulp');
 let log = require('fancy-log');
 let rename = require('gulp-rename');
-let sass = require('gulp-sass')(require('node-sass'));
+let sass = require('gulp-sass')(require('sass'));
 let sourcemaps = require('gulp-sourcemaps');
 let Transform = require('stream').Transform;
 

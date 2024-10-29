@@ -1,13 +1,13 @@
 <div id="tag-editor" class="flex-shrink-1">
     <h2 id="tag-label" class="border-top pt-3 pb-2"><a
-        data-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
+        data-bs-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
         aria-controls="tag-form"><i class="fas fa-plus-square"></i> <span
             id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
     <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
         {% csrf_token %}
-        <div class="d-print-none">
+        <div class="d-print-none grid">
             {% if user.is_authenticated %}
-                <div class="form-row">
+                <div class="row">
                     <div class="col input-group">
                         <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[\- _À-ž'\w]{1,50}">
                         <div class="input-group-append">
@@ -37,7 +37,7 @@
                         <input type="hidden" name="tags" value="{{ tag }}" />
                         {{ tag }}
                     </label>
-                    <button type="button" class="close authenticated-only" data-dismiss="alert" aria-label="Remove previous tag" hidden>
+                    <button type="button" class="close authenticated-only" data-bs-dismiss="alert" aria-label="Remove previous tag" hidden>
                         <span aria-hidden="true" class="fas fa-times"></span>
                     </button>
                 </li>

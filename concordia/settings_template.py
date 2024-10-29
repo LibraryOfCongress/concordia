@@ -109,7 +109,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
-    "bootstrap4",
+    "django_bootstrap5",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",

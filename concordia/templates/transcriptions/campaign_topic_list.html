@@ -71,7 +71,7 @@
         </ul>
         {% with campaigns|length as campaigns_count %}
             {% if campaigns_count > 10 %}
-                <div class="align-items-center justify-content-center row">
+                <div class="align-items-center justify-content-center d-flex">
                     <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
                 </div>
             {% endif %}

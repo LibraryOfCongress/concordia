@@ -48,7 +48,7 @@ function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
-        (https://getbootstrap.com/docs/4.1/components/alerts/)
+        (https://getbootstrap.com/docs/5.3/components/alerts/)
 
         If provided, uniqueId will be used to remove any existing elements which
         have that ID, allowing old messages to be replaced automatically.
@@ -156,7 +156,7 @@ if (screenfull.isEnabled) {
         .removeAttr('hidden')
         .on('click', function (event) {
             event.preventDefault();
-            var targetElement = document.getElementById(this.dataset.target);
+            var targetElement = document.getElementById(this.dataset.bsTarget);
 
             if (screenfull.isFullscreen) {
                 screenfull.exit();
@@ -298,6 +298,7 @@ $twitterShareButton.on('click', function () {
     return true;
 });
 
+// eslint-disable-next-line no-unused-vars
 function trackUIInteraction(element, category, action, label) {
     if ('loc_ux_tracking' in window) {
         let loc_ux_tracking = window['loc_ux_tracking'];

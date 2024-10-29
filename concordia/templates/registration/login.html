@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 
 {% block head_content %}
     <meta name="robots" content="noindex">
@@ -30,11 +30,7 @@
                         <a href="https://www.loc.gov/legal/" target="_blank">the Library's
                             security requirements</a>
                     </p>
-                    {% buttons %}
-                        <button id="login" type="submit" class="btn btn-primary">
-                            Login
-                        </button>
-                    {% endbuttons %}
+                    {% bootstrap_button "Login" button_type="submit" button_class="btn-primary" extra_classes="btn" id="login" %}
                 </form>
             </div>
         </div>

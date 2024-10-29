@@ -13,11 +13,11 @@
                 <tbody>
                     <tr>
                         <th>Total Images:</th>
-                        <td class="text-monospace text-right">{{ total_asset_count|intcomma }}</td>
+                        <td class="font-monospace text-end">{{ total_asset_count|intcomma }}</td>
                     </tr>
                     <tr>
                         <th>Total Projects:</th>
-                        <td class="text-monospace text-right">{{ projects.paginator.count|intcomma }} </td>
+                        <td class="font-monospace text-end">{{ projects.paginator.count|intcomma }} </td>
                     </tr>
                 </tbody>
             </table>
@@ -36,19 +36,19 @@
                                 <tbody>
                                     <tr>
                                         <th>Images in this Project</th>
-                                        <td class="text-monospace text-right">{{ project.asset_count|intcomma }}</td>
+                                        <td class="font-monospace text-end">{{ project.asset_count|intcomma }}</td>
                                     </tr>
                                     <tr>
                                         <th>Number of Transcribers</th>
-                                        <td class="text-monospace text-right">{{ project.transcriber_count|intcomma }} </td>
+                                        <td class="font-monospace text-end">{{ project.transcriber_count|intcomma }} </td>
                                     </tr>
                                     <tr>
                                         <th>Number of Reviewers</th>
-                                        <td class="text-monospace text-right">{{ project.reviewer_count|intcomma }} </td>
+                                        <td class="font-monospace text-end">{{ project.reviewer_count|intcomma }} </td>
                                     </tr>
                                     <tr>
                                         <th>Tags</th>
-                                        <td class="text-monospace text-right">{{ project.tag_count|intcomma }} </td>
+                                        <td class="font-monospace text-end">{{ project.tag_count|intcomma }} </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -59,7 +59,7 @@
                                     {% for status, count in project.transcription_statuses %}
                                         <tr>
                                             <th>{{ status }}</th>
-                                            <td class="text-monospace text-right">{{ count }}</td>
+                                            <td class="font-monospace text-end">{{ count }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>

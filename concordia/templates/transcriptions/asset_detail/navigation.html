@@ -3,9 +3,9 @@
         <form class="p-1" onsubmit="document.location.href = encodeURI(document.getElementById('asset-selection').value); return false">
             <div class="input-group input-group-sm flex-nowrap">
                 <div class="input-group-prepend">
-                    <label class="input-group-text p-0 pr-1 border-0" for="asset-selection">Page</label>
+                    <label class="input-group-text mt-1 p-0 pe-1 border-0" for="asset-selection">Page</label>
                 </div>
-                <select id="asset-selection" class="custom-select custom-select-sm">
+                <select id="asset-selection" class="form-select form-select-sm">
                     {% for sequence, slug in asset_navigation %}
                         <option {% if sequence == asset.sequence %}selected{% endif %} value="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id slug %}">{{ sequence }}</option>
                     {% endfor %}
@@ -19,23 +19,23 @@
         <div class="btn-group btn-group-sm p-1">
             <a class="btn btn-primary {% if not previous_asset_url %}disabled{% endif %}" {% if previous_asset_url %}href="{{ previous_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
                 <span class="fas fa-chevron-left"></span>
-                <span class="sr-only">Previous Page</span>
+                <span class="visually-hidden">Previous Page</span>
             </a>
             <a class="btn btn-primary {% if not next_asset_url %}disabled{% endif %}" {% if next_asset_url %}href="{{ next_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
                 <span class="fas fa-chevron-right"></span>
-                <span class="sr-only">Next Page</span>
+                <span class="visually-hidden">Next Page</span>
             </a>
         </div>
 
         <div class="btn-group btn-group-sm p-1">
-            <button hidden id="go-fullscreen" class="btn btn-primary text-nowrap" data-target="contribute-main-content">
+            <button hidden id="go-fullscreen" class="btn btn-primary text-nowrap" data-bs-target="contribute-main-content">
                 <span class="fas fa-arrows-alt"></span>
                 Fullscreen
             </button>
         </div>
     </div>
 
-    <div class="btn-group align-self-end">
+    <div class="btn-group align-self-end" style="margin-right: -8px">
         {% if asset.resource_url %}
             <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
                 <a class="btn btn-outline-primary text-nowrap" target="_blank" rel=noopener title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
