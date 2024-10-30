@@ -33,7 +33,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     $transcriptionEditor
                         .data('hasReservation', false)
                         .trigger('update-ui-state');
-                    jQuery('#asset-reservation-failure-modal').modal();
+                    jQuery('#asset-reservation-failure-modal').show();
                 } else {
                     displayHtmlMessage(
                         'warning',
@@ -54,7 +54,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 $transcriptionEditor
                     .data('hasReservation', false)
                     .trigger('update-ui-state');
-                jQuery('#asset-reservation-failure-modal').modal();
+                jQuery('#asset-reservation-failure-modal').show();
                 Sentry.captureException(errorThrown, function (scope) {
                     scope.setTransactionName(
                         '408 error when attempting to reserve asset at ' +

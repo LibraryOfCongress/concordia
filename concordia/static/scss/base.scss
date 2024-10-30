@@ -208,6 +208,11 @@ header.border-bottom {
 .alert {
     color: #fff;
 
+    &.alert-danger {
+        background-color: $red;
+        color: #fff;
+    }
+
     &.alert-dismissible {
         padding: 9px 1rem;
     }
