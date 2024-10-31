@@ -716,10 +716,13 @@ li.breadcrumb-item.active {
     margin: 0 -6px;
 }
 
+.row .concordia-object-card-container {
+    width: 90%;
+}
+
 .concordia-object-card-container {
     display: flex;
     flex-wrap: wrap;
-    width: 90%;
     padding-top: 0.25em;
 }
 
