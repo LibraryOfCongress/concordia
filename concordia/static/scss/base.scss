@@ -236,9 +236,13 @@ header.border-bottom {
             color: $dark;
         }
     }
+
+    &.alert-success {
+        background-color: $green;
+    }
 }
 
-.alert a {
+.alert a[type='button'] {
     color: inherit;
     font-size: 1.5rem;
 }
