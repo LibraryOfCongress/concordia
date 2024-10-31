@@ -38,8 +38,8 @@
             </div>
         </div>
         {% include "fragments/transcription-progress-row.html" %}
-        <div class="row">
-            <div class="col-12 col-lg mt-4">
+        <div class="d-flex justify-content-between mt-4">
+            <div>
                 <h3>Filter pages:</h2>
             </div>
             {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as all_assets %}
