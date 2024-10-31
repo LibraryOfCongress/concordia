@@ -129,6 +129,8 @@ $alert-padding-x: 1rem;
 @import '../../../node_modules/bootstrap/scss/nav';
 @import '../../../node_modules/bootstrap/scss/navbar';
 @import '../../../node_modules/bootstrap/scss/breadcrumb';
+@import '../../../node_modules/bootstrap/scss/alert';
+@import '../../../node_modules/bootstrap/scss/close';
 @import '../../../node_modules/bootstrap/scss/carousel';
 
 // progress
@@ -234,6 +236,11 @@ header.border-bottom {
             color: $dark;
         }
     }
+}
+
+.alert a {
+    color: inherit;
+    font-size: 1.5rem;
 }
 
 .font-serif {
