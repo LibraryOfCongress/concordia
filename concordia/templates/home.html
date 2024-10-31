@@ -77,7 +77,7 @@
                     <div class="carousel-item {% if forloop.first %} active {% endif %}" {% if slide.overlay_position == "right" %} data-overlay-position="top-right" {% endif %} data-bs-title="{{ slide.headline }}" data-hero-text="{{ slide.body }}" data-link-url="{{ slide.lets_go_url }}">
                         <img class="d-block img-fluid" src="{{ MEDIA_URL }}{{ slide.carousel_image }}" alt="{{ slide.image_alt_text }}" width="1200" height="480">
                         <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                            <h2 class="h1 title mb-1">{{ slide.headline }}</h2>
+                            <h2 class="h1 title mb-1 fw-bold">{{ slide.headline }}</h2>
                             <p class="hero-text mx-auto">{{ slide.body }}</p>
                             <a class="btn btn-primary px-4" href="{{ slide.lets_go_url }}">LET'S GO!</a>
                         </div>
