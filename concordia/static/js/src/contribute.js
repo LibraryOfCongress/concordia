@@ -305,8 +305,8 @@ function setupPage() {
                 .attr('hidden', 'hidden')
                 .filter('#message-inprogress')
                 .removeAttr('hidden');
-            messageChildren
-                .filter('#message-contributors')
+            $('#transcription-status-display').removeAttr('hidden');
+            $('#message-contributors')
                 .removeAttr('hidden')
                 .find('#message-contributors-num')
                 .html(responseData.asset.contributors);
