@@ -129,6 +129,8 @@ $alert-padding-x: 1rem;
 @import '../../../node_modules/bootstrap/scss/nav';
 @import '../../../node_modules/bootstrap/scss/navbar';
 @import '../../../node_modules/bootstrap/scss/breadcrumb';
+@import '../../../node_modules/bootstrap/scss/alert';
+@import '../../../node_modules/bootstrap/scss/close';
 @import '../../../node_modules/bootstrap/scss/carousel';
 
 // progress
@@ -234,6 +236,15 @@ header.border-bottom {
             color: $dark;
         }
     }
+
+    &.alert-success {
+        background-color: $green;
+    }
+}
+
+.alert a[type='button'] {
+    color: inherit;
+    font-size: 1.5rem;
 }
 
 .font-serif {
@@ -705,10 +716,13 @@ li.breadcrumb-item.active {
     margin: 0 -6px;
 }
 
+.row .concordia-object-card-container {
+    width: 90%;
+}
+
 .concordia-object-card-container {
     display: flex;
     flex-wrap: wrap;
-    width: 90%;
     padding-top: 0.25em;
 }
 
@@ -994,6 +1008,11 @@ body .disabled > .page-link {
     border-radius: 100%;
     height: 14px;
     width: 14px;
+}
+
+#previous-guide,
+#next-guide {
+    cursor: pointer;
 }
 
 .aspect-ratio-box {

@@ -3,7 +3,7 @@
         {% csrf_token %}
         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
         <div class="row justify-content-sm-between align-items-end mx-0">
-            <div class="col">
+            <div class="col ps-0">
                 <div id="transcription-status-message">
                     <div id="transcription-status-display" class="row">
                         <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
