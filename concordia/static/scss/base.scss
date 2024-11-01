@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 $gray-100: #f6f6f6;
 $gray-200: #efefef;
 $gray-300: $gray-200;
@@ -213,6 +215,11 @@ header.border-bottom {
     &.alert-danger {
         background-color: $red;
         color: #fff;
+
+        .alert-link {
+            color: #fff;
+            font-weight: bolder;
+        }
     }
 
     &.alert-dismissible {
@@ -1019,12 +1026,12 @@ body .disabled > .page-link {
     height: 0;
     overflow: hidden;
     /* stylelint-disable-next-line scss/no-global-function-names */
-    padding-top: percentage(9 / 16);
+    padding-top: percentage(math.div(9, 16));
     position: relative;
 
     @include media-breakpoint-up(sm) {
         /* stylelint-disable-next-line scss/no-global-function-names */
-        padding-top: percentage(240 / 320);
+        padding-top: percentage(math.div(240, 320));
     }
 }
 

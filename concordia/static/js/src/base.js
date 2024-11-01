@@ -62,18 +62,21 @@ function displayHtmlMessage(level, message, uniqueId) {
         .removeAttr('hidden')
         .removeAttr('id');
 
-    $newMessage.addClass('alert-' + level);
     if (level == 'error') {
-        /* class for red background */
-        $newMessage.addClass('alert-danger');
+        // Class for red background
+        level = 'danger';
     }
+
+    $newMessage.addClass('alert-' + level);
 
     if (uniqueId) {
         $('#' + uniqueId).remove();
         $newMessage.attr('id', uniqueId);
     }
 
-    $newMessage.prepend(message);
+    // Add a span to the message to ensure justified
+    // styles don't end up splitting the text
+    $newMessage.prepend('<span>' + message + '</span>');
 
     $messages.append($newMessage);
 
