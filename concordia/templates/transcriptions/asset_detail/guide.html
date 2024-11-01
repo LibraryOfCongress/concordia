@@ -36,7 +36,7 @@
                         <h3>About This Campaign</h3>
                     </div>
                     <div class="col-1 pt-2">
-                        <a class="fw-bold ms-3" id="next-guide" href="#guide-carousel" data-bs-slide="next">></a>
+                        <a class="fw-bold ms-3" id="next-guide" data-bs-target="#guide-carousel" data-bs-slide="next">></a>
                     </div>
                 </div>
                 <div class="guide-body">
@@ -67,14 +67,14 @@
                 <div class="carousel-item container" id="pane-{{ forloop.counter }}">
                     <div class="border-bottom justify-content-center mb-3 py-1 row">
                         <div class="col-1 pt-2 prev-guide">
-                            <a class="fw-bold" id="previous-guide" href="#guide-carousel" data-bs-slide="prev"><</a>
+                            <a class="fw-bold" id="previous-guide" data-bs-target="#guide-carousel" data-bs-slide="prev"><</a>
                         </div>
                         <div class="col text-center ps-2">
                             <h3>{{ guide.title }}</h3>
                         </div>
                         <div class="col-1 pt-2 next-guide">
                             {% if not forloop.last %}
-                                <a class="fw-bold" id="next-guide" href="#guide-carousel" data-bs-slide="next">></a>
+                                <a class="fw-bold" id="next-guide" data-bs-target="#guide-carousel" data-bs-slide="next">></a>
                             {% endif %}
                         </div>
                     </div>

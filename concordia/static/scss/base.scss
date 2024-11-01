@@ -1010,6 +1010,11 @@ body .disabled > .page-link {
     width: 14px;
 }
 
+#previous-guide,
+#next-guide {
+    cursor: pointer;
+}
+
 .aspect-ratio-box {
     height: 0;
     overflow: hidden;
