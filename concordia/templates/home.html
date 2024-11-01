@@ -223,8 +223,13 @@
             }
         }
         $("#no-interface-banner").click(function(event) {
-            storage.setItem(event.target.parentElement.id, true);
-            $('#' + event.target.parentElement.id).attr("hidden", true);
+            var banner = event.target.parentElement.parentElement;
+            if (banner.hasAttribute('id')) {
+                storage.setItem(banner.id, true);
+                var element = document.getElementById(banner.id);
+                element.classList.remove("d-flex");
+                element.attr("hidden", "hidden");
+            }
         });
     </script>
 {% endblock body_scripts %}
