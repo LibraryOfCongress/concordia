@@ -1,4 +1,4 @@
-/* global OpenSeadragon screenfull debounce displayMessage */
+/* global OpenSeadragon screenfull debounce displayHtmlMessage */
 
 const viewerData = document.getElementById('viewer-data').dataset;
 
@@ -225,9 +225,13 @@ seadragonViewer.addHandler('open-failed', function () {
     // We don't use the eventData or error message
     // because it contains the image URL, which we don't
     // want to display
-    displayMessage(
+    let contactUs =
+        '<strong><a class="alert-link" href="' +
+        viewerData.contactUrl +
+        '">contact us</a></strong>';
+    displayHtmlMessage(
         'error',
-        'Unable to display image',
+        'Unable to display image - ' + contactUs,
         'openseadragon-open-failed',
     );
 });
