@@ -1,4 +1,4 @@
-/* global $ displayMessage displayHtmlMessage buildErrorMessage */
+/* global $ displayMessage buildErrorMessage */
 
 import {reserveAssetForEditing} from 'asset-reservation';
 import {resetTurnstile} from 'turnstile';
@@ -274,7 +274,7 @@ function setupPage() {
         })
         .on('form-submit-success', function (event, extra) {
             let responseData = extra.responseData;
-            displayHtmlMessage(
+            displayMessage(
                 'info',
                 "Successfully saved your work. Submit it for review when you're done",
                 'transcription-save-result',
@@ -440,14 +440,14 @@ function setupPage() {
                         .find('#message-contributors-num')
                         .html(data.asset.contributors);
                     $('#review-accepted-modal')
-                        .modal()
+                        .show()
                         .on('hidden.bs.modal', function () {
                             window.location.reload(true);
                         });
                 }
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
-                displayHtmlMessage(
+                displayMessage(
                     'error',
                     'Unable to save your review: ' +
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
