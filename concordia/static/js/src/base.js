@@ -53,10 +53,10 @@ function displayHtmlMessage(level, message, uniqueId) {
         If provided, uniqueId will be used to remove any existing elements which
         have that ID, allowing old messages to be replaced automatically.
     */
-    var $messages = $('#messages');
+    let $messages = $('#messages');
     $messages.removeAttr('hidden');
 
-    var $newMessage = $messages
+    let $newMessage = $messages
         .find('#message-template .alert')
         .clone()
         .removeAttr('hidden')
@@ -76,6 +76,11 @@ function displayHtmlMessage(level, message, uniqueId) {
 
     // Add a span to the message to ensure justified
     // styles don't end up splitting the text
+    // message might be a Text node, so we need to get
+    // the actual text if so
+    if (message instanceof Text) {
+        message = message.textContent;
+    }
     $newMessage.prepend('<span>' + message + '</span>');
 
     $messages.append($newMessage);
