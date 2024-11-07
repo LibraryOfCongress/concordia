@@ -228,7 +228,7 @@ seadragonViewer.addHandler('open-failed', function () {
     let contactUs =
         '<strong><a class="alert-link" href="' +
         viewerData.contactUrl +
-        '">contact us</a></strong>';
+        '" target="_blank">Contact us</a></strong>';
     displayHtmlMessage(
         'error',
         'Unable to display image - ' + contactUs,
