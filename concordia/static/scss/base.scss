@@ -410,6 +410,18 @@ button.btn-primary:hover {
     background-color: #005c87;
 }
 
+.btn {
+    &.btn-danger {
+        background-color: $red;
+        color: #fff;
+    }
+
+    &.btn-info {
+        background-color: $blue;
+        color: #fff;
+    }
+}
+
 a.btn-dark {
     color: #fff;
 }
