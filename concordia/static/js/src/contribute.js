@@ -1,4 +1,4 @@
-/* global $ displayMessage buildErrorMessage */
+/* global $ displayMessage displayHtmlMessage buildErrorMessage */
 
 import {reserveAssetForEditing} from 'asset-reservation';
 import {resetTurnstile} from 'turnstile';
@@ -274,7 +274,7 @@ function setupPage() {
         })
         .on('form-submit-success', function (event, extra) {
             let responseData = extra.responseData;
-            displayMessage(
+            displayHtmlMessage(
                 'info',
                 "Successfully saved your work. Submit it for review when you're done",
                 'transcription-save-result',
@@ -447,7 +447,7 @@ function setupPage() {
                 }
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
-                displayMessage(
+                displayHtmlMessage(
                     'error',
                     'Unable to save your review: ' +
                         buildErrorMessage(jqXHR, textStatus, errorThrown),

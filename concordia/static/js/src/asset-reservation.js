@@ -1,4 +1,4 @@
-/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
+/* global jQuery displayHtmlMessage buildErrorMessage Sentry */
 
 const assetReservationData = document.getElementById(
     'asset-reservation-data',
@@ -62,7 +62,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     );
                 });
             } else {
-                displayMessage(
+                displayHtmlMessage(
                     'error',
                     'Unable to reserve this page: ' +
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
