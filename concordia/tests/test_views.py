@@ -224,6 +224,22 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.assertContains(response, c.title)
 
+        response = self.client.get(
+            reverse("topic-detail", args=(c.slug,)),
+            {"transcription_status": "not_started"},
+        )
+        context = response.context
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/topic_detail.html"
+        )
+        self.assertContains(response, c.title)
+        self.assertIn("sublevel_querystring", context)
+        self.assertEqual(
+            context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
     def test_unlisted_topic_detail_view(self):
         c2 = create_topic(
             title="GET Unlisted Topic", unlisted=True, slug="get-unlisted-topic"
