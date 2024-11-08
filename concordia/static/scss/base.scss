@@ -1803,6 +1803,10 @@ table.table thead.border-y {
     color: $light;
 }
 
+.dropdown-menu .dropdown-item:active {
+    background-color: $blue;
+}
+
 .change-options {
     background-color: $gray-200;
 }
