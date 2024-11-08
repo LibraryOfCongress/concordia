@@ -15,6 +15,7 @@ $orange: #f05129;
 $green: #218739;
 $red: #d1332e;
 $navy: #002347;
+$white: #fff;
 
 $dark: $gray-900;
 $accent: $orange;
@@ -408,6 +409,11 @@ body .btn-outline-primary:disabled {
     background-color: transparent;
     color: $blue;
     opacity: 0.2;
+}
+
+a.btn-info:hover {
+    background-color: #005c87;
+    color: $white;
 }
 
 button.btn-primary:hover {
