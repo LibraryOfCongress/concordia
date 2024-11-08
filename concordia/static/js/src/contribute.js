@@ -440,7 +440,7 @@ function setupPage() {
                         .find('#message-contributors-num')
                         .html(data.asset.contributors);
                     $('#review-accepted-modal')
-                        .modal()
+                        .show()
                         .on('hidden.bs.modal', function () {
                             window.location.reload(true);
                         });

@@ -410,6 +410,18 @@ button.btn-primary:hover {
     background-color: #005c87;
 }
 
+.btn {
+    &.btn-danger {
+        background-color: $red;
+        color: #fff;
+    }
+
+    &.btn-info {
+        background-color: $blue;
+        color: #fff;
+    }
+}
+
 a.btn-dark {
     color: #fff;
 }
@@ -437,6 +449,10 @@ body .form-check-input {
 .form-check .form-check-input:disabled ~ .form-check-label,
 .form-check-input[disabled] ~ .form-check-label {
     opacity: 1;
+}
+
+.flex-1 {
+    flex: 1;
 }
 
 a .campaign-title:hover,
