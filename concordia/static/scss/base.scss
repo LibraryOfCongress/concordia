@@ -247,6 +247,10 @@ header.border-bottom {
     &.alert-success {
         background-color: $green;
     }
+
+    &.alert-warning {
+        background-color: $gray-700;
+    }
 }
 
 .alert a[type='button'] {
@@ -419,6 +423,11 @@ button.btn-primary:hover {
     &.btn-info {
         background-color: $blue;
         color: #fff;
+    }
+
+    &.btn-warning {
+        background-color: $gray-700;
+        border-color: $gray-700;
     }
 }
 
