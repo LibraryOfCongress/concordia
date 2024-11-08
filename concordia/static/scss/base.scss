@@ -413,6 +413,7 @@ body .btn-outline-primary:disabled {
 
 a.btn-info:hover {
     background-color: #005c87;
+    border-color: #005c87;
     color: $white;
 }
 
@@ -428,6 +429,7 @@ button.btn-primary:hover {
 
     &.btn-info {
         background-color: $blue;
+        border-color: $blue;
         color: #fff;
     }
 
