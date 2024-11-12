@@ -494,10 +494,21 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 args=(project.campaign.slug, project.slug),
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/project_detail.html"
+        )
+
+        # Non-existent project in an existing campaign
+        response = self.client.get(
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, "bad-slug"),
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse("transcriptions:campaign-detail", args=(project.campaign.slug,)),
         )
 
     def test_project_unicode_slug(self):
