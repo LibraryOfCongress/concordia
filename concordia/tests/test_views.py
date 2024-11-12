@@ -498,6 +498,30 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertTemplateUsed(
             response, template_name="transcriptions/project_detail.html"
         )
+        # Filter by reviewable parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, project.slug),
+            ),
+            {"filter_by_reviewable": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
+        # Bad status parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, project.slug),
+            ),
+            {"transcription_status": "bad_parameter"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
 
         # Non-existent project in an existing campaign
         response = self.client.get(
