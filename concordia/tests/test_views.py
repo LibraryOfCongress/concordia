@@ -25,6 +25,7 @@ from concordia.models import (
     TranscriptionStatus,
 )
 from concordia.tasks import (
+    campaign_report,
     delete_old_tombstoned_reservations,
     expire_inactive_asset_reservations,
     tombstone_old_active_asset_reservations,
@@ -257,31 +258,66 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
         """
-        c = create_campaign(title="GET Campaign", slug="get-campaign")
-
+        campaign = create_campaign(title="GET Campaign", slug="get-campaign")
         response = self.client.get(
-            reverse("transcriptions:campaign-detail", args=(c.slug,))
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/campaign_detail.html"
         )
-        self.assertContains(response, c.title)
+        self.assertContains(response, campaign.title)
+        # Filter by reviewable parameter check
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,)),
+            {"filter_by_reviewable": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response, campaign.title)
+        # Bad status parameter check
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,)),
+            {"transcription_status": "bad_parameter"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response, campaign.title)
 
-        c2 = create_campaign(
+        # Unlisted
+        campaign = create_campaign(
             title="GET Unlisted Campaign", unlisted=True, slug="get-unlisted-campaign"
         )
-
-        response2 = self.client.get(
-            reverse("transcriptions:campaign-detail", args=(c2.slug,))
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
         )
-
-        self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response2, template_name="transcriptions/campaign_detail.html"
+            response, template_name="transcriptions/campaign_detail.html"
         )
-        self.assertContains(response2, c2.title)
+        self.assertContains(response, campaign.title)
+
+        # Retired
+        campaign = create_campaign(
+            title="GET Retired Campaign",
+            slug="get-retired-campaign",
+            status=Campaign.Status.RETIRED,
+        )
+        # We need a site report for a retired campaign because
+        # that's where the view pulls data from
+        campaign_report(campaign=campaign)
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail_retired.html"
+        )
+        self.assertContains(response, campaign.title)
 
     def test_campaign_unicode_slug(self):
         """Confirm that Unicode characters are usable in Campaign URLs"""
