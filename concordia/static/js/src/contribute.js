@@ -424,9 +424,8 @@ function setupPage() {
                 } else {
                     $('#transcription-status-display')
                         .children()
-                        .attr('hidden', 'hidden')
-                        .filter('#display-completed')
-                        .removeAttr('hidden');
+                        .attr('hidden', 'hidden');
+                    $('#display-completed').removeAttr('hidden');
                     let messageChildren = $(
                         '#transcription-status-message',
                     ).children();
@@ -434,6 +433,7 @@ function setupPage() {
                         .attr('hidden', 'hidden')
                         .filter('#message-completed')
                         .removeAttr('hidden');
+                    $('#transcription-status-display').removeAttr('hidden');
                     messageChildren
                         .filter('#message-contributors')
                         .removeAttr('hidden')
