@@ -358,13 +358,11 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/item_detail.html"
         )
         self.assertContains(response, item.title)
-
         self.assertEqual(0, response.context["not_started_percent"])
         self.assertEqual(0, response.context["in_progress_percent"])
         self.assertEqual(0, response.context["submitted_percent"])
@@ -405,19 +403,55 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/item_detail.html"
         )
         self.assertContains(response, item.title)
-
         # We have 10 total, 6 of which have transcription records and of those
         # 6, 3 have been submitted and one of those was accepted:
         self.assertEqual(40, response.context["not_started_percent"])
         self.assertEqual(30, response.context["in_progress_percent"])
         self.assertEqual(20, response.context["submitted_percent"])
         self.assertEqual(10, response.context["completed_percent"])
+        # Filter by reviewable parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            ),
+            {"filter_by_reviewable": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+        # Bad status parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            ),
+            {"transcription_status": "bad_parameter"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+
+        # Non-existent item in an existing campaign
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, "bad-id"),
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse(
+                "transcriptions:campaign-detail", args=(item.project.campaign.slug,)
+            ),
+        )
 
     def test_asset_unicode_slug(self):
         """Confirm that Unicode characters are usable in Asset URLs"""
