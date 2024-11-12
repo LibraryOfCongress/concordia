@@ -50,6 +50,7 @@ from .utils import (
     create_guide,
     create_item,
     create_project,
+    create_tag_collection,
     create_topic,
     create_transcription,
 )
@@ -471,7 +472,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         self.login_user()
 
-        asset = create_asset()
+        asset = create_asset(sequence=100)
 
         self.transcription = asset.transcription_set.create(
             user_id=self.user.id, text="Test transcription 1"
@@ -482,6 +483,8 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         asset.item.project.campaign.save()
         title = "Transcription: Basic Rules"
         create_guide(title=title)
+
+        tag_collection = create_tag_collection(asset=asset)
 
         response = self.client.get(
             reverse(
@@ -498,6 +501,75 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertIn("cards", response.context)
         self.assertIn("guides", response.context)
         self.assertEqual(title, response.context["guides"][0]["title"])
+        self.assertIn("tags", response.context)
+        self.assertEqual([tag_collection.tags.all()[0].value], response.context["tags"])
+
+        # Next and previous asset checks
+        previous_asset = create_asset(
+            item=asset.item, slug="previous-asset", sequence=1
+        )
+        next_asset = create_asset(item=asset.item, slug="next-asset", sequence=1000)
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": asset.slug,
+                },
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("previous_asset_url", response.context)
+        self.assertEqual(
+            previous_asset.get_absolute_url(), response.context["previous_asset_url"]
+        )
+        self.assertIn("next_asset_url", response.context)
+        self.assertEqual(
+            next_asset.get_absolute_url(), response.context["next_asset_url"]
+        )
+
+        # Download URL iiif check
+        asset.download_url = "http://tile.loc.gov/image-services/iiif/service:music:mussuffrage:mussuffrage-100183:mussuffrage-100183.0001/full/pct:100/0/default.jpg"
+        asset.save()
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": asset.slug,
+                },
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("thumbnail_url", response.context)
+        self.assertEqual(
+            "https://tile.loc.gov/image-services/iiif/service:music:mussuffrage:mussuffrage-100183:mussuffrage-100183.0001/full/!512,512/0/default.jpg",
+            response.context["thumbnail_url"],
+        )
+
+        # Non-existent asset in an existing campaign
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": "bad-slug",
+                },
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse(
+                "transcriptions:campaign-detail",
+                args=(asset.item.project.campaign.slug,),
+            ),
+        )
 
     @patch.object(Asset, "get_ocr_transcript")
     def test_generate_ocr_transcription(self, mock):
