@@ -1426,18 +1426,55 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertCountEqual(updated_tags, data["user_tags"])
 
     def test_find_next_transcribable_no_campaign(self):
-        asset1 = create_asset(slug="test-asset-1")
-        create_asset(item=asset1.item, slug="test-asset-2")
+        # Test case where there are no transcribable assets
         resp = self.client.get(reverse("redirect-to-next-transcribable-asset"))
+        self.assertRedirects(resp, expected_url="/")
 
+        asset1 = create_asset(slug="test-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        campaign = asset1.item.project.campaign
+
+        resp = self.client.get(reverse("redirect-to-next-transcribable-asset"))
         self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
+
+        # Configure next transcription campaign for tests below
+        campaign.next_transcription_campaign = True
+        campaign.save()
+
+        # Test when next transcribable campaign doesn't exist and there
+        # are no other campaigns/assets
+        with patch("concordia.models.Campaign.objects.get") as mock:
+            mock.side_effect = IndexError
+            response = self.client.get(reverse("redirect-to-next-transcribable-asset"))
+        self.assertRedirects(response, expected_url="/")
+
+        # Test case when a campaign is configured to be default next transcribable
+        response = self.client.get(reverse("redirect-to-next-transcribable-asset"))
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+
+        # Test when next transcribable campaign has not transcribable assets
+        asset1.delete()
+        asset2.delete()
+        response = self.client.get(reverse("redirect-to-next-transcribable-asset"))
+        self.assertRedirects(response, expected_url="/")
+
+        # Test when next transcription campaign has no transcribable assets
+        # and other campaigns exist and have no transcribable assets
+        create_campaign(slug="test-campaign-2")
+        response = self.client.get(reverse("redirect-to-next-transcribable-asset"))
+        self.assertRedirects(response, expected_url="/")
 
     def test_find_next_reviewable_no_campaign(self):
         user = self.create_user("test-user")
         anon = get_anonymous_user()
 
+        # Test case where there are no reviewable assets
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url="/")
+
         asset1 = create_asset(slug="test-asset-1")
         asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        campaign = asset2.item.project.campaign
 
         t1 = Transcription(asset=asset1, user=user, text="test", submitted=now())
         t1.full_clean()
@@ -1448,37 +1485,88 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.save()
 
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
-
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+        # Test logged in user
+        self.login_user()
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+        # Configure campaign to be next review cmpaign for tests below
+        campaign.next_review_campaign = True
+        campaign.save()
+
+        # Test when next reviewable campaign doesn't exist and there
+        # are no other campaigns/assets
+        with patch("concordia.models.Campaign.objects.get") as mock:
+            mock.side_effect = IndexError
+            response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url="/")
+
+        # Test case when a campaign is configured to be default next reviewable
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+        # Test when next reviewable campaign has no reviewable assets
+        asset1.delete()
+        asset2.delete()
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url="/")
+
+        # Test when next reviewable campaign has no reviewable assets
+        # and other campaigns exist and have no reviewable assets
+        create_campaign(slug="test-campaign-2")
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url="/")
 
     def test_find_next_transcribable_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
-        create_asset(item=asset1.item, slug="test-asset-2")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
         campaign = asset1.item.project.campaign
 
+        # Anonymous user test
         resp = self.client.get(
             reverse(
                 "transcriptions:redirect-to-next-transcribable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
-
         self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
+
+        # Authenticated user test
+        self.login_user()
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-campaign-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
 
     def test_find_next_transcribable_topic(self):
         asset1 = create_asset(slug="test-asset-1")
-        create_asset(item=asset1.item, slug="test-asset-2")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
         project = asset1.item.project
         topic = create_topic(project=project)
 
+        # Anonymous user test
         resp = self.client.get(
             reverse(
                 "redirect-to-next-transcribable-topic-asset",
                 kwargs={"topic_slug": topic.slug},
             )
         )
-
         self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
+
+        # Authenticated user test
+        self.login_user()
+        resp = self.client.get(
+            reverse(
+                "redirect-to-next-transcribable-topic-asset",
+                kwargs={"topic_slug": topic.slug},
+            )
+        )
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
 
     def test_find_next_reviewable_campaign(self):
         anon = get_anonymous_user()
@@ -1496,13 +1584,23 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         campaign = asset1.item.project.campaign
 
+        # Anonymous user test
         response = self.client.get(
             reverse(
                 "transcriptions:redirect-to-next-reviewable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
+        # Authenticated user test
+        self.login_user()
+        response = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-reviewable-campaign-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_topic(self):
@@ -1521,13 +1619,23 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.full_clean()
         t2.save()
 
+        # Anonymous user test
         response = self.client.get(
             reverse(
                 "redirect-to-next-reviewable-topic-asset",
                 kwargs={"topic_slug": topic.slug},
             )
         )
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
+        # Authenticated user test
+        self.login_user()
+        response = self.client.get(
+            reverse(
+                "redirect-to-next-reviewable-topic-asset",
+                kwargs={"topic_slug": topic.slug},
+            )
+        )
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_unlisted_campaign(self):
