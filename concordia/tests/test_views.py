@@ -1278,32 +1278,52 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
     def test_find_next_transcribable_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
-        create_asset(item=asset1.item, slug="test-asset-2")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
         campaign = asset1.item.project.campaign
 
+        # Anonymous user test
         resp = self.client.get(
             reverse(
                 "transcriptions:redirect-to-next-transcribable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
-
         self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
+
+        # Authenticated user test
+        self.login_user()
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-campaign-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
 
     def test_find_next_transcribable_topic(self):
         asset1 = create_asset(slug="test-asset-1")
-        create_asset(item=asset1.item, slug="test-asset-2")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
         project = asset1.item.project
         topic = create_topic(project=project)
 
+        # Anonymous user test
         resp = self.client.get(
             reverse(
                 "redirect-to-next-transcribable-topic-asset",
                 kwargs={"topic_slug": topic.slug},
             )
         )
-
         self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
+
+        # Authenticated user test
+        self.login_user()
+        resp = self.client.get(
+            reverse(
+                "redirect-to-next-transcribable-topic-asset",
+                kwargs={"topic_slug": topic.slug},
+            )
+        )
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
 
     def test_find_next_reviewable_campaign(self):
         anon = get_anonymous_user()
@@ -1321,13 +1341,23 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         campaign = asset1.item.project.campaign
 
+        # Anonymous user test
         response = self.client.get(
             reverse(
                 "transcriptions:redirect-to-next-reviewable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
+        # Authenticated user test
+        self.login_user()
+        response = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-reviewable-campaign-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_topic(self):
@@ -1346,13 +1376,23 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.full_clean()
         t2.save()
 
+        # Anonymous user test
         response = self.client.get(
             reverse(
                 "redirect-to-next-reviewable-topic-asset",
                 kwargs={"topic_slug": topic.slug},
             )
         )
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
+        # Authenticated user test
+        self.login_user()
+        response = self.client.get(
+            reverse(
+                "redirect-to-next-reviewable-topic-asset",
+                kwargs={"topic_slug": topic.slug},
+            )
+        )
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_unlisted_campaign(self):
