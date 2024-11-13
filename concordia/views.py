@@ -1567,14 +1567,17 @@ def get_transcription_superseded(asset, supersedes_pk):
         else:
             superseded = None
     else:
-        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
-            return JsonResponse(
-                {"error": "This transcription has been superseded"}, status=409
-            )
-
         try:
-            superseded = asset.transcription_set.get(pk=supersedes_pk)
-        except Transcription.DoesNotExist:
+            if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+                return JsonResponse(
+                    {"error": "This transcription has been superseded"}, status=409
+                )
+
+            try:
+                superseded = asset.transcription_set.get(pk=supersedes_pk)
+            except Transcription.DoesNotExist:
+                return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+        except ValueError:
             return JsonResponse({"error": "Invalid supersedes value"}, status=400)
     return superseded
 
