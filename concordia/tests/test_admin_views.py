@@ -1,13 +1,18 @@
+import copy
 import json
 import tempfile
 from http import HTTPStatus
+from io import BytesIO
 from unittest import mock
 
+from django.contrib.messages import get_messages
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 
 from concordia.admin.views import SerializedObjectView
+from concordia.models import Campaign, Project
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -290,6 +295,397 @@ class TestFunctionBasedViews(CreateTestUsers, TestCase, StreamingTestMixin):
             b"",
         ]
         self.assertEqual(content, test_data)
+
+
+class TestAdminBulkImportView(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.login_user(is_staff=True, is_superuser=True)
+        self.path = reverse("admin:bulk-import")
+        self.campaign_title = "Test Campaign"
+        self.campaign_short_description = "Short description"
+        self.campaign_long_description = "Long description"
+        self.campaign_slug = "test-campaign"
+        self.project_slug = "test-project"
+        self.project_title = "Test Project"
+        self.project_description = "Project description"
+        self.url = "http://example.com"
+        self.spreadsheet_data = {
+            "Campaign": self.campaign_title,
+            "Campaign Short Description": self.campaign_short_description,
+            "Campaign Long Description": self.campaign_long_description,
+            "Campaign Slug": self.campaign_slug,
+            "Project Slug": self.project_slug,
+            "Project": self.project_title,
+            "Project Description": self.project_description,
+            "Import URLs": self.url,
+        }
+        self.post_data = {"spreadsheet_file": BytesIO()}
+
+    def test_get(self):
+        response = self.client.get(self.path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+
+    def test_invalid_form(self):
+        response = self.client.post(self.path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+
+    def test_fully_valid_form(self):
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [self.spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+            self.assertEqual(response.status_code, 200)
+            messages = [str(message) for message in get_messages(response.wsgi_request)]
+            self.assertEqual(len(messages), 3)
+            self.assertEqual(messages[0], f"Created new campaign {self.campaign_title}")
+            self.assertEqual(messages[1], f"Created new project {self.project_title}")
+            self.assertEqual(
+                messages[2],
+                f"Queued {self.campaign_title} {self.project_title} "
+                f"import for {self.url}",
+            )
+
+            campaign = Campaign.objects.get()
+            self.assertEqual(campaign.title, self.campaign_title)
+            self.assertEqual(campaign.slug, self.campaign_slug)
+            self.assertEqual(campaign.description, self.campaign_long_description)
+            self.assertEqual(
+                campaign.short_description, self.campaign_short_description
+            )
+
+            project = Project.objects.get()
+            self.assertEqual(project.title, self.project_title)
+            self.assertEqual(project.slug, self.project_slug)
+            self.assertEqual(project.description, self.project_description)
+
+            # Submit it again to test that it doesn't re-create the campaign or project
+            response = self.client.post(self.path, data=self.post_data)
+            self.assertEqual(response.status_code, 200)
+            messages = [str(message) for message in get_messages(response.wsgi_request)]
+            self.assertEqual(len(messages), 3)
+            self.assertEqual(
+                messages[0],
+                f"Reusing campaign {self.campaign_title} without modification",
+            )
+            self.assertEqual(
+                messages[1],
+                f"Reusing project {self.project_title} without modification",
+            )
+            self.assertEqual(
+                messages[2],
+                f"Queued {self.campaign_title} {self.project_title} "
+                f"import for {self.url}",
+            )
+            self.assertEqual(1, Campaign.objects.count())
+            self.assertEqual(1, Project.objects.count())
+
+    def test_missing_field(self):
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+        del spreadsheet_data["Campaign"]
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "Skipping row 0: missing fields ['Campaign']"
+        )
+
+    def test_empty_field(self):
+        # Only three fields require values: Campaign, Projet and Import URLs.
+        # Other fields must be present but can be empty.
+        # This tests that blank value check
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+
+            # Test one empty field
+            spreadsheet_data["Campaign"] = ""
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+            self.assertEqual(response.status_code, 200)
+            messages = [str(message) for message in get_messages(response.wsgi_request)]
+            self.assertEqual(len(messages), 1)
+            self.assertEqual(
+                messages[0],
+                "Skipping row 0: at least one required field "
+                "(Campaign, Project, Import URLs) is empty",
+            )
+
+    def test_all_empty_fields(self):
+        # If all values in a spreadsheet row are empty, the row is skipped silently
+        spreadsheet_data = {key: "" for key in self.spreadsheet_data.keys()}
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 0)
+
+    def test_empty_campaign_slug(self):
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+        spreadsheet_data["Campaign Slug"] = ""
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 3)
+        self.assertEqual(messages[0], f"Created new campaign {self.campaign_title}")
+        self.assertEqual(messages[1], f"Created new project {self.project_title}")
+        self.assertEqual(
+            messages[2],
+            f"Queued {self.campaign_title} {self.project_title} import for {self.url}",
+        )
+
+        # Since the provided campaign slug was blank, it should slugify the Campaign
+        # field instead
+        campaign = Campaign.objects.get()
+        self.assertEqual(
+            campaign.slug, slugify(self.campaign_title, allow_unicode=True)
+        )
+
+    def test_bad_campaign_slug(self):
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+        spreadsheet_data["Campaign Slug"] = "bad#slug@"
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 2)
+        self.assertEqual(messages[0], "Campaign slug doesn't match pattern.")
+        self.assertEqual(
+            messages[1],
+            "Unable to create campaign Test Campaign: {'slug': "
+            "['Enter a valid “slug” consisting of Unicode letters, "
+            "numbers, underscores, or hyphens.']}",
+        )
+
+    def test_empty_project_slug(self):
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+        spreadsheet_data["Project Slug"] = ""
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 3)
+        self.assertEqual(messages[0], f"Created new campaign {self.campaign_title}")
+        self.assertEqual(messages[1], f"Created new project {self.project_title}")
+        self.assertEqual(
+            messages[2],
+            f"Queued {self.campaign_title} {self.project_title} import for {self.url}",
+        )
+
+        # Since the provided project slug was blank, it should slugify the project
+        # field instead
+        project = Project.objects.get()
+        self.assertEqual(project.slug, slugify(self.project_title, allow_unicode=True))
+
+    def test_bad_project_slug(self):
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+        spreadsheet_data["Project Slug"] = "bad#slug@"
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 3)
+        self.assertEqual(messages[0], f"Created new campaign {self.campaign_title}")
+        self.assertEqual(messages[1], "Project slug doesn't match pattern.")
+        self.assertEqual(
+            messages[2],
+            "Unable to create project Test Project: {'slug': "
+            "['Enter a valid “slug” consisting of Unicode letters, "
+            "numbers, underscores, or hyphens.']}",
+        )
+
+    def test_bad_url(self):
+        spreadsheet_data = copy.copy(self.spreadsheet_data)
+        spreadsheet_data["Import URLs"] = bad_url = "ftp://example.com"
+
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ),
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [spreadsheet_data]
+
+            response = self.client.post(self.path, data=self.post_data)
+
+        self.assertEqual(response.status_code, 200)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 3)
+        self.assertEqual(messages[0], f"Created new campaign {self.campaign_title}")
+        self.assertEqual(messages[1], f"Created new project {self.project_title}")
+        self.assertEqual(messages[2], f"Skipping unrecognized URL value: {bad_url}")
+
+    def test_import_task_exception(self):
+        with (
+            mock.patch(
+                "concordia.admin.views.AdminProjectBulkImportForm", autospec=True
+            ) as form_mock,
+            mock.patch(
+                "concordia.admin.views.slurp_excel", autospec=True
+            ) as slurp_mock,
+            mock.patch(
+                "concordia.admin.views.import_items_into_project_from_url",
+                autospec=True,
+            ) as import_mock,
+        ):
+            form_mock.return_value.is_valid.return_value = True
+            form_mock.return_value.cleaned_data = {}
+            slurp_mock.return_value = [self.spreadsheet_data]
+            import_mock.side_effect = Exception("Test Exception")
+
+            response = self.client.post(self.path, data=self.post_data)
+
+            self.assertEqual(response.status_code, 200)
+            messages = [str(message) for message in get_messages(response.wsgi_request)]
+            self.assertEqual(len(messages), 3)
+            self.assertEqual(messages[0], f"Created new campaign {self.campaign_title}")
+            self.assertEqual(messages[1], f"Created new project {self.project_title}")
+            self.assertEqual(
+                messages[2],
+                f"Unhandled error attempting to import {self.url}: Test Exception",
+            )
 
 
 class TestSerializedObjectView(TestCase):
