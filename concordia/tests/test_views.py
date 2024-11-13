@@ -1151,6 +1151,22 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertEqual(sorted(test_tags), data["user_tags"])
         self.assertEqual(sorted(test_tags), data["all_tags"])
 
+    def test_invalid_tag_submission(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        test_tags = ["foo", "bar"]
+
+        with patch("concordia.models.Tag.full_clean") as mock:
+            mock.side_effect = forms.ValidationError("Testing error")
+            resp = self.client.post(
+                reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+                data={"tags": test_tags},
+            )
+            data = self.assertValidJSON(resp, expected_status=400)
+            self.assertIn("error", data)
+
     def test_tag_submission_with_diacritics(self):
         asset = create_asset()
 
