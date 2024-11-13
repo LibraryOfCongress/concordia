@@ -254,6 +254,13 @@ header.border-bottom {
     }
 }
 
+div .btn:first-child:active,
+a:not(.btn-check) + .btn:active,
+div :not(.btn-check) + .btn:active {
+    background-color: #005c87;
+    border-color: #005c87;
+}
+
 .alert a[type='button'] {
     color: inherit;
     font-size: 1.5rem;
