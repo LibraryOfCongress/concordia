@@ -1245,6 +1245,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         asset1 = create_asset(slug="test-asset-1")
         asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        campaign = asset2.item.project.campaign
 
         t1 = Transcription(asset=asset1, user=user, text="test", submitted=now())
         t1.full_clean()
@@ -1255,8 +1256,25 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.save()
 
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
-
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+        # Test case when a campaign is configured to be default next reviewable
+        campaign.next_review_campaign = True
+        campaign.save()
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+        # Test logged in user
+        self.login_user()
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+        # Test when next reviewable campaign doesn't exist and there
+        # are no other campaigns/assets
+        with patch("concordia.models.Campaign.objects.get") as mock:
+            mock.side_effect = IndexError
+            response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+        self.assertRedirects(response, expected_url="/")
 
     def test_find_next_transcribable_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
