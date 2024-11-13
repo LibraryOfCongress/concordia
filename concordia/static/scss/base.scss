@@ -1407,6 +1407,11 @@ button.btn-outline-primary:hover {
     max-width: 419px;
 }
 
+#ocr-transcription-modal .modal-header a {
+    cursor: pointer;
+    font-size: 1.5rem;
+}
+
 #language-selection-modal {
     display: none;
     margin-left: 40px;
