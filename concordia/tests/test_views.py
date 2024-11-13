@@ -25,6 +25,7 @@ from concordia.models import (
     TranscriptionStatus,
 )
 from concordia.tasks import (
+    campaign_report,
     delete_old_tombstoned_reservations,
     expire_inactive_asset_reservations,
     tombstone_old_active_asset_reservations,
@@ -49,6 +50,7 @@ from .utils import (
     create_guide,
     create_item,
     create_project,
+    create_tag_collection,
     create_topic,
     create_transcription,
 )
@@ -224,6 +226,22 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.assertContains(response, c.title)
 
+        response = self.client.get(
+            reverse("topic-detail", args=(c.slug,)),
+            {"transcription_status": "not_started"},
+        )
+        context = response.context
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/topic_detail.html"
+        )
+        self.assertContains(response, c.title)
+        self.assertIn("sublevel_querystring", context)
+        self.assertEqual(
+            context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
     def test_unlisted_topic_detail_view(self):
         c2 = create_topic(
             title="GET Unlisted Topic", unlisted=True, slug="get-unlisted-topic"
@@ -241,31 +259,66 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
         """
-        c = create_campaign(title="GET Campaign", slug="get-campaign")
-
+        campaign = create_campaign(title="GET Campaign", slug="get-campaign")
         response = self.client.get(
-            reverse("transcriptions:campaign-detail", args=(c.slug,))
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/campaign_detail.html"
         )
-        self.assertContains(response, c.title)
+        self.assertContains(response, campaign.title)
+        # Filter by reviewable parameter check
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,)),
+            {"filter_by_reviewable": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response, campaign.title)
+        # Bad status parameter check
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,)),
+            {"transcription_status": "bad_parameter"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response, campaign.title)
 
-        c2 = create_campaign(
+        # Unlisted
+        campaign = create_campaign(
             title="GET Unlisted Campaign", unlisted=True, slug="get-unlisted-campaign"
         )
-
-        response2 = self.client.get(
-            reverse("transcriptions:campaign-detail", args=(c2.slug,))
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
         )
-
-        self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response2, template_name="transcriptions/campaign_detail.html"
+            response, template_name="transcriptions/campaign_detail.html"
         )
-        self.assertContains(response2, c2.title)
+        self.assertContains(response, campaign.title)
+
+        # Retired
+        campaign = create_campaign(
+            title="GET Retired Campaign",
+            slug="get-retired-campaign",
+            status=Campaign.Status.RETIRED,
+        )
+        # We need a site report for a retired campaign because
+        # that's where the view pulls data from
+        campaign_report(campaign=campaign)
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail_retired.html"
+        )
+        self.assertContains(response, campaign.title)
 
     def test_campaign_unicode_slug(self):
         """Confirm that Unicode characters are usable in Campaign URLs"""
@@ -306,13 +359,11 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/item_detail.html"
         )
         self.assertContains(response, item.title)
-
         self.assertEqual(0, response.context["not_started_percent"])
         self.assertEqual(0, response.context["in_progress_percent"])
         self.assertEqual(0, response.context["submitted_percent"])
@@ -353,19 +404,55 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/item_detail.html"
         )
         self.assertContains(response, item.title)
-
         # We have 10 total, 6 of which have transcription records and of those
         # 6, 3 have been submitted and one of those was accepted:
         self.assertEqual(40, response.context["not_started_percent"])
         self.assertEqual(30, response.context["in_progress_percent"])
         self.assertEqual(20, response.context["submitted_percent"])
         self.assertEqual(10, response.context["completed_percent"])
+        # Filter by reviewable parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            ),
+            {"filter_by_reviewable": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+        # Bad status parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            ),
+            {"transcription_status": "bad_parameter"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+
+        # Non-existent item in an existing campaign
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, "bad-id"),
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse(
+                "transcriptions:campaign-detail", args=(item.project.campaign.slug,)
+            ),
+        )
 
     def test_asset_unicode_slug(self):
         """Confirm that Unicode characters are usable in Asset URLs"""
@@ -385,7 +472,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         self.login_user()
 
-        asset = create_asset()
+        asset = create_asset(sequence=100)
 
         self.transcription = asset.transcription_set.create(
             user_id=self.user.id, text="Test transcription 1"
@@ -396,6 +483,8 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         asset.item.project.campaign.save()
         title = "Transcription: Basic Rules"
         create_guide(title=title)
+
+        tag_collection = create_tag_collection(asset=asset)
 
         response = self.client.get(
             reverse(
@@ -412,6 +501,75 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertIn("cards", response.context)
         self.assertIn("guides", response.context)
         self.assertEqual(title, response.context["guides"][0]["title"])
+        self.assertIn("tags", response.context)
+        self.assertEqual([tag_collection.tags.all()[0].value], response.context["tags"])
+
+        # Next and previous asset checks
+        previous_asset = create_asset(
+            item=asset.item, slug="previous-asset", sequence=1
+        )
+        next_asset = create_asset(item=asset.item, slug="next-asset", sequence=1000)
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": asset.slug,
+                },
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("previous_asset_url", response.context)
+        self.assertEqual(
+            previous_asset.get_absolute_url(), response.context["previous_asset_url"]
+        )
+        self.assertIn("next_asset_url", response.context)
+        self.assertEqual(
+            next_asset.get_absolute_url(), response.context["next_asset_url"]
+        )
+
+        # Download URL iiif check
+        asset.download_url = "http://tile.loc.gov/image-services/iiif/service:music:mussuffrage:mussuffrage-100183:mussuffrage-100183.0001/full/pct:100/0/default.jpg"
+        asset.save()
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": asset.slug,
+                },
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("thumbnail_url", response.context)
+        self.assertEqual(
+            "https://tile.loc.gov/image-services/iiif/service:music:mussuffrage:mussuffrage-100183:mussuffrage-100183.0001/full/!512,512/0/default.jpg",
+            response.context["thumbnail_url"],
+        )
+
+        # Non-existent asset in an existing campaign
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": "bad-slug",
+                },
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse(
+                "transcriptions:campaign-detail",
+                args=(asset.item.project.campaign.slug,),
+            ),
+        )
 
     @patch.object(Asset, "get_ocr_transcript")
     def test_generate_ocr_transcription(self, mock):
@@ -442,10 +600,45 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 args=(project.campaign.slug, project.slug),
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/project_detail.html"
+        )
+        # Filter by reviewable parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, project.slug),
+            ),
+            {"filter_by_reviewable": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
+        # Bad status parameter check
+        response = self.client.get(
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, project.slug),
+            ),
+            {"transcription_status": "bad_parameter"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
+
+        # Non-existent project in an existing campaign
+        response = self.client.get(
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, "bad-slug"),
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse("transcriptions:campaign-detail", args=(project.campaign.slug,)),
         )
 
     def test_project_unicode_slug(self):

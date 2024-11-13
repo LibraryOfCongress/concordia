@@ -819,6 +819,7 @@ class HomeView(ListView):
         ctx = super().get_context_data(*args, **kwargs)
 
         banner = Banner.objects.filter(active=True).first()
+
         if banner is not None:
             ctx["banner"] = banner
 
@@ -1187,11 +1188,10 @@ class CampaignDetailView(APIDetailView):
         return ctx
 
     def get_template_names(self):
-        if self.object:
-            if self.object.status == Campaign.Status.COMPLETED:
-                return [self.completed_template_name]
-            elif self.object.status == Campaign.Status.RETIRED:
-                return [self.retired_template_name]
+        if self.object.status == Campaign.Status.COMPLETED:
+            return [self.completed_template_name]
+        elif self.object.status == Campaign.Status.RETIRED:
+            return [self.retired_template_name]
         return super().get_template_names()
 
 

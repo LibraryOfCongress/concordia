@@ -11,7 +11,7 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from maintenance_mode.core import get_maintenance_mode, set_maintenance_mode
 
-from concordia.models import Guide, SimplePage
+from concordia.models import Banner, CarouselSlide, Guide, OverlayPosition, SimplePage
 from concordia.views import simple_page
 
 from .utils import (
@@ -39,9 +39,32 @@ class TopLevelViewTests(
 
     def test_homepage(self):
         response = self.client.get(reverse("homepage"))
-
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "home.html")
+
+        banner = Banner.objects.create(
+            slug="test-banner", text="Test Banner", active=True
+        )
+        response = self.client.get(reverse("homepage"))
+        context = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "home.html")
+        self.assertIn("banner", context)
+        self.assertEqual(context["banner"].text, banner.text)
+        banner.delete()
+
+        slide = CarouselSlide.objects.create(
+            published=True,
+            overlay_position=OverlayPosition.LEFT,
+            headline="Test Headline",
+        )
+        response = self.client.get(reverse("homepage"))
+        context = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "home.html")
+        self.assertIn("firstslide", context)
+        self.assertEqual(context["firstslide"].headline, slide.headline)
+        slide.delete()
 
     def test_contact_us_get(self):
         response = self.client.get(reverse("contact"))
