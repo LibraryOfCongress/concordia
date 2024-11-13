@@ -1,3 +1,4 @@
+import sys
 from datetime import date, timedelta
 from unittest.mock import patch
 
@@ -771,6 +772,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
     def test_transcription_save(self):
         asset = create_asset()
 
+        # Test when Turnstile validation failes
         with patch("concordia.turnstile.fields.TurnstileField.validate") as mock:
             mock.side_effect = forms.ValidationError(
                 "Testing error", code="invalid_turnstile"
@@ -798,13 +800,41 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             data = self.assertValidJSON(resp, expected_status=409)
             self.assertIn("error", data)
 
-            # This should work with the chain specified:
+            # If a transcription contains a URL, it should return an error
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={
+                    "text": "http://example.com",
+                    "supersedes": asset.transcription_set.get().pk,
+                },
+            )
+            data = self.assertValidJSON(resp, expected_status=400)
+            self.assertIn("error", data)
+
+            # Test that it correctly works when supersedes is set
             resp = self.client.post(
                 reverse("save-transcription", args=(asset.pk,)),
                 data={"text": "test", "supersedes": asset.transcription_set.get().pk},
             )
             data = self.assertValidJSON(resp, expected_status=201)
             self.assertIn("submissionUrl", data)
+
+            # Test that it correctly works when supersedes is set and confirm
+            # ocr_originaed is properly set
+            transcription = asset.transcription_set.order_by("pk").last()
+            transcription.ocr_originated = True
+            transcription.save()
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={
+                    "text": "test",
+                    "supersedes": asset.transcription_set.order_by("pk").last().pk,
+                },
+            )
+            data = self.assertValidJSON(resp, expected_status=201)
+            self.assertIn("submissionUrl", data)
+            new_transcription = asset.transcription_set.order_by("pk").last()
+            self.assertTrue(new_transcription.ocr_originated)
 
             # We should see an error if you attempt to supersede a transcription
             # which has already been superseded:
@@ -816,6 +846,30 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
                 },
             )
             data = self.assertValidJSON(resp, expected_status=409)
+            self.assertIn("error", data)
+
+            # We should get an error if you attempt to supersede a transcription
+            # that doesn't exist
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={
+                    "text": "test",
+                    "supersedes": sys.maxsize,
+                },
+            )
+            data = self.assertValidJSON(resp, expected_status=400)
+            self.assertIn("error", data)
+
+            # We should get an error if you attempt to supersede with
+            # with a pk that is invalid (i.e., a string instead of int)
+            resp = self.client.post(
+                reverse("save-transcription", args=(asset.pk,)),
+                data={
+                    "text": "test",
+                    "supersedes": "bad-pk",
+                },
+            )
+            data = self.assertValidJSON(resp, expected_status=400)
             self.assertIn("error", data)
 
             # A logged in user can take over from an anonymous user:
