@@ -1,9 +1,9 @@
 <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true" class="text-primary">&times;</span>
-            </button>
+        <div class="modal-header d-flex justify-content-end">
+            <a data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true" class="text-primary fw-bold">&times;</span>
+            </a>
         </div>
         <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
             <div class="modal-body">
