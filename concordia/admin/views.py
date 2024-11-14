@@ -370,14 +370,14 @@ def admin_bulk_import_review(request):
 
                     # Read Campaign slug value from excel
                     campaign_slug = row["Campaign Slug"]
-                    if campaign_slug and not pattern.match(campaign_slug):
+                    if campaign_slug and not pattern.fullmatch(campaign_slug):
                         messages.warning(
                             request, "Campaign slug doesn't match pattern."
                         )
 
                     # Read Project slug value from excel
                     project_slug = row["Project Slug"]
-                    if project_slug and not pattern.match(project_slug):
+                    if project_slug and not pattern.fullmatch(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern.")
 
                     potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
@@ -389,20 +389,13 @@ def admin_bulk_import_review(request):
                             )
                             continue
 
-                        try:
-                            urls.append(url)
-                            url_counter = url_counter + 1
+                        urls.append(url)
+                        url_counter = url_counter + 1
 
-                            if url_counter == 50:
-                                all_urls.append(urls)
-                                url_counter = 0
-                                urls = []
-
-                        except Exception as exc:
-                            messages.error(
-                                request,
-                                f"Unhandled error attempting to count {url}: {exc}",
-                            )
+                        if url_counter == 50:
+                            all_urls.append(urls)
+                            url_counter = 0
+                            urls = []
 
                 all_urls.append(urls)
                 for _i, val in enumerate(all_urls):
