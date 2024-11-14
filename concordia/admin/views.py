@@ -375,7 +375,7 @@ def admin_bulk_import_review(request):
                             request, "Campaign slug doesn't match pattern."
                         )
 
-                        # Read Project slug value from excel
+                    # Read Project slug value from excel
                     project_slug = row["Project Slug"]
                     if project_slug and not pattern.match(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern.")
@@ -484,7 +484,7 @@ def admin_bulk_import_view(request):
                 try:
                     # Read Campaign slug value from excel
                     campaign_slug = row["Campaign Slug"]
-                    if campaign_slug and not pattern.match(campaign_slug):
+                    if campaign_slug and not pattern.fullmatch(campaign_slug):
                         messages.warning(
                             request, "Campaign slug doesn't match pattern."
                         )
@@ -516,7 +516,7 @@ def admin_bulk_import_view(request):
                 try:
                     # Read Project slug value from excel
                     project_slug = row["Project Slug"]
-                    if project_slug and not pattern.match(project_slug):
+                    if project_slug and not pattern.fullmatch(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern.")
                     project, created = validated_get_or_create(
                         Project,
