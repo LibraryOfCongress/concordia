@@ -4,7 +4,6 @@ import tempfile
 import time
 from http import HTTPStatus
 
-from celery import Celery
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -228,39 +227,33 @@ def celery_task_review(request):
         "campaigns": [],
         "projects": [],
     }
-    celery = Celery("concordia")
-    celery.config_from_object("django.conf:settings", namespace="CELERY")
     idx = request.GET.get("id")
 
     if idx is not None:
-        form = AdminProjectBulkImportForm()
         projects = Project.objects.filter(campaign_id=int(idx))
         for project in projects:
             asset_successful = 0
             asset_failure = 0
             asset_incomplete = 0
             asset_unstarted = 0
-            proj_dict = {}
-            proj_dict["title"] = project.title
-            proj_dict["id"] = project.pk
-            proj_dict["campaign_id"] = idx
+            proj_dict = {"title": project.title, "id": project.pk, "campaign_id": idx}
             messages.info(request, f"{project.title}")
-            importjobs = ImportJob.objects.filter(project_id=project.pk).order_by(
+            for importjob in ImportJob.objects.filter(project_id=project.pk).order_by(
                 "-created"
-            )
-            for importjob in importjobs:
-                job_id = importjob.pk
-                assets = ImportItem.objects.filter(job_id=job_id).order_by("-created")
-                for asset in assets:
-                    counter = counter + 1
-                    assettasks = ImportItemAsset.objects.filter(import_item_id=asset.pk)
+            ):
+                for asset in ImportItem.objects.filter(job_id=importjob.pk).order_by(
+                    "-created"
+                ):
+                    counter += 1
                     countasset = 0
-                    for assettask in assettasks:
+                    for assettask in ImportItemAsset.objects.filter(
+                        import_item_id=asset.pk
+                    ):
                         if (
                             assettask.failed is not None
                             and assettask.last_started is not None
                         ):
-                            asset_failure = asset_failure + 1
+                            asset_failure += 1
                             messages.warning(
                                 request,
                                 f"{assettask.url}-{assettask.status}",
@@ -269,7 +262,7 @@ def celery_task_review(request):
                             assettask.completed is None
                             and assettask.last_started is not None
                         ):
-                            asset_incomplete = asset_incomplete + 1
+                            asset_incomplete += 1
                             messages.warning(
                                 request,
                                 f"{assettask.url}-{assettask.status}",
@@ -278,19 +271,19 @@ def celery_task_review(request):
                             assettask.completed is None
                             and assettask.last_started is None
                         ):
-                            asset_unstarted = asset_unstarted + 1
+                            asset_unstarted += 1
                             messages.warning(
                                 request,
                                 f"{assettask.url}-{assettask.status}",
                             )
                         else:
-                            asset_successful = asset_successful + 1
+                            asset_successful += 1
                             messages.info(
                                 request,
                                 f"{assettask.url}-{assettask.status}",
                             )
-                        countasset = countasset + 1
-                        totalcount = totalcount + 1
+                        countasset += 1
+                        totalcount += 1
             proj_dict["successful"] = asset_successful
             proj_dict["incomplete"] = asset_incomplete
             proj_dict["unstarted"] = asset_unstarted
@@ -298,14 +291,11 @@ def celery_task_review(request):
             context["projects"].append(proj_dict)
         messages.info(request, f"{totalcount} Total Assets Processed")
         context["totalassets"] = totalcount
-
     else:
         context["campaigns"] = Campaign.objects.exclude(
             status=Campaign.Status.RETIRED
         ).order_by("-launch_date")
-        form = AdminProjectBulkImportForm()
 
-    context["form"] = form
     return render(request, "admin/celery_task.html", context)
 
 
