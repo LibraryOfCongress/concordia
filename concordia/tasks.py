@@ -1070,7 +1070,7 @@ def unusual_activity():
     html_body_message = html_body_template.render(context)
 
     to_email = ["rsar@loc.gov"]
-    if settings.DEFAULT_TO_EMAIL:
+    if settings.DEFAULT_TO_EMAIL and not settings.DEBUG:
         to_email.append(settings.DEFAULT_TO_EMAIL)
     message = EmailMultiAlternatives(
         subject=context["title"],

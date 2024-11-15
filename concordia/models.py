@@ -843,18 +843,24 @@ class TranscriptionManager(models.Manager):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
 
-    def review_incidents(self):
-        user_incident_count = []
-        recent_accepts = self.filter(
+    def recent_accepts(self):
+        return self.filter(
             accepted__gte=ONE_DAY_AGO,
             reviewed_by__is_superuser=False,
             reviewed_by__is_staff=False,
         )
-        recent_rejects = self.filter(
+
+    def recent_rejects(self):
+        return self.filter(
             rejected__gte=ONE_DAY_AGO,
             reviewed_by__is_superuser=False,
             reviewed_by__is_staff=False,
         )
+
+    def review_incidents(self):
+        user_incident_count = []
+        recent_accepts = self.recent_accepts()
+        recent_rejects = self.recent_rejects()
         recent_actions = recent_accepts.union(recent_rejects)
         user_ids = set(
             recent_actions.order_by("reviewed_by").values_list("reviewed_by", flat=True)
@@ -871,11 +877,14 @@ class TranscriptionManager(models.Manager):
 
         return user_incident_count
 
-    def transcribe_incidents(self):
-        user_incident_count = []
-        transcriptions = self.get_queryset().filter(
+    def recent_transcriptions(self):
+        return self.get_queryset().filter(
             submitted__gte=ONE_DAY_AGO, user__is_superuser=False, user__is_staff=False
         )
+
+    def transcribe_incidents(self):
+        user_incident_count = []
+        transcriptions = self.recent_transcriptions()
         user_ids = (
             transcriptions.order_by("user")
             .distinct("user")
