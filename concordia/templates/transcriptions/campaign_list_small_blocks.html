@@ -16,7 +16,7 @@
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
         <ul class="list-unstyled row">
-            {% with show_description=True %}
+            {% with show_description=True show_start=True %}
                 {% for campaign in campaigns %}
                     {% include "transcriptions/campaign_small_block.html" %}
                 {% endfor %}
