@@ -282,6 +282,13 @@ def on_cardfamily_save(sender, instance, **kwargs):
 post_save.connect(on_cardfamily_save, sender=CardFamily)
 
 
+class ResearchCenter(models.Model):
+    title = models.CharField(max_length=80)
+
+    def __str__(self):
+        return self.title
+
+
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     class Status(models.IntegerChoices):
         ACTIVE = 1
