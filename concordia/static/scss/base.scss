@@ -1059,6 +1059,23 @@ body .disabled > .page-link {
  * Homepage customizations
  */
 
+.play-pause-button {
+    position: absolute;
+    top: 5px;
+    right: 20px;
+    background-color: $blue;
+    border: 1px solid $blue;
+    border-radius: 5px;
+    font-size: 18px;
+    height: 40px;
+    width: 40px;
+    z-index: 2;
+
+    i {
+        color: $white;
+    }
+}
+
 .carousel-item {
     img {
         background-color: $light;
