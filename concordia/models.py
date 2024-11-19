@@ -283,6 +283,19 @@ post_save.connect(on_cardfamily_save, sender=CardFamily)
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
+    AMERICAN_FOLKLIFE_CENTER = "AFC"
+    LAW_LIBRARY = "LL"
+    MANUSCRIPT = "M"
+    PERFORMING_ARTS = "PA"
+    RARE_BOOK = "RB"
+    RESEARCH_CENTER_CHOICES = [
+        (AMERICAN_FOLKLIFE_CENTER, "American Folklife Center"),
+        (LAW_LIBRARY, "Law Library"),
+        (MANUSCRIPT, "Manuscript"),
+        (PERFORMING_ARTS, "Performing Arts"),
+        (RARE_BOOK, "Rare Book"),
+    ]
+
     class Status(models.IntegerChoices):
         ACTIVE = 1
         COMPLETED = 2
