@@ -11,7 +11,14 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from maintenance_mode.core import get_maintenance_mode, set_maintenance_mode
 
-from concordia.models import Banner, CarouselSlide, Guide, OverlayPosition, SimplePage
+from concordia.models import (
+    Banner,
+    CarouselSlide,
+    Guide,
+    OverlayPosition,
+    SimplePage,
+    SiteReport,
+)
 from concordia.views import simple_page
 
 from .utils import (
@@ -19,12 +26,19 @@ from .utils import (
     CreateTestUsers,
     JSONAssertMixin,
     create_guide,
+    create_site_report,
 )
 
 
 class TopLevelViewTests(
     JSONAssertMixin, CreateTestUsers, CacheControlAssertions, TestCase
 ):
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
     def test_healthz(self):
         data = self.assertValidJSON(self.client.get("/healthz"))
 
@@ -205,6 +219,71 @@ class TopLevelViewTests(
         create_guide(page=l1)
         resp = self.client.get(reverse("welcome-guide"))
         self.assertEqual(200, resp.status_code)
+
+    def test_simple_page_with_context(self):
+        path = reverse("about")
+        page_body = (
+            "<p>{{ assets_published}}</p> "
+            "<p>{{ campaigns_published }}</p> "
+            "<p>{{ assets_completed }}</p> "
+            "<p>{{ assets_waiting_review }}</p> "
+            "<p>{{ users_activated }}</p>"
+        )
+        about_page = SimplePage.objects.create(
+            title="About",
+            body=page_body,
+            path=reverse("about"),
+        )
+
+        # Test with no SiteReports
+        response = self.client.get(path)
+        context = response.context
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(about_page.title, context["title"])
+        self.assertEqual([(path, about_page.title)], context["breadcrumbs"])
+        self.assertEqual(
+            context["body"], "<p>0</p>\n<p>0</p>\n<p>0</p>\n<p>0</p>\n<p>0</p>"
+        )
+
+        # Test with only active SiteReport
+        cache.clear()
+        create_site_report(
+            report_name=SiteReport.ReportName.TOTAL,
+            campaigns_published=1,
+            assets_published=1,
+            assets_completed=1,
+            assets_waiting_review=1,
+            users_activated=1,
+        )
+
+        response = self.client.get(path)
+        context = response.context
+        self.assertEqual(
+            context["body"], "<p>1</p>\n<p>1</p>\n<p>1</p>\n<p>1</p>\n<p>1</p>"
+        )
+
+        # Test with both SiteReports, but with cached values from above
+        # So we should expect the retired SiteReport to not be included in data
+        create_site_report(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL,
+            assets_published=1,
+            assets_completed=1,
+            assets_waiting_review=1,
+        )
+
+        response = self.client.get(path)
+        context = response.context
+        self.assertEqual(
+            context["body"], "<p>1</p>\n<p>1</p>\n<p>1</p>\n<p>1</p>\n<p>1</p>"
+        )
+
+        # Test without bad cached data
+        cache.clear()
+        response = self.client.get(path)
+        context = response.context
+        self.assertEqual(
+            context["body"], "<p>2</p>\n<p>1</p>\n<p>2</p>\n<p>2</p>\n<p>1</p>"
+        )
 
 
 class HelpCenterRedirectTests(TestCase):

@@ -273,12 +273,28 @@ def about_simple_page(request, path=None, slug=None):
     context_cache_key = "about_simple_page-about_context"
     about_context = cache.get(context_cache_key)
     if not about_context:
-        active_campaigns = SiteReport.objects.filter(
-            report_name=SiteReport.ReportName.TOTAL
-        ).latest()
-        retired_campaigns = SiteReport.objects.filter(
-            report_name=SiteReport.ReportName.RETIRED_TOTAL
-        ).latest()
+        try:
+            active_campaigns = SiteReport.objects.filter(
+                report_name=SiteReport.ReportName.TOTAL
+            ).latest()
+        except SiteReport.DoesNotExist:
+            active_campaigns = SiteReport(
+                campaigns_published=0,
+                assets_published=0,
+                assets_completed=0,
+                assets_waiting_review=0,
+                users_activated=0,
+            )
+        try:
+            retired_campaigns = SiteReport.objects.filter(
+                report_name=SiteReport.ReportName.RETIRED_TOTAL
+            ).latest()
+        except SiteReport.DoesNotExist:
+            retired_campaigns = SiteReport(
+                assets_published=0,
+                assets_completed=0,
+                assets_waiting_review=0,
+            )
         about_context = {
             "report_date": now() - datetime.timedelta(days=1),
             "campaigns_published": active_campaigns.campaigns_published,
