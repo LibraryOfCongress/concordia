@@ -1,8 +1,9 @@
 name: 'CodeQL Advanced'
 
 on:
+    workflow_dispatch:
     push:
-        branches: [main, release, 'feature-*']
+        branches: [release]
         paths-ignore:
             - docs/**
             - README.md
@@ -12,7 +13,7 @@ on:
             - kibana-proxy/**
             - postgresql/**
     pull_request:
-        branches: [main, release, 'feature-*']
+        branches: [main, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
