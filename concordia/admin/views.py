@@ -223,15 +223,14 @@ def celery_task_review(request):
     asset_unstarted = 0
     asset_failure = 0
     context = {
-        "title": "Active Importer Tasks",
+        "title": "Importer Tasks",
         "campaigns": [],
         "projects": [],
     }
     idx = request.GET.get("id")
 
     if idx is not None:
-        projects = Project.objects.filter(campaign_id=int(idx))
-        for project in projects:
+        for project in Project.objects.filter(campaign_id=int(idx)):
             asset_successful = 0
             asset_failure = 0
             asset_incomplete = 0
