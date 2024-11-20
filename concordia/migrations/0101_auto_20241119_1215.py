@@ -2,6 +2,14 @@
 
 from django.db import migrations
 
+TITLES = (
+    "American Folklife Center",
+    "Law Library",
+    "Manuscript",
+    "Performing Arts",
+    "Rare Book",
+)
+
 
 def forwards_func(apps, schema_editor):
     # create initial data
@@ -18,10 +26,17 @@ def forwards_func(apps, schema_editor):
     )
 
 
+def reverse_func(apps, schema_editor):
+    ResearchCenter = apps.get_model("concordia", "ResearchCenter")
+    db_alias = schema_editor.connection.alias
+    for title in TITLES:
+        ResearchCenter.objects.using(db_alias).filter(title=title).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
         ("concordia", "0100_researchcenter"),
     ]
 
-    operations = [migrations.RunPython(forwards_func)]
+    operations = [migrations.RunPython(forwards_func, reverse_func)]

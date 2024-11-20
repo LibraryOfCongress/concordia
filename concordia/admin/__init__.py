@@ -241,6 +241,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "short_description",
         "metadata",
         "disable_ocr",
+        "research_centers",
     )
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ("card_family",)

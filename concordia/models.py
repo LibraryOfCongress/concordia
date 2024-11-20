@@ -335,6 +335,8 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         default=False, help_text="Turn OCR off for all assets of this campaign"
     )
 
+    research_centers = models.ManyToManyField(ResearchCenter)
+
     class Meta:
         indexes = [
             models.Index(fields=["published", "unlisted"]),
