@@ -1048,13 +1048,6 @@ class CampaignTopicListView(TemplateView):
 
         return render(self.request, self.template_name, data)
 
-    def get_context_data(self, **kwargs):
-        data = super().get_context_data(**kwargs)
-        data["topics"] = (
-            Topic.objects.published().listed().order_by("ordering", "title")
-        )
-        return data
-
 
 @method_decorator(default_cache_control, name="dispatch")
 @method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
