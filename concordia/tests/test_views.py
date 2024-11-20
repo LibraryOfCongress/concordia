@@ -595,11 +595,14 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         # Anonymous user test; should redirect
         response = self.client.post(url)
         self.assertEqual(302, response.status_code)
+        self.assertFalse(mock.called)
+        mock.reset_mock()
 
         self.login_user()
         response = self.client.post(url)
         self.assertEqual(201, response.status_code)
         self.assertTrue(mock.called)
+        mock.reset_mock()
 
         asset2 = create_asset(
             item=asset1.item,
@@ -610,6 +613,14 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         response = self.client.post(url, data={"language": "spa"})
         self.assertEqual(201, response.status_code)
         mock.assert_called_with("spa")
+        mock.reset_mock()
+
+        with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+            superseded_mock.return_value = HttpResponse(status=409)
+            url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
+            response = self.client.post(url)
+            self.assertEqual(409, response.status_code)
+            self.assertFalse(mock.called)
 
     def test_project_detail_view(self):
         """

@@ -1603,8 +1603,7 @@ def generate_ocr_transcription(request, *, asset_pk):
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
-        if isinstance(superseded, HttpResponse):
-            return superseded
+        return superseded
     else:
         # This means this is the first transcription on this asset
         # to enable undoing of the OCR transcription, we create
