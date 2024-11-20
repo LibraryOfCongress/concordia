@@ -303,6 +303,21 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.assertContains(response, campaign.title)
 
+        # Completed
+        campaign = create_campaign(
+            title="GET Completed Campaign",
+            slug="get-completed-campaign",
+            status=Campaign.Status.COMPLETED,
+        )
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail_completed.html"
+        )
+        self.assertContains(response, campaign.title)
+
         # Retired
         campaign = create_campaign(
             title="GET Retired Campaign",
