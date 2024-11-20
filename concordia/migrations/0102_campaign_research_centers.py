@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="campaign",
             name="research_centers",
-            field=models.ManyToManyField(to="concordia.researchcenter"),
+            field=models.ManyToManyField(blank=True, to="concordia.researchcenter"),
         ),
     ]
