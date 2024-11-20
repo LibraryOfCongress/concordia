@@ -1597,11 +1597,7 @@ def get_transcription_superseded(asset, supersedes_pk):
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def generate_ocr_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
-
-    if request.user.is_anonymous:
-        user = get_anonymous_user()
-    else:
-        user = request.user
+    user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
     language = request.POST.get("language", None)

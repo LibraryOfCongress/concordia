@@ -589,10 +589,16 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
     @patch.object(Asset, "get_ocr_transcript")
     def test_generate_ocr_transcription(self, mock):
-        self.login_user()
         asset1 = create_asset(storage_image="tests/test-european.jpg")
         url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset1.pk})
-        self.client.post(url)
+
+        # Anonymous user test; should redirect
+        response = self.client.post(url)
+        self.assertEqual(302, response.status_code)
+
+        self.login_user()
+        response = self.client.post(url)
+        self.assertEqual(201, response.status_code)
         self.assertTrue(mock.called)
 
         asset2 = create_asset(
@@ -601,7 +607,8 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             storage_image="tests/test-european.jpg",
         )
         url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
-        self.client.post(url, data={"language": "spa"})
+        response = self.client.post(url, data={"language": "spa"})
+        self.assertEqual(201, response.status_code)
         mock.assert_called_with("spa")
 
     def test_project_detail_view(self):
