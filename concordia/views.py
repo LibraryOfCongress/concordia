@@ -1699,7 +1699,7 @@ def rollforward_transcription(request, *, asset_pk):
 
     try:
         transcription = asset.rollforward_transcription(user)
-    except AttributeError as e:
+    except ValueError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
         return JsonResponse({"error": "No transcription to restore"}, status=400)
 

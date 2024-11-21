@@ -2121,7 +2121,7 @@ class TranscriptionViewTests(CreateTestUsers, TestCase):
         self.login_user()
 
         # Test rollback when there are no transcriptions
-        response = self.client.post(path, content_type="application/json")
+        response = self.client.post(path)
         self.assertEqual(400, response.status_code)
         self.assertIn("error", response.json())
 
@@ -2177,3 +2177,65 @@ class TranscriptionViewTests(CreateTestUsers, TestCase):
         self.assertEqual(response_json["undo_available"], False)
         self.assertIn("redo_available", response_json)
         self.assertEqual(response_json["redo_available"], True)
+
+    def test_rollforward_transcription(self):
+        path = reverse("rollforward-transcription", args=[self.asset.id])
+        self.login_user()
+
+        # Test rollforward when there are no transcriptions
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        transcription1 = create_transcription(
+            asset=self.asset, text="Test transcription 1"
+        )
+        user = transcription1.user
+
+        # Test rollback when there are no transcriptions to rollforward to
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        # Test successful rollforward, which requires a rollback first
+        transcription2 = create_transcription(
+            asset=self.asset, user=user, text="Test transcription 2"
+        )
+        self.asset.rollback_transcription(user)
+        response = self.client.post(path)
+        self.assertEqual(201, response.status_code)
+        response_json = response.json()
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription2.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], True)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], False)
+
+        # Test aftering rolling back then creating a new transcription
+        self.asset.rollback_transcription(user)
+        create_transcription(asset=self.asset, user=user, text="Test transcription 3")
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        # Test anonymous user after a rollback
+        self.client.logout()
+        transcription3 = create_transcription(
+            asset=self.asset, user=user, text="Test transcription 3"
+        )
+        self.asset.rollback_transcription(user)
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            response = self.client.post(path)
+        response_json = response.json()
+        self.assertEqual(201, response.status_code)
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription3.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], True)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], False)
