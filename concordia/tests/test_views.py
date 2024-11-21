@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import caches
 from django.http import HttpResponse, JsonResponse
 from django.test import (
@@ -39,6 +39,7 @@ from concordia.views import (
     FilteredProjectDetailView,
     ratelimit_view,
     registration_rate,
+    reserve_rate,
     user_cache_control,
 )
 
@@ -2049,9 +2050,10 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
         self.assertTrue(response.context.get("filter_by_reviewable"))
 
 
-class RateLimitTests(TestCase):
+class RateLimitTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.request_factory = RequestFactory()
+        self.user = self.create_user("test-user")
 
     def test_registration_rate(self):
         request = self.request_factory.get("/")
@@ -2066,6 +2068,15 @@ class RateLimitTests(TestCase):
         response = ratelimit_view(request, exception)
         self.assertEqual(response.status_code, 429)
         self.assertNotEqual(response["Retry-After"], 0)
+
+    def test_reserve_rate(self):
+        request = self.request_factory.post("/")
+
+        request.user = AnonymousUser()
+        self.assertEqual("100/m", reserve_rate("test.group", request))
+
+        request.user = self.user
+        self.assertEqual(None, reserve_rate("test.group", request))
 
 
 class LoginTests(TestCase, CreateTestUsers):

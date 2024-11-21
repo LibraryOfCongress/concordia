@@ -2106,8 +2106,11 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses = statuses
 
 
-def reserve_rate(g, r):
-    return None if r.user.is_authenticated else "100/m"
+def reserve_rate(group, request):
+    # `group` is the group of rate limits to count together
+    # It defaults to the dotted name of the view, so each
+    # view is its own unique group
+    return None if request.user.is_authenticated else "100/m"
 
 
 @ratelimit(
