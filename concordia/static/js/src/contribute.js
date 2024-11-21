@@ -342,7 +342,7 @@ function setupPage() {
                     .filter('#display-submitted')
                     .removeAttr('hidden');
                 let messageChildren = $(
-                    '#transcription-status-message',
+                    '#transcription-status-display',
                 ).children();
                 messageChildren
                     .attr('hidden', 'hidden')
