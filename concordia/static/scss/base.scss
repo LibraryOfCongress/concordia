@@ -1075,6 +1075,16 @@ body .disabled > .page-link {
     }
 }
 
+.list-view li {
+    padding-top: 24px;
+}
+
+.list-view .aspect-ratio-box {
+    height: 150px;
+    padding-top: 0;
+    width: 150px;
+}
+
 .aspect-ratio-box-inner-wrapper {
     position: absolute;
     top: 0;

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load staticfiles %}
+{% load staticfiles truncation %}
 
 {% block title %}Completed Campaigns{% endblock title %}
 
@@ -15,12 +15,51 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        <ul class="list-unstyled row">
-            {% with show_description=True show_start=True %}
+        {% if request.GET.view == 'list' %}
+            <ul class="list-unstyled list-view">
                 {% for campaign in campaigns %}
-                    {% include "transcriptions/campaign_small_block.html" %}
+                    <li>
+                        <div class="row">
+                            <div class="col-2">
+                                <div class="aspect-ratio-box">
+                                    <div class="aspect-ratio-box-inner-wrapper">
+                                        <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.alt_image_text}}" loading="lazy" width="150" height="150">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-10">
+                                <p class="mb-2">
+                                    <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                        <span class="d-block h4 mt-2">
+                                            {{ campaign.title }}
+                                        </span>
+                                    </a>
+                                    {% if campaign.launch_date %}
+                                        <span class="fw-bold">Started: </span>{{ campaign.launch_date|date:"Y-m-d" }}
+                                        {% if campaign.completed_date %}</br>{% endif %}
+                                    {% endif %}
+                                    {% if campaign.completed_date %}
+                                        <span class="fw-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}
+                                    {% endif %}
+                                </p>
+                                <p class="mb-2">
+                                    {{ campaign.short_description|striptags|truncatechars_on_word_break:160 }}
+                                </p>
+                            </div>
+                        </div>
+                    </li>
                 {% endfor %}
-            {% endwith %}
-        </ul>
+            </ul>
+        {% else %}
+            <ul class="list-unstyled row">
+                {% with show_description=True show_start=True %}
+                    {% for campaign in campaigns %}
+                        {% include "transcriptions/campaign_small_block.html" %}
+                    {% endfor %}
+                {% endwith %}
+            </ul>
+        {% endif %}
     </div>
 {% endblock main_content %}
