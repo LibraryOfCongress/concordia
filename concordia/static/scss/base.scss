@@ -1062,6 +1062,18 @@ body .disabled > .page-link {
     cursor: pointer;
 }
 
+#campaign-options {
+    select {
+        background-color: $white;
+        border-color: $blue;
+    }
+
+    button {
+        background-color: $blue;
+        color: $white;
+    }
+}
+
 .aspect-ratio-box {
     height: 0;
     overflow: hidden;

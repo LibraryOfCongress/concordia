@@ -16,6 +16,34 @@
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
         {% if request.GET.view == 'list' %}
+            <div id="campaign-options" class="row">
+                <div class="col d-flex align-items-center">
+                    <label for="view-options" class="pe-1">View</label>
+                    <select id="view-options">
+                        <option value="grid" selected>Grid</option>
+                        <option value="list">List</option>
+                    </select>
+                    <button type="submit">Go</button>
+                </div>
+                <div class="col d-flex align-items-center">
+                    <label for="campaign-type" class="pe-1">Campaign Type</label>
+                    <select id="campaign-type">
+                        <option value="completed" selected>Completed Campaigns</option>
+                        <option value="retired">Retired Campaigns</option>
+                    </select>
+                    <button type="submit">Go</button>
+                </div>
+                <div class="col d-flex align-items-center">
+                    <label for="research-center" class="pe-1">Research Center</label>
+                    <select id="research-center">
+                        <option value="all" selected>All Research Centers</option>
+                        {% for research_center in research_centers %}
+                            <option>{{ research_center.title}}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Go</button>
+                </div>
+            </div>
             <ul class="list-unstyled list-view">
                 {% for campaign in campaigns %}
                     <li>
