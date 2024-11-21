@@ -65,6 +65,24 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         transcription_count = self.user_admin.transcription_count(user)
         self.assertEqual(transcription_count, 1)
 
+    def test_review_count(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        users = self.user_admin.get_queryset(request)
+        user = users.get(username=self.user.username)
+        review_count = self.user_admin.review_count(user)
+        self.assertEqual(review_count, 0)
+
+        transcription = create_transcription(
+            asset=self.asset, user=self.super_user, submitted=timezone.now()
+        )
+        transcription.accepted = timezone.now()
+        transcription.reviewed_by = self.user
+        transcription.save()
+        user = users.get(username=self.user.username)
+        review_count = self.user_admin.review_count(user)
+        self.assertEqual(review_count, 1)
+
     def test_csv_export(self):
         request = self.request_factory.get("/")
         request.user = self.super_user
@@ -160,6 +178,15 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(response.status_code, 302)
         campaign = Campaign.objects.get(pk=self.campaign.pk)
         self.assertEqual(campaign.status, Campaign.Status.RETIRED)
+
+    def test_campaign_admin(self):
+        self.client.force_login(self.super_user)
+        response = self.client.get(reverse("admin:concordia_campaign_add"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "form")
+        self.assertContains(response, "Display on homepage")
+        self.assertContains(response, "Next transcription campaign")
+        self.assertContains(response, "Next review campaign")
 
 
 class ResourceAdminTest(TestCase, CreateTestUsers):
