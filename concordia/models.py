@@ -658,6 +658,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
+        if original_latest_transcription is None:
+            return (
+                False,
+                (
+                    "Can not rollback transcription on an asset "
+                    "with no transcriptions"
+                ),
+            )
         while latest_transcription.source:
             latest_transcription = latest_transcription.source
 
@@ -729,6 +737,15 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
+
+        if original_latest_transcription is None:
+            return (
+                False,
+                (
+                    "Can not rollforward transcription on an asset "
+                    "with no transcriptions"
+                ),
+            )
 
         if latest_transcription.rolled_forward:
 
