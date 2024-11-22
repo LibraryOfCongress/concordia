@@ -517,11 +517,11 @@ function setupPage() {
                     );
                 }
                 let messageChildren = $(
-                    '#transcription-status-message',
+                    '#transcription-status-display',
                 ).children();
                 messageChildren
                     .attr('hidden', 'hidden')
-                    .filter('#message-inprogress')
+                    .filter('#display-inprogress')
                     .removeAttr('hidden');
                 messageChildren
                     .filter('#message-contributors')
