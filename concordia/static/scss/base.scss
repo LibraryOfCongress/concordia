@@ -1338,6 +1338,10 @@ button.btn-outline-primary:hover {
     border-color: $primary;
     color: $white;
     border-radius: 0;
+
+    &.btn {
+        border-radius: $btn-border-radius;
+    }
 }
 
 .filter-slider {
