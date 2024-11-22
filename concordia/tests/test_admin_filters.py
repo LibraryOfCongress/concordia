@@ -5,6 +5,7 @@ from concordia.admin import (
     CardAdmin,
     ItemAdmin,
     ProjectAdmin,
+    ResourceAdmin,
     SiteReportAdmin,
     TranscriptionAdmin,
 )
@@ -16,16 +17,27 @@ from concordia.admin.filters import (
     ProjectCampaignStatusListFilter,
     SiteReportCampaignListFilter,
     SubmittedFilter,
+    TopicListFilter,
 )
 from concordia.admin_site import ConcordiaAdminSite
-from concordia.models import Campaign, Card, Item, Project, SiteReport, Transcription
+from concordia.models import (
+    Campaign,
+    Card,
+    Item,
+    Project,
+    Resource,
+    SiteReport,
+    Transcription,
+)
 from concordia.tests.utils import (
     CreateTestUsers,
     create_card,
     create_card_family,
     create_item,
     create_project,
+    create_resource,
     create_site_report,
+    create_topic,
     create_transcription,
 )
 
@@ -193,3 +205,21 @@ class TranscriptionFilterTests(CreateTestUsers, TestCase):
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
+
+
+class TopicListFilterTests(TestCase):
+    def setUp(self):
+        self.topic = create_topic()
+        self.resource1 = create_resource(topic=self.topic)
+        self.resource2 = create_resource()
+
+    def test_resource_topic_list_filter(self):
+        topic_filter = TopicListFilter(None, {}, Resource, ResourceAdmin)
+        resources = topic_filter.queryset(None, Resource.objects.all())
+        self.assertEqual(resources.count(), 2)
+
+        topic_filter = TopicListFilter(
+            None, {"topic__id__exact": self.topic.id}, Resource, ResourceAdmin
+        )
+        resources = topic_filter.queryset(None, Resource.objects.all())
+        self.assertEqual(resources.count(), 1)
