@@ -273,12 +273,28 @@ def about_simple_page(request, path=None, slug=None):
     context_cache_key = "about_simple_page-about_context"
     about_context = cache.get(context_cache_key)
     if not about_context:
-        active_campaigns = SiteReport.objects.filter(
-            report_name=SiteReport.ReportName.TOTAL
-        ).latest()
-        retired_campaigns = SiteReport.objects.filter(
-            report_name=SiteReport.ReportName.RETIRED_TOTAL
-        ).latest()
+        try:
+            active_campaigns = SiteReport.objects.filter(
+                report_name=SiteReport.ReportName.TOTAL
+            ).latest()
+        except SiteReport.DoesNotExist:
+            active_campaigns = SiteReport(
+                campaigns_published=0,
+                assets_published=0,
+                assets_completed=0,
+                assets_waiting_review=0,
+                users_activated=0,
+            )
+        try:
+            retired_campaigns = SiteReport.objects.filter(
+                report_name=SiteReport.ReportName.RETIRED_TOTAL
+            ).latest()
+        except SiteReport.DoesNotExist:
+            retired_campaigns = SiteReport(
+                assets_published=0,
+                assets_completed=0,
+                assets_waiting_review=0,
+            )
         about_context = {
             "report_date": now() - datetime.timedelta(days=1),
             "campaigns_published": active_campaigns.campaigns_published,
@@ -1032,13 +1048,6 @@ class CampaignTopicListView(TemplateView):
 
         return render(self.request, self.template_name, data)
 
-    def get_context_data(self, **kwargs):
-        data = super().get_context_data(**kwargs)
-        data["topics"] = (
-            Topic.objects.published().listed().order_by("ordering", "title")
-        )
-        return data
-
 
 @method_decorator(default_cache_control, name="dispatch")
 @method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
@@ -1588,18 +1597,13 @@ def get_transcription_superseded(asset, supersedes_pk):
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
 def generate_ocr_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
-
-    if request.user.is_anonymous:
-        user = get_anonymous_user()
-    else:
-        user = request.user
+    user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
-        if isinstance(superseded, HttpResponse):
-            return superseded
+        return superseded
     else:
         # This means this is the first transcription on this asset
         # to enable undoing of the OCR transcription, we create
@@ -1695,7 +1699,7 @@ def rollforward_transcription(request, *, asset_pk):
 
     try:
         transcription = asset.rollforward_transcription(user)
-    except AttributeError as e:
+    except ValueError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
         return JsonResponse({"error": "No transcription to restore"}, status=400)
 
@@ -2102,8 +2106,11 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses = statuses
 
 
-def reserve_rate(g, r):
-    return None if r.user.is_authenticated else "100/m"
+def reserve_rate(group, request):
+    # `group` is the group of rate limits to count together
+    # It defaults to the dotted name of the view, so each
+    # view is its own unique group
+    return None if request.user.is_authenticated else "100/m"
 
 
 @ratelimit(

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import caches
 from django.http import HttpResponse, JsonResponse
 from django.test import (
@@ -39,6 +39,7 @@ from concordia.views import (
     FilteredProjectDetailView,
     ratelimit_view,
     registration_rate,
+    reserve_rate,
     user_cache_control,
 )
 
@@ -300,6 +301,21 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response, campaign.title)
+
+        # Completed
+        campaign = create_campaign(
+            title="GET Completed Campaign",
+            slug="get-completed-campaign",
+            status=Campaign.Status.COMPLETED,
+        )
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(campaign.slug,))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail_completed.html"
         )
         self.assertContains(response, campaign.title)
 
@@ -574,11 +590,20 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
     @patch.object(Asset, "get_ocr_transcript")
     def test_generate_ocr_transcription(self, mock):
-        self.login_user()
         asset1 = create_asset(storage_image="tests/test-european.jpg")
         url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset1.pk})
-        self.client.post(url)
+
+        # Anonymous user test; should redirect
+        response = self.client.post(url)
+        self.assertEqual(302, response.status_code)
+        self.assertFalse(mock.called)
+        mock.reset_mock()
+
+        self.login_user()
+        response = self.client.post(url)
+        self.assertEqual(201, response.status_code)
         self.assertTrue(mock.called)
+        mock.reset_mock()
 
         asset2 = create_asset(
             item=asset1.item,
@@ -586,8 +611,17 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             storage_image="tests/test-european.jpg",
         )
         url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
-        self.client.post(url, data={"language": "spa"})
+        response = self.client.post(url, data={"language": "spa"})
+        self.assertEqual(201, response.status_code)
         mock.assert_called_with("spa")
+        mock.reset_mock()
+
+        with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+            superseded_mock.return_value = HttpResponse(status=409)
+            url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
+            response = self.client.post(url)
+            self.assertEqual(409, response.status_code)
+            self.assertFalse(mock.called)
 
     def test_project_detail_view(self):
         """
@@ -2016,9 +2050,10 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
         self.assertTrue(response.context.get("filter_by_reviewable"))
 
 
-class RateLimitTests(TestCase):
+class RateLimitTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.request_factory = RequestFactory()
+        self.user = self.create_user("test-user")
 
     def test_registration_rate(self):
         request = self.request_factory.get("/")
@@ -2033,6 +2068,15 @@ class RateLimitTests(TestCase):
         response = ratelimit_view(request, exception)
         self.assertEqual(response.status_code, 429)
         self.assertNotEqual(response["Retry-After"], 0)
+
+    def test_reserve_rate(self):
+        request = self.request_factory.post("/")
+
+        request.user = AnonymousUser()
+        self.assertEqual("100/m", reserve_rate("test.group", request))
+
+        request.user = self.user
+        self.assertEqual(None, reserve_rate("test.group", request))
 
 
 class LoginTests(TestCase, CreateTestUsers):
@@ -2066,3 +2110,132 @@ class LoginTests(TestCase, CreateTestUsers):
         )
         self.assertIn("user", response.context)
         self.assertTrue(response.context["user"].is_authenticated)
+
+
+class TranscriptionViewTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+
+    def test_rollback_transcription(self):
+        path = reverse("rollback-transcription", args=[self.asset.id])
+        self.login_user()
+
+        # Test rollback when there are no transcriptions
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        transcription1 = create_transcription(
+            asset=self.asset, text="Test transcription 1"
+        )
+        user = transcription1.user
+
+        # Test rollback when there are no transcriptions to rollback to
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        # Test successful rollback
+        create_transcription(asset=self.asset, user=user, text="Test transcription 2")
+        response = self.client.post(path)
+        self.assertEqual(201, response.status_code)
+        response_json = response.json()
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription1.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], False)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], True)
+
+        # Test after a rollforward
+        self.asset.rollforward_transcription(user)
+        response = self.client.post(path)
+        self.assertEqual(201, response.status_code)
+        response_json = response.json()
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription1.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], False)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], True)
+
+        # Test anonymous user
+        self.client.logout()
+        create_transcription(asset=self.asset, user=user, text="Test transcription 3")
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            response = self.client.post(path)
+        self.assertEqual(201, response.status_code)
+        response_json = response.json()
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription1.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], False)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], True)
+
+    def test_rollforward_transcription(self):
+        path = reverse("rollforward-transcription", args=[self.asset.id])
+        self.login_user()
+
+        # Test rollforward when there are no transcriptions
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        transcription1 = create_transcription(
+            asset=self.asset, text="Test transcription 1"
+        )
+        user = transcription1.user
+
+        # Test rollback when there are no transcriptions to rollforward to
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        # Test successful rollforward, which requires a rollback first
+        transcription2 = create_transcription(
+            asset=self.asset, user=user, text="Test transcription 2"
+        )
+        self.asset.rollback_transcription(user)
+        response = self.client.post(path)
+        self.assertEqual(201, response.status_code)
+        response_json = response.json()
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription2.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], True)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], False)
+
+        # Test aftering rolling back then creating a new transcription
+        self.asset.rollback_transcription(user)
+        create_transcription(asset=self.asset, user=user, text="Test transcription 3")
+        response = self.client.post(path)
+        self.assertEqual(400, response.status_code)
+        self.assertIn("error", response.json())
+
+        # Test anonymous user after a rollback
+        self.client.logout()
+        transcription3 = create_transcription(
+            asset=self.asset, user=user, text="Test transcription 3"
+        )
+        self.asset.rollback_transcription(user)
+        with patch(
+            "concordia.turnstile.fields.TurnstileField.validate", return_value=True
+        ):
+            response = self.client.post(path)
+        response_json = response.json()
+        self.assertEqual(201, response.status_code)
+        self.assertIn("id", response_json)
+        self.assertIn("text", response_json)
+        self.assertEqual(response_json["text"], transcription3.text)
+        self.assertIn("undo_available", response_json)
+        self.assertEqual(response_json["undo_available"], True)
+        self.assertIn("redo_available", response_json)
+        self.assertEqual(response_json["redo_available"], False)

@@ -203,6 +203,8 @@ def create_asset(
 def create_transcription(*, asset=None, user=None, do_save=True, **kwargs):
     if asset is None:
         asset = create_asset()
+    if user is None:
+        user = CreateTestUsers.create_user(f"asset-{asset.id}-user")
     transcription = Transcription(asset=asset, user=user, **kwargs)
     transcription.full_clean()
     if do_save:
