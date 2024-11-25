@@ -259,7 +259,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        form.base_fields["display_on_homepage"].label = "Dislay on homepage"
+        form.base_fields["display_on_homepage"].label = "Display on homepage"
         form.base_fields["next_transcription_campaign"].label = (
             "Next transcription campaign"
         )
