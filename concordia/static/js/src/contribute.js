@@ -604,9 +604,9 @@ function setupPage() {
                                 <input type="hidden" name="tags" value="' +
                         value +
                         '" /> \
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag"> \
+                                <a class="close" data-bs-dismiss="alert" aria-label="Remove previous tag"> \
                                     <span aria-hidden="true" class="fas fa-times"></span> \
-                                </button> \
+                                </a> \
                             </li> \
                 ',
                 );
