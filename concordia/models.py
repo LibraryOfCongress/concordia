@@ -782,10 +782,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             try:
                 while rolled_forward_count >= 1:
                     latest_transcription = latest_transcription.supersedes
+                    if not latest_transcription:
+                        # We do this here to handle the error rather than letting
+                        # it be raised below when we try to process this
+                        # non-existent transcription
+                        raise AttributeError
                     rolled_forward_count -= 1
             except AttributeError:
-                # This should only happen if the transcription
-                # history was manually edited
+                # This error is raised manually if latest_transcription ends up
+                # being None at the end of the loop or automatically if it is None
+                # when the loop continues
+                # In either case, his should only happen if the transcription
+                # history was manually edited.
                 return (
                     False,
                     (

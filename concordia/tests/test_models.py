@@ -111,6 +111,23 @@ class AssetTestCase(CreateTestUsers, TestCase):
         ):
             asset.rollforward_transcription(self.anon)
 
+    def test_rollforward_with_too_many_rollforward_transcriptions(self):
+        asset = create_asset(slug="rollforward-test", item=self.asset.item)
+        transcription1 = create_transcription(asset=asset, user=self.anon)
+        create_transcription(
+            asset=asset, user=self.anon, supersedes=transcription1, rolled_forward=True
+        )
+        create_transcription(
+            asset=asset, user=self.anon, supersedes=transcription1, rolled_forward=True
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "More rollforward transcription exist than non-roll-forward "
+            "transcriptions, which shouldn't be possible. Possibly "
+            "incorrectly modified transcriptions for this asset.",
+        ):
+            asset.rollforward_transcription(self.anon)
+
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
     def setUp(self):
