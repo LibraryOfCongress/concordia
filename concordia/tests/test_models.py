@@ -2,15 +2,17 @@ from datetime import date, timedelta
 from secrets import token_hex
 from unittest import mock
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.signals import post_save
 from django.test import TestCase
 from django.utils import timezone
 
 from concordia.models import (
+    Asset,
     AssetTranscriptionReservation,
     Campaign,
     CardFamily,
+    MediaType,
     Resource,
     Transcription,
     TranscriptionStatus,
@@ -43,12 +45,12 @@ from .utils import (
 class AssetTestCase(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
-        anon = get_anonymous_user()
-        create_transcription(asset=self.asset, user=anon)
+        self.anon = get_anonymous_user()
+        create_transcription(asset=self.asset, user=self.anon)
         create_transcription(
             asset=self.asset,
             user=self.create_test_user(username="tester"),
-            reviewed_by=anon,
+            reviewed_by=self.anon,
         )
 
     def test_get_ocr_transcript(self):
@@ -85,6 +87,29 @@ class AssetTestCase(CreateTestUsers, TestCase):
             self.asset.get_storage_path(filename=self.asset.storage_image),
             "test-campaign/test-project/testitem.0123456789/1.jpg",
         )
+
+    def test_saving_without_campaign(self):
+        try:
+            Asset.objects.create(
+                item=self.asset.item,
+                title="No campaign",
+                slug="no-campaign",
+                media_type=MediaType.IMAGE,
+                media_url="1.jpg",
+                storage_image="unittest1.jpg",
+            )
+        except (ValidationError, ObjectDoesNotExist):
+            self.fail("Creating an Asset without a campaign failed validation.")
+
+    def test_rollforward_with_only_rollforward_transcriptions(self):
+        asset = create_asset(slug="rollforward-test", item=self.asset.item)
+        create_transcription(asset=asset, user=self.anon, rolled_forward=True)
+        with self.assertRaisesMessage(
+            ValueError,
+            "Can not rollforward transcription on an asset with "
+            "no non-rollforward transcriptions",
+        ):
+            asset.rollforward_transcription(self.anon)
 
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
