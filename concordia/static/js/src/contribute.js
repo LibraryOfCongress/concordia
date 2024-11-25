@@ -30,6 +30,7 @@ function unlockControls($container) {
     $container.find('button#open-guide').removeAttr('disabled');
     $container.find('button#ocr-transcription-button').removeAttr('disabled');
     $container.find('button#close-guide').removeAttr('disabled');
+    $container.find('button#new-tag-button').removeAttr('disabled');
 }
 
 $(document).on('keydown', function (event) {
