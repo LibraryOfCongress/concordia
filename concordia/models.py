@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import signing
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
@@ -614,11 +614,13 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        try:
+            self.campaign  # noqa: B018
+        except ObjectDoesNotExist:
+            self.campaign = self.item.project.campaign
         # This ensures all 'required' fields really are required
         # even when creating objects programmatically. Particularly,
         # we want to make sure we don't end up with an empty storage_image
-        if not self.campaign:
-            self.campaign = self.item.project.campaign
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -664,6 +666,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         return self.disable_ocr or self.item.turn_off_ocr()
 
     def can_rollback(self):
+        # original_latest_transcription holds the actual latest transcription
+        # latest_transcription starts by holding the actual latest transcription,
+        # but if it's a rolled forward or backward transcription, we use it to
+        # find the most recent non-rolled transcription and store it instead
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
@@ -675,43 +681,32 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "with no transcriptions"
                 ),
             )
+        # If the latest transcription has a source (i.e., is a rollback
+        # or rollforward transcription), we want the original transcription
+        # that it's based on, back to the original source
         while latest_transcription.source:
             latest_transcription = latest_transcription.source
 
-        transcriptions = (
+        # We look back from the latest non-rolled transcription,
+        # ignoring any rolled forward or sources of rolled forward
+        # transcriptions
+        transcription_to_rollback_to = (
             self.transcription_set.exclude(rolled_forward=True)
             .exclude(source_of__rolled_forward=True)
             .exclude(pk__gte=latest_transcription.pk)
             .order_by("-pk")
+            .first()
         )
-        if not transcriptions:
+        if transcription_to_rollback_to is None:
+            # We didn't find one, which means there's no eligible
+            # transcription to rollback to, because everything before
+            # is either a rollforward or the source of a rollforward
+            # (or there just isn't an earlier transcription at all)
             return (
                 False,
                 (
                     "Can not rollback transcription on an asset "
-                    "with no non-rollback transcriptions"
-                ),
-            )
-
-        transcription_to_rollback_to = None
-        for transcription in transcriptions:
-            if transcription.source:
-                transcription_to_check = transcription.source
-            else:
-                transcription_to_check = transcription
-            if (
-                latest_transcription.rolled_back is False
-                or latest_transcription.supersedes != transcription_to_check
-            ):
-                transcription_to_rollback_to = transcription
-                break
-
-        if not transcription_to_rollback_to:
-            return (
-                False,
-                (
-                    "Can not rollback transcription on an asset with "
-                    "no non-rollback transcriptions"
+                    "with no non-rollforward older transcriptions"
                 ),
             )
 
@@ -739,9 +734,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def can_rollforward(self):
         # original_latest_transcription holds the actual latest transcription
-        # latest_transcription holds the most recent transcription. If it's a rolled
-        # forward transcription, we use it to find the most recent non-rolled-forward
-        # transcription
+        # latest_transcription starts by holding the actual latest transcription,
+        # but if it's a rolled forward transcription, we use it to find the most
+        # recent non-rolled-forward transcription and store that in latest_transcription
 
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
@@ -757,7 +752,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             )
 
         if latest_transcription.rolled_forward:
-
             # We need to find the latest transcription that wasn't rolled forward
             rolled_forward_count = 0
             try:
@@ -779,8 +773,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             try:
                 while rolled_forward_count >= 1:
                     latest_transcription = latest_transcription.supersedes
+                    if not latest_transcription:
+                        # We do this here to handle the error rather than letting
+                        # it be raised below when we try to process this
+                        # non-existent transcription
+                        raise AttributeError
                     rolled_forward_count -= 1
             except AttributeError:
+                # This error is raised manually if latest_transcription ends up
+                # being None at the end of the loop or automatically if it is None
+                # when the loop continues
+                # In either case, his should only happen if the transcription
+                # history was manually edited.
                 return (
                     False,
                     (
@@ -790,6 +794,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     ),
                 )
 
+        # If the latest_transcription we end up with is a rollback transcription,
+        # we want to rollforward to the transcription it replaced. If not,
+        # nothing can be rolled forward
         if latest_transcription.rolled_back:
             transcription_to_rollforward = latest_transcription.supersedes
         else:
@@ -801,12 +808,15 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 ),
             )
 
+        # If that replaced transcription doesn't exist, we can't do anything
+        # This shouldn't be possible normally, but if a transcription history
+        # is manually edited, you could end up in this state.
         if not transcription_to_rollforward:
             return (
                 False,
                 (
                     "Can not rollforward transcription on an asset if the latest "
-                    "non-transcription did not supersede a previous transcription"
+                    "rollback transcription did not supersede a previous transcription"
                 ),
             )
 
