@@ -2,8 +2,9 @@ from datetime import date, timedelta
 from secrets import token_hex
 from unittest import mock
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models.signals import post_save
+from django.db.models import signals
 from django.test import TestCase
 from django.utils import timezone
 
@@ -20,6 +21,7 @@ from concordia.models import (
     resource_file_upload_path,
     validated_get_or_create,
 )
+from concordia.signals.handlers import create_user_profile
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -125,6 +127,22 @@ class AssetTestCase(CreateTestUsers, TestCase):
             "More rollforward transcription exist than non-roll-forward "
             "transcriptions, which shouldn't be possible. Possibly "
             "incorrectly modified transcriptions for this asset.",
+        ):
+            asset.rollforward_transcription(self.anon)
+
+    def test_rollforward_with_no_superseded_transcription(self):
+        # This isn't a state that would happen normally, but could be created
+        # accidentally when manually editing transcription history
+        asset = create_asset(slug="rollforward-test", item=self.asset.item)
+        transcription1 = create_transcription(asset=asset, user=self.anon)
+        create_transcription(asset=asset, user=self.anon, supersedes=transcription1)
+        create_transcription(
+            asset=asset, user=self.anon, rolled_back=True, source=transcription1
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "Can not rollforward transcription on an asset if the latest "
+            "rollback transcription did not supersede a previous transcription",
         ):
             asset.rollforward_transcription(self.anon)
 
@@ -370,6 +388,19 @@ class UserProfileActivityTestCase(TestCase):
         self.assertEqual(f"{activity.user} - {activity.campaign}", str(activity))
 
 
+class UserProfileTestCase(CreateTestUsers, TestCase):
+    def test_transcription_save_creating_userprofile(self):
+        signals.post_save.disconnect(
+            create_user_profile, sender=settings.AUTH_USER_MODEL
+        )
+        user = self.create_test_user()
+        self.assertFalse(hasattr(user, "profile"))
+        create_transcription(user=user)
+        self.assertTrue(hasattr(user, "profile"))
+        self.assertEqual(user.profile.transcribe_count, 1)
+        signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
+
+
 class CampaignTestCase(TestCase):
     def test_queryset(self):
         campaign = create_campaign(unlisted=True)
@@ -399,7 +430,7 @@ class CardFamilyTestCase(TestCase):
 
     def test_on_cardfamily_save(self):
         with mock.patch("concordia.models.on_cardfamily_save") as mocked_handler:
-            post_save.connect(mocked_handler, sender=CardFamily)
+            signals.post_save.connect(mocked_handler, sender=CardFamily)
             self.family1.save()
             self.assertTrue(mocked_handler.called)
             self.assertEqual(mocked_handler.call_count, 1)
