@@ -687,35 +687,26 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         while latest_transcription.source:
             latest_transcription = latest_transcription.source
 
-        # We look forward from the latest non-rolled transcription,
-        # ignoring any rolled forward or resources of rolled forward
+        # We look back from the latest non-rolled transcription,
+        # ignoring any rolled forward or sources of rolled forward
         # transcriptions
-        transcriptions = (
+        transcription_to_rollback_to = (
             self.transcription_set.exclude(rolled_forward=True)
             .exclude(source_of__rolled_forward=True)
             .exclude(pk__gte=latest_transcription.pk)
             .order_by("-pk")
+            .first()
         )
-
-        for transcription in transcriptions:
-            if transcription.source:
-                # This means the transcription is a rollback,
-                # so we want the transcription it's based on instead
-                transcription_to_check = transcription.source
-            else:
-                transcription_to_check = transcription
-            if (
-                latest_transcription.rolled_back is False
-                or latest_transcription.supersedes != transcription_to_check
-            ):
-                transcription_to_rollback_to = transcription
-                break
-        else:
+        if transcription_to_rollback_to is None:
+            # We didn't find one, which means there's no eligible
+            # transcription to rollback to, because everything before
+            # is either a rollforward or the source of a rollforward
+            # (or there just isn't an earlier transcription at all)
             return (
                 False,
                 (
                     "Can not rollback transcription on an asset "
-                    "with no non-rollback transcriptions"
+                    "with no non-rollforward older transcriptions"
                 ),
             )
 
