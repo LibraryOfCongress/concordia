@@ -1013,52 +1013,50 @@ body .disabled > .page-link {
         }
     }
 
+    @include media-breakpoint-down(md) {
+        position: absolute;
+        top: 19px;
+    }
+
     .title {
         font-size: 2.25rem;
     }
 }
 
-@include media-breakpoint-down(lg) {
-    .carousel-control-next,
-    .carousel-control-prev {
-        margin-top: 40%;
-    }
-}
-
-@include media-breakpoint-up(md) {
-    .carousel-control-next .carousel-control-next-icon {
+.carousel {
+    .carousel-control-next-icon {
         background-image: url('/static/img/slick-right-arrow.svg');
     }
 
-    .carousel-control-prev .carousel-control-prev-icon {
+    .carousel-control-prev-icon {
         background-image: url('/static/img/slick-left-arrow.svg');
     }
-}
 
-.carousel .carousel-control-next-icon,
-.carousel .carousel-control-prev-icon {
-    height: $carousel-control-icon-height;
-    width: $carousel-control-icon-width;
-}
-
-.carousel .carousel-indicators {
-    > button {
-        border-radius: 50%;
-        border: 1px solid $blue;
-        height: 12px;
-        opacity: 1;
-        width: 12px;
-
-        &.active {
-            background-color: $blue;
-            border-color: $blue;
-        }
+    .carousel-control-next-icon,
+    .carousel-control-prev-icon {
+        height: $carousel-control-icon-height;
+        width: $carousel-control-icon-width;
     }
 
-    left: 50%;
-    width: 60%;
-    margin-left: -30%;
-    text-align: center;
+    .carousel-indicators {
+        > button {
+            border-radius: 50%;
+            border: 1px solid $blue;
+            height: 12px;
+            opacity: 1;
+            width: 12px;
+
+            &.active {
+                background-color: $blue;
+                border-color: $blue;
+            }
+        }
+
+        left: 50%;
+        width: 60%;
+        margin-left: -30%;
+        text-align: center;
+    }
 }
 
 #card-carousel .carousel-indicators > button {
