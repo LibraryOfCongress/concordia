@@ -30,6 +30,7 @@ function unlockControls($container) {
     $container.find('button#open-guide').removeAttr('disabled');
     $container.find('button#ocr-transcription-button').removeAttr('disabled');
     $container.find('button#close-guide').removeAttr('disabled');
+    $container.find('button#new-tag-button').removeAttr('disabled');
 }
 
 $(document).on('keydown', function (event) {
@@ -342,7 +343,7 @@ function setupPage() {
                     .filter('#display-submitted')
                     .removeAttr('hidden');
                 let messageChildren = $(
-                    '#transcription-status-message',
+                    '#transcription-status-display',
                 ).children();
                 messageChildren
                     .attr('hidden', 'hidden')
@@ -408,6 +409,7 @@ function setupPage() {
                             );
                             reserveAssetForEditing();
                             setupPage();
+                            window.location.reload(true);
                         })
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             displayMessage(
@@ -517,11 +519,11 @@ function setupPage() {
                     );
                 }
                 let messageChildren = $(
-                    '#transcription-status-message',
+                    '#transcription-status-display',
                 ).children();
                 messageChildren
                     .attr('hidden', 'hidden')
-                    .filter('#message-inprogress')
+                    .filter('#display-inprogress')
                     .removeAttr('hidden');
                 messageChildren
                     .filter('#message-contributors')
@@ -602,9 +604,9 @@ function setupPage() {
                                 <input type="hidden" name="tags" value="' +
                         value +
                         '" /> \
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag"> \
+                                <a class="close" data-bs-dismiss="alert" aria-label="Remove previous tag"> \
                                     <span aria-hidden="true" class="fas fa-times"></span> \
-                                </button> \
+                                </a> \
                             </li> \
                 ',
                 );
