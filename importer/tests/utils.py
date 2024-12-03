@@ -27,7 +27,7 @@ def create_import_item(item=None, project=None, import_job=None, **kwargs):
 
 
 def create_import_asset(
-    sequence_number,
+    sequence_number=1,
     asset=None,
     item=None,
     import_item=None,
@@ -35,6 +35,7 @@ def create_import_asset(
     import_job=None,
     **kwargs,
 ):
+    # sequence_number has to be unique to a particular import_item
     # asset is a concordia.models.Asset instance
     # item is a concordia.models.Item instance
     # import_item is an importer.models.ImportItem instance
