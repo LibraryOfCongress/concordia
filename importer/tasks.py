@@ -69,28 +69,28 @@ def requests_retry_session(
 
 def update_task_status(f):
     """
-    Decorator which causes any function which is passed a TaskStatusModel  to
-    update on entry and exit and populate the status field with an exception
+    Decorator which causes any function which is passed a TaskStatusModel subclass
+    object to update on entry and exit and populate the status field with an exception
     message if raised
 
     Assumes that all wrapped functions get the Celery task self value as the
-    first parameter and the TaskStatusModel subclass as the second
+    first parameter and the TaskStatusModel subclass object as the second
     """
 
     @wraps(f)
-    def inner(self, task_status_model, *args, **kwargs):
+    def inner(self, task_status_object, *args, **kwargs):
         # We'll do a sanity check to make sure that another process hasn't
-        # updated the model status in the meantime:
-        guard_qs = task_status_model.__class__._default_manager.filter(
-            pk=task_status_model.pk, completed__isnull=False
+        # updated the object status in the meantime:
+        guard_qs = task_status_object.__class__._default_manager.filter(
+            pk=task_status_object.pk, completed__isnull=False
         )
         if guard_qs.exists():
             logger.warning(
                 "Task %s was already completed and will not be repeated",
-                task_status_model,
+                task_status_object,
                 extra={
                     "data": {
-                        "object": task_status_model,
+                        "object": task_status_object,
                         "args": args,
                         "kwargs": kwargs,
                     }
@@ -98,19 +98,19 @@ def update_task_status(f):
             )
             return
 
-        task_status_model.last_started = now()
-        task_status_model.task_id = self.request.id
-        task_status_model.save()
+        task_status_object.last_started = now()
+        task_status_object.task_id = self.request.id
+        task_status_object.save()
 
         try:
-            f(self, task_status_model, *args, **kwargs)
-            task_status_model.completed = now()
-            task_status_model.save()
+            f(self, task_status_object, *args, **kwargs)
+            task_status_object.completed = now()
+            task_status_object.save()
         except Exception as exc:
-            task_status_model.status = "{}\n\nUnhandled exception: {}".format(
-                task_status_model.status, exc
+            task_status_object.status = "{}\n\nUnhandled exception: {}".format(
+                task_status_object.status, exc
             ).strip()
-            task_status_model.save()
+            task_status_object.save()
             raise
 
     return inner
