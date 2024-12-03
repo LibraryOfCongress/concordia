@@ -15,38 +15,38 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        {% if request.GET.view == 'list' %}
-            <div id="campaign-options" class="row">
-                <div class="col d-flex align-items-center">
-                    <label for="view-options" class="pe-1">View</label>
-                    <select id="view-options">
-                        <option value="grid" selected>Grid</option>
-                        <option value="list">List</option>
-                    </select>
-                    <button type="submit">Go</button>
-                </div>
-                <div class="col d-flex align-items-center">
-                    <label for="campaign-type" class="pe-1">Campaign Type</label>
-                    <select id="campaign-type">
-                        <option value="completed" selected>Completed Campaigns</option>
-                        <option value="retired">Retired Campaigns</option>
-                    </select>
-                    <button type="submit">Go</button>
-                </div>
-                <div class="col d-flex align-items-center">
-                    <label for="research-center" class="pe-1">Research Center</label>
-                    <select id="research-center">
-                        <option value="all" selected>All Research Centers</option>
-                        {% for research_center in research_centers %}
-                            <option>{{ research_center.title}}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit">Go</button>
-                </div>
+        <div id="campaign-options" class="row mb-2">
+            <div class="col d-flex align-items-center">
+                <label for="view-options" class="pe-1">View</label>
+                <select id="view-options">
+                    <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
+                    <option value="list"{% if request.GET.view == 'list' %} selected{% endif %}>List</option>
+                </select>
+                <button type="submit">Go</button>
             </div>
-            <ul class="list-unstyled list-view">
+            <div class="col-5 d-flex align-items-center">
+                <label for="campaign-type" class="pe-1">Campaign Type</label>
+                <select id="campaign-type">
+                    <option value="completed" selected>Completed Campaigns</option>
+                    <option value="retired">Retired Campaigns</option>
+                </select>
+                <button type="submit">Go</button>
+            </div>
+            <div class="col-5 d-flex align-items-center">
+                <label for="research-center" class="pe-1">Research Center</label>
+                <select id="research-center">
+                    <option value="all" selected>All Research Centers</option>
+                    {% for research_center in research_centers %}
+                        <option>{{ research_center.title}}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Go</button>
+            </div>
+        </div>
+        {% if request.GET.view == 'list' %}
+            <ul id="campaign-list" class="list-unstyled list-view">
                 {% for campaign in campaigns %}
-                    <li>
+                    <li{% if forloop.counter > 10 %} hidden{% endif %}>
                         <div class="row">
                             <div class="col-2">
                                 <div class="aspect-ratio-box">
@@ -60,7 +60,7 @@
                             <div class="col-10">
                                 <p class="mb-2">
                                     <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
-                                        <span class="d-block h4 mt-2">
+                                        <span class="d-block h4">
                                             {{ campaign.title }}
                                         </span>
                                     </a>
@@ -80,8 +80,15 @@
                     </li>
                 {% endfor %}
             </ul>
+            {% with campaigns|length as campaigns_count %}
+                {% if campaigns_count > 10 %}
+                    <div class="align-items-center justify-content-center d-flex">
+                        <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
+                    </div>
+                {% endif %}
+            {% endwith %}
         {% else %}
-            <ul class="list-unstyled row">
+            <ul class="list-unstyled row mt-4">
                 {% with show_description=True show_start=True %}
                     {% for campaign in campaigns %}
                         {% include "transcriptions/campaign_small_block.html" %}
@@ -91,3 +98,19 @@
         {% endif %}
     </div>
 {% endblock main_content %}
+
+{% block body_scripts %}
+    <script>
+        let showMoreButton = document.getElementById("show-more");
+        let campaignList = document.getElementById("campaign-list");
+        if (showMoreButton){
+            showMoreButton.addEventListener("click", function(event){
+                for (const child of campaignList.children){
+                    child.hidden = false;
+                }
+                showMoreButton.parentElement.hidden = true;
+                event.preventDefault();
+            });
+        }
+    </script>
+{% endblock body_scripts %}
