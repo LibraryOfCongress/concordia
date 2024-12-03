@@ -3,7 +3,9 @@ from unittest import mock
 from django.contrib import messages
 from django.test import RequestFactory, TestCase
 
-from importer.admin import retry_download_task
+from concordia.models import Campaign
+from concordia.tests.utils import create_campaign
+from importer.admin import ImportCampaignListFilter, retry_download_task
 from importer.models import ImportItemAsset
 
 from .utils import create_import_asset
@@ -33,3 +35,34 @@ class ActionTests(TestCase):
             messages_mock.call_args.args,
             (request, messages.INFO, f"Queued {import_asset_count} tasks"),
         )
+
+
+class ImportCampaignListFilterTest(TestCase):
+    def test_lookups(self):
+        class TestImportCampaignListFilter(ImportCampaignListFilter):
+            # We need a subclass because ImportCampaignListFilter itself
+            # isn't meant to be used directly, and can't be due
+            # to not having a parameter_name configured
+            parameter_name = "campaign"
+
+        campaigns = [create_campaign(slug=f"test-campaign-{i}") for i in range(5)]
+        campaigns += [
+            create_campaign(
+                slug="test-campaign-completed", status=Campaign.Status.COMPLETED
+            )
+        ]
+        retired_campaign = create_campaign(
+            slug="test-campaign-retired",
+            title="Retired Campaign",
+            status=Campaign.Status.RETIRED,
+        )
+
+        philter = TestImportCampaignListFilter(
+            None, {}, mock.MagicMock(), mock.MagicMock()
+        )
+        values_list = philter.lookups(mock.MagicMock(), mock.MagicMock())
+
+        self.assertEqual(len(values_list), len(campaigns))
+        for idx, title in values_list:
+            self.assertNotEqual(idx, retired_campaign.id)
+            self.assertNotIn("Retired", title)
