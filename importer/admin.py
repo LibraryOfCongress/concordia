@@ -95,7 +95,10 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
     @staticmethod
     def generate_natural_timestamp_display_property(field_name):
         def inner(obj):
-            value = getattr(obj, field_name)
+            try:
+                value = getattr(obj, field_name)
+            except AttributeError:
+                return None
             if value:
                 return naturaltime(value)
             else:

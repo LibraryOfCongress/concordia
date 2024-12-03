@@ -5,7 +5,11 @@ from django.test import RequestFactory, TestCase
 
 from concordia.models import Campaign
 from concordia.tests.utils import create_campaign
-from importer.admin import ImportCampaignListFilter, retry_download_task
+from importer.admin import (
+    ImportCampaignListFilter,
+    TaskStatusModelAdmin,
+    retry_download_task,
+)
 from importer.models import ImportItemAsset
 
 from .utils import create_import_asset
@@ -66,3 +70,31 @@ class ImportCampaignListFilterTest(TestCase):
         for idx, title in values_list:
             self.assertNotEqual(idx, retired_campaign.id)
             self.assertNotIn("Retired", title)
+
+
+@mock.patch("importer.admin.naturaltime")
+class TaskStatusModelAdminTest(TestCase):
+    def test_generate_natural_timestamp_display_property(self, naturaltime_mock):
+        inner = TaskStatusModelAdmin.generate_natural_timestamp_display_property(
+            "test_field"
+        )
+
+        obj = mock.MagicMock()
+        value = inner(obj)
+        self.assertTrue(naturaltime_mock.called)
+
+        naturaltime_mock.reset_mock()
+        obj = mock.MagicMock(spec=["test_field"])
+        obj.test_field = None
+        value = inner(obj)
+        self.assertEqual(value, None)
+        self.assertFalse(naturaltime_mock.called)
+
+        naturaltime_mock.reset_mock()
+        # Passing an empty list to spec means there are no
+        # attributes on the mock, so accessing any attribute
+        # will raise an AttributeError
+        obj = mock.MagicMock(spec=[])
+        value = inner(obj)
+        self.assertEqual(value, None)
+        self.assertFalse(naturaltime_mock.called)
