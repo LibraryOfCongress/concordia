@@ -1068,9 +1068,9 @@ body .disabled > .page-link {
         border-color: $blue;
     }
 
-    button {
-        background-color: $blue;
-        color: $white;
+    .btn {
+        border-radius: 0;
+        padding: 1.5px 10px;
     }
 }
 
