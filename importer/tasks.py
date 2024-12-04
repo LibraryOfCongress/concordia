@@ -466,12 +466,11 @@ def import_item(self, import_item):
     return download_asset_group()
 
 
+# Function name is misleading since it doesn't actually take or
+# use a URL, just the data retrieved from one
 def populate_item_from_url(item, item_info):
     """
-    Populates a Concordia.Item from the provided loc.gov URL
-
-    Returns the retrieved JSON data so additional imports can be peformed
-    without a second request
+    Populates a Concordia.Item from the data retrieved from a loc.gov URL
     """
 
     for k in ("title", "description"):
