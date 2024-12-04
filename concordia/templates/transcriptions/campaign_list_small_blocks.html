@@ -24,24 +24,6 @@
                 </select>
                 <a class="btn btn-primary" onclick="filterCampaigns();">Go</a>
             </div>
-            <div class="col-5 d-flex align-items-center">
-                <label for="campaign-type" class="pe-1">Campaign Type</label>
-                <select id="campaign-type">
-                    <option value="completed" selected>Completed Campaigns</option>
-                    <option value="retired">Retired Campaigns</option>
-                </select>
-                <a class="btn btn-primary" type="submit">Go</a>
-            </div>
-            <div class="col-5 d-flex align-items-center">
-                <label for="research-center" class="pe-1">Research Center</label>
-                <select id="research-center">
-                    <option value="all" selected>All Research Centers</option>
-                    {% for research_center in research_centers %}
-                        <option>{{ research_center.title}}</option>
-                    {% endfor %}
-                </select>
-                <a class="btn btn-primary" type="submit">Go</a>
-            </div>
         </div>
         {% if request.GET.view == 'list' %}
             <ul id="campaign-list" class="list-unstyled list-view">
