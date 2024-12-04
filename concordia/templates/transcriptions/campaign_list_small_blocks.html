@@ -85,7 +85,7 @@
     <script>
         var filterCampaigns = function(form) {
             let viewValue = document.getElementById('view-options').value;
-            window.location.href = "?view=" + viewValue;
+            window.location.href = "?view=" + encodeURIComponent(viewValue);
         };
         let showMoreButton = document.getElementById("show-more");
         let campaignList = document.getElementById("campaign-list");
