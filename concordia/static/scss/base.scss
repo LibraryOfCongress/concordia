@@ -1062,6 +1062,18 @@ body .disabled > .page-link {
     cursor: pointer;
 }
 
+#campaign-options {
+    select {
+        background-color: $white;
+        border-color: $blue;
+    }
+
+    .btn {
+        border-radius: 0;
+        padding: 1.5px 10px;
+    }
+}
+
 .aspect-ratio-box {
     height: 0;
     overflow: hidden;
@@ -1073,6 +1085,16 @@ body .disabled > .page-link {
         /* stylelint-disable-next-line scss/no-global-function-names */
         padding-top: percentage(math.div(240, 320));
     }
+}
+
+.list-view li {
+    padding-top: 24px;
+}
+
+.list-view .aspect-ratio-box {
+    height: 150px;
+    padding-top: 0;
+    width: 150px;
 }
 
 .aspect-ratio-box-inner-wrapper {

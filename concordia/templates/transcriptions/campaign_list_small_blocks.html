@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load staticfiles %}
+{% load staticfiles truncation %}
 
 {% block title %}Completed Campaigns{% endblock title %}
 
@@ -15,12 +15,89 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        <ul class="list-unstyled row">
-            {% with show_description=True show_start=True %}
+        <div id="campaign-options" class="row mb-2">
+            <div class="col-2 d-flex align-items-center">
+                <label for="view-options" class="pe-1">View</label>
+                <select id="view-options">
+                    <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
+                    <option value="list"{% if request.GET.view == 'list' %} selected{% endif %}>List</option>
+                </select>
+                <a class="btn btn-primary" onclick="filterCampaigns();">Go</a>
+            </div>
+        </div>
+        {% if request.GET.view == 'list' %}
+            <ul id="campaign-list" class="list-unstyled list-view">
                 {% for campaign in campaigns %}
-                    {% include "transcriptions/campaign_small_block.html" %}
+                    <li{% if forloop.counter > 10 %} hidden{% endif %}>
+                        <div class="row">
+                            <div class="col-2">
+                                <div class="aspect-ratio-box">
+                                    <div class="aspect-ratio-box-inner-wrapper">
+                                        <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.alt_image_text}}" loading="lazy" width="150" height="150">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-10">
+                                <p class="mb-2">
+                                    <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                        <span class="d-block h4">
+                                            {{ campaign.title }}
+                                        </span>
+                                    </a>
+                                    {% if campaign.launch_date %}
+                                        <span class="fw-bold">Started: </span>{{ campaign.launch_date|date:"Y-m-d" }}
+                                        {% if campaign.completed_date %}</br>{% endif %}
+                                    {% endif %}
+                                    {% if campaign.completed_date %}
+                                        <span class="fw-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}
+                                    {% endif %}
+                                </p>
+                                <p class="mb-2">
+                                    {{ campaign.short_description|striptags|truncatechars_on_word_break:160 }}
+                                </p>
+                            </div>
+                        </div>
+                    </li>
                 {% endfor %}
+            </ul>
+            {% with campaigns|length as campaigns_count %}
+                {% if campaigns_count > 10 %}
+                    <div class="align-items-center justify-content-center d-flex">
+                        <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
+                    </div>
+                {% endif %}
             {% endwith %}
-        </ul>
+        {% else %}
+            <ul class="list-unstyled row mt-4">
+                {% with show_description=True show_start=True %}
+                    {% for campaign in campaigns %}
+                        {% include "transcriptions/campaign_small_block.html" %}
+                    {% endfor %}
+                {% endwith %}
+            </ul>
+        {% endif %}
     </div>
 {% endblock main_content %}
+
+{% block body_scripts %}
+    <script>
+        var filterCampaigns = function(form) {
+            let viewValue = document.getElementById('view-options').value;
+            window.location.href = "?view=" + encodeURIComponent(viewValue);
+        };
+        let showMoreButton = document.getElementById("show-more");
+        let campaignList = document.getElementById("campaign-list");
+        if (showMoreButton){
+            showMoreButton.addEventListener("click", function(event){
+                for (const child of campaignList.children){
+                    child.hidden = false;
+                }
+                showMoreButton.parentElement.classList.remove("d-flex");
+                showMoreButton.parentElement.hidden = true;
+                event.preventDefault();
+            });
+        }
+    </script>
+{% endblock body_scripts %}
