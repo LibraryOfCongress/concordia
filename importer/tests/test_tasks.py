@@ -22,13 +22,14 @@ from importer.tasks import (
     get_item_info_from_result,
     import_collection_task,
     import_item_count_from_url,
+    import_item_task,
     import_items_into_project_from_url,
     normalize_collection_url,
     redownload_image_task,
     update_task_status,
 )
 
-from .utils import create_import_job
+from .utils import create_import_item, create_import_job
 
 
 class MockResponse:
@@ -457,3 +458,11 @@ class ItemImportTests(TestCase):
                 ]
                 create_item_import_task(self.job.pk, self.item_url, redownload=True)
                 self.assertTrue(task_mock.called)
+
+    def test_import_item_task(self, get_mock):
+        import_item = create_import_item(import_job=self.job)
+        with mock.patch("importer.tasks.import_item") as task_mock:
+            import_item_task(import_item.pk)
+            self.assertTrue(task_mock.called)
+            task, called_import_item = task_mock.call_args.args
+            self.assertTrue(called_import_item, import_item)
