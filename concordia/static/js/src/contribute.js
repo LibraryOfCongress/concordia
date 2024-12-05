@@ -339,9 +339,8 @@ function setupPage() {
             .done(function (data) {
                 $('#transcription-status-display')
                     .children()
-                    .attr('hidden', 'hidden')
-                    .filter('#display-submitted')
-                    .removeAttr('hidden');
+                    .attr('hidden', 'hidden');
+                $('#display-submitted').removeAttr('hidden');
                 let messageChildren = $(
                     '#transcription-status-display',
                 ).children();
