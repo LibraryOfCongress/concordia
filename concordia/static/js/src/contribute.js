@@ -340,7 +340,6 @@ function setupPage() {
                 $('#transcription-status-display')
                     .children()
                     .attr('hidden', 'hidden');
-                $('#display-submitted').removeAttr('hidden');
                 let messageChildren = $(
                     '#transcription-status-display',
                 ).children();
@@ -348,6 +347,7 @@ function setupPage() {
                     .attr('hidden', 'hidden')
                     .filter('#message-submitted')
                     .removeAttr('hidden');
+                $('#display-submitted').removeAttr('hidden');
                 messageChildren
                     .filter('#message-contributors')
                     .removeAttr('hidden')
