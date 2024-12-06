@@ -229,7 +229,7 @@
                 storage.setItem(banner.id, true);
                 var element = document.getElementById(banner.id);
                 element.classList.remove("d-flex");
-                element.attr("hidden", "hidden");
+                $(element).attr("hidden", "hidden");
             }
         });
     </script>
