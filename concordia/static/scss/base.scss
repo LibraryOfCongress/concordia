@@ -147,12 +147,6 @@ $bg-not-started: #fff;
 /* stylelint-disable-next-line color-function-notation */
 $shadow-color: rgba(51, 51, 51, 80%); /* #333333 */
 
-html {
-    @include media-breakpoint-up(xl) {
-        width: 1200px;
-    }
-}
-
 html,
 #contribute-main-content {
     background-color: $white;
@@ -1164,7 +1158,7 @@ body .disabled > .page-link {
 
 #homepage-carousel {
     @include media-breakpoint-up(xl) {
-        max-width: 1200px;
+        max-width: 1140px;
     }
 }
 
