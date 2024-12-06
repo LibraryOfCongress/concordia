@@ -910,12 +910,24 @@ class CampaignListView(APIListView):
 class CompletedCampaignListView(APIListView):
     template_name = "transcriptions/campaign_list_small_blocks.html"
 
-    queryset = (
-        Campaign.objects.published()
-        .listed()
-        .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
-        .order_by("-completed_date")
-    )
+    def get_queryset(self):
+        campaign_type = self.request.GET.get("type", "completed")
+        if campaign_type == "retired":
+            status = Campaign.Status.RETIRED
+        else:
+            status = Campaign.Status.COMPLETED
+        campaigns = (
+            Campaign.objects.published()
+            .listed()
+            .filter(
+                status__in=[
+                    status,
+                ]
+            )
+            .order_by("-completed_date")
+        )
+        return campaigns
+
     context_object_name = "campaigns"
 
 
