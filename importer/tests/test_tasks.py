@@ -21,6 +21,7 @@ from importer.tasks import (
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_collection_task,
+    import_item,
     import_item_count_from_url,
     import_item_task,
     import_items_into_project_from_url,
@@ -352,7 +353,7 @@ class CollectionURLNormalizationTests(TestCase):
 
 
 @mock.patch("importer.tasks.requests.get")
-class ItemImportTests(TestCase):
+class CreateItemImportTaskTests(TestCase):
     def setUp(self):
         self.job = create_import_job()
         self.item_url = "http://example.com"
@@ -459,10 +460,50 @@ class ItemImportTests(TestCase):
                 create_item_import_task(self.job.pk, self.item_url, redownload=True)
                 self.assertTrue(task_mock.called)
 
-    def test_import_item_task(self, get_mock):
-        import_item = create_import_item(import_job=self.job)
+
+class ItemImportTests(TestCase):
+    def setUp(self):
+        self.item_url = "http://example.com"
+        self.job = create_import_job()
+        self.import_item = create_import_item(import_job=self.job, url=self.item_url)
+
+    def test_import_item_task(self):
         with mock.patch("importer.tasks.import_item") as task_mock:
-            import_item_task(import_item.pk)
+            import_item_task(self.import_item.pk)
             self.assertTrue(task_mock.called)
             task, called_import_item = task_mock.call_args.args
-            self.assertTrue(called_import_item, import_item)
+            self.assertTrue(called_import_item, self.import_item)
+
+    def test_import_item(self):
+        with (
+            mock.patch(
+                "importer.tasks.get_asset_urls_from_item_resources"
+            ) as asset_url_mock,
+            mock.patch("importer.tasks.download_asset_task.s") as download_mock,
+            mock.patch("importer.tasks.group") as group_mock,
+        ):
+            # It's difficult/impossible to cleanly mock a decorator due to the way
+            # they're applied when the decorated object/function is evaluated on
+            # import, so we unfortunately have to handle the update_task_status
+            # decorator, so we need a mock object that can pass for a Celery task
+            # object so update_task_status doesn't error during the test
+            task_mock = mock.MagicMock()
+            task_mock.request.id = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+
+            asset_url_mock.return_value = [
+                ["http://example.com/test.jpg"],
+                self.item_url,
+            ]
+
+            import_item(task_mock, self.import_item)
+            self.assertFalse(download_mock.called)
+            self.assertTrue(group_mock.called)
+
+            asset_url_mock.return_value = [
+                [],
+                "",
+            ]
+
+            import_item(task_mock, self.import_item)
+            self.assertFalse(download_mock.called)
+            self.assertTrue(group_mock.called)
