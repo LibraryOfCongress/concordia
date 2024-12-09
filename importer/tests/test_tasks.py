@@ -13,17 +13,15 @@ from concordia.tests.utils import (
     create_item,
     create_project,
 )
+from importer import tasks
 from importer.models import ImportItem, ImportJob
 from importer.tasks import (
-    create_item_import_task,
     fetch_all_urls,
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_collection_task,
-    import_item,
     import_item_count_from_url,
-    import_item_task,
     import_items_into_project_from_url,
     normalize_collection_url,
     redownload_image_task,
@@ -374,14 +372,14 @@ class CreateItemImportTaskTests(TestCase):
         self.response_mock.raise_for_status.side_effect = requests.exceptions.HTTPError
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            create_item_import_task(self.job.pk, self.item_url)
+            tasks.create_item_import_task(self.job.pk, self.item_url)
 
     def test_create_item_import_task_new_item(self, get_mock):
         get_mock.return_value = self.response_mock
         self.response_mock.json.return_value = self.item_data
 
         with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
-            create_item_import_task(self.job.pk, self.item_url)
+            tasks.create_item_import_task(self.job.pk, self.item_url)
             self.assertTrue(task_mock.called)
             self.assertEqual(Item.objects.count(), 1)
             self.assertTrue(Item.objects.filter(item_id=self.item_id).exists())
@@ -400,7 +398,7 @@ class CreateItemImportTaskTests(TestCase):
                         ["http://example.com/test.jpg"],
                         self.item_url,
                     ]
-                    create_item_import_task(self.job.pk, self.item_url)
+                    tasks.create_item_import_task(self.job.pk, self.item_url)
                     self.assertEqual(
                         log.output,
                         [
@@ -426,7 +424,7 @@ class CreateItemImportTaskTests(TestCase):
                         ["http://example.com/test.jpg"],
                         self.item_url,
                     ]
-                    create_item_import_task(self.job.pk, self.item_url)
+                    tasks.create_item_import_task(self.job.pk, self.item_url)
 
                     self.assertEqual(
                         log.output,
@@ -457,7 +455,9 @@ class CreateItemImportTaskTests(TestCase):
                     ["http://example.com/test.jpg"],
                     self.item_url,
                 ]
-                create_item_import_task(self.job.pk, self.item_url, redownload=True)
+                tasks.create_item_import_task(
+                    self.job.pk, self.item_url, redownload=True
+                )
                 self.assertTrue(task_mock.called)
 
 
@@ -469,7 +469,7 @@ class ItemImportTests(TestCase):
 
     def test_import_item_task(self):
         with mock.patch("importer.tasks.import_item") as task_mock:
-            import_item_task(self.import_item.pk)
+            tasks.import_item_task(self.import_item.pk)
             self.assertTrue(task_mock.called)
             task, called_import_item = task_mock.call_args.args
             self.assertTrue(called_import_item, self.import_item)
@@ -495,7 +495,7 @@ class ItemImportTests(TestCase):
                 self.item_url,
             ]
 
-            import_item(task_mock, self.import_item)
+            tasks.import_item(task_mock, self.import_item)
             self.assertFalse(download_mock.called)
             self.assertTrue(group_mock.called)
 
@@ -504,6 +504,21 @@ class ItemImportTests(TestCase):
                 "",
             ]
 
-            import_item(task_mock, self.import_item)
+            tasks.import_item(task_mock, self.import_item)
             self.assertFalse(download_mock.called)
             self.assertTrue(group_mock.called)
+
+    def test_populate_item_from_url(self):
+        item = Item(item_url="http://example.com")
+        item_info = {
+            "title": "Test Title",
+            "description": "Test description",
+            "image_url": ["image.gif", "image.jpg", "image2.jpg"],
+        }
+
+        tasks.populate_item_from_url(item, item_info)
+
+        self.assertEqual(item.item_url, "http://example.com")
+        self.assertEqual(item.title, "Test Title")
+        self.assertEqual(item.description, "Test description")
+        self.assertEqual(item.thumbnail_url, "http://example.com/image.jpg")
