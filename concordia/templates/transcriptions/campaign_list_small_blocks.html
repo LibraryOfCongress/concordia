@@ -30,7 +30,7 @@
                 {% for campaign in campaigns %}
                     <li{% if forloop.counter > 10 %} hidden{% endif %}>
                         <div class="row">
-                            <div class="col-2">
+                            <div class="campaign-thumbnail">
                                 <div class="aspect-ratio-box">
                                     <div class="aspect-ratio-box-inner-wrapper">
                                         <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
@@ -39,7 +39,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-10">
+                            <div class="campaign-text">
                                 <p class="mb-2">
                                     <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                                         <span class="d-block h4">
