@@ -17,7 +17,6 @@ from importer import tasks
 from importer.models import ImportItem, ImportJob
 from importer.tasks import (
     fetch_all_urls,
-    get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_collection_task,
@@ -175,7 +174,7 @@ class GetCollectionItemsTests(TestCase):
     def test_cache_miss(self, mock_get):
         mock_get.return_value = MockResponse()
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
 
     @override_settings(
@@ -186,7 +185,7 @@ class GetCollectionItemsTests(TestCase):
         }
     )
     def test_cache_hit(self):
-        items = get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
 
     @mock.patch("importer.tasks.get_item_info_from_result")
@@ -201,9 +200,27 @@ class GetCollectionItemsTests(TestCase):
     def test_ignored_format(self, mock_get, mock_get_info):
         mock_get.return_value = MockResponse(original_format="collection")
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
         self.assertTrue(mock_get_info.called)
+
+    def test_no_results(self):
+        with (
+            mock.patch("importer.tasks.cache") as cache_mock,
+            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            self.assertLogs("importer.tasks", level="ERROR") as log,
+        ):
+            cache_mock.get.return_value = None
+            requests_mock.return_value.get.return_value.json.return_value = {}
+            items = tasks.get_collection_items("http://example.com")
+            self.assertEqual(items, [])
+            self.assertEqual(
+                log.output,
+                [
+                    "ERROR:importer.tasks:"
+                    'Expected URL http://example.com to include "results"'
+                ],
+            )
 
 
 class FetchAllUrlsTests(TestCase):

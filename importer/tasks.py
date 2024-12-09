@@ -168,11 +168,7 @@ def get_collection_items(collection_url):
 
         data = resp.json()
 
-        if "results" not in data:
-            logger.error('Expected URL %s to include "results"', resp.url)
-            continue
-
-        for result in data["results"]:
+        for result in data.get("results", {}):
             try:
                 item_info = get_item_info_from_result(result)
             except Exception:
@@ -186,8 +182,10 @@ def get_collection_items(collection_url):
 
             if item_info:
                 items.append(item_info)
+        else:
+            logger.error('Expected URL %s to include "results"', current_page_url)
 
-        current_page_url = data["pagination"].get("next", None)
+        current_page_url = data.get("pagination", {}).get("next", None)
 
     if not items:
         logger.warning("No valid items found for collection url: %s", collection_url)
