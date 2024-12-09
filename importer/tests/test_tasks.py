@@ -6,8 +6,15 @@ from django.core.cache.backends.base import BaseCache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from concordia.tests.utils import CreateTestUsers, create_asset, create_project
-from importer.models import ImportJob
+from concordia.models import Item
+from concordia.tests.utils import (
+    CreateTestUsers,
+    create_asset,
+    create_item,
+    create_project,
+)
+from importer import tasks
+from importer.models import ImportItem, ImportJob
 from importer.tasks import (
     fetch_all_urls,
     get_collection_items,
@@ -21,7 +28,7 @@ from importer.tasks import (
     update_task_status,
 )
 
-from .utils import create_import_job
+from .utils import create_import_item, create_import_job
 
 
 class MockResponse:
@@ -341,3 +348,177 @@ class CollectionURLNormalizationTests(TestCase):
             ),
             "https://www.loc.gov/collections/branch-rickey-papers/?fo=json&foo=bar",
         )
+
+
+@mock.patch("importer.tasks.requests.get")
+class CreateItemImportTaskTests(TestCase):
+    def setUp(self):
+        self.job = create_import_job()
+        self.item_url = "http://example.com"
+        self.response_mock = mock.MagicMock()
+        self.item_id = "testid1"
+        self.item_title = "Test Title"
+        self.image_url = []
+        self.item_data = {
+            "item": {
+                "id": self.item_id,
+                "title": self.item_title,
+                "image_url": self.image_url,
+            }
+        }
+
+    def test_create_item_import_task_http_error(self, get_mock):
+        get_mock.return_value = self.response_mock
+        self.response_mock.raise_for_status.side_effect = requests.exceptions.HTTPError
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            tasks.create_item_import_task(self.job.pk, self.item_url)
+
+    def test_create_item_import_task_new_item(self, get_mock):
+        get_mock.return_value = self.response_mock
+        self.response_mock.json.return_value = self.item_data
+
+        with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+            tasks.create_item_import_task(self.job.pk, self.item_url)
+            self.assertTrue(task_mock.called)
+            self.assertEqual(Item.objects.count(), 1)
+            self.assertTrue(Item.objects.filter(item_id=self.item_id).exists())
+
+    def test_create_item_import_task_existing_item_missing_assets(self, get_mock):
+        item = create_item(item_id="testid1", project=self.job.project)
+        get_mock.return_value = self.response_mock
+        self.response_mock.json.return_value = self.item_data
+
+        with mock.patch(
+            "importer.tasks.get_asset_urls_from_item_resources"
+        ) as asset_url_mock:
+            with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+                with self.assertLogs("importer.tasks", level="WARNING") as log:
+                    asset_url_mock.return_value = [
+                        ["http://example.com/test.jpg"],
+                        self.item_url,
+                    ]
+                    tasks.create_item_import_task(self.job.pk, self.item_url)
+                    self.assertEqual(
+                        log.output,
+                        [
+                            f"WARNING:importer.tasks:"
+                            f"Reprocessing existing item {item} that is missing assets"
+                        ],
+                    )
+                    self.assertEqual(Item.objects.count(), 1)
+                    self.assertTrue(task_mock.called)
+
+    def test_create_item_import_task_existing_item_no_missing_assets(self, get_mock):
+        item = create_item(item_id="testid1", project=self.job.project)
+        create_asset(item=item)
+        get_mock.return_value = self.response_mock
+        self.response_mock.json.return_value = self.item_data
+
+        with mock.patch(
+            "importer.tasks.get_asset_urls_from_item_resources"
+        ) as asset_url_mock:
+            with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+                with self.assertLogs("importer.tasks", level="WARNING") as log:
+                    asset_url_mock.return_value = [
+                        ["http://example.com/test.jpg"],
+                        self.item_url,
+                    ]
+                    tasks.create_item_import_task(self.job.pk, self.item_url)
+
+                    self.assertEqual(
+                        log.output,
+                        [
+                            f"WARNING:importer.tasks:"
+                            f"Not reprocessing existing item with all asssets: {item}"
+                        ],
+                    )
+                    self.assertEqual(
+                        ImportItem.objects.get(item=item).status,
+                        f"Not reprocessing existing item with all assets: {item}",
+                    )
+                    self.assertFalse(task_mock.called)
+
+    def test_create_item_import_task_existing_item_redownload(self, get_mock):
+        item = create_item(item_id="testid1", project=self.job.project)
+        create_asset(item=item)
+        get_mock.return_value = self.response_mock
+        self.response_mock.json.return_value = {
+            "item": {"id": "testid1", "title": "Test Title", "image_url": []}
+        }
+
+        with mock.patch(
+            "importer.tasks.get_asset_urls_from_item_resources"
+        ) as asset_url_mock:
+            with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+                asset_url_mock.return_value = [
+                    ["http://example.com/test.jpg"],
+                    self.item_url,
+                ]
+                tasks.create_item_import_task(
+                    self.job.pk, self.item_url, redownload=True
+                )
+                self.assertTrue(task_mock.called)
+
+
+class ItemImportTests(TestCase):
+    def setUp(self):
+        self.item_url = "http://example.com"
+        self.job = create_import_job()
+        self.import_item = create_import_item(import_job=self.job, url=self.item_url)
+
+    def test_import_item_task(self):
+        with mock.patch("importer.tasks.import_item") as task_mock:
+            tasks.import_item_task(self.import_item.pk)
+            self.assertTrue(task_mock.called)
+            task, called_import_item = task_mock.call_args.args
+            self.assertTrue(called_import_item, self.import_item)
+
+    def test_import_item(self):
+        with (
+            mock.patch(
+                "importer.tasks.get_asset_urls_from_item_resources"
+            ) as asset_url_mock,
+            mock.patch("importer.tasks.download_asset_task.s") as download_mock,
+            mock.patch("importer.tasks.group") as group_mock,
+        ):
+            # It's difficult/impossible to cleanly mock a decorator due to the way
+            # they're applied when the decorated object/function is evaluated on
+            # import, so we unfortunately have to handle the update_task_status
+            # decorator, so we need a mock object that can pass for a Celery task
+            # object so update_task_status doesn't error during the test
+            task_mock = mock.MagicMock()
+            task_mock.request.id = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+
+            asset_url_mock.return_value = [
+                ["http://example.com/test.jpg"],
+                self.item_url,
+            ]
+
+            tasks.import_item(task_mock, self.import_item)
+            self.assertFalse(download_mock.called)
+            self.assertTrue(group_mock.called)
+
+            asset_url_mock.return_value = [
+                [],
+                "",
+            ]
+
+            tasks.import_item(task_mock, self.import_item)
+            self.assertFalse(download_mock.called)
+            self.assertTrue(group_mock.called)
+
+    def test_populate_item_from_url(self):
+        item = Item(item_url="http://example.com")
+        item_info = {
+            "title": "Test Title",
+            "description": "Test description",
+            "image_url": ["image.gif", "image.jpg", "image2.jpg"],
+        }
+
+        tasks.populate_item_from_url(item, item_info)
+
+        self.assertEqual(item.item_url, "http://example.com")
+        self.assertEqual(item.title, "Test Title")
+        self.assertEqual(item.description, "Test description")
+        self.assertEqual(item.thumbnail_url, "http://example.com/image.jpg")
