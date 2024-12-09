@@ -1063,6 +1063,8 @@ body .disabled > .page-link {
 }
 
 #campaign-options {
+    margin-left: 1px;
+
     select {
         background-color: $white;
         border-color: $blue;
