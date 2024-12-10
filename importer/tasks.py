@@ -263,7 +263,6 @@ def import_item_count_from_url(import_url):
         item_data = resp.json()
         output = len(item_data["resources"][0]["files"])
         return f"{import_url} - Asset Count: {output}", output
-
     except Exception as exc:
         return f"Unhandled exception importing {import_url} {exc}", 0
 

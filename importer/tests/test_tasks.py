@@ -20,7 +20,6 @@ from importer.tasks import (
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_collection_task,
-    import_item_count_from_url,
     import_items_into_project_from_url,
     normalize_collection_url,
     redownload_image_task,
@@ -156,10 +155,17 @@ class ImportItemCountFromUrlTests(TestCase):
         }
     )
     def test_import_item_count_from_url(self, mock_get):
-        self.assertEqual(import_item_count_from_url(None), ("None - Asset Count: 0", 0))
+        self.assertEqual(
+            tasks.import_item_count_from_url(None), ("None - Asset Count: 0", 0)
+        )
 
     def test_unhandled_exception_importing(self):
-        self.assertRaises(Exception, import_item_count_from_url)
+        with mock.patch("importer.tasks.requests.get") as get_mock:
+            get_mock.side_effect = AttributeError("Error message")
+            self.assertEqual(
+                tasks.import_item_count_from_url("http://example.com"),
+                ("Unhandled exception importing http://example.com Error message", 0),
+            )
 
 
 class GetCollectionItemsTests(TestCase):
