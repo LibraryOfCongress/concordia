@@ -188,7 +188,6 @@ class GetCollectionItemsTests(TestCase):
         items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
 
-    @mock.patch("importer.tasks.get_item_info_from_result")
     @mock.patch.object(requests.Session, "get")
     @override_settings(
         CACHES={
@@ -197,12 +196,40 @@ class GetCollectionItemsTests(TestCase):
             }
         }
     )
-    def test_ignored_format(self, mock_get, mock_get_info):
+    def test_ignored_format(self, mock_get):
         mock_get.return_value = MockResponse(original_format="collection")
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
-        self.assertEqual(len(items), 1)
-        self.assertTrue(mock_get_info.called)
+        with self.assertLogs("importer.tasks", level="INFO") as log:
+            items = tasks.get_collection_items(
+                "https://www.loc.gov/collections/example/"
+            )
+
+            self.assertEqual(
+                log.output[0],
+                "INFO:importer.tasks:"
+                "Skipping result 1 because it contains an "
+                "unsupported format: {'collection'}",
+            )
+        self.assertEqual(len(items), 0)
+
+    def test_multiple_items(self):
+        with (
+            mock.patch("importer.tasks.cache") as cache_mock,
+            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            mock.patch("importer.tasks.get_item_info_from_result") as result_mock,
+        ):
+            cache_mock.get.return_value = None
+            requests_mock.return_value.get.return_value.json.return_value = {
+                "results": [1, 2, 3]
+            }
+            # Each time this mock is called, the next value in the list
+            # is returned
+            result_mock.side_effect = [4, 5, None]
+
+            items = tasks.get_collection_items("http://example.com")
+
+            self.assertEqual(items, [4, 5])
+            self.assertEqual(result_mock.call_count, 3)
 
     def test_no_results(self):
         with (
