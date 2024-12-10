@@ -222,6 +222,36 @@ class GetCollectionItemsTests(TestCase):
                 ],
             )
 
+    def test_get_info_exception(self):
+        with (
+            mock.patch("importer.tasks.cache") as cache_mock,
+            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            mock.patch("importer.tasks.get_item_info_from_result") as result_mock,
+            self.assertLogs("importer.tasks", level="WARNING") as log,
+        ):
+            cache_mock.get.return_value = None
+            requests_mock.return_value.get.return_value.json.return_value = {
+                "results": [1]
+            }
+            result_mock.side_effect = AttributeError
+
+            items = tasks.get_collection_items("http://example.com")
+
+            self.assertEqual(items, [])
+            # The first log entry contains a stack trace, so we use assertIn
+            # rather than assertEqual here
+            self.assertIn(
+                "WARNING:importer.tasks:"
+                "Skipping result from http://example.com which did not match "
+                "expected format:",
+                log.output[0],
+            )
+            self.assertEqual(
+                log.output[1],
+                "WARNING:importer.tasks:"
+                "No valid items found for collection url: http://example.com",
+            )
+
 
 class FetchAllUrlsTests(TestCase):
     @mock.patch.object(concurrent.futures.ThreadPoolExecutor, "map")

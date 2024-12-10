@@ -168,20 +168,20 @@ def get_collection_items(collection_url):
 
         data = resp.json()
 
-        for result in data.get("results", {}):
-            try:
-                item_info = get_item_info_from_result(result)
-            except Exception:
-                logger.warning(
-                    "Skipping result from %s which did not match expected format:",
-                    resp.url,
-                    exc_info=True,
-                    extra={"data": {"result": result, "url": resp.url}},
-                )
-                continue
-
-            if item_info:
-                items.append(item_info)
+        results = data.get("results", None)
+        if results:
+            for result in results:
+                try:
+                    item_info = get_item_info_from_result(result)
+                    if item_info:
+                        items.append(item_info)
+                except Exception:
+                    logger.warning(
+                        "Skipping result from %s which did not match expected format:",
+                        current_page_url,
+                        exc_info=True,
+                        extra={"data": {"result": result, "url": current_page_url}},
+                    )
         else:
             logger.error('Expected URL %s to include "results"', current_page_url)
 
