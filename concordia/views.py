@@ -911,23 +911,24 @@ class CampaignListView(APIListView):
 class CompletedCampaignListView(APIListView):
     template_name = "transcriptions/campaign_list_small_blocks.html"
 
-    def get_queryset(self):
-        research_center = self.request.GET.get("research_center", None)
+    def _get_all_campaigns(self):
         if self.request.GET.get("type", "completed") == "retired":
             status = Campaign.Status.RETIRED
         else:
             status = Campaign.Status.COMPLETED
-        if research_center is None:
-            campaigns = Campaign.objects
-        else:
-            campaigns = ResearchCenter.objects.get(pk=research_center).campaign_set
-        campaigns = campaigns.published().listed().filter(status=status)
+        return Campaign.objects.published().listed().filter(status=status)
+
+    def get_queryset(self):
+        campaigns = self._get_all_campaigns()
+        research_center = self.request.GET.get("research_center", None)
+        if research_center is not None:
+            campaigns = campaigns.filter(research_centers=research_center)
         return campaigns.order_by("-completed_date")
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data["research_centers"] = ResearchCenter.objects.filter(
-            campaign__in=self.object_list
+            campaign__in=self._get_all_campaigns()
         ).distinct()
 
         return data
