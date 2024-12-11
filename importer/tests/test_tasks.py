@@ -26,7 +26,7 @@ from importer.tasks import (
     update_task_status,
 )
 
-from .utils import create_import_item, create_import_job
+from .utils import create_import_asset, create_import_item, create_import_job
 
 
 class MockResponse:
@@ -679,3 +679,12 @@ class AssetImportTests(TestCase):
             ]
         )
         self.assertEqual(results, ([], "http://example.com"))
+
+    def test_download_asset_task(self):
+        import_asset = create_import_asset()
+        with mock.patch("importer.tasks.download_asset") as task_mock:
+            tasks.download_asset_task(import_asset.pk)
+            self.assertTrue(task_mock.called)
+            task, called_import_asset, redownload = task_mock.call_args.args
+            self.assertTrue(called_import_asset, import_asset)
+            self.assertEqual(redownload, None)
