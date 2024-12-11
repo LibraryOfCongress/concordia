@@ -32,16 +32,20 @@
                 </select>
                 <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
             </div>
-            <div class="col-5 d-flex align-items-center">
-                <label for="research-center" class="pe-1">Research Center</label>
-                <select id="research-center">
-                    <option value="all" selected>All Research Centers</option>
-                    {% for research_center in research_centers %}
-                        <option>{{ research_center.title}}</option>
-                    {% endfor %}
-                </select>
-                <a class="btn btn-primary" type="submit">Go</a>
-            </div>
+            {% if research_centers %}
+                <div class="col-5 d-flex align-items-center">
+                    <label for="research-center" class="pe-1">Research Center</label>
+                    <select id="research-center">
+                        <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All Research Centers</option>
+                        {% for research_center in research_centers %}
+                            <option value="{{ research_center.pk }}"{% if request.GET.research_center == research_center.pk %} selected{% endif %}>
+                                {{ research_center.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
+                </div>
+            {% endif %}
         </div>
         {% if request.GET.view == 'list' %}
             <ul id="campaign-list" class="list-unstyled list-view">
@@ -124,6 +128,17 @@
             let url = new URL(window.location.href);
             let typeValue = document.getElementById('campaign-type').value;
             url.searchParams.set("type", encodeURIComponent(typeValue));
+            window.location.href = url;
+        }
+
+        var toggleResearchCenter = function(form) {
+            let url = new URL(window.location.href);
+            let researchCenter = document.getElementById('research-center').value;
+            if (researchCenter == "all") {
+                url.searchParams.delete("research_center");
+            } else {
+                url.searchParams.set("research_center", encodeURIComponent(researchCenter));
+            }
             window.location.href = url;
         }
     </script>

@@ -85,6 +85,7 @@ from concordia.models import (
     Guide,
     Item,
     Project,
+    ResearchCenter,
     SimplePage,
     SiteReport,
     Tag,
@@ -911,22 +912,25 @@ class CompletedCampaignListView(APIListView):
     template_name = "transcriptions/campaign_list_small_blocks.html"
 
     def get_queryset(self):
-        campaign_type = self.request.GET.get("type", "completed")
-        if campaign_type == "retired":
+        research_center = self.request.GET.get("research_center", None)
+        if self.request.GET.get("type", "completed") == "retired":
             status = Campaign.Status.RETIRED
         else:
             status = Campaign.Status.COMPLETED
-        campaigns = (
-            Campaign.objects.published()
-            .listed()
-            .filter(
-                status__in=[
-                    status,
-                ]
-            )
-            .order_by("-completed_date")
-        )
-        return campaigns
+        if research_center is None:
+            campaigns = Campaign.objects
+        else:
+            campaigns = ResearchCenter.objects.get(pk=research_center).campaign_set
+        campaigns = campaigns.published().listed().filter(status=status)
+        return campaigns.order_by("-completed_date")
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["research_centers"] = ResearchCenter.objects.filter(
+            campaign__in=self.object_list
+        ).distinct()
+
+        return data
 
     context_object_name = "campaigns"
 
