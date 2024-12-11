@@ -566,6 +566,7 @@ def download_asset(self, import_asset):
                 temp_file.write(chunk)
 
             # Rewind the tempfile back to the first byte so we can
+            # save it to storage
             temp_file.flush()
             temp_file.seek(0)
 

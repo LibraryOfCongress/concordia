@@ -606,7 +606,15 @@ class ItemImportTests(TestCase):
 
 class AssetImportTests(TestCase):
     def setUp(self):
-        self.import_asset = create_import_asset()
+        self.import_asset = create_import_asset(url="http://example.com")
+
+        # It's difficult/impossible to cleanly mock a decorator due to the way
+        # they're applied when the decorated object/function is evaluated on
+        # import, so we unfortunately have to handle the update_task_status
+        # decorator, so we need a mock object that can pass for a Celery task
+        # object so update_task_status doesn't error during the test
+        self.task_mock = mock.MagicMock()
+        self.task_mock.request.id = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
 
     def test_get_asset_urls_from_item_resources_empty(self):
         self.assertEqual(tasks.get_asset_urls_from_item_resources([]), ([], ""))
@@ -689,3 +697,34 @@ class AssetImportTests(TestCase):
             self.assertTrue(task_mock.called)
             task, called_import_asset = task_mock.call_args.args
             self.assertTrue(called_import_asset, self.import_asset)
+
+    @override_settings(
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}
+    )
+    def test_download_asset_valid(self):
+        with mock.patch("importer.tasks.requests.get") as get_mock:
+            get_mock.return_value.iter_content.return_value = [b"chunk1", b"chunk2"]
+            tasks.download_asset(self.task_mock, self.import_asset)
+
+            self.assertEqual(get_mock.call_args[0], ("http://example.com",))
+            self.assertTrue(get_mock.call_args[1]["stream"])
+
+    @override_settings(
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}
+    )
+    def test_download_asset_invalid(self):
+        with (
+            mock.patch("importer.tasks.requests.get") as get_mock,
+            self.assertLogs("importer.tasks", level="ERROR") as log,
+        ):
+            get_mock.return_value.raise_for_status.side_effect = AttributeError
+            with self.assertRaises(AttributeError):
+                tasks.download_asset(self.task_mock, self.import_asset)
+            # Since the logging includes a stacktrace, we just check the
+            # beginning of the log entry with assertIn
+            self.assertIn(
+                "ERROR:importer.tasks:"
+                "Unable to download http://example.com to "
+                "test-campaign/test-project/testitem.0123456789/1.jpg",
+                log.output[0],
+            )
