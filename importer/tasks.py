@@ -534,31 +534,18 @@ def download_asset_task(self, import_asset_pk):
     qs = ImportItemAsset.objects.select_related("import_item__item__project__campaign")
     import_asset = qs.get(pk=import_asset_pk)
 
-    return download_asset(self, import_asset, None)
+    return download_asset(self, import_asset)
 
 
-# FIXME: allow the redownload_images task to be run with this decorator
-# present in the code. The redownload images feature will not work
-# while the @update_task_status decorator is here
 @update_task_status
-def download_asset(self, import_asset, redownload_asset):
+def download_asset(self, import_asset):
     """
     Download the URL specified for an Asset and save it to working
     storage
     """
-    if import_asset:
-        item = import_asset.import_item.item
-        download_url = import_asset.url
-        asset = import_asset.asset
-    elif redownload_asset:
-        item = redownload_asset.item
-        download_url = redownload_asset.download_url
-        asset = redownload_asset
-    else:
-        logger.exception(
-            "download_asset was called without an import asset or a redownload asset"
-        )
-        raise
+    item = import_asset.import_item.item
+    download_url = import_asset.url
+    asset = import_asset.asset
 
     asset_filename = os.path.join(
         item.project.campaign.slug,
@@ -583,8 +570,6 @@ def download_asset(self, import_asset, redownload_asset):
             temp_file.seek(0)
 
             ASSET_STORAGE.save(asset_filename, temp_file)
-
     except Exception:
         logger.exception("Unable to download %s to %s", download_url, asset_filename)
-
         raise

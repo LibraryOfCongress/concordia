@@ -605,6 +605,9 @@ class ItemImportTests(TestCase):
 
 
 class AssetImportTests(TestCase):
+    def setUp(self):
+        self.import_asset = create_import_asset()
+
     def test_get_asset_urls_from_item_resources_empty(self):
         self.assertEqual(tasks.get_asset_urls_from_item_resources([]), ([], ""))
 
@@ -681,10 +684,8 @@ class AssetImportTests(TestCase):
         self.assertEqual(results, ([], "http://example.com"))
 
     def test_download_asset_task(self):
-        import_asset = create_import_asset()
         with mock.patch("importer.tasks.download_asset") as task_mock:
-            tasks.download_asset_task(import_asset.pk)
+            tasks.download_asset_task(self.import_asset.pk)
             self.assertTrue(task_mock.called)
-            task, called_import_asset, redownload = task_mock.call_args.args
-            self.assertTrue(called_import_asset, import_asset)
-            self.assertEqual(redownload, None)
+            task, called_import_asset = task_mock.call_args.args
+            self.assertTrue(called_import_asset, self.import_asset)
