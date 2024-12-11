@@ -22,8 +22,30 @@
                     <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
                     <option value="list"{% if request.GET.view == 'list' %} selected{% endif %}>List</option>
                 </select>
-                <a class="btn btn-primary" onclick="filterCampaigns();">Go</a>
+                <a class="btn btn-primary" onclick="toggleCampaignView();">Go</a>
             </div>
+            <div class="col-5 d-flex align-items-center">
+                <label for="campaign-type" class="pe-1">Campaign Type</label>
+                <select id="campaign-type">
+                    <option value="completed"{% if request.GET.type != 'retired' %} selected{% endif %}>Completed Campaigns</option>
+                    <option value="retired"{% if request.GET.type == 'retired' %} selected{% endif %}>Retired Campaigns</option>
+                </select>
+                <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
+            </div>
+            {% if research_centers %}
+                <div class="col-5 d-flex align-items-center">
+                    <label for="research-center" class="pe-1">Research Center</label>
+                    <select id="research-center">
+                        <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All Research Centers</option>
+                        {% for research_center in research_centers %}
+                            <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
+                                {{ research_center.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
+                </div>
+            {% endif %}
         </div>
         {% if request.GET.view == 'list' %}
             <ul id="campaign-list" class="list-unstyled list-view">
@@ -83,9 +105,11 @@
 
 {% block body_scripts %}
     <script>
-        var filterCampaigns = function(form) {
+        var toggleCampaignView = function(form) {
+            let url = new URL(window.location.href);
             let viewValue = document.getElementById('view-options').value;
-            window.location.href = "?view=" + encodeURIComponent(viewValue);
+            url.searchParams.set("view", encodeURIComponent(viewValue));
+            window.location.href = url;
         };
         let showMoreButton = document.getElementById("show-more");
         let campaignList = document.getElementById("campaign-list");
@@ -98,6 +122,24 @@
                 showMoreButton.parentElement.hidden = true;
                 event.preventDefault();
             });
+        }
+
+        var toggleCampaignType = function(form) {
+            let url = new URL(window.location.href);
+            let typeValue = document.getElementById('campaign-type').value;
+            url.searchParams.set("type", encodeURIComponent(typeValue));
+            window.location.href = url;
+        }
+
+        var toggleResearchCenter = function(form) {
+            let url = new URL(window.location.href);
+            let researchCenter = document.getElementById('research-center').value;
+            if (researchCenter == "all") {
+                url.searchParams.delete("research_center");
+            } else {
+                url.searchParams.set("research_center", encodeURIComponent(researchCenter));
+            }
+            window.location.href = url;
         }
     </script>
 {% endblock body_scripts %}

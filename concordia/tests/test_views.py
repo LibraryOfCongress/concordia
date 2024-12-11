@@ -109,8 +109,10 @@ class CompletedCampaignListViewTests(TestCase):
 
     def test_queryset(self):
         view = CompletedCampaignListView()
+        view.request = RequestFactory().get("/campaigns/completed/")
+        queryset = view.get_queryset()
         self.assertGreater(
-            view.queryset.first().completed_date, view.queryset.last().completed_date
+            queryset.first().completed_date, queryset.last().completed_date
         )
 
 
