@@ -488,7 +488,10 @@ def get_asset_urls_from_item_resources(resources):
     """
 
     assets = []
-    item_resource_url = resources[0]["url"] or ""
+    try:
+        item_resource_url = resources[0]["url"] or ""
+    except (IndexError, KeyError):
+        item_resource_url = ""
 
     for resource in resources:
         # The JSON response for each file is a list of available image versions
@@ -498,6 +501,7 @@ def get_asset_urls_from_item_resources(resources):
             candidates = []
 
             for variant in item_file:
+
                 if any(i for i in ("url", "height", "width") if i not in variant):
                     continue
 

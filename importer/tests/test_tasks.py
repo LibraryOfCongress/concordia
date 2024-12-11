@@ -602,3 +602,80 @@ class ItemImportTests(TestCase):
         self.assertEqual(item.title, "Test Title")
         self.assertEqual(item.description, "Test description")
         self.assertEqual(item.thumbnail_url, "http://example.com/image.jpg")
+
+
+class AssetImportTests(TestCase):
+    def test_get_asset_urls_from_item_resources_empty(self):
+        self.assertEqual(tasks.get_asset_urls_from_item_resources([]), ([], ""))
+
+    def test_get_asset_urls_from_item_resources_url_only(self):
+        results = tasks.get_asset_urls_from_item_resources(
+            [{"url": "http://example.com"}]
+        )
+        self.assertEqual(results, ([], "http://example.com"))
+
+    def test_get_asset_urls_from_item_resources_valid(self):
+        results = tasks.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com",
+                    "files": [
+                        [
+                            {
+                                "url": "http://example.com/1.jpg",
+                                "height": 1,
+                                "width": 1,
+                                "mimetype": "image/jpeg",
+                            },
+                            {"url": "http://example.com/2.jpg"},
+                            {
+                                "url": "http://example.com/3.jpg",
+                                "height": 2,
+                                "width": 2,
+                                "mimetype": "image/jpeg",
+                            },
+                            {
+                                "url": "http://example.com/4.jpg",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(results, (["http://example.com/3.jpg"], "http://example.com"))
+
+    def test_get_asset_urls_from_item_resource_no_valid(self):
+        results = tasks.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com",
+                    "files": [
+                        [
+                            {
+                                "url": "http://example.com/1.jpg",
+                                "height": 1,
+                                "width": 1,
+                                "mimetype": "file/pdf",
+                            },
+                            {"url": "http://example.com/2.jpg"},
+                            {
+                                "url": "http://example.com/3.jpg",
+                                "height": 2,
+                                "width": 2,
+                                "mimetype": "video/mov",
+                            },
+                            {
+                                "url": "http://example.com/4.jpg",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(results, ([], "http://example.com"))
