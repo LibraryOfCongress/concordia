@@ -475,6 +475,11 @@ body .form-check-input {
     opacity: 1;
 }
 
+#invert-form div {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
 #invert:checked {
     background-color: $blue;
     border-color: $blue;
