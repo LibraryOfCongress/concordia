@@ -38,7 +38,7 @@
                     <select id="research-center">
                         <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All Research Centers</option>
                         {% for research_center in research_centers %}
-                            <option value="{{ research_center.pk }}"{% if request.GET.research_center == research_center.pk %} selected{% endif %}>
+                            <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
                                 {{ research_center.title }}
                             </option>
                         {% endfor %}
