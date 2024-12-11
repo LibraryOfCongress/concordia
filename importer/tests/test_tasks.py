@@ -17,11 +17,9 @@ from importer import tasks
 from importer.models import ImportItem, ImportJob
 from importer.tasks import (
     fetch_all_urls,
-    get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_collection_task,
-    import_item_count_from_url,
     import_items_into_project_from_url,
     normalize_collection_url,
     redownload_image_task,
@@ -157,10 +155,17 @@ class ImportItemCountFromUrlTests(TestCase):
         }
     )
     def test_import_item_count_from_url(self, mock_get):
-        self.assertEqual(import_item_count_from_url(None), ("None - Asset Count: 0", 0))
+        self.assertEqual(
+            tasks.import_item_count_from_url(None), ("None - Asset Count: 0", 0)
+        )
 
     def test_unhandled_exception_importing(self):
-        self.assertRaises(Exception, import_item_count_from_url)
+        with mock.patch("importer.tasks.requests.get") as get_mock:
+            get_mock.side_effect = AttributeError("Error message")
+            self.assertEqual(
+                tasks.import_item_count_from_url("http://example.com"),
+                ("Unhandled exception importing http://example.com Error message", 0),
+            )
 
 
 class GetCollectionItemsTests(TestCase):
@@ -175,7 +180,7 @@ class GetCollectionItemsTests(TestCase):
     def test_cache_miss(self, mock_get):
         mock_get.return_value = MockResponse()
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
 
     @override_settings(
@@ -186,10 +191,9 @@ class GetCollectionItemsTests(TestCase):
         }
     )
     def test_cache_hit(self):
-        items = get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
 
-    @mock.patch("importer.tasks.get_item_info_from_result")
     @mock.patch.object(requests.Session, "get")
     @override_settings(
         CACHES={
@@ -198,12 +202,88 @@ class GetCollectionItemsTests(TestCase):
             }
         }
     )
-    def test_ignored_format(self, mock_get, mock_get_info):
+    def test_ignored_format(self, mock_get):
         mock_get.return_value = MockResponse(original_format="collection")
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = get_collection_items("https://www.loc.gov/collections/example/")
-        self.assertEqual(len(items), 1)
-        self.assertTrue(mock_get_info.called)
+        with self.assertLogs("importer.tasks", level="INFO") as log:
+            items = tasks.get_collection_items(
+                "https://www.loc.gov/collections/example/"
+            )
+
+            self.assertEqual(
+                log.output[0],
+                "INFO:importer.tasks:"
+                "Skipping result 1 because it contains an "
+                "unsupported format: {'collection'}",
+            )
+        self.assertEqual(len(items), 0)
+
+    def test_multiple_items(self):
+        with (
+            mock.patch("importer.tasks.cache") as cache_mock,
+            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            mock.patch("importer.tasks.get_item_info_from_result") as result_mock,
+        ):
+            cache_mock.get.return_value = None
+            requests_mock.return_value.get.return_value.json.return_value = {
+                "results": [1, 2, 3]
+            }
+            # Each time this mock is called, the next value in the list
+            # is returned
+            result_mock.side_effect = [4, 5, None]
+
+            items = tasks.get_collection_items("http://example.com")
+
+            self.assertEqual(items, [4, 5])
+            self.assertEqual(result_mock.call_count, 3)
+
+    def test_no_results(self):
+        with (
+            mock.patch("importer.tasks.cache") as cache_mock,
+            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            self.assertLogs("importer.tasks", level="ERROR") as log,
+        ):
+            cache_mock.get.return_value = None
+            requests_mock.return_value.get.return_value.json.return_value = {}
+            items = tasks.get_collection_items("http://example.com")
+            self.assertEqual(items, [])
+            self.assertEqual(
+                log.output,
+                [
+                    "ERROR:importer.tasks:"
+                    'Expected URL http://example.com to include "results"'
+                ],
+            )
+
+    def test_get_info_exception(self):
+        with (
+            mock.patch("importer.tasks.cache") as cache_mock,
+            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            mock.patch("importer.tasks.get_item_info_from_result") as result_mock,
+            self.assertLogs("importer.tasks", level="WARNING") as log,
+        ):
+            cache_mock.get.return_value = None
+            requests_mock.return_value.get.return_value.json.return_value = {
+                "results": [1]
+            }
+            result_mock.side_effect = AttributeError
+
+            items = tasks.get_collection_items("http://example.com")
+
+            self.assertEqual(items, [])
+            # The first log entry contains a stack trace, so we use assertIn
+            # rather than assertEqual here
+            self.assertIn(
+                "WARNING:importer.tasks:"
+                "Skipping result from http://example.com which did not match "
+                "expected format:",
+                log.output[0],
+            )
+            self.assertEqual(
+                log.output[1],
+                "WARNING:importer.tasks:"
+                "No valid items found for collection url: http://example.com",
+            )
 
 
 class FetchAllUrlsTests(TestCase):

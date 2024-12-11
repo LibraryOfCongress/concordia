@@ -168,26 +168,24 @@ def get_collection_items(collection_url):
 
         data = resp.json()
 
-        if "results" not in data:
-            logger.error('Expected URL %s to include "results"', resp.url)
-            continue
+        results = data.get("results", None)
+        if results:
+            for result in results:
+                try:
+                    item_info = get_item_info_from_result(result)
+                    if item_info:
+                        items.append(item_info)
+                except Exception:
+                    logger.warning(
+                        "Skipping result from %s which did not match expected format:",
+                        current_page_url,
+                        exc_info=True,
+                        extra={"data": {"result": result, "url": current_page_url}},
+                    )
+        else:
+            logger.error('Expected URL %s to include "results"', current_page_url)
 
-        for result in data["results"]:
-            try:
-                item_info = get_item_info_from_result(result)
-            except Exception:
-                logger.warning(
-                    "Skipping result from %s which did not match expected format:",
-                    resp.url,
-                    exc_info=True,
-                    extra={"data": {"result": result, "url": resp.url}},
-                )
-                continue
-
-            if item_info:
-                items.append(item_info)
-
-        current_page_url = data["pagination"].get("next", None)
+        current_page_url = data.get("pagination", {}).get("next", None)
 
     if not items:
         logger.warning("No valid items found for collection url: %s", collection_url)
@@ -265,7 +263,6 @@ def import_item_count_from_url(import_url):
         item_data = resp.json()
         output = len(item_data["resources"][0]["files"])
         return f"{import_url} - Asset Count: {output}", output
-
     except Exception as exc:
         return f"Unhandled exception importing {import_url} {exc}", 0
 
