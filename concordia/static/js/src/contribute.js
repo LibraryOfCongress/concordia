@@ -686,9 +686,9 @@ function setupPage() {
                 $ocrLoading.attr('hidden', 'hidden');
                 $('#transcription-status-display')
                     .children()
-                    .attr('hidden', 'hidden')
-                    .filter('#display-inprogress')
-                    .removeAttr('hidden');
+                    .attr('hidden', 'hidden');
+                $('#display-inprogress').removeAttr('hidden');
+                $('#transcription-status-display').removeAttr('hidden');
                 let messageChildren = $(
                     '#transcription-status-message',
                 ).children();
