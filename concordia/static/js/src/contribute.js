@@ -686,9 +686,8 @@ function setupPage() {
                 $ocrLoading.attr('hidden', 'hidden');
                 $('#transcription-status-display')
                     .children()
-                    .attr('hidden', 'hidden')
-                    .filter('#display-inprogress')
-                    .removeAttr('hidden');
+                    .attr('hidden', 'hidden');
+                $('#display-inprogress').removeAttr('hidden');
                 let messageChildren = $(
                     '#transcription-status-message',
                 ).children();
@@ -709,6 +708,7 @@ function setupPage() {
                     .removeAttr('hidden')
                     .find('#message-contributors-num')
                     .html(responseData.asset.contributors);
+                $('#transcription-status-display').removeAttr('hidden');
                 $transcriptionEditor.trigger('update-ui-state');
                 $ocrForm.find('input[name="supersedes"]').val(responseData.id);
             })
