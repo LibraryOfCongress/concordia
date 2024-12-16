@@ -51,7 +51,7 @@ jobs:
                   pip3 install -U setuptools
                   pip3 install -U setuptools-scm
 
-                  FULL_VERSION_NUMBER="$(pipenv run python -m setuptools_scm)"
+                  FULL_VERSION_NUMBER="$(python3 -m setuptools_scm)"
                   echo "full_ver_num=$(echo "${FULL_VERSION_NUMBER}")" >> $GITHUB_ENV
 
                   HOTFIX_VERSION_NUMBER="$(git describe --tags)"
