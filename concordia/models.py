@@ -493,7 +493,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
-    title = models.CharField(max_length=600)
+    title = models.CharField(max_length=700)
     item_url = models.URLField(max_length=255)
     item_id = models.CharField(
         max_length=100, help_text="Unique item ID assigned by the upstream source"
