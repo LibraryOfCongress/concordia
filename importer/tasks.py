@@ -495,10 +495,12 @@ def get_asset_urls_from_item_resources(resources):
 
     for resource in resources:
         # The JSON response for each file is a list of available image versions
-        # we will attempt to save the highest resolution JPEG:
+        # we will attempt to save the highest resolution jpg, falling back to
+        # to the highest resolution gif if there are none
 
         for item_file in resource.get("files", []):
             candidates = []
+            backup_candidates = []
 
             for variant in item_file:
 
@@ -508,13 +510,21 @@ def get_asset_urls_from_item_resources(resources):
                 url = variant["url"]
                 height = variant["height"]
                 width = variant["width"]
+                mimetype = variant.get("mimetype")
 
-                if variant.get("mimetype") == "image/jpeg":
+                # We prefer jpgs, but if there are none,
+                # we'll fallback to gifs
+                if mimetype == "image/jpeg":
                     candidates.append((url, height * width))
+                elif mimetype == "image/gif":
+                    backup_candidates.append((url, height * width))
 
             if candidates:
                 candidates.sort(key=lambda i: i[1], reverse=True)
                 assets.append(candidates[0][0])
+            elif backup_candidates:
+                backup_candidates.sort(key=lambda i: i[1], reverse=True)
+                assets.append(backup_candidates[0][0])
 
     return assets, item_resource_url
 
