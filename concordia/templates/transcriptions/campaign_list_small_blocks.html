@@ -15,8 +15,8 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        <div id="campaign-options" class="row mb-2">
-            <div class="col-2 d-flex align-items-center">
+        <div id="campaign-options" class="d-flex justify-content-end mb-2">
+            <div class="d-flex align-items-center mx-2">
                 <label for="view-options" class="pe-1">View</label>
                 <select id="view-options">
                     <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
@@ -24,7 +24,7 @@
                 </select>
                 <a class="btn btn-primary" onclick="toggleCampaignView();">Go</a>
             </div>
-            <div class="col-5 d-flex align-items-center">
+            <div class="d-flex align-items-center mx-2">
                 <label for="campaign-type" class="pe-1">Campaign Type</label>
                 <select id="campaign-type">
                     <option value="completed"{% if request.GET.type != 'retired' %} selected{% endif %}>Completed Campaigns</option>
@@ -33,7 +33,7 @@
                 <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
             </div>
             {% if research_centers %}
-                <div class="col-5 d-flex align-items-center">
+                <div class="d-flex align-items-center ms-2">
                     <label for="research-center" class="pe-1">Research Center</label>
                     <select id="research-center">
                         <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All Research Centers</option>
