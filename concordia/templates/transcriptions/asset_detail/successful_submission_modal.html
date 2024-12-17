@@ -1,35 +1,20 @@
 <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title">Nice Job!</h5>
+            <h5 class="modal-title">Submitted!</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="$('#successful-submission-modal').hide();">
 
             </button>
         </div>
         <div class="modal-body">
+            <p>Thanks for helping complete this page!</p>
             <p>
-                This page has been submitted for review.
+                {% if user.is_authenticated %}This page has been submitted for review.{% else %}<a href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a> or <a href="{% url 'registration_register' %}">Register</a> to review and track your progress.{% endif %}
             </p>
             <p>
-                What do you want to do next?
-            </p>
-        </div>
-        <div class="modal-footer d-block text-center">
-            <p>
-                <a class="btn btn-primary" href="{{ next_review_asset_url }}">
-                    Review a new page
-                </a>
-            </p>
-            <p>
-                <a class="btn btn-primary" href="{{ next_open_asset_url }}">
-                    Transcribe a new page
-                </a>
-            </p>
-            <p>
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                    Add Tags
-                </button>
+                What would you like to do next?
             </p>
         </div>
+        {% include "fragments/_modal_footer.html" %}
     </div>
 </div>
