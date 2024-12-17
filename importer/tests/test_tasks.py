@@ -682,7 +682,7 @@ class AssetImportTests(TestCase):
                                 "url": "http://example.com/4.jpg",
                                 "height": 100,
                                 "width": 100,
-                                "mimetype": "image/gif",
+                                "mimetype": "image/tiff",
                             },
                         ]
                     ],
@@ -690,6 +690,39 @@ class AssetImportTests(TestCase):
             ]
         )
         self.assertEqual(results, ([], "http://example.com"))
+
+    def test_get_asset_urls_from_item_resource_no_jpgs(self):
+        results = tasks.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com",
+                    "files": [
+                        [
+                            {
+                                "url": "http://example.com/1.jpg",
+                                "height": 1,
+                                "width": 1,
+                                "mimetype": "file/pdf",
+                            },
+                            {"url": "http://example.com/2.jpg"},
+                            {
+                                "url": "http://example.com/3.gif",
+                                "height": 2,
+                                "width": 2,
+                                "mimetype": "image/gif",
+                            },
+                            {
+                                "url": "http://example.com/4.gif",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(results, (["http://example.com/4.gif"], "http://example.com"))
 
     def test_download_asset_task(self):
         with mock.patch("importer.tasks.download_asset") as task_mock:
