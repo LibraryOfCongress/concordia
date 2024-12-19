@@ -26,14 +26,23 @@ chmod 600 ~/.pgpass
 aws s3 sync s3://crowd-content s3://crowd-${ENV_NAME}-content
 
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
-psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
+psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia with (force);"
 pg_restore --create -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres --no-owner --no-acl "${DUMP_FILE}"
 RETURNCODE=$?
 echo $RETURNCODE
 
 if [ $RETURNCODE = 0 ] && [ $ENV_NAME = "test" ]; then
     ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[1])')"
-    ECS_SERVICE_2="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[3].split("/")[2])')"
+
+    # If a feature branch env is running the number of services in the test cluster increases.
+    NUMBER_OF_SERVICES="$(aws ecs list-services --region us-east-1 --cluster crowd-test | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(len(Parameter))')"
+    if [ $NUMBER_OF_SERVICES = 3 ];then
+        # Normal
+        ECS_SERVICE_2="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[2].split("/")[2])')"
+    else
+        # Feature branch env exists.
+        ECS_SERVICE_2="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[3].split("/")[2])')"
+    fi
 
     aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE}
     aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE_2}

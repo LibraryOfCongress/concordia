@@ -9,8 +9,16 @@
         </div>
         <span class="d-block h4 mt-2 small-campaign-title">{{ campaign.title }}</span>
     </a>
-    {% if campaign.completed_date %}
-        <p><span class="fw-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}</p>
+    {% if campaign.completed_date or show_start and campaign.launch_date %}
+        <p>
+            {% if show_start and campaign.launch_date %}
+                <span class="fw-bold">Started: </span>{{ campaign.launch_date|date:"Y-m-d" }}
+                {% if campaign.completed_date %}</br>{% endif %}
+            {% endif %}
+            {% if campaign.completed_date %}
+                <span class="fw-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}
+            {% endif %}
+        </p>
     {% endif %}
     {% if show_description %}
         <p class="small-campaign-description">{{ campaign.short_description|striptags|truncatechars_on_word_break:160 }}</p>

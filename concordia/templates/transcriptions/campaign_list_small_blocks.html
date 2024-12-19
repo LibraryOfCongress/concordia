@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load staticfiles %}
+{% load staticfiles truncation %}
 
 {% block title %}Completed Campaigns{% endblock title %}
 
@@ -15,12 +15,131 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        <ul class="list-unstyled row">
-            {% with show_description=True %}
+        <div id="campaign-options" class="d-flex justify-content-end mb-2">
+            <div class="d-flex align-items-center mx-2">
+                <label for="view-options" class="pe-1">View</label>
+                <select id="view-options">
+                    <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
+                    <option value="list"{% if request.GET.view == 'list' %} selected{% endif %}>List</option>
+                </select>
+                <a class="btn btn-primary" onclick="toggleCampaignView();">Go</a>
+            </div>
+            <div class="d-flex align-items-center mx-2">
+                <label for="campaign-type" class="pe-1">Campaign Type</label>
+                <select id="campaign-type">
+                    <option value="completed"{% if request.GET.type != 'retired' %} selected{% endif %}>Completed Campaigns</option>
+                    <option value="retired"{% if request.GET.type == 'retired' %} selected{% endif %}>Retired Campaigns</option>
+                </select>
+                <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
+            </div>
+            {% if research_centers %}
+                <div class="d-flex align-items-center ms-2">
+                    <label for="research-center" class="pe-1">Research Center</label>
+                    <select id="research-center">
+                        <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All Research Centers</option>
+                        {% for research_center in research_centers %}
+                            <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
+                                {{ research_center.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
+                </div>
+            {% endif %}
+        </div>
+        {% if request.GET.view == 'list' %}
+            <ul id="campaign-list" class="list-unstyled list-view">
                 {% for campaign in campaigns %}
-                    {% include "transcriptions/campaign_small_block.html" %}
+                    <li{% if forloop.counter > 10 %} hidden{% endif %}>
+                        <div class="row">
+                            <div class="campaign-thumbnail">
+                                <div class="aspect-ratio-box">
+                                    <div class="aspect-ratio-box-inner-wrapper">
+                                        <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.alt_image_text}}" loading="lazy" width="150" height="150">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="campaign-text">
+                                <p class="mb-2">
+                                    <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                        <span class="d-block h4">
+                                            {{ campaign.title }}
+                                        </span>
+                                    </a>
+                                    {% if campaign.launch_date %}
+                                        <span class="fw-bold">Started: </span>{{ campaign.launch_date|date:"Y-m-d" }}
+                                        {% if campaign.completed_date %}</br>{% endif %}
+                                    {% endif %}
+                                    {% if campaign.completed_date %}
+                                        <span class="fw-bold">Completed: </span>{{ campaign.completed_date|date:"Y-m-d" }}
+                                    {% endif %}
+                                </p>
+                                <p class="mb-2">
+                                    {{ campaign.short_description|striptags|truncatechars_on_word_break:160 }}
+                                </p>
+                            </div>
+                        </div>
+                    </li>
                 {% endfor %}
+            </ul>
+            {% with campaigns|length as campaigns_count %}
+                {% if campaigns_count > 10 %}
+                    <div class="align-items-center justify-content-center d-flex">
+                        <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
+                    </div>
+                {% endif %}
             {% endwith %}
-        </ul>
+        {% else %}
+            <ul class="list-unstyled row mt-4">
+                {% with show_description=True show_start=True %}
+                    {% for campaign in campaigns %}
+                        {% include "transcriptions/campaign_small_block.html" %}
+                    {% endfor %}
+                {% endwith %}
+            </ul>
+        {% endif %}
     </div>
 {% endblock main_content %}
+
+{% block body_scripts %}
+    <script>
+        var toggleCampaignView = function(form) {
+            let url = new URL(window.location.href);
+            let viewValue = document.getElementById('view-options').value;
+            url.searchParams.set("view", encodeURIComponent(viewValue));
+            window.location.href = url;
+        };
+        let showMoreButton = document.getElementById("show-more");
+        let campaignList = document.getElementById("campaign-list");
+        if (showMoreButton){
+            showMoreButton.addEventListener("click", function(event){
+                for (const child of campaignList.children){
+                    child.hidden = false;
+                }
+                showMoreButton.parentElement.classList.remove("d-flex");
+                showMoreButton.parentElement.hidden = true;
+                event.preventDefault();
+            });
+        }
+
+        var toggleCampaignType = function(form) {
+            let url = new URL(window.location.href);
+            let typeValue = document.getElementById('campaign-type').value;
+            url.searchParams.set("type", encodeURIComponent(typeValue));
+            window.location.href = url;
+        }
+
+        var toggleResearchCenter = function(form) {
+            let url = new URL(window.location.href);
+            let researchCenter = document.getElementById('research-center').value;
+            if (researchCenter == "all") {
+                url.searchParams.delete("research_center");
+            } else {
+                url.searchParams.set("research_center", encodeURIComponent(researchCenter));
+            }
+            window.location.href = url;
+        }
+    </script>
+{% endblock body_scripts %}

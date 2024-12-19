@@ -9,7 +9,6 @@ celery = {extras = ["redis"],version = ">=5.0.5"}
 "boto3" = ">=1.9.16"
 botocore = '>=1.12.16'
 requests = "*"
-Django = ">=4.2.14, <5.0"
 bagit = "*"
 django-registration = "*"
 django-tinymce = "*"
@@ -54,6 +53,7 @@ prometheus-client = "*"
 xlsxwriter = "*"
 blinker = "<1.8.0"
 psycopg2 = "*"
+django = "<5.0,>=4.2.17"
 
 [dev-packages]
 invoke = "*"

@@ -69,28 +69,28 @@ def requests_retry_session(
 
 def update_task_status(f):
     """
-    Decorator which causes any function which is passed a TaskStatusModel  to
-    update on entry and exit and populate the status field with an exception
+    Decorator which causes any function which is passed a TaskStatusModel subclass
+    object to update on entry and exit and populate the status field with an exception
     message if raised
 
     Assumes that all wrapped functions get the Celery task self value as the
-    first parameter and the TaskStatusModel subclass as the second
+    first parameter and the TaskStatusModel subclass object as the second
     """
 
     @wraps(f)
-    def inner(self, task_status_model, *args, **kwargs):
+    def inner(self, task_status_object, *args, **kwargs):
         # We'll do a sanity check to make sure that another process hasn't
-        # updated the model status in the meantime:
-        guard_qs = task_status_model.__class__._default_manager.filter(
-            pk=task_status_model.pk, completed__isnull=False
+        # updated the object status in the meantime:
+        guard_qs = task_status_object.__class__._default_manager.filter(
+            pk=task_status_object.pk, completed__isnull=False
         )
         if guard_qs.exists():
             logger.warning(
                 "Task %s was already completed and will not be repeated",
-                task_status_model,
+                task_status_object,
                 extra={
                     "data": {
-                        "object": task_status_model,
+                        "object": task_status_object,
                         "args": args,
                         "kwargs": kwargs,
                     }
@@ -98,19 +98,19 @@ def update_task_status(f):
             )
             return
 
-        task_status_model.last_started = now()
-        task_status_model.task_id = self.request.id
-        task_status_model.save()
+        task_status_object.last_started = now()
+        task_status_object.task_id = self.request.id
+        task_status_object.save()
 
         try:
-            f(self, task_status_model, *args, **kwargs)
-            task_status_model.completed = now()
-            task_status_model.save()
+            f(self, task_status_object, *args, **kwargs)
+            task_status_object.completed = now()
+            task_status_object.save()
         except Exception as exc:
-            task_status_model.status = "{}\n\nUnhandled exception: {}".format(
-                task_status_model.status, exc
+            task_status_object.status = "{}\n\nUnhandled exception: {}".format(
+                task_status_object.status, exc
             ).strip()
-            task_status_model.save()
+            task_status_object.save()
             raise
 
     return inner
@@ -168,26 +168,24 @@ def get_collection_items(collection_url):
 
         data = resp.json()
 
-        if "results" not in data:
-            logger.error('Expected URL %s to include "results"', resp.url)
-            continue
+        results = data.get("results", None)
+        if results:
+            for result in results:
+                try:
+                    item_info = get_item_info_from_result(result)
+                    if item_info:
+                        items.append(item_info)
+                except Exception:
+                    logger.warning(
+                        "Skipping result from %s which did not match expected format:",
+                        current_page_url,
+                        exc_info=True,
+                        extra={"data": {"result": result, "url": current_page_url}},
+                    )
+        else:
+            logger.error('Expected URL %s to include "results"', current_page_url)
 
-        for result in data["results"]:
-            try:
-                item_info = get_item_info_from_result(result)
-            except Exception:
-                logger.warning(
-                    "Skipping result from %s which did not match expected format:",
-                    resp.url,
-                    exc_info=True,
-                    extra={"data": {"result": result, "url": resp.url}},
-                )
-                continue
-
-            if item_info:
-                items.append(item_info)
-
-        current_page_url = data["pagination"].get("next", None)
+        current_page_url = data.get("pagination", {}).get("next", None)
 
     if not items:
         logger.warning("No valid items found for collection url: %s", collection_url)
@@ -265,7 +263,6 @@ def import_item_count_from_url(import_url):
         item_data = resp.json()
         output = len(item_data["resources"][0]["files"])
         return f"{import_url} - Asset Count: {output}", output
-
     except Exception as exc:
         return f"Unhandled exception importing {import_url} {exc}", 0
 
@@ -466,12 +463,11 @@ def import_item(self, import_item):
     return download_asset_group()
 
 
+# Function name is misleading since it doesn't actually take or
+# use a URL, just the data retrieved from one
 def populate_item_from_url(item, item_info):
     """
-    Populates a Concordia.Item from the provided loc.gov URL
-
-    Returns the retrieved JSON data so additional imports can be peformed
-    without a second request
+    Populates a Concordia.Item from the data retrieved from a loc.gov URL
     """
 
     for k in ("title", "description"):
@@ -492,29 +488,43 @@ def get_asset_urls_from_item_resources(resources):
     """
 
     assets = []
-    item_resource_url = resources[0]["url"] or ""
+    try:
+        item_resource_url = resources[0]["url"] or ""
+    except (IndexError, KeyError):
+        item_resource_url = ""
 
     for resource in resources:
         # The JSON response for each file is a list of available image versions
-        # we will attempt to save the highest resolution JPEG:
+        # we will attempt to save the highest resolution jpg, falling back to
+        # to the highest resolution gif if there are none
 
         for item_file in resource.get("files", []):
             candidates = []
+            backup_candidates = []
 
             for variant in item_file:
+
                 if any(i for i in ("url", "height", "width") if i not in variant):
                     continue
 
                 url = variant["url"]
                 height = variant["height"]
                 width = variant["width"]
+                mimetype = variant.get("mimetype")
 
-                if variant.get("mimetype") == "image/jpeg":
+                # We prefer jpgs, but if there are none,
+                # we'll fallback to gifs
+                if mimetype == "image/jpeg":
                     candidates.append((url, height * width))
+                elif mimetype == "image/gif":
+                    backup_candidates.append((url, height * width))
 
             if candidates:
                 candidates.sort(key=lambda i: i[1], reverse=True)
                 assets.append(candidates[0][0])
+            elif backup_candidates:
+                backup_candidates.sort(key=lambda i: i[1], reverse=True)
+                assets.append(backup_candidates[0][0])
 
     return assets, item_resource_url
 
@@ -534,31 +544,18 @@ def download_asset_task(self, import_asset_pk):
     qs = ImportItemAsset.objects.select_related("import_item__item__project__campaign")
     import_asset = qs.get(pk=import_asset_pk)
 
-    return download_asset(self, import_asset, None)
+    return download_asset(self, import_asset)
 
 
-# FIXME: allow the redownload_images task to be run with this decorator
-# present in the code. The redownload images feature will not work
-# while the @update_task_status decorator is here
 @update_task_status
-def download_asset(self, import_asset, redownload_asset):
+def download_asset(self, import_asset):
     """
     Download the URL specified for an Asset and save it to working
     storage
     """
-    if import_asset:
-        item = import_asset.import_item.item
-        download_url = import_asset.url
-        asset = import_asset.asset
-    elif redownload_asset:
-        item = redownload_asset.item
-        download_url = redownload_asset.download_url
-        asset = redownload_asset
-    else:
-        logger.exception(
-            "download_asset was called without an import asset or a redownload asset"
-        )
-        raise
+    item = import_asset.import_item.item
+    download_url = import_asset.url
+    asset = import_asset.asset
 
     asset_filename = os.path.join(
         item.project.campaign.slug,
@@ -579,12 +576,11 @@ def download_asset(self, import_asset, redownload_asset):
                 temp_file.write(chunk)
 
             # Rewind the tempfile back to the first byte so we can
+            # save it to storage
             temp_file.flush()
             temp_file.seek(0)
 
             ASSET_STORAGE.save(asset_filename, temp_file)
-
     except Exception:
         logger.exception("Unable to download %s to %s", download_url, asset_filename)
-
         raise

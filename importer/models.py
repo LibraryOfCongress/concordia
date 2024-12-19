@@ -51,7 +51,7 @@ class ImportJob(TaskStatusModel):
 
     def __str__(self):
         return "ImportJob(created_by=%s, project=%s, url=%s)" % (
-            self.created_by.username,
+            self.created_by.username if self.created_by else None,
             self.project.title,
             self.url,
         )

@@ -1,6 +1,7 @@
 import copy
 import json
 import tempfile
+from functools import wraps
 from http import HTTPStatus
 from io import BytesIO
 from unittest import mock
@@ -17,9 +18,12 @@ from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
     create_asset,
+    create_campaign,
     create_card,
+    create_project,
     create_site_report,
 )
+from importer.tests.utils import create_import_asset
 
 
 @mock.patch("importer.utils.excel.load_workbook", autospec=True)
@@ -1035,6 +1039,231 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(messages[3], "All Processes Completed")
 
 
+class TestCeleryTaskReview(CreateTestUsers, TestCase):
+    def setUp(self):
+        # We don't set up our data here because we want to test
+        # both with and without data
+        self.login_user(is_staff=True, is_superuser=True)
+        self.path = reverse("admin:celery-review")
+
+    def add_campaigns(self):
+        self.add_active_campaigns()
+        self.add_completed_campaigns()
+        self.add_retired_campaigns()
+
+    def add_active_campaigns(self):
+        self.campaign1 = create_campaign(
+            slug="test-active-campaign-1", title="Test Active Campaign 1"
+        )
+        self.campaign2 = create_campaign(
+            slug="test-active-campaign-2", title="Test Active Campaign 2"
+        )
+
+    def add_completed_campaigns(self):
+        self.completed_campaign1 = create_campaign(
+            slug="test-completed-campaign-1",
+            title="Test Completed Campaign 1",
+            status=Campaign.Status.COMPLETED,
+        )
+        self.completed_campaign2 = create_campaign(
+            slug="test-completed-campaign-2",
+            title="Test Completed Campaign 1",
+            status=Campaign.Status.COMPLETED,
+        )
+
+    def add_retired_campaigns(self):
+        self.retired_campaign1 = create_campaign(
+            slug="test-retired-campaign-1",
+            title="Test Retired Campaign 1",
+            status=Campaign.Status.RETIRED,
+        )
+        self.retired_campaign2 = create_campaign(
+            slug="test-retired-campaign-2",
+            title="Test Retired Campaign 1",
+            status=Campaign.Status.RETIRED,
+        )
+
+    def add_projects(self):
+        # Active campaign 1, three projects
+        create_project(
+            campaign=self.campaign1,
+            slug="campaign1-project-1",
+            title="Campaign 1 Project 1",
+        )
+        create_project(
+            campaign=self.campaign1,
+            slug="campaign1-project-2",
+            title="Campaign 1 Project 2",
+        )
+        create_project(
+            campaign=self.campaign1,
+            slug="campaign1-project-3",
+            title="Campaign 1 Project 3",
+        )
+
+        # Active campaign 2, two projects
+        create_project(
+            campaign=self.campaign2,
+            slug="campaign1-project-1",
+            title="Campaign 2 Project 1",
+        )
+        create_project(
+            campaign=self.campaign2,
+            slug="campaign1-project-2",
+            title="Campaign 2 Project 2",
+        )
+
+        # Completed campaign 1, two projects
+        create_project(
+            campaign=self.completed_campaign1,
+            slug="completed-campaign1-project-1",
+            title="Completed Campaign 1 Project 1",
+        )
+        create_project(
+            campaign=self.completed_campaign1,
+            slug="completed-campaign1-project-2",
+            title="Completed Campaign 1 Project 2",
+        )
+
+        # Completed campaign 2, one project
+        create_project(
+            campaign=self.completed_campaign2,
+            slug="completed-campaign2-project-1",
+            title="Completed Campaign 1 Project 1",
+        )
+
+        # We don't create any for retired campaigns since the campaigns
+        # are only created to make sure the view ignores them
+
+    def add_tasks(self, campaign):
+        data = []
+        for project in campaign.project_set.all():
+            import_asset = create_import_asset(1, project=project)
+            item = import_asset.import_item
+            import_job = item.job
+            create_import_asset(
+                2,
+                import_item=item,
+                import_job=import_job,
+                project=project,
+                last_started=timezone.now(),
+            )
+            create_import_asset(
+                3,
+                import_item=item,
+                import_job=import_job,
+                project=project,
+                failed=timezone.now(),
+                last_started=timezone.now(),
+            )
+            create_import_asset(
+                4,
+                import_item=item,
+                import_job=import_job,
+                project=project,
+                completed=timezone.now(),
+                last_started=timezone.now(),
+            )
+            data.append(
+                {
+                    "title": project.title,
+                    "id": project.id,
+                    "campaign_id": str(campaign.id),
+                    "successful": 1,
+                    "incomplete": 1,
+                    "unstarted": 1,
+                    "failure": 1,
+                }
+            )
+        return data
+
+    def test_empty_dashboard(self):
+        response = self.client.get(self.path)
+        context = response.context
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("campaigns", context)
+        campaigns = list(context["campaigns"])
+        self.assertEqual(campaigns, [])
+
+    def test_dashboard(self):
+        self.add_active_campaigns()
+        response = self.client.get(self.path)
+        context = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("campaigns", context)
+        self.assertIn(self.campaign1, context["campaigns"])
+        self.assertIn(self.campaign2, context["campaigns"])
+
+        self.add_completed_campaigns()
+        response = self.client.get(self.path)
+        context = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("campaigns", context)
+        campaigns = list(context["campaigns"])
+        self.assertIn(self.campaign1, campaigns)
+        self.assertIn(self.campaign2, campaigns)
+        self.assertIn(self.completed_campaign1, campaigns)
+        self.assertIn(self.completed_campaign2, campaigns)
+
+        self.add_retired_campaigns()
+        response = self.client.get(self.path)
+        context = response.context
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("campaigns", context)
+        campaigns = list(context["campaigns"])
+        self.assertIn(self.campaign1, campaigns)
+        self.assertIn(self.campaign2, campaigns)
+        self.assertIn(self.completed_campaign1, campaigns)
+        self.assertIn(self.completed_campaign2, campaigns)
+        self.assertNotIn(self.retired_campaign1, campaigns)
+        self.assertNotIn(self.retired_campaign2, campaigns)
+
+    def test_campaign_dashboard(self):
+        self.add_campaigns()
+        self.add_projects()
+
+        data = self.add_tasks(self.campaign1)
+        response = self.client.get(self.path, {"id": self.campaign1.id})
+        context = response.context
+        self.assertIn("campaigns", context)
+        self.assertEqual(context["campaigns"], [])
+        self.assertIn("totalassets", context)
+        self.assertEqual(context["totalassets"], 12)
+        self.assertIn("projects", context)
+        self.assertEqual(context["projects"], data)
+
+        data = self.add_tasks(self.campaign2)
+        response = self.client.get(self.path, {"id": self.campaign2.id})
+        context = response.context
+        self.assertIn("campaigns", context)
+        self.assertEqual(context["campaigns"], [])
+        self.assertIn("totalassets", context)
+        self.assertEqual(context["totalassets"], 8)
+        self.assertIn("projects", context)
+        self.assertEqual(context["projects"], data)
+
+        data = self.add_tasks(self.completed_campaign1)
+        response = self.client.get(self.path, {"id": self.completed_campaign1.id})
+        context = response.context
+        self.assertIn("campaigns", context)
+        self.assertEqual(context["campaigns"], [])
+        self.assertIn("totalassets", context)
+        self.assertEqual(context["totalassets"], 8)
+        self.assertIn("projects", context)
+        self.assertEqual(context["projects"], data)
+
+        data = self.add_tasks(self.completed_campaign2)
+        response = self.client.get(self.path, {"id": self.completed_campaign2.id})
+        context = response.context
+        self.assertIn("campaigns", context)
+        self.assertEqual(context["campaigns"], [])
+        self.assertIn("totalassets", context)
+        self.assertEqual(context["totalassets"], 4)
+        self.assertIn("projects", context)
+        self.assertEqual(context["projects"], data)
+
+
 class TestSerializedObjectView(TestCase):
     def setUp(self):
         self.card = create_card()
@@ -1058,3 +1287,82 @@ class TestSerializedObjectView(TestCase):
         response = SerializedObjectView.as_view()(request)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertJSONEqual(response.content, {"status": "false"})
+
+
+def mock_cache(object_to_patch):
+    def decorator(cls):
+        # Decorator to mock `django.core.cache.caches`.
+        # Passes the mock cache and caches_mock to each
+        # test method as additional arguments.
+        # We have to write this as a custom decorator
+        # in order to not have to create these mocks in
+        # each invidivual test method, since we need to override
+        # __getitem__ on the caches mock
+
+        # We need to create a helper function so each method
+        # gets a unique wrapper and mocks
+        def create_wrapper(attr):
+            @wraps(attr)
+            def wrapper(self, *args, **kwargs):
+                with mock.patch(object_to_patch) as caches_mock:
+                    cache_mock = mock.MagicMock()
+                    caches_mock.__getitem__.return_value = cache_mock
+                    return attr(self, caches_mock, cache_mock, *args, **kwargs)
+
+            return wrapper
+
+        # Wrap each test method to include the mocks as arguments
+        for attr_name in dir(cls):
+            attr = getattr(cls, attr_name)
+            if callable(attr) and attr_name.startswith("test_"):
+                setattr(cls, attr_name, create_wrapper(attr))
+
+        return cls
+
+    return decorator
+
+
+@mock_cache("concordia.admin.views.caches")
+class TestClearCacheView(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.login_user(is_staff=True, is_superuser=True)
+        self.path = reverse("admin:clear-cache")
+
+    def test_get(self, caches_mock, cache_mock):
+        response = self.client.get(self.path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        self.assertFalse(caches_mock.__getitem__.called)
+        self.assertFalse(cache_mock.clear.called)
+
+    def test_invalid_form(self, caches_mock, cache_mock):
+        response = self.client.post(self.path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        self.assertFalse(caches_mock.__getitem__.called)
+        self.assertFalse(cache_mock.clear.called)
+
+    def test_valid_form(self, caches_mock, cache_mock):
+        response = self.client.post(self.path, {"cache_name": "view_cache"})
+        self.assertEqual(response.status_code, 302)
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(messages[0], "Successfully cleared 'view_cache' cache")
+        self.assertTrue(caches_mock.__getitem__.called)
+        self.assertTrue(cache_mock.clear.called)
+
+    def test_form_with_invalid_data(self, caches_mock, cache_mock):
+        response = self.client.post(self.path, {"cache_name": "default"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        self.assertFalse(caches_mock.__getitem__.called)
+        self.assertFalse(cache_mock.clear.called)
+
+    def test_exception(self, caches_mock, cache_mock):
+        caches_mock.__getitem__.side_effect = Exception("Test Exception")
+        response = self.client.post(self.path, {"cache_name": "view_cache"})
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertEqual(
+            messages[0],
+            "Couldn't clear cache 'view_cache', something went wrong. "
+            "Received error: Test Exception",
+        )

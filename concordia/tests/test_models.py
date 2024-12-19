@@ -2,15 +2,18 @@ from datetime import date, timedelta
 from secrets import token_hex
 from unittest import mock
 
-from django.core.exceptions import ValidationError
-from django.db.models.signals import post_save
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import signals
 from django.test import TestCase
 from django.utils import timezone
 
 from concordia.models import (
+    Asset,
     AssetTranscriptionReservation,
     Campaign,
     CardFamily,
+    MediaType,
     Resource,
     Transcription,
     TranscriptionStatus,
@@ -18,6 +21,7 @@ from concordia.models import (
     resource_file_upload_path,
     validated_get_or_create,
 )
+from concordia.signals.handlers import create_user_profile
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -43,12 +47,12 @@ from .utils import (
 class AssetTestCase(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
-        anon = get_anonymous_user()
-        create_transcription(asset=self.asset, user=anon)
+        self.anon = get_anonymous_user()
+        create_transcription(asset=self.asset, user=self.anon)
         create_transcription(
             asset=self.asset,
             user=self.create_test_user(username="tester"),
-            reviewed_by=anon,
+            reviewed_by=self.anon,
         )
 
     def test_get_ocr_transcript(self):
@@ -85,6 +89,62 @@ class AssetTestCase(CreateTestUsers, TestCase):
             self.asset.get_storage_path(filename=self.asset.storage_image),
             "test-campaign/test-project/testitem.0123456789/1.jpg",
         )
+
+    def test_saving_without_campaign(self):
+        try:
+            Asset.objects.create(
+                item=self.asset.item,
+                title="No campaign",
+                slug="no-campaign",
+                media_type=MediaType.IMAGE,
+                media_url="1.jpg",
+                storage_image="unittest1.jpg",
+            )
+        except (ValidationError, ObjectDoesNotExist):
+            self.fail("Creating an Asset without a campaign failed validation.")
+
+    def test_rollforward_with_only_rollforward_transcriptions(self):
+        asset = create_asset(slug="rollforward-test", item=self.asset.item)
+        create_transcription(asset=asset, user=self.anon, rolled_forward=True)
+        with self.assertRaisesMessage(
+            ValueError,
+            "Can not rollforward transcription on an asset with "
+            "no non-rollforward transcriptions",
+        ):
+            asset.rollforward_transcription(self.anon)
+
+    def test_rollforward_with_too_many_rollforward_transcriptions(self):
+        asset = create_asset(slug="rollforward-test", item=self.asset.item)
+        transcription1 = create_transcription(asset=asset, user=self.anon)
+        create_transcription(
+            asset=asset, user=self.anon, supersedes=transcription1, rolled_forward=True
+        )
+        create_transcription(
+            asset=asset, user=self.anon, supersedes=transcription1, rolled_forward=True
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "More rollforward transcription exist than non-roll-forward "
+            "transcriptions, which shouldn't be possible. Possibly "
+            "incorrectly modified transcriptions for this asset.",
+        ):
+            asset.rollforward_transcription(self.anon)
+
+    def test_rollforward_with_no_superseded_transcription(self):
+        # This isn't a state that would happen normally, but could be created
+        # accidentally when manually editing transcription history
+        asset = create_asset(slug="rollforward-test", item=self.asset.item)
+        transcription1 = create_transcription(asset=asset, user=self.anon)
+        create_transcription(asset=asset, user=self.anon, supersedes=transcription1)
+        create_transcription(
+            asset=asset, user=self.anon, rolled_back=True, source=transcription1
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "Can not rollforward transcription on an asset if the latest "
+            "rollback transcription did not supersede a previous transcription",
+        ):
+            asset.rollforward_transcription(self.anon)
 
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
@@ -328,6 +388,19 @@ class UserProfileActivityTestCase(TestCase):
         self.assertEqual(f"{activity.user} - {activity.campaign}", str(activity))
 
 
+class UserProfileTestCase(CreateTestUsers, TestCase):
+    def test_transcription_save_creating_userprofile(self):
+        signals.post_save.disconnect(
+            create_user_profile, sender=settings.AUTH_USER_MODEL
+        )
+        user = self.create_test_user()
+        self.assertFalse(hasattr(user, "profile"))
+        create_transcription(user=user)
+        self.assertTrue(hasattr(user, "profile"))
+        self.assertEqual(user.profile.transcribe_count, 1)
+        signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
+
+
 class CampaignTestCase(TestCase):
     def test_queryset(self):
         campaign = create_campaign(unlisted=True)
@@ -357,7 +430,7 @@ class CardFamilyTestCase(TestCase):
 
     def test_on_cardfamily_save(self):
         with mock.patch("concordia.models.on_cardfamily_save") as mocked_handler:
-            post_save.connect(mocked_handler, sender=CardFamily)
+            signals.post_save.connect(mocked_handler, sender=CardFamily)
             self.family1.save()
             self.assertTrue(mocked_handler.called)
             self.assertEqual(mocked_handler.call_count, 1)
