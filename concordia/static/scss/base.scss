@@ -137,10 +137,10 @@ $alert-padding-x: 1rem;
 @import '../../../node_modules/bootstrap/scss/carousel';
 
 // progress
-$bg-completed: $dark;
-$bg-submitted: $primary;
+$bg-completed: $blue;
+$bg-submitted: #e0f6ff;
 /* stylelint-disable-next-line scss/no-global-function-names */
-$bg-in-progress: tint-color($primary, 28%);
+$bg-in-progress: $navy;
 $bg-not-started: #fff;
 
 // shadow
@@ -531,7 +531,16 @@ body .bg-primary {
 /* stylelint-disable-next-line selector-class-pattern */
 .row .bg-not_started {
     background-color: $bg-not-started;
+    background-image: repeating-linear-gradient(
+        45deg,
+        #242424 0,
+        #242424 1px,
+        #fff 0,
+        #fff 50%
+    );
+    background-size: 10px 10px;
     border: 1px solid $primary;
+    opacity: 0.8;
 }
 
 .completed-bar {
@@ -909,7 +918,17 @@ li.breadcrumb-item.active {
     &::after {
         content: '';
         background-color: #fff;
+        background-image: repeating-linear-gradient(
+            45deg,
+            #242424 0,
+            #242424 1px,
+            #fff 0,
+            #fff 50%
+        );
+        background-size: 10px 10px;
+        border: 1px solid $primary;
         flex: 1 1 0%;
+        opacity: 0.8;
     }
 
     &.campaign-progress::after {
