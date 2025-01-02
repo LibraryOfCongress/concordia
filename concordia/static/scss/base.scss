@@ -452,6 +452,10 @@ a.btn-dark {
 
 a.btn-outline-dark {
     color: $gray-800;
+
+    .transcription-status-key-lg {
+        border: 1px solid $white;
+    }
 }
 
 a.btn-outline-dark.active {
