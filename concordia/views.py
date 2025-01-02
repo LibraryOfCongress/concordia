@@ -337,6 +337,12 @@ def ajax_session_status(request):
                     "url": request.build_absolute_uri(reverse("admin:index")),
                 }
             )
+        links.append(
+            {
+                "title": "Logout",
+                "url": request.build_absolute_uri(reverse("logout")),
+            }
+        )
 
         res = {"username": user.username, "links": links}
 
