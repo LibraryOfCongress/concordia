@@ -200,7 +200,7 @@ $.ajax({
                 'aria-haspopup': 'true',
                 'aria-expanded': 'false',
             })
-            .text(data.username)
+            .text(data.username + ' ')
             .prependTo($accountDropdown);
         $('<span>')
             .addClass('fa fa-chevron-down text-primary')
