@@ -344,7 +344,7 @@ def ajax_session_status(request):
             }
         )
 
-        res = {"username": user.username, "links": links}
+        res = {"username": user.username[:15], "links": links}
 
     return JsonResponse(res)
 
