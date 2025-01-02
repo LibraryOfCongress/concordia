@@ -326,7 +326,7 @@ def ajax_session_status(request):
     else:
         links = [
             {
-                "title": f"{user.username} Profile",
+                "title": "Profile",
                 "url": request.build_absolute_uri(reverse("user-profile")),
             }
         ]
@@ -337,8 +337,14 @@ def ajax_session_status(request):
                     "url": request.build_absolute_uri(reverse("admin:index")),
                 }
             )
+        links.append(
+            {
+                "title": "Logout",
+                "url": request.build_absolute_uri(reverse("logout")),
+            }
+        )
 
-        res = {"username": user.username, "links": links}
+        res = {"username": user.username[:15], "links": links}
 
     return JsonResponse(res)
 
