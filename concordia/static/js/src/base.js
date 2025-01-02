@@ -193,7 +193,7 @@ $.ajax({
     if (data.links) {
         var $accountDropdown = $('#topnav-account-dropdown');
         $('<a>')
-            .addClass('nav-link')
+            .addClass('nav-link fw-bold')
             .attr({
                 id: 'topnav-account-dropdown-toggle',
                 'data-bs-toggle': 'dropdown',
