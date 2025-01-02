@@ -1,36 +1,25 @@
 /* global $ */
 
-import {Carousel} from '/static/bootstrap/dist/js/bootstrap.bundle.min.js';
+import * as bootstrap from 'https://cdn.skypack.dev/bootstrap@5.3.0/dist/js/bootstrap.esm.js';
+
+// initialization
+var carouselElement = document.getElementById('homepage-carousel');
+var carousel = new bootstrap.Carousel(carouselElement, {
+    interval: 5000,
+    pause: false,
+});
 
 // play/pause
-function cycleCarousel(carouselElement) {
-    var carouselInstance = Carousel.getInstance(carouselElement);
-
-    carouselInstance.cycle();
-    carouselElement.dataset.bsInterval = 5000;
-    carouselElement.dataset.bsPause = 'hover';
-    carouselElement.dataset.bsRide = 'carousel';
-    $(this).children('.fa').removeClass('fa-play').addClass('fa-pause');
-    $(this).removeClass('paused');
-}
-
-function pauseCarousel(carouselElement) {
-    var carouselInstance = Carousel.getInstance(carouselElement);
-
-    carouselInstance.pause();
-    carouselElement.dataset.bsInterval = false;
-    carouselElement.dataset.bsPause = false;
-    carouselElement.dataset.bsRide = false;
-    $(this).children('.fa').removeClass('fa-pause').addClass('fa-play');
-    $(this).addClass('paused');
-}
-
-$('.play-pause-button').click(function () {
-    var carouselElement = document.getElementById('homepage-carousel');
-
-    if ($(this).hasClass('paused')) {
-        cycleCarousel(carouselElement);
-    } else {
-        pauseCarousel(carouselElement);
-    }
-});
+document
+    .getElementById('play-pause-button')
+    .addEventListener('click', function () {
+        if ($(this).hasClass('paused')) {
+            carousel.cycle();
+            $(this).children('.fa').removeClass('fa-play').addClass('fa-pause');
+        } else {
+            carousel.pause();
+            // console.log(carousel);
+            $(this).children('.fa').removeClass('fa-pause').addClass('fa-play');
+        }
+        $(this).toggleClass('paused');
+    });
