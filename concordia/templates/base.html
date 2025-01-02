@@ -117,37 +117,29 @@ for performance:
                             </li>
                             <li id="topnav-account-dropdown" class="nav-item dropdown
                                                                     nav-dropdown authenticated-only" hidden>
-                                <a id="topnav-account-dropdown-toggle" class="nav-link
-                                                                              {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
-                                   aria-expanded="false">Account <span class="fa fa-chevron-down text-primary"></a>
-                                    <div class="dropdown-menu"
-                                         aria-labelledby="topnav-account-dropdown-toggle">
-                                        <a class="dropdown-item" href="{% url 'logout' %}"
-                                           rel="nofollow">Logout</a>
-                                    </div>
-                                </li>
-                                <li class="nav-item anonymous-only">
-                                    <a class="nav-link d-lg-none" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
-                                </li>
-                                <li class="nav-item anonymous-only">
-                                    <a class="nav-link d-lg-none" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
-                                </li>
-                            </ul>
-                        </div>
+                            </li>
+                            <li class="nav-item anonymous-only">
+                                <a class="nav-link d-lg-none" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
+                            </li>
+                            <li class="nav-item anonymous-only">
+                                <a class="nav-link d-lg-none" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
+                            </li>
+                        </ul>
 
                         <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex
-                                   d-print-none small">
+                                   d-print-none small ms-4 ps-3">
                             <li class="nav-item">
-                                <a class="nav-link nav-secondary nav-link-login text-dark"
+                                <a class="nav-link nav-secondary nav-link-login fw-bold"
                                    href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-secondary nav-link-register text-dark"
+                                <a class="nav-link nav-secondary nav-link-register fw-bold"
                                    href="{% url 'registration_register' %}" rel="nofollow">Register</a>
                             </li>
                         </ul>
-                    </nav>
-                </header>
+                    </div>
+                </nav>
+            </header>
         {% endblock site-header %}
 
         {% block breadcrumbs-container %}
