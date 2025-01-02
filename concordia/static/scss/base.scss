@@ -1131,11 +1131,15 @@ body .disabled > .page-link {
     select {
         background-color: $white;
         border-color: $blue;
+        font-size: 12px;
+        height: 2.286rem;
+        padding: 0.321rem 0.6rem;
     }
 
     .btn {
         border-radius: 0;
-        padding: 1.125px 10px;
+        font-size: 12px;
+        height: 2.286rem;
     }
 }
 
