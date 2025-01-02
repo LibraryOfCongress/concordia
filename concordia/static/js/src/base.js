@@ -191,13 +191,31 @@ $.ajax({
     $('.anonymous-only').remove();
     $('.authenticated-only').removeAttr('hidden');
     if (data.links) {
-        var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
+        var $accountDropdown = $('#topnav-account-dropdown');
+        $('<a>')
+            .addClass('nav-link')
+            .attr({
+                id: 'topnav-account-dropdown-toggle',
+                'data-bs-toggle': 'dropdown',
+                'aria-haspopup': 'true',
+                'aria-expanded': 'false',
+            })
+            .text(data.username)
+            .prependTo($accountDropdown);
+        $('<span>')
+            .addClass('fa fa-chevron-down text-primary')
+            .appendTo('#topnav-account-dropdown-toggle');
+        var $accountDropdownMenu = $('<div>');
+        $accountDropdownMenu
+            .addClass('dropdown-menu')
+            .attr('aria-labelledby', 'topnav-account-dropdown-toggle')
+            .appendTo($accountDropdown);
         for (const link of data.links) {
             $('<a>')
                 .addClass('dropdown-item')
                 .attr('href', link.url)
                 .text(link.title)
-                .prependTo($accountMenu);
+                .appendTo($accountDropdownMenu);
         }
     }
 });

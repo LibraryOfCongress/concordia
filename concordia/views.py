@@ -326,7 +326,7 @@ def ajax_session_status(request):
     else:
         links = [
             {
-                "title": f"{user.username} Profile",
+                "title": "Profile",
                 "url": request.build_absolute_uri(reverse("user-profile")),
             }
         ]
