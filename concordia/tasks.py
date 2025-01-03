@@ -1049,18 +1049,20 @@ def clear_sessions():
     call_command("clearsessions")
 
 
-@celery_app.task
+@celery_app.task(ignore_result=True)
 def unusual_activity():
     """
     Locate pages that were improperly transcribed or reviewed.
     """
     site = Site.objects.get_current()
+    now = timezone.now()
+    ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
     context = {
         "title": "Unusual User Activity Report for "
-        + timezone.now().strftime("%b %d %Y, %I:%M %p"),
+        + now.strftime("%b %d %Y, %I:%M %p"),
         "domain": "https://" + site.domain,
-        "transcriptions": Transcription.objects.transcribe_incidents(),
-        "reviews": Transcription.objects.review_incidents(),
+        "transcriptions": Transcription.objects.transcribe_incidents(ONE_DAY_AGO),
+        "reviews": Transcription.objects.review_incidents(ONE_DAY_AGO),
     }
 
     text_body_template = loader.get_template("emails/unusual_activity.txt")

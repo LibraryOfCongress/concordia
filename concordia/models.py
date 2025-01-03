@@ -879,18 +879,24 @@ class TranscriptionManager(models.Manager):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
 
-    def review_incidents(self):
+    def recent_accepts(self, start=ONE_DAY_AGO):
+        return self.filter(
+            accepted__gte=start,
+            reviewed_by__is_superuser=False,
+            reviewed_by__is_staff=False,
+        )
+
+    def recent_rejects(self, start=ONE_DAY_AGO):
+        return self.filter(
+            rejected__gte=start,
+            reviewed_by__is_superuser=False,
+            reviewed_by__is_staff=False,
+        )
+
+    def review_incidents(self, start=ONE_DAY_AGO):
         user_incident_count = []
-        recent_accepts = self.filter(
-            accepted__gte=ONE_DAY_AGO,
-            reviewed_by__is_superuser=False,
-            reviewed_by__is_staff=False,
-        )
-        recent_rejects = self.filter(
-            rejected__gte=ONE_DAY_AGO,
-            reviewed_by__is_superuser=False,
-            reviewed_by__is_staff=False,
-        )
+        recent_accepts = self.recent_accepts(start)
+        recent_rejects = self.recent_rejects(start)
         recent_actions = recent_accepts.union(recent_rejects)
         user_ids = set(
             recent_actions.order_by("reviewed_by").values_list("reviewed_by", flat=True)
@@ -898,7 +904,9 @@ class TranscriptionManager(models.Manager):
 
         for user_id in user_ids:
             user = ConcordiaUser.objects.get(id=user_id)
-            incident_count = user.review_incidents(recent_accepts, recent_rejects)
+            incident_count = user.review_incidents(
+                recent_accepts, recent_rejects, start
+            )
             if incident_count > 0:
                 review_count = Transcription.objects.filter(reviewed_by=user).count()
                 user_incident_count.append(
@@ -907,10 +915,10 @@ class TranscriptionManager(models.Manager):
 
         return user_incident_count
 
-    def transcribe_incidents(self):
+    def transcribe_incidents(self, start=ONE_DAY_AGO):
         user_incident_count = []
         transcriptions = self.get_queryset().filter(
-            submitted__gte=ONE_DAY_AGO, user__is_superuser=False, user__is_staff=False
+            submitted__gte=start, user__is_superuser=False, user__is_staff=False
         )
         user_ids = (
             transcriptions.order_by("user")
