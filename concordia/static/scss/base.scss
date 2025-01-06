@@ -452,6 +452,10 @@ a.btn-dark {
 
 a.btn-outline-dark {
     color: $gray-800;
+
+    .transcription-status-key-lg {
+        border: 1px solid $white;
+    }
 }
 
 a.btn-outline-dark.active {
@@ -1131,11 +1135,15 @@ body .disabled > .page-link {
     select {
         background-color: $white;
         border-color: $blue;
+        font-size: 12px;
+        height: 2.286rem;
+        padding: 0.321rem 0.6rem;
     }
 
     .btn {
         border-radius: 0;
-        padding: 1.125px 10px;
+        font-size: 12px;
+        height: 2.286rem;
     }
 }
 
