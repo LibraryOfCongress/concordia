@@ -30,13 +30,17 @@ class TestWidgets(TestCase):
     def test_TurnstileWidget(self):
         widget = TurnstileWidget()
 
+        # Testing basic validation
         self.assertEqual(widget.value_from_datadict({}, None, None), None)
 
+        # Testing validation with data
         data = {"cf-turnstile-response": "test-data"}
         self.assertEqual(widget.value_from_datadict(data, None, None), "test-data")
 
+        # Testing basic attrs
         self.assertEqual(widget.build_attrs({}), {"data-sitekey": "test-key"})
 
+        # Testing with extra ttrs
         self.assertEqual(
             widget.build_attrs(
                 {"id": "test-id"}, extra_attrs={"custom-attr": "test-attr"}
@@ -44,6 +48,7 @@ class TestWidgets(TestCase):
             {"data-sitekey": "test-key", "id": "test-id", "custom-attr": "test-attr"},
         )
 
+        # Testing basic context
         self.assertEqual(
             widget.get_context("test-name", "test value", {}),
             {
@@ -59,6 +64,7 @@ class TestWidgets(TestCase):
             },
         )
 
+        # Testing with special context
         widget.extra_url = {
             "test-parameter1": "test-value1",
             "test-parameter2": "test-value2",
