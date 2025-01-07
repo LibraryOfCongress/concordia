@@ -32,20 +32,18 @@
                 </select>
                 <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
             </div>
-            {% if research_centers %}
-                <div class="d-flex align-items-center ms-3 mt-2">
-                    <label for="research-center" class="pe-1">Research Center</label>
-                    <select id="research-center">
-                        <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All</option>
-                        {% for research_center in research_centers %}
-                            <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
-                                {{ research_center.title }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
-                </div>
-            {% endif %}
+            <div class="d-flex align-items-center ms-3 mt-2">
+                <label for="research-center" class="pe-1">Research Center</label>
+                <select id="research-center">
+                    <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All</option>
+                    {% for research_center in research_centers %}
+                        <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
+                            {{ research_center.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
+            </div>
         </div>
         {% if request.GET.view == 'list' %}
             <ul id="campaign-list" class="list-unstyled list-view">
