@@ -1,5 +1,5 @@
 # Originally from
-# https://github.com/zmh-program/django-turnstile/blob/main/turnstile/fields.py
+# https://github.com/zmh-program/django-turnstile/blob/main/turnstile/widgets.py
 
 from urllib.parse import urlencode
 
