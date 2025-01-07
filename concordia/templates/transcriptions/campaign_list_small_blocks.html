@@ -27,7 +27,8 @@
             <div class="d-flex align-items-center ms-3 mt-2">
                 <label for="campaign-type" class="pe-1">Campaign Status</label>
                 <select id="campaign-type">
-                    <option value="completed"{% if request.GET.type != 'retired' %} selected{% endif %}>Completed</option>
+                    <option value="all"{% if 'type' not in request.GET %} selected{%endif %}>All</option>
+                    <option value="completed"{% if request.GET.type == 'completed' %} selected{% endif %}>Completed</option>
                     <option value="retired"{% if request.GET.type == 'retired' %} selected{% endif %}>Retired</option>
                 </select>
                 <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
@@ -125,7 +126,11 @@
         var toggleCampaignType = function(form) {
             let url = new URL(window.location.href);
             let typeValue = document.getElementById('campaign-type').value;
-            url.searchParams.set("type", encodeURIComponent(typeValue));
+            if (typeValue == "all") {
+                url.searchParams.delete("type");
+            } else {
+                url.searchParams.set("type", encodeURIComponent(typeValue));
+            }
             window.location.href = url;
         }
 

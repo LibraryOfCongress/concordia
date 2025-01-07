@@ -912,11 +912,16 @@ class CompletedCampaignListView(APIListView):
     template_name = "transcriptions/campaign_list_small_blocks.html"
 
     def _get_all_campaigns(self):
-        if self.request.GET.get("type", "completed") == "retired":
+        campaignType = self.request.GET.get("type", None)
+        campaigns = Campaign.objects.published().listed()
+        if campaignType is None:
+            return campaigns
+        elif campaignType == "retired":
             status = Campaign.Status.RETIRED
         else:
             status = Campaign.Status.COMPLETED
-        return Campaign.objects.published().listed().filter(status=status)
+
+        return campaigns.filter(status=status)
 
     def get_queryset(self):
         campaigns = self._get_all_campaigns()
