@@ -525,15 +525,18 @@ body .bg-primary {
 
 .row .bg-submitted {
     background-color: $bg-submitted;
+    border: 1px solid $dark;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */
-.row .bg-in_progress {
+.row .bg-in_progress,
+.row .bg-in-progress {
     background-color: $bg-in-progress;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */
-.row .bg-not_started {
+.row .bg-not_started,
+.row .bg-not-started {
     background-color: $bg-not-started;
     background-image: repeating-linear-gradient(
         45deg,
@@ -543,7 +546,7 @@ body .bg-primary {
         #fff 50%
     );
     background-size: 10px 10px;
-    border: 1px solid $primary;
+    border: 1px solid $dark;
     opacity: 0.8;
 }
 
