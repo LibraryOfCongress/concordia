@@ -54,6 +54,16 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                 cls.assets.append(
                     create_asset(title=f"{item.id} — {i}", item=item, do_save=False)
                 )
+            cls.assets.append(
+                create_asset(
+                    title=f"Thumbnail URL test for {item.id}",
+                    item=item,
+                    download_url="http://tile.loc.gov/image-services/iiif/"
+                    "service:music:mussuffrage:mussuffrage-100183:mussuffrage-100183.0001/"
+                    "full/pct:100/0/default.jpg",
+                    do_save=False,
+                )
+            )
         Asset.objects.bulk_create(cls.assets)
 
         cls.transcriptions = []
@@ -347,3 +357,5 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             self.assertIn("slug", obj)
             self.assertIn("url", obj)
             self.assertIn("year", obj)
+            if "Thumbnail test" in obj["title"]:
+                self.assertIn("https", obj["thumbnail_url"])
