@@ -25,7 +25,7 @@ class TestFields(TestCase):
             open_mock = opener_mock.return_value.open
             read_mock = open_mock.return_value.read
 
-            field = TurnstileField()
+            field = TurnstileField(required=False)
 
             self.assertEqual(
                 field.widget_attrs(field.widget),
