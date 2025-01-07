@@ -15,37 +15,39 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        <div id="campaign-options" class="d-flex flex-wrap justify-content-end my-2">
-            <div class="d-flex align-items-center ms-3 mt-2">
-                <label for="view-options" class="pe-1">View</label>
-                <select id="view-options">
-                    <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
-                    <option value="list"{% if request.GET.view == 'list' %} selected{% endif %}>List</option>
-                </select>
-                <a class="btn btn-primary" onclick="toggleCampaignView();">Go</a>
-            </div>
-            <div class="d-flex align-items-center ms-3 mt-2">
-                <label for="campaign-type" class="pe-1">Campaign Status</label>
-                <select id="campaign-type">
-                    <option value="completed"{% if request.GET.type != 'retired' %} selected{% endif %}>Completed</option>
-                    <option value="retired"{% if request.GET.type == 'retired' %} selected{% endif %}>Retired</option>
-                </select>
-                <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
-            </div>
-            {% if research_centers %}
-                <div class="d-flex align-items-center ms-3 mt-2">
-                    <label for="research-center" class="pe-1">Research Center</label>
-                    <select id="research-center">
-                        <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All</option>
-                        {% for research_center in research_centers %}
-                            <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
-                                {{ research_center.title }}
-                            </option>
-                        {% endfor %}
+        <div class="controls">
+            <div id="campaign-options" class="control-group justify-content-end">
+                <div class="input-group input-group-sm flex-nowrap control-views">
+                    <label for="view-options" class="input-group-text">View</label>
+                    <select id="view-options" class="form-select">
+                        <option value="grid"{% if request.GET.view != 'list' %} selected{% endif %}>Grid</option>
+                        <option value="list"{% if request.GET.view == 'list' %} selected{% endif %}>List</option>
                     </select>
-                    <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
+                    <a class="btn btn-primary" onclick="toggleCampaignView();">Go</a>
                 </div>
-            {% endif %}
+                <div class="input-group input-group-sm flex-nowrap control-views">
+                    <label for="campaign-type" class="input-group-text">Campaign Status</label>
+                    <select id="campaign-type" class="form-select">
+                        <option value="completed"{% if request.GET.type != 'retired' %} selected{% endif %}>Completed</option>
+                        <option value="retired"{% if request.GET.type == 'retired' %} selected{% endif %}>Retired</option>
+                    </select>
+                    <a class="btn btn-primary" onclick="toggleCampaignType();" type="submit">Go</a>
+                </div>
+                {% if research_centers %}
+                    <div class="input-group input-group-sm flex-nowrap control-views">
+                        <label for="research-center" class="input-group-text">Research Center</label>
+                        <select id="research-center" class="form-select">
+                            <option value="all"{% if 'research_center' not in request.GET %} selected{% endif %}>All</option>
+                            {% for research_center in research_centers %}
+                                <option value="{{ research_center.pk }}"{% if request.GET.research_center|add:"0" == research_center.pk %} selected{% endif %}>
+                                    {{ research_center.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <a class="btn btn-primary" onclick="toggleResearchCenter();" type="submit">Go</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
         {% if request.GET.view == 'list' %}
             <ul id="campaign-list" class="list-unstyled list-view">

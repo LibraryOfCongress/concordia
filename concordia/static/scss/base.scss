@@ -1132,18 +1132,21 @@ body .disabled > .page-link {
 #campaign-options {
     margin-left: 1px;
 
+    label {
+        background-color: $white;
+        border: none;
+    }
+
     select {
         background-color: $white;
         border-color: $blue;
-        font-size: 16px;
-        height: 2.286rem;
-        padding: 0.3rem;
+        font-size: 14px;
+        height: 35px;
     }
 
     .btn {
         border-radius: 0;
-        font-size: 16px;
-        height: 2.286rem;
+        font-size: 14px;
     }
 }
 
@@ -1940,6 +1943,43 @@ table.table thead.border-y {
 
 #validation-confirmation {
     font-size: 87.5%;
+}
+
+/* Controls */
+:root {
+    --controls-gap-x: 1rem;
+    --controls-gap-y: 0.5rem;
+}
+
+.controls {
+    .input-group {
+        width: auto;
+
+        input-group-text {
+            padding-left: 0;
+            padding-right: 0.25rem;
+            border: none;
+        }
+
+        .btn {
+            border-radius: 0;
+        }
+    }
+
+    &:not(.viewer-controls) {
+        .control-group:only-child {
+            @include media-breakpoint-up(sm) {
+                margin-left: auto;
+            }
+        }
+    }
+}
+
+.control-group {
+    display: flex;
+    gap: var(--controls-gap-y) var(--controls-gap-x);
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 /* print */
