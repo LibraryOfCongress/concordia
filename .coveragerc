@@ -1,4 +1,5 @@
 [run]
+dynamic_context = test_function
 branch = true
 include =
     concordia/*
@@ -8,6 +9,7 @@ omit =
     */migrations/*
     */tests/*
     */settings*.py
+    */urls.py
     */static/*
 
 [report]
