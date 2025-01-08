@@ -52,6 +52,7 @@ from .utils import (
     create_guide,
     create_item,
     create_project,
+    create_research_center,
     create_tag_collection,
     create_topic,
     create_transcription,
@@ -94,26 +95,69 @@ class CompletedCampaignListViewTests(TestCase):
     This class contains the unit tests for the CompletedCampaignListView
     """
 
-    def setUp(self):
+    def test_queryset(self):
         today = date.today()
-        self.campaign1 = create_campaign(
+        create_campaign(
             published=True, status=Campaign.Status.COMPLETED, completed_date=today
         )
         yesterday = today - timedelta(days=1)
-        self.campaign2 = create_campaign(
+        create_campaign(
             published=True,
             status=Campaign.Status.COMPLETED,
             slug="test-campaign-2",
             completed_date=yesterday,
         )
+        create_campaign(
+            published=True,
+            status=Campaign.Status.RETIRED,
+            slug="test-campaign-3",
+            completed_date=yesterday,
+        )
 
-    def test_queryset(self):
         view = CompletedCampaignListView()
+
+        # Test default
         view.request = RequestFactory().get("/campaigns/completed/")
         queryset = view.get_queryset()
         self.assertGreater(
             queryset.first().completed_date, queryset.last().completed_date
         )
+
+        # Test retired
+        view.request = RequestFactory().get("/campaigns/completed/?type=retired")
+        queryset = view.get_queryset()
+        self.assertEqual(queryset.count(), 1)
+
+    def test_research_centers(self):
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+
+        center = create_research_center()
+
+        create_campaign(
+            published=True, status=Campaign.Status.COMPLETED, completed_date=today
+        )
+        campaign2 = create_campaign(
+            published=True,
+            status=Campaign.Status.COMPLETED,
+            slug="test-campaign-2",
+            completed_date=yesterday,
+        )
+        campaign2.research_centers.add(center)
+        url = f"/campaigns/completed/?research_center={center.id}"
+
+        # Test queryset directly
+        view = CompletedCampaignListView()
+        view.request = RequestFactory().get(url)
+        queryset = view.get_queryset()
+
+        self.assertEqual(queryset.count(), 1)
+
+        # Test get_context_data through a get
+        response = self.client.get(url)
+
+        self.assertIn("research_centers", response.context)
+        self.assertEqual(response.context["research_centers"][0], center)
 
 
 @override_settings(

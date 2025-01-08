@@ -909,7 +909,9 @@ class CampaignListView(APIListView):
 
 @method_decorator(default_cache_control, name="dispatch")
 class CompletedCampaignListView(APIListView):
+    model = Campaign
     template_name = "transcriptions/campaign_list_small_blocks.html"
+    context_object_name = "campaigns"
 
     def _get_all_campaigns(self):
         if self.request.GET.get("type", "completed") == "retired":
@@ -932,8 +934,6 @@ class CompletedCampaignListView(APIListView):
         ).distinct()
 
         return data
-
-    context_object_name = "campaigns"
 
 
 def calculate_asset_stats(asset_qs, ctx):
