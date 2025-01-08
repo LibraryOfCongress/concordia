@@ -525,15 +525,18 @@ body .bg-primary {
 
 .row .bg-submitted {
     background-color: $bg-submitted;
+    border: 1px solid $dark;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */
-.row .bg-in_progress {
+.row .bg-in_progress,
+.row .bg-in-progress {
     background-color: $bg-in-progress;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */
-.row .bg-not_started {
+.row .bg-not_started,
+.row .bg-not-started {
     background-color: $bg-not-started;
     background-image: repeating-linear-gradient(
         45deg,
@@ -543,7 +546,7 @@ body .bg-primary {
         #fff 50%
     );
     background-size: 10px 10px;
-    border: 1px solid $primary;
+    border: 1px solid $dark;
     opacity: 0.8;
 }
 
@@ -930,7 +933,6 @@ li.breadcrumb-item.active {
             #fff 50%
         );
         background-size: 10px 10px;
-        border: 1px solid $primary;
         flex: 1 1 0%;
         opacity: 0.8;
     }
@@ -1132,18 +1134,22 @@ body .disabled > .page-link {
 #campaign-options {
     margin-left: 1px;
 
+    label {
+        font-size: 14px;
+    }
+
     select {
         background-color: $white;
         border-color: $blue;
-        font-size: 12px;
-        height: 2.286rem;
-        padding: 0.321rem 0.6rem;
+        font-size: 14px;
+        height: 2.155rem;
+        padding: 0.3rem;
     }
 
     .btn {
         border-radius: 0;
-        font-size: 12px;
-        height: 2.286rem;
+        font-size: 14px;
+        height: 2.155rem;
     }
 }
 

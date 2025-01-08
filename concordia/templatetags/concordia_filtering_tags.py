@@ -27,7 +27,7 @@ def transcription_status_filters(
             (
                 "%s?transcription_status=%s" % (url, urlquote(key)),
                 "active" if active_value == key else "",
-                key,
+                key.replace("_", "-"),
                 label,
                 counts.get(key),
             )
