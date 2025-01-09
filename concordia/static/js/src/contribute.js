@@ -408,7 +408,6 @@ function setupPage() {
                             );
                             reserveAssetForEditing();
                             setupPage();
-                            window.location.reload(true);
                         })
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             displayMessage(
