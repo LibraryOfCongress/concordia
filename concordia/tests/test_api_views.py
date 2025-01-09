@@ -104,10 +104,6 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
         cls.assets = []
         for item in cls.items:
-            for i in range(0, 15):
-                cls.assets.append(
-                    create_asset(title=f"{item.id} — {i}", item=item, do_save=False)
-                )
             cls.assets.append(
                 create_asset(
                     title=f"Thumbnail URL test for {item.id}",
@@ -118,6 +114,10 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                     do_save=False,
                 )
             )
+            for i in range(0, 15):
+                cls.assets.append(
+                    create_asset(title=f"{item.id} — {i}", item=item, do_save=False)
+                )
         Asset.objects.bulk_create(cls.assets)
 
         cls.transcriptions = []
