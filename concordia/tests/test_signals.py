@@ -35,6 +35,21 @@ class TestSignalHandlers(CreateTestUsers, TestCase):
             self.assertTrue(request.user.is_authenticated)
             self.assertEqual(len(mail.outbox), 1)
 
+    def test_user_successfully_activated_no_request(self):
+        with mock.patch("concordia.signals.handlers.flag_enabled") as flag_mock:
+            flag_mock.return_value = True
+            user_activated.send(sender=self.__class__, user=self.user, request=None)
+            self.assertEqual(len(mail.outbox), 1)
+
+    def test_user_successfully_activated_no_welcome_email(self):
+        with mock.patch("concordia.signals.handlers.flag_enabled") as flag_mock:
+            flag_mock.return_value = False
+            response = self.client.get("/")
+            request = response.wsgi_request
+            user_activated.send(sender=self.__class__, user=self.user, request=request)
+            self.assertTrue(request.user.is_authenticated)
+            self.assertEqual(len(mail.outbox), 0)
+
     def test_add_user_to_newsletter(self):
         self.login_user()
         response = self.client.post("/")

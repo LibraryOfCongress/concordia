@@ -1,9 +1,12 @@
+from datetime import date
+from unittest import mock
 from urllib.parse import urlparse
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
+from concordia import api_views
 from concordia.models import (
     Asset,
     Campaign,
@@ -21,6 +24,57 @@ from .utils import (
     create_project,
     create_topic,
 )
+
+
+class URLAwareEncoderTest(TestCase):
+    def test_default(self):
+        encoder = api_views.URLAwareEncoder()
+        self.assertEqual(encoder.default(None), None)
+
+        obj = mock.Mock(spec=["url"])
+        self.assertEqual(encoder.default(obj), obj.url)
+
+        obj = mock.Mock(spec=["get_absolute_url"])
+        self.assertEqual(encoder.default(obj), obj.get_absolute_url())
+
+        # Test non-model object
+        obj = date.today()
+        self.assertEqual(encoder.default(obj), date.today().isoformat())
+
+
+class APIViewMixinTest(TestCase):
+    def setUp(self):
+        self.mixin = api_views.APIViewMixin()
+
+    def test_serialize_conctext(self):
+        context = {"test-key": "test-value"}
+        self.assertEqual(self.mixin.serialize_context(context), context)
+
+    @mock.patch("concordia.api_views.model_to_dict")
+    def test_serialize_object(self, mtd_mock):
+        return_data = {"test-key": "test-value"}
+        mtd_mock.return_value = return_data
+
+        obj = mock.Mock(spec=["get_absolute_url"])
+        data = self.mixin.serialize_object(obj)
+
+        self.assertEqual(data, return_data | {"url": obj.get_absolute_url()})
+
+        obj = mock.Mock(spec=[])
+        data = self.mixin.serialize_object(obj)
+
+        self.assertEqual(data, return_data)
+
+
+@mock.patch("concordia.api_views.time")
+class APIListViewTest(TestCase):
+    def test_serialize_context(self, time_mock):
+        time_mock.return_value = "test-time"
+        view = api_views.APIListView()
+        context = {"object_list": []}
+
+        data = view.serialize_context(context)
+        self.assertEqual(data, {"objects": [], "sent": "test-time"})
 
 
 @override_settings(RATELIMIT_ENABLE=False)
@@ -50,6 +104,16 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
         cls.assets = []
         for item in cls.items:
+            cls.assets.append(
+                create_asset(
+                    title=f"Thumbnail URL test for {item.id}",
+                    item=item,
+                    download_url="http://tile.loc.gov/image-services/iiif/"
+                    "service:music:mussuffrage:mussuffrage-100183:mussuffrage-100183.0001/"
+                    "full/pct:100/0/default.jpg",
+                    do_save=False,
+                )
+            )
             for i in range(0, 15):
                 cls.assets.append(
                     create_asset(title=f"{item.id} — {i}", item=item, do_save=False)
@@ -92,7 +156,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         data = self.assertValidJSON(resp)
         return resp, data
 
-    def get_api_list_response(self, url, page_size=23, **request_args):
+    def get_api_list_response(self, url, page_size=10, **request_args):
         """
         This issues a call to one of our API views and confirms that the
         response follows our basic conventions of returning a top level object
@@ -347,3 +411,5 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             self.assertIn("slug", obj)
             self.assertIn("url", obj)
             self.assertIn("year", obj)
+            if "Thumbnail test" in obj["title"]:
+                self.assertIn("https", obj["thumbnail_url"])
