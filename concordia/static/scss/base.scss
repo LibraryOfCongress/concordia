@@ -621,9 +621,6 @@ hr {
 }
 
 ul.nav-secondary {
-    position: absolute;
-    top: 1rem;
-    right: 15px;
     margin: 0 -10px;
 
     .nav-link {
@@ -692,6 +689,10 @@ ul.nav-secondary {
 
 .navbar-light .navbar-nav .nav-link {
     color: $gray-800;
+}
+
+.navbar-light .navbar-nav #topnav-account-dropdown-toggle {
+    color: $blue;
 }
 
 .logo-loc {
