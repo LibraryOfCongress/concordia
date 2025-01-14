@@ -84,7 +84,7 @@ for performance:
                             </li>
                             <li class="nav-item dropdown nav-dropdown">
                                 <a id="topnav-campaigns-dropdown-toggle" class="nav-link
-                                                                                {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-bs-toggle="dropdown" aria-haspopup="true"
+                                                                                {% if 'campaigns' in PATH_LEVEL_1 %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">Campaigns <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu" aria-labelledby="topnav-campaigns-dropdown-toggle">
                                     <a class="dropdown-item" href="{% url 'campaign-topic-list' %}">All Campaigns</a>
@@ -94,7 +94,7 @@ for performance:
                             <li id="topnav-help-dropdown" class="nav-item dropdown
                                                                  nav-dropdown">
                                 <a id="topnav-help-dropdown-toggle" class="nav-link
-                                                                           {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}"
+                                                                           {% if PATH_LEVEL_1 == 'help-center' or PATH_LEVEL_1 == 'get-started' %}active{% endif %}"
                                    href="{% url 'help-center' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu"
