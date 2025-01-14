@@ -1631,10 +1631,16 @@ def generate_ocr_transcription(request, *, asset_pk):
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
-        return superseded
+        # If superseded is an HttpResponse, that means
+        # this transcription has already been superseded, so
+        # we won't run OCR and instead send back an error
+        # Otherwise, we just have thr transcription the OCR
+        # is gong to supersede, so we can continue
+        if isinstance(superseded, HttpResponse):
+            return superseded
     else:
-        # This means this is the first transcription on this asset
-        # to enable undoing of the OCR transcription, we create
+        # This means this is the first transcription on this asset.
+        # To enable undoing of the OCR transcription, we create
         # an empty transcription for the OCR transcription to supersede
         superseded = Transcription(
             asset=asset,

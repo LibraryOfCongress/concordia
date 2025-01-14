@@ -663,11 +663,24 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         mock.reset_mock()
 
         with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+            # Test case if the trancription being replaced has already been superseded
             superseded_mock.return_value = HttpResponse(status=409)
             url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
             response = self.client.post(url)
             self.assertEqual(409, response.status_code)
+            self.assertTrue(superseded_mock.called)
             self.assertFalse(mock.called)
+
+            # Test case if the transcription being replaced hasn't been superseded
+            superseded_mock.reset_mock()
+            superseded_mock.return_value = create_transcription(
+                asset=asset2, user=get_anonymous_user(), submitted=now()
+            )
+            url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
+            response = self.client.post(url)
+            self.assertEqual(201, response.status_code)
+            self.assertTrue(superseded_mock.called)
+            self.assertTrue(mock.called)
 
     def test_project_detail_view(self):
         """
