@@ -159,20 +159,13 @@ class CompletedCampaignListViewTests(TestCase):
 
     def test_research_centers(self):
         today = date.today()
-        yesterday = today - timedelta(days=1)
 
         center = create_research_center()
 
         create_campaign(
             published=True, status=Campaign.Status.COMPLETED, completed_date=today
         )
-        campaign2 = create_campaign(
-            published=True,
-            status=Campaign.Status.COMPLETED,
-            slug="test-campaign-2",
-            completed_date=yesterday,
-        )
-        campaign2.research_centers.add(center)
+        self.campaign2.research_centers.add(center)
         url = f"/campaigns/completed/?research_center={center.id}"
 
         # Test queryset directly
