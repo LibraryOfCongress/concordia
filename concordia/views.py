@@ -923,7 +923,9 @@ class CompletedCampaignListView(APIListView):
         campaignType = self.request.GET.get("type", None)
         campaigns = Campaign.objects.published().listed()
         if campaignType is None:
-            return campaigns
+            return campaigns.filter(
+                status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED]
+            )
         elif campaignType == "retired":
             status = Campaign.Status.RETIRED
         else:
