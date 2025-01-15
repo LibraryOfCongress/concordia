@@ -95,23 +95,52 @@ class CompletedCampaignListViewTests(TestCase):
     This class contains the unit tests for the CompletedCampaignListView
     """
 
-    def test_queryset(self):
+    def setUp(self):
         today = date.today()
-        create_campaign(
-            published=True, status=Campaign.Status.COMPLETED, completed_date=today
-        )
         yesterday = today - timedelta(days=1)
-        create_campaign(
+
+        self.campaign2 = create_campaign(
             published=True,
             status=Campaign.Status.COMPLETED,
             slug="test-campaign-2",
             completed_date=yesterday,
         )
-        create_campaign(
+        self.campaign3 = create_campaign(
             published=True,
             status=Campaign.Status.RETIRED,
             slug="test-campaign-3",
             completed_date=yesterday,
+        )
+
+    def test_get_all_campaigns(self):
+        active = create_campaign(
+            published=True,
+            slug="test-campaign-4",
+            completed_date=self.campaign2.completed_date,
+        )
+        view = CompletedCampaignListView()
+        view.request = RequestFactory().get("/campaigns/completed/")
+        completed_and_retired = view._get_all_campaigns()
+        self.assertNotIn(active, completed_and_retired)
+        self.assertIn(self.campaign2, completed_and_retired)
+        self.assertIn(self.campaign3, completed_and_retired)
+
+        view.request = RequestFactory().get("/campaigns/completed/?type=completed")
+        completed_campaigns = view._get_all_campaigns()
+        self.assertNotIn(active, completed_campaigns)
+        self.assertIn(self.campaign2, completed_campaigns)
+        self.assertNotIn(self.campaign3, completed_campaigns)
+
+        view.request = RequestFactory().get("/campaigns/completed/?type=retired")
+        retired_campaigns = view._get_all_campaigns()
+        self.assertNotIn(active, retired_campaigns)
+        self.assertNotIn(self.campaign2, retired_campaigns)
+        self.assertIn(self.campaign3, retired_campaigns)
+
+    def test_queryset(self):
+        today = date.today()
+        create_campaign(
+            published=True, status=Campaign.Status.COMPLETED, completed_date=today
         )
 
         view = CompletedCampaignListView()
