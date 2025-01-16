@@ -94,7 +94,7 @@ for performance:
                             <li id="topnav-help-dropdown" class="nav-item dropdown
                                                                  nav-dropdown">
                                 <a id="topnav-help-dropdown-toggle" class="nav-link
-                                                                           {% if PATH_LEVEL_1 == 'help-center' or PATH_LEVEL_1 == 'get-started' %}active{% endif %}"
+                                                                           {% if PATH_LEVEL_1 == 'help-center' or 'get-started' in PATH_LEVEL_1 %}active{% endif %}"
                                    href="{% url 'help-center' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
                                    aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu"
