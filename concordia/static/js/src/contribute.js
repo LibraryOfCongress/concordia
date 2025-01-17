@@ -400,6 +400,9 @@ function setupPage() {
                             $('#editor-column').html(
                                 $(data).find('#editor-column').html(),
                             );
+                            $('#ocr-section').html(
+                                $(data).find('#ocr-section').html(),
+                            );
                             $('#help-container').html(
                                 $(data).find('#help-container').html(),
                             );
