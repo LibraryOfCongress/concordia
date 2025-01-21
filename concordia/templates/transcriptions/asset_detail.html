@@ -77,8 +77,8 @@
                 {% include "transcriptions/asset_detail/ocr_help_modal.html" %}
                 {% include "transcriptions/asset_detail/viewer_filters.html" %}
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
-                {% if not disable_ocr %}
-                    <div id="ocr-section" class="row ps-3 pb-4 bg-white print-none">
+                <div id="ocr-section" class="row ps-3 pb-4 bg-white print-none">
+                    {% if not disable_ocr %}
                         <div class="d-flex flex-row align-items-center justify-content-end mt-1">
                             <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-bs-placement="top" data-bs-trigger="focus click hover" title="When to use OCR"  data-bs-toggle="modal" data-bs-target="#ocr-help-modal">
                                 <span class="underline-link fw-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
@@ -89,8 +89,8 @@
                                 <a role="button" data-bs-placement="top" title='Log in to use "Transcribe with OCR"' id="ocr-transcription-link" class="btn btn-primary mx-1 disabled" disabled>Transcribe with OCR</a>
                             {% endif %}
                         </div>
-                    </div>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
