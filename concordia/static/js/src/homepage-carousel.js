@@ -1,10 +1,10 @@
 /* global $ */
 
-import * as bootstrap from 'https://cdn.skypack.dev/bootstrap@5.3.0/dist/js/bootstrap.esm.js';
+import {Carousel} from '/static/bootstrap/dist/js/bootstrap.esm.js';
 
 // initialization
 var carouselElement = document.getElementById('homepage-carousel');
-var carousel = new bootstrap.Carousel(carouselElement, {
+var carousel = new Carousel(carouselElement, {
     interval: 5000,
     pause: false,
 });
