@@ -928,7 +928,6 @@ li.breadcrumb-item.active {
         content: '';
         background-color: #fff;
         background-size: 10px 10px;
-        border: 1px solid $dark;
         flex: 1 1 0%;
         opacity: 0.8;
     }
@@ -941,6 +940,7 @@ li.breadcrumb-item.active {
             #fff 0,
             #fff 50%
         );
+        border: 1px solid $dark;
     }
 
     &.campaign-progress::after {
