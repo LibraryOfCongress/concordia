@@ -952,6 +952,11 @@ body .campaign-page-progress {
     height: 2.5rem;
 }
 
+.campaign-page-progress .progress-bar:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
 div.campaign-progress {
     height: 35px;
     margin-top: 20px;
