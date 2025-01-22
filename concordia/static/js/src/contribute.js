@@ -1,5 +1,6 @@
 /* global $ displayMessage buildErrorMessage */
 
+import {selectLanguage} from 'ocr';
 import {reserveAssetForEditing} from 'asset-reservation';
 import {resetTurnstile} from 'turnstile';
 
@@ -408,6 +409,10 @@ function setupPage() {
                             );
                             $ocrModal.html(
                                 $(data).find('#ocr-transcription-modal').html(),
+                            );
+                            $('#select-language-button').on(
+                                'click',
+                                selectLanguage,
                             );
                             reserveAssetForEditing();
                             setupPage();
