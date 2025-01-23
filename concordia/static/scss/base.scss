@@ -932,6 +932,7 @@ li.breadcrumb-item.active {
         opacity: 0.8;
     }
 
+    &.campaign-progress::after,
     &.w-100::after {
         background-image: repeating-linear-gradient(
             45deg,
@@ -941,10 +942,6 @@ li.breadcrumb-item.active {
             #fff 50%
         );
         border: 1px solid $dark;
-    }
-
-    &.campaign-progress::after {
-        box-shadow: inset 0 0 1px 1px $primary;
     }
 }
 
