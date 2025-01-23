@@ -262,7 +262,6 @@ def simple_page(request, path=None, slug=None, body_ctx=None):
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
-    resp["Last-Modified"] = http_date(page.updated_on.timestamp())
     return resp
 
 
