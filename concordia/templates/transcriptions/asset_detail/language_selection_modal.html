@@ -23,7 +23,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
-                {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                {% if transcription_status != "completed" %}
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
                     <button id="ocr-transcription-button" class="btn btn-link underline-link fw-bold" disabled>Replace Text</button>
                 {% endif %}
