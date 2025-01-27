@@ -251,7 +251,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         for obj in data["objects"]:
             self.assertIn("id", obj)
             self.assertIn("url", obj)
-            self.assertDictContainsSubset(test_topics[obj["id"]], obj)
+            self.assertEqual(obj, obj | test_topics[obj["id"]])
 
     def test_topic_detail(self):
         resp, data = self.get_api_response(
@@ -266,15 +266,14 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertIn("id", serialized_project)
         self.assertIn("url", serialized_project)
         topic = self.test_topic
-        self.assertDictContainsSubset(
-            {
-                "id": topic.id,
+        self.assertEqual(
+            serialized_project,
+            serialized_project
+            | {
                 "title": topic.title,
                 "description": topic.description,
                 "slug": topic.slug,
-                "thumbnail_image": topic.thumbnail_image,
             },
-            serialized_project,
         )
         self.assertURLEqual(
             serialized_project["url"], f"http://testserver{topic.get_absolute_url()}"
@@ -295,7 +294,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         for obj in data["objects"]:
             self.assertIn("id", obj)
             self.assertIn("url", obj)
-            self.assertDictContainsSubset(test_campaigns[obj["id"]], obj)
+            self.assertEqual(obj, obj | test_campaigns[obj["id"]])
 
     def test_campaign_detail(self):
         resp, data = self.get_api_response(
@@ -313,8 +312,10 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertIn("id", serialized_project)
         self.assertIn("url", serialized_project)
         campaign = self.test_project.campaign
-        self.assertDictContainsSubset(
-            {
+        self.assertEqual(
+            serialized_project,
+            serialized_project
+            | {
                 "id": campaign.id,
                 "title": campaign.title,
                 "description": campaign.description,
@@ -322,7 +323,6 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                 "metadata": campaign.metadata,
                 "thumbnail_image": campaign.thumbnail_image,
             },
-            serialized_project,
         )
         self.assertURLEqual(
             serialized_project["url"], f"http://testserver{campaign.get_absolute_url()}"
@@ -348,8 +348,10 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertURLEqual(
             serialized_project["url"], f"http://testserver{project.get_absolute_url()}"
         )
-        self.assertDictContainsSubset(
-            {
+        self.assertEqual(
+            serialized_project,
+            serialized_project
+            | {
                 "description": project.description,
                 "id": project.id,
                 "metadata": project.metadata,
@@ -357,7 +359,6 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                 "thumbnail_image": project.thumbnail_image,
                 "title": project.title,
             },
-            serialized_project,
         )
 
         for obj in data["objects"]:
@@ -389,15 +390,16 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertURLEqual(
             serialized_item["url"], f"http://testserver{item.get_absolute_url()}"
         )
-        self.assertDictContainsSubset(
-            {
+        self.assertEqual(
+            serialized_item,
+            serialized_item
+            | {
                 "description": item.description,
                 "id": item.id,
                 "item_id": item.item_id,
                 "metadata": item.metadata,
                 "title": item.title,
             },
-            serialized_item,
         )
 
         for obj in data["objects"]:
