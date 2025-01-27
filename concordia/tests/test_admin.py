@@ -217,7 +217,7 @@ class ResourceFileAdminTest(TestCase, CreateTestUsers):
             resource = MockResource()
 
         result = self.resource_file_admin.resource_url(MockResourceFile())
-        self.assertEquals(result, "http://example.com")
+        self.assertEqual(result, "http://example.com")
 
     def test_get_fields(self):
         request = self.request_factory.get("/")
@@ -247,15 +247,15 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
     def test_item_import_view(self):
         self.client.force_login(self.staff_user)
         response = self.client.get(reverse(self.url_lookup, args=[self.project.id]))
-        self.assertEquals(response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
         self.client.logout()
 
         self.client.force_login(self.super_user)
         response = self.client.get(reverse(self.url_lookup, args=[self.project.id + 1]))
-        self.assertEquals(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
         response = self.client.get(reverse(self.url_lookup, args=[self.project.id]))
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="admin/concordia/project/item_import.html"
         )
@@ -264,7 +264,7 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
             reverse(self.url_lookup, args=[self.project.id]),
             {"bad_param": "https://example.com"},
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="admin/concordia/project/item_import.html"
         )
@@ -315,35 +315,35 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         deleted_objects, model_count, perms_needed, protected = (
             self.admin.get_deleted_objects(mock_objs, request)
         )
-        self.assertEquals(len(deleted_objects), 4)
-        self.assertEquals(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
-        self.assertNotEquals(perms_needed, set())
-        self.assertEquals(protected, [])
+        self.assertEqual(len(deleted_objects), 4)
+        self.assertEqual(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
+        self.assertNotEqual(perms_needed, set())
+        self.assertEqual(protected, [])
 
         request.user = self.super_user
         deleted_objects, model_count, perms_needed, protected = (
             self.admin.get_deleted_objects(mock_objs, request)
         )
-        self.assertEquals(len(deleted_objects), 4)
-        self.assertEquals(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
-        self.assertEquals(perms_needed, set())
-        self.assertEquals(protected, [])
+        self.assertEqual(len(deleted_objects), 4)
+        self.assertEqual(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
+        self.assertEqual(perms_needed, set())
+        self.assertEqual(protected, [])
 
         deleted_objects, model_count, perms_needed, protected = (
             self.admin.get_deleted_objects([self.item], request)
         )
-        self.assertEquals(len(deleted_objects), 1)
-        self.assertEquals(model_count, {"items": 1, "assets": 1, "transcriptions": 1})
-        self.assertEquals(perms_needed, set())
-        self.assertEquals(protected, [])
+        self.assertEqual(len(deleted_objects), 1)
+        self.assertEqual(model_count, {"items": 1, "assets": 1, "transcriptions": 1})
+        self.assertEqual(perms_needed, set())
+        self.assertEqual(protected, [])
 
     def test_get_queryset(self):
         request = self.request_factory.get("/")
         qs = self.admin.get_queryset(request)
-        self.assertEquals(qs.count(), 1)
+        self.assertEqual(qs.count(), 1)
 
     def test_campaign_title(self):
-        self.assertEquals(
+        self.assertEqual(
             self.item.project.campaign.title, self.admin.campaign_title(self.item)
         )
 
@@ -362,7 +362,7 @@ class AssetAdminTest(TestCase, CreateTestUsers):
     def test_get_queryset(self):
         request = self.request_factory.get("/")
         qs = self.admin.get_queryset(request)
-        self.assertEquals(qs.count(), 1)
+        self.assertEqual(qs.count(), 1)
 
     def test_lookup_allowed(self):
         self.assertTrue(self.admin.lookup_allowed("item__project__id__exact", 0))
@@ -372,16 +372,16 @@ class AssetAdminTest(TestCase, CreateTestUsers):
         self.assertFalse(self.admin.lookup_allowed("item__project", 0))
 
     def test_item_id(self):
-        self.assertEquals(self.asset.item.item_id, self.admin.item_id(self.asset))
+        self.assertEqual(self.asset.item.item_id, self.admin.item_id(self.asset))
 
     def test_truncated_media_url(self):
         truncated_url = self.admin.truncated_media_url(self.asset)
-        self.assertEquals(truncated_url.count(self.asset.media_url), 2)
+        self.assertEqual(truncated_url.count(self.asset.media_url), 2)
 
         self.asset.media_url = "".join([str(i) for i in range(200)])
         truncated_url = self.admin.truncated_media_url(self.asset)
-        self.assertEquals(truncated_url.count(self.asset.media_url), 1)
-        self.assertEquals(truncated_url.count(self.asset.media_url[:99]), 2)
+        self.assertEqual(truncated_url.count(self.asset.media_url), 1)
+        self.assertEqual(truncated_url.count(self.asset.media_url[:99]), 2)
 
     def test_get_readonly_fields(self):
         request = self.request_factory.get("/")
@@ -479,11 +479,11 @@ class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def test_truncated_text(self):
         self.transcription.text = self.fake.text(50)
         result = self.admin.truncated_text(self.transcription)
-        self.assertEquals(result, self.transcription.text)
+        self.assertEqual(result, self.transcription.text)
 
         self.transcription.text = self.fake.text(500)
         result = self.admin.truncated_text(self.transcription)
-        self.assertNotEquals(result, self.transcription.text)
+        self.assertNotEqual(result, self.transcription.text)
         self.assertIn(result[:-1], self.transcription.text)
 
     def test_export_to_csv(self):
