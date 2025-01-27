@@ -11,6 +11,7 @@ from concordia.models import (
     Asset,
     Campaign,
     Item,
+    Project,
     Topic,
     Transcription,
     User,
@@ -86,6 +87,10 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         cls.reviewer = User.objects.create_user(
             username="reviewer", email="tester@example.com"
         )
+
+        # clear data from other tests
+        Project.objects.all().delete()
+        Topic.objects.all().delete()
 
         cls.test_project = create_project()
 
@@ -270,9 +275,11 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             serialized_project,
             serialized_project
             | {
+                "id": topic.id,
                 "title": topic.title,
                 "description": topic.description,
                 "slug": topic.slug,
+                "thumbnail_image": topic.thumbnail_image,
             },
         )
         self.assertURLEqual(
