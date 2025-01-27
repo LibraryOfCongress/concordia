@@ -105,6 +105,17 @@ class ConcordiaAccountViewTests(
         self.login_user()
 
         with self.settings(REQUIRE_EMAIL_RECONFIRMATION=False):
+            # First, test trying to 'update' to the already used email
+            response = self.client.post(
+                reverse("user-profile"),
+                {"email": self.user.email, "username": "tester"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        self.assertFalse(response.context["form"].is_valid())
+
+        with self.settings(REQUIRE_EMAIL_RECONFIRMATION=False):
             response = self.client.post(
                 reverse("user-profile"), {"email": test_email, "username": "tester"}
             )

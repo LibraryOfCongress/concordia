@@ -1,4 +1,4 @@
-<div id="guide-sidebar" class="sidebar offscreen">
+<div id="guide-sidebar" class="sidebar offscreen" tabindex="-1">
     <div id="title-bar" class="bg-primary px-2 py-1 row text-white">
         <div id="guide-bars-col" class="col-1 d-none pt-2">
             <a id="guide-bars" data-bs-target="#guide-carousel" data-bs-slide-to="0" href="" aria-label="link">
@@ -19,11 +19,11 @@
             <div class="carousel-item active" id="guide-nav">
                 <ul class="nav flex-column">
                     <li class="nav-item toc-title">
-                        <a class="nav-link" data-bs-target="#guide-carousel" data-bs-slide-to="1" href="#">About This Campaign</a>
+                        <a class="nav-link" data-bs-target="#guide-carousel" data-bs-slide-to="1" href="#" tabindex="-1">About This Campaign</a>
                     </li>
                     {% for guide in guides %}
                         <li class="nav-item toc-title">
-                            <a data-bs-target="#guide-carousel" data-bs-slide-to="{{ forloop.counter|add:1 }}" class="nav-link" href="#pane-{{ forloop.counter }}">
+                            <a data-bs-target="#guide-carousel" data-bs-slide-to="{{ forloop.counter|add:1 }}" class="nav-link" href="#pane-{{ forloop.counter }}" tabindex="-1">
                                 {{ guide.title }}
                             </a>
                         </li>

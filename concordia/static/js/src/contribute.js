@@ -1,5 +1,6 @@
 /* global $ displayMessage buildErrorMessage */
 
+import {selectLanguage} from 'ocr';
 import {reserveAssetForEditing} from 'asset-reservation';
 import {resetTurnstile} from 'turnstile';
 
@@ -400,15 +401,21 @@ function setupPage() {
                             $('#editor-column').html(
                                 $(data).find('#editor-column').html(),
                             );
+                            $('#ocr-section').html(
+                                $(data).find('#ocr-section').html(),
+                            );
                             $('#help-container').html(
                                 $(data).find('#help-container').html(),
                             );
                             $ocrModal.html(
                                 $(data).find('#ocr-transcription-modal').html(),
                             );
+                            $('#select-language-button').on(
+                                'click',
+                                selectLanguage,
+                            );
                             reserveAssetForEditing();
                             setupPage();
-                            window.location.reload(true);
                         })
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             displayMessage(

@@ -16,6 +16,7 @@ from concordia.models import (
     Item,
     MediaType,
     Project,
+    ResearchCenter,
     Resource,
     ResourceFile,
     SimplePage,
@@ -316,6 +317,13 @@ def create_campaign_retirement_progress(
     if do_save:
         progress.save()
     return progress
+
+
+def create_research_center(*, title="Test Research Center", do_save=True, **kwargs):
+    center = ResearchCenter(title=title, **kwargs)
+    if do_save:
+        center.save()
+    return center
 
 
 class JSONAssertMixin(object):

@@ -67,7 +67,7 @@ class TurnstileField(forms.Field):
         try:
             response = opener.open(request, timeout=settings.TURNSTILE_TIMEOUT)
         except HTTPError as exc:
-            logger.exception("HTTPError received from Turnstile: ", exc, exc_info=exc)
+            logger.exception("HTTPError received from Turnstile: %s", exc, exc_info=exc)
             raise forms.ValidationError(
                 self.error_messages["error_turnstile"], code="error_turnstile"
             ) from exc

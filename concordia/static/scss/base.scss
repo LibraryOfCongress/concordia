@@ -621,9 +621,6 @@ hr {
 }
 
 ul.nav-secondary {
-    position: absolute;
-    top: 1rem;
-    right: 15px;
     margin: 0 -10px;
 
     .nav-link {
@@ -692,6 +689,11 @@ ul.nav-secondary {
 
 .navbar-light .navbar-nav .nav-link {
     color: $gray-800;
+}
+
+.navbar-light .navbar-nav #topnav-account-dropdown-toggle {
+    color: $blue;
+    cursor: pointer;
 }
 
 .logo-loc {
@@ -925,6 +927,13 @@ li.breadcrumb-item.active {
     &::after {
         content: '';
         background-color: #fff;
+        background-size: 10px 10px;
+        flex: 1 1 0%;
+        opacity: 0.8;
+    }
+
+    &.campaign-progress::after,
+    &.w-100::after {
         background-image: repeating-linear-gradient(
             45deg,
             #242424 0,
@@ -932,18 +941,17 @@ li.breadcrumb-item.active {
             #fff 0,
             #fff 50%
         );
-        background-size: 10px 10px;
-        flex: 1 1 0%;
-        opacity: 0.8;
-    }
-
-    &.campaign-progress::after {
-        box-shadow: inset 0 0 1px 1px $primary;
+        border: 1px solid $dark;
     }
 }
 
 body .campaign-page-progress {
     height: 2.5rem;
+}
+
+.campaign-page-progress .progress-bar:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
 }
 
 div.campaign-progress {

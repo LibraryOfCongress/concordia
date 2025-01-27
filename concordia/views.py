@@ -262,7 +262,6 @@ def simple_page(request, path=None, slug=None, body_ctx=None):
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
-    resp["Last-Modified"] = http_date(page.updated_on.timestamp())
     return resp
 
 
@@ -326,7 +325,7 @@ def ajax_session_status(request):
     else:
         links = [
             {
-                "title": f"{user.username} Profile",
+                "title": "Profile",
                 "url": request.build_absolute_uri(reverse("user-profile")),
             }
         ]
@@ -337,8 +336,14 @@ def ajax_session_status(request):
                     "url": request.build_absolute_uri(reverse("admin:index")),
                 }
             )
+        links.append(
+            {
+                "title": "Logout",
+                "url": request.build_absolute_uri(reverse("logout")),
+            }
+        )
 
-        res = {"username": user.username, "links": links}
+        res = {"username": user.username[:15], "links": links}
 
     return JsonResponse(res)
 
@@ -909,13 +914,17 @@ class CampaignListView(APIListView):
 
 @method_decorator(default_cache_control, name="dispatch")
 class CompletedCampaignListView(APIListView):
+    model = Campaign
     template_name = "transcriptions/campaign_list_small_blocks.html"
+    context_object_name = "campaigns"
 
     def _get_all_campaigns(self):
         campaignType = self.request.GET.get("type", None)
         campaigns = Campaign.objects.published().listed()
         if campaignType is None:
-            return campaigns
+            return campaigns.filter(
+                status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED]
+            )
         elif campaignType == "retired":
             status = Campaign.Status.RETIRED
         else:
@@ -937,8 +946,6 @@ class CompletedCampaignListView(APIListView):
         ).distinct()
 
         return data
-
-    context_object_name = "campaigns"
 
 
 def calculate_asset_stats(asset_qs, ctx):
@@ -1625,10 +1632,16 @@ def generate_ocr_transcription(request, *, asset_pk):
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
-        return superseded
+        # If superseded is an HttpResponse, that means
+        # this transcription has already been superseded, so
+        # we won't run OCR and instead send back an error
+        # Otherwise, we just have thr transcription the OCR
+        # is gong to supersede, so we can continue
+        if isinstance(superseded, HttpResponse):
+            return superseded
     else:
-        # This means this is the first transcription on this asset
-        # to enable undoing of the OCR transcription, we create
+        # This means this is the first transcription on this asset.
+        # To enable undoing of the OCR transcription, we create
         # an empty transcription for the OCR transcription to supersede
         superseded = Transcription(
             asset=asset,

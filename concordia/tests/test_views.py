@@ -52,6 +52,7 @@ from .utils import (
     create_guide,
     create_item,
     create_project,
+    create_research_center,
     create_tag_collection,
     create_topic,
     create_transcription,
@@ -96,24 +97,89 @@ class CompletedCampaignListViewTests(TestCase):
 
     def setUp(self):
         today = date.today()
-        self.campaign1 = create_campaign(
-            published=True, status=Campaign.Status.COMPLETED, completed_date=today
-        )
         yesterday = today - timedelta(days=1)
+
         self.campaign2 = create_campaign(
             published=True,
             status=Campaign.Status.COMPLETED,
             slug="test-campaign-2",
             completed_date=yesterday,
         )
+        self.campaign3 = create_campaign(
+            published=True,
+            status=Campaign.Status.RETIRED,
+            slug="test-campaign-3",
+            completed_date=yesterday,
+        )
+
+    def test_get_all_campaigns(self):
+        active = create_campaign(
+            published=True,
+            slug="test-campaign-4",
+            completed_date=self.campaign2.completed_date,
+        )
+        view = CompletedCampaignListView()
+        view.request = RequestFactory().get("/campaigns/completed/")
+        completed_and_retired = view._get_all_campaigns()
+        self.assertNotIn(active, completed_and_retired)
+        self.assertIn(self.campaign2, completed_and_retired)
+        self.assertIn(self.campaign3, completed_and_retired)
+
+        view.request = RequestFactory().get("/campaigns/completed/?type=completed")
+        completed_campaigns = view._get_all_campaigns()
+        self.assertNotIn(active, completed_campaigns)
+        self.assertIn(self.campaign2, completed_campaigns)
+        self.assertNotIn(self.campaign3, completed_campaigns)
+
+        view.request = RequestFactory().get("/campaigns/completed/?type=retired")
+        retired_campaigns = view._get_all_campaigns()
+        self.assertNotIn(active, retired_campaigns)
+        self.assertNotIn(self.campaign2, retired_campaigns)
+        self.assertIn(self.campaign3, retired_campaigns)
 
     def test_queryset(self):
+        today = date.today()
+        create_campaign(
+            published=True, status=Campaign.Status.COMPLETED, completed_date=today
+        )
+
         view = CompletedCampaignListView()
+
+        # Test default
         view.request = RequestFactory().get("/campaigns/completed/")
         queryset = view.get_queryset()
         self.assertGreater(
             queryset.first().completed_date, queryset.last().completed_date
         )
+
+        # Test retired
+        view.request = RequestFactory().get("/campaigns/completed/?type=retired")
+        queryset = view.get_queryset()
+        self.assertEqual(queryset.count(), 1)
+
+    def test_research_centers(self):
+        today = date.today()
+
+        center = create_research_center()
+
+        create_campaign(
+            published=True, status=Campaign.Status.COMPLETED, completed_date=today
+        )
+        self.campaign2.research_centers.add(center)
+        url = f"/campaigns/completed/?research_center={center.id}"
+
+        # Test queryset directly
+        view = CompletedCampaignListView()
+        view.request = RequestFactory().get(url)
+        queryset = view.get_queryset()
+
+        self.assertEqual(queryset.count(), 1)
+
+        # Test get_context_data through a get
+        response = self.client.get(url)
+
+        self.assertIn("research_centers", response.context)
+        self.assertEqual(response.context["research_centers"][0], center)
 
 
 @override_settings(
@@ -619,11 +685,24 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         mock.reset_mock()
 
         with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+            # Test case if the trancription being replaced has already been superseded
             superseded_mock.return_value = HttpResponse(status=409)
             url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
             response = self.client.post(url)
             self.assertEqual(409, response.status_code)
+            self.assertTrue(superseded_mock.called)
             self.assertFalse(mock.called)
+
+            # Test case if the transcription being replaced hasn't been superseded
+            superseded_mock.reset_mock()
+            superseded_mock.return_value = create_transcription(
+                asset=asset2, user=get_anonymous_user(), submitted=now()
+            )
+            url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
+            response = self.client.post(url)
+            self.assertEqual(201, response.status_code)
+            self.assertTrue(superseded_mock.called)
+            self.assertTrue(mock.called)
 
     def test_project_detail_view(self):
         """

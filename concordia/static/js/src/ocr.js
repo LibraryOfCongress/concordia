@@ -6,3 +6,5 @@ function selectLanguage() {
 }
 
 $('#select-language-button').on('click', selectLanguage);
+
+export {selectLanguage};
