@@ -15,7 +15,8 @@
 {% block main_content %}
     <div class="container py-3">
         <h1>Completed Campaigns</h1>
-        <div id="campaign-options" class="d-flex flex-wrap justify-content-end my-2">
+        <div id="campaign-options" class="d-flex flex-wrap my-2">
+            <div class="d-flex align-items-center me-auto mt-2">Results: {{ result_count }} Campaigns</div>
             <div class="d-flex align-items-center ms-3 mt-2">
                 <label for="view-options" class="pe-1">View</label>
                 <select id="view-options">

@@ -940,9 +940,11 @@ class CompletedCampaignListView(APIListView):
         return campaigns.order_by("-completed_date")
 
     def get_context_data(self, **kwargs):
+        campaigns = self._get_all_campaigns()
         data = super().get_context_data(**kwargs)
+        data["result_count"] = campaigns.count()
         data["research_centers"] = ResearchCenter.objects.filter(
-            campaign__in=self._get_all_campaigns()
+            campaign__in=campaigns
         ).distinct()
 
         return data
