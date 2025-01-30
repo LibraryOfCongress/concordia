@@ -157,6 +157,17 @@ class CompletedCampaignListViewTests(TestCase):
         queryset = view.get_queryset()
         self.assertEqual(queryset.count(), 1)
 
+    def test_context_data(self):
+        request = RequestFactory().get("/campaigns/completed/")
+        response = CompletedCampaignListView.as_view()(request)
+        self.assertIsInstance(response.context_data, dict)
+        self.assertEqual(response.context_data["result_count"], 2)
+
+        request = RequestFactory().get("/campaigns/completed/?type=completed")
+        response = CompletedCampaignListView.as_view()(request)
+        self.assertIsInstance(response.context_data, dict)
+        self.assertEqual(response.context_data["result_count"], 1)
+
     def test_research_centers(self):
         today = date.today()
 
