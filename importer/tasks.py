@@ -3,6 +3,7 @@ See the module-level docstring for implementation details
 """
 
 import concurrent.futures
+import hashlib
 import os
 import re
 from functools import wraps
@@ -10,6 +11,7 @@ from logging import getLogger
 from tempfile import NamedTemporaryFile
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
+import boto3
 import requests
 from celery import group
 from django.core.cache import cache
@@ -565,6 +567,8 @@ def download_asset(self, import_asset):
     )
 
     try:
+        s3 = boto3.client('s3')
+        hasher = hashlib.md5()
         # We'll download the remote file to a temporary file
         # and after that completes successfully will upload it
         # to the defined ASSET_STORAGE.
@@ -574,6 +578,7 @@ def download_asset(self, import_asset):
 
             for chunk in resp.iter_content(chunk_size=256 * 1024):
                 temp_file.write(chunk)
+                hasher.update(chunk)
 
             # Rewind the tempfile back to the first byte so we can
             # save it to storage
@@ -584,3 +589,10 @@ def download_asset(self, import_asset):
     except Exception:
         logger.exception("Unable to download %s to %s", download_url, asset_filename)
         raise
+
+    filehash = hasher.hexdigest()
+    response = s3.head_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=filename)
+    etag = response.get("ETag")[1:-1] # trim quotes around hash
+    if filehash != etag:
+        logger.exception("ETag (%s) for %s did not match calculated md5 hash (%s)", etag, filename, filehash)
+        raise Exception(f"ETag {etag} for {filename} did not match calculated md5 hash {filehash}")
