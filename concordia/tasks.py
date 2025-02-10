@@ -1054,32 +1054,36 @@ def unusual_activity():
     """
     Locate pages that were improperly transcribed or reviewed.
     """
-    now = timezone.now()
     site = Site.objects.get_current()
-    ONE_DAY_AGO = now - datetime.timedelta(days=1)
-    context = {
-        "title": "Unusual User Activity Report for "
-        + now.strftime("%b %d %Y, %I:%M %p"),
-        "domain": "https://" + site.domain,
-        "transcriptions": Transcription.objects.transcribe_incidents(ONE_DAY_AGO),
-        "reviews": Transcription.objects.review_incidents(ONE_DAY_AGO),
-    }
+    # Don't bother running unless we're in the prod env
+    if site.domain.find("-") < 0:
+        now = timezone.now()
+        ONE_DAY_AGO = now - datetime.timedelta(days=1)
+        context = {
+            "title": "Unusual User Activity Report for "
+            + now.strftime("%b %d %Y, %I:%M %p"),
+            "domain": "https://" + site.domain,
+            "transcriptions": Transcription.objects.transcribe_incidents(ONE_DAY_AGO),
+            "reviews": Transcription.objects.review_incidents(ONE_DAY_AGO),
+        }
 
-    text_body_template = loader.get_template("emails/unusual_activity.txt")
-    text_body_message = text_body_template.render(context)
+        text_body_template = loader.get_template("emails/unusual_activity.txt")
+        text_body_message = text_body_template.render(context)
 
-    html_body_template = loader.get_template("emails/unusual_activity.html")
-    html_body_message = html_body_template.render(context)
+        html_body_template = loader.get_template("emails/unusual_activity.html")
+        html_body_message = html_body_template.render(context)
 
-    to_email = ["rsar@loc.gov"]
-    if settings.DEFAULT_TO_EMAIL:
-        to_email.append(settings.DEFAULT_TO_EMAIL)
-    message = EmailMultiAlternatives(
-        subject=context["title"],
-        body=text_body_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=to_email,
-        reply_to=[settings.DEFAULT_FROM_EMAIL],
-    )
-    message.attach_alternative(html_body_message, "text/html")
-    message.send()
+        to_email = ["rsar@loc.gov"]
+        if settings.DEFAULT_TO_EMAIL:
+            to_email.append(settings.DEFAULT_TO_EMAIL)
+        message = EmailMultiAlternatives(
+            subject=context["title"],
+            body=text_body_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=to_email,
+            reply_to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        message.attach_alternative(html_body_message, "text/html")
+        message.send()
+    else:
+        print("site.domain was %s." % site.domain)
