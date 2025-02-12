@@ -30,7 +30,7 @@ User._meta.get_field("email").__dict__["_unique"] = True
 ONE_MINUTE = datetime.timedelta(minutes=1)
 ONE_DAY = datetime.timedelta(days=1)
 ONE_DAY_AGO = timezone.now() - ONE_DAY
-THRESHOLD = 3
+THRESHOLD = 2
 
 
 def resource_file_upload_path(instance, filename):
@@ -98,12 +98,13 @@ class ConcordiaUser(User):
 
     def transcribe_incidents(self, transcriptions, threshold=THRESHOLD):
         recent_transcriptions = transcriptions.filter(user=self).order_by("submitted")
-        timestamps = recent_transcriptions.values_list("submitted", flat=True)
+        timestamps = recent_transcriptions
         incidents = 0
-        for i in range(len(timestamps)):
+        for i in range(timestamps.count()):
             count = 1
-            for j in range(i + 1, len(timestamps)):
-                if (timestamps[j] - timestamps[i]).seconds <= 60:
+            other_assets = timestamps.exclude(asset=timestamps[i].asset)
+            for j in range(i + 1, other_assets.count()):
+                if (other_assets[j].submitted - timestamps[i].submitted).seconds <= 60:
                     count += 1
                     if count == threshold:
                         incidents += 1
@@ -907,11 +908,14 @@ class TranscriptionManager(models.Manager):
 
         return user_incident_count
 
-    def transcribe_incidents(self, start=ONE_DAY_AGO):
-        user_incident_count = []
-        transcriptions = self.get_queryset().filter(
+    def recent_transcriptions(self, start=ONE_DAY_AGO):
+        return self.get_queryset().filter(
             submitted__gte=start, user__is_superuser=False, user__is_staff=False
         )
+
+    def transcribe_incidents(self, start=ONE_DAY_AGO):
+        user_incident_count = []
+        transcriptions = self.recent_transcriptions(start)
         user_ids = (
             transcriptions.order_by("user")
             .distinct("user")
