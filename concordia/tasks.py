@@ -1054,9 +1054,9 @@ def unusual_activity():
     """
     Locate pages that were improperly transcribed or reviewed.
     """
-    site = Site.objects.get_current()
     # Don't bother running unless we're in the prod env
-    if site.domain.find("-") < 0:
+    if settings.CONCORDIA_ENVIRONMENT == "production":
+        site = Site.objects.get_current()
         now = timezone.now()
         ONE_DAY_AGO = now - datetime.timedelta(days=1)
         context = {
@@ -1085,5 +1085,3 @@ def unusual_activity():
         )
         message.attach_alternative(html_body_message, "text/html")
         message.send()
-    else:
-        print("site.domain was %s." % site.domain)
