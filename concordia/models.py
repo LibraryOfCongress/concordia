@@ -96,21 +96,20 @@ class ConcordiaUser(User):
                     break
         return incidents
 
-    def transcribe_incidents(self, transcriptions, threshold=THRESHOLD):
+    def transcribe_incidents(self, transcriptions):
         recent_transcriptions = transcriptions.filter(user=self).order_by("submitted")
-        timestamps = recent_transcriptions
+        transcriptions = recent_transcriptions
         incidents = 0
-        for i in range(timestamps.count()):
-            count = 1
-            other_assets = timestamps.exclude(asset=timestamps[i].asset)
-            for j in range(i + 1, other_assets.count()):
-                if (other_assets[j].submitted - timestamps[i].submitted).seconds <= 60:
-                    count += 1
-                    if count == threshold:
-                        incidents += 1
-                        break
-                else:
-                    break
+        for transcription in transcriptions:
+            start = transcription.submitted
+            end = transcription.submitted + datetime.timedelta(minutes=1)
+            if (
+                transcriptions.filter(submitted__lte=end, submitted__gt=start)
+                .exclude(asset=transcription.asset)
+                .count()
+                > 0
+            ):
+                incidents += 1
         return incidents
 
 
