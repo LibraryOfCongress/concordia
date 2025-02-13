@@ -97,8 +97,7 @@ class ConcordiaUser(User):
         return incidents
 
     def transcribe_incidents(self, transcriptions):
-        recent_transcriptions = transcriptions.filter(user=self).order_by("submitted")
-        transcriptions = recent_transcriptions
+        transcriptions = transcriptions.filter(user=self).order_by("submitted")
         incidents = 0
         for transcription in transcriptions:
             start = transcription.submitted
