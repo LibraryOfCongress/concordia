@@ -1050,12 +1050,12 @@ def clear_sessions():
 
 
 @celery_app.task(ignore_result=True)
-def unusual_activity():
+def unusual_activity(ignore_env=False):
     """
     Locate pages that were improperly transcribed or reviewed.
     """
     # Don't bother running unless we're in the prod env
-    if settings.CONCORDIA_ENVIRONMENT == "production":
+    if settings.CONCORDIA_ENVIRONMENT == "production" or ignore_env:
         site = Site.objects.get_current()
         now = timezone.now()
         ONE_DAY_AGO = now - datetime.timedelta(days=1)
