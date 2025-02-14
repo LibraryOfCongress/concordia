@@ -16,7 +16,7 @@
         <div id="homepage-contribute-container" class="container my-4">
             <div class="px-default ms-md-3 mb-5">
                 <div class="alert {{ banner.alert_class }} alert-dismissible w-100 d-flex" id="banner-{{ banner.slug }}" role="alert">
-                    <div class="d-flex flex-1 justify-content-center me-2">
+                    <div id="banner-inner" class="d-flex flex-1 justify-content-center">
                         <a class="btn {{ banner.btn_class }}" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
                             {{ banner.text }}
                         </a>

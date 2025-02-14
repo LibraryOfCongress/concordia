@@ -1198,6 +1198,10 @@ body .disabled > .page-link {
     }
 }
 
+#banner-inner {
+    margin-right: 0.75rem;
+}
+
 #homepage-contribute-activities {
     img {
         @include media-breakpoint-down(sm) {
