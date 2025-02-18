@@ -1,4 +1,5 @@
 import concurrent.futures
+import os.path
 from unittest import mock
 
 import requests
@@ -616,6 +617,24 @@ class AssetImportTests(TestCase):
         self.task_mock = mock.MagicMock()
         self.task_mock.request.id = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
 
+        self.get_return_value = [b"chunk1", b"chunk2"]
+
+        self.valid_hash = "097c42989a9e5d9dcced7b35ec4b0486"
+        self.invalid_hash = "bad-hash"
+
+        asset = self.import_asset.asset
+        item = asset.item
+        self.filename = os.path.join(
+            item.project.campaign.slug,
+            item.project.slug,
+            item.item_id,
+            "%d.jpg" % asset.sequence,
+        )
+
+        self.head_object_mock = mock.MagicMock()
+        self.s3_client_mock = mock.MagicMock()
+        self.s3_client_mock.head_object = self.head_object_mock
+
     def test_get_asset_urls_from_item_resources_empty(self):
         self.assertEqual(tasks.get_asset_urls_from_item_resources([]), ([], ""))
 
@@ -732,18 +751,74 @@ class AssetImportTests(TestCase):
             self.assertTrue(called_import_asset, self.import_asset)
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid(self):
-        with mock.patch("importer.tasks.requests.get") as get_mock:
-            get_mock.return_value.iter_content.return_value = [b"chunk1", b"chunk2"]
+        with (
+            mock.patch("importer.tasks.requests.get") as get_mock,
+            mock.patch("importer.tasks.boto3.client") as boto_mock,
+            mock.patch("importer.tasks.flag_enabled") as flag_mock,
+        ):
+            get_mock.return_value.iter_content.return_value = self.get_return_value
+            boto_mock.return_value = self.s3_client_mock
+            flag_mock.return_value = True
+            self.head_object_mock.return_value = {"ETag": f'"{self.valid_hash}"'}
+
             tasks.download_asset(self.task_mock, self.import_asset)
 
             self.assertEqual(get_mock.call_args[0], ("http://example.com",))
             self.assertTrue(get_mock.call_args[1]["stream"])
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}}
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        AWS_STORAGE_BUCKET_NAME="test-bucket",
+    )
+    def test_download_asset_valid_checksum_fail(self):
+        with (
+            mock.patch("importer.tasks.requests.get") as get_mock,
+            mock.patch("importer.tasks.boto3.client") as boto_mock,
+            mock.patch("importer.tasks.flag_enabled") as flag_mock,
+        ):
+            get_mock.return_value.iter_content.return_value = self.get_return_value
+            boto_mock.return_value = self.s3_client_mock
+            flag_mock.return_value = True
+            self.head_object_mock.return_value = {"ETag": f'"{self.invalid_hash}"'}
+
+            with self.assertRaises(Exception) as assertion:
+                tasks.download_asset(self.task_mock, self.import_asset)
+
+            self.assertEqual(
+                str(assertion.exception),
+                f"ETag {self.invalid_hash} for {self.filename} did not match "
+                f"calculated md5 hash {self.valid_hash}",
+            )
+
+    @override_settings(
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        AWS_STORAGE_BUCKET_NAME="test-bucket",
+    )
+    def test_download_asset_valid_checksum_fail_without_flag(self):
+        with (
+            mock.patch("importer.tasks.requests.get") as get_mock,
+            mock.patch("importer.tasks.boto3.client") as boto_mock,
+            self.assertLogs("importer.tasks", level="WARN") as log,
+        ):
+            get_mock.return_value.iter_content.return_value = self.get_return_value
+            boto_mock.return_value = self.s3_client_mock
+            self.head_object_mock.return_value = {"ETag": f'"{self.invalid_hash}"'}
+
+            tasks.download_asset(self.task_mock, self.import_asset)
+            self.assertEqual(
+                log.output[0],
+                f"WARNING:importer.tasks:ETag ({self.invalid_hash}) for "
+                f"{self.filename} did not match calculated md5 hash "
+                f"({self.valid_hash}) but the IMPORT_IMAGE_CHECKSUM flag is disabled",
+            )
+
+    @override_settings(
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_invalid(self):
         with (

@@ -3,6 +3,7 @@ See the module-level docstring for implementation details
 """
 
 import concurrent.futures
+import hashlib
 import os
 import re
 from functools import wraps
@@ -10,12 +11,16 @@ from logging import getLogger
 from tempfile import NamedTemporaryFile
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
+import boto3
 import requests
 from celery import group
+from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.utils.text import slugify
 from django.utils.timezone import now
+from flags.state import flag_enabled
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
@@ -438,7 +443,15 @@ def import_item(self, import_item):
         )
         # Previously, any asset that raised a validation error was just ignored.
         # We don't want that--we want to see if an asset fails validation
-        item_asset.full_clean()
+        try:
+            item_asset.full_clean()
+        except ValidationError as exc:
+            raise ValidationError(
+                f"Importing asset with slug '{item_asset.slug}' for "
+                f"item '{item_asset.item}' with resource URL "
+                f"'{item_asset.resource_url}' failed with the following "
+                f"exception: {exc}"
+            ) from exc
         item_assets.append(item_asset)
 
     Asset.objects.bulk_create(item_assets)
@@ -565,6 +578,7 @@ def download_asset(self, import_asset):
     )
 
     try:
+        hasher = hashlib.md5(usedforsecurity=False)
         # We'll download the remote file to a temporary file
         # and after that completes successfully will upload it
         # to the defined ASSET_STORAGE.
@@ -574,6 +588,7 @@ def download_asset(self, import_asset):
 
             for chunk in resp.iter_content(chunk_size=256 * 1024):
                 temp_file.write(chunk)
+                hasher.update(chunk)
 
             # Rewind the tempfile back to the first byte so we can
             # save it to storage
@@ -584,3 +599,33 @@ def download_asset(self, import_asset):
     except Exception:
         logger.exception("Unable to download %s to %s", download_url, asset_filename)
         raise
+
+    filehash = hasher.hexdigest()
+    response = boto3.client("s3").head_object(
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=asset_filename
+    )
+    etag = response.get("ETag")[1:-1]  # trim quotes around hash
+    if filehash != etag:
+        if flag_enabled("IMPORT_IMAGE_CHECKSUM"):
+            logger.error(
+                "ETag (%s) for %s did not match calculated md5 hash (%s) and "
+                "the IMPORT_IMAGE_CHECKSUM flag is enabled",
+                etag,
+                asset_filename,
+                filehash,
+            )
+            raise Exception(
+                f"ETag {etag} for {asset_filename} did not match calculated "
+                f"md5 hash {filehash}"
+            )
+        else:
+            logger.warning(
+                "ETag (%s) for %s did not match calculated md5 hash (%s) but "
+                "the IMPORT_IMAGE_CHECKSUM flag is disabled",
+                etag,
+                asset_filename,
+                filehash,
+            )
+    else:
+        if settings.DEBUG:
+            logger.info("Checksums for %s matched. Upload successful.", asset_filename)
