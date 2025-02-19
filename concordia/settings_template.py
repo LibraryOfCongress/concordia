@@ -401,6 +401,7 @@ FLAGS = {
     "SEND_WELCOME_EMAIL": [],
     "SHOW_BANNER": [],
     "DISPLAY_ITEM_DESCRIPTION": [],
+    "IMPORT_IMAGE_CHECKSUM": [],
 }
 
 ASGI_APPLICATION = "concordia.routing.application"

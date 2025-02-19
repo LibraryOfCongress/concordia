@@ -4,6 +4,7 @@ from secrets import token_hex
 
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import tag
 from django.urls import reverse
 from pylenium.config import PyleniumConfig
 from pylenium.driver import Pylenium
@@ -14,6 +15,7 @@ from .utils import CreateTestUsers
 logger = getLogger(__name__)
 
 
+@tag("selenium", "axe")
 class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
