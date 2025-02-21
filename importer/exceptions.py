@@ -1,0 +1,2 @@
+class ImageImportFailure(Exception):
+    pass
