@@ -15,6 +15,7 @@ from concordia.tests.utils import (
     create_project,
 )
 from importer import tasks
+from importer.exceptions import ImageImportFailure
 from importer.models import ImportItem, ImportJob
 from importer.tasks import (
     fetch_all_urls,
@@ -826,7 +827,7 @@ class AssetImportTests(TestCase):
             self.assertLogs("importer.tasks", level="ERROR") as log,
         ):
             get_mock.return_value.raise_for_status.side_effect = AttributeError
-            with self.assertRaises(AttributeError):
+            with self.assertRaises(ImageImportFailure):
                 tasks.download_asset(self.task_mock, self.import_asset)
             # Since the logging includes a stacktrace, we just check the
             # beginning of the log entry with assertIn

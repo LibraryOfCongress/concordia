@@ -30,6 +30,8 @@ from concordia.storage import ASSET_STORAGE
 from importer.models import ImportItem, ImportItemAsset, ImportJob
 
 from .celery import app
+from .exceptions import ImageImportFailure
+from .models import TaskStatusModel
 
 logger = getLogger(__name__)
 
@@ -115,6 +117,9 @@ def update_task_status(f):
             task_status_object.status = "{}\n\nUnhandled exception: {}".format(
                 task_status_object.status, exc
             ).strip()
+            task_status_object.failed = now()
+            if isinstance(exc, ImageImportFailure):
+                task_status_object.failure_reason = TaskStatusModel.FailureReason.IMAGE
             task_status_object.save()
             raise
 
@@ -596,9 +601,11 @@ def download_asset(self, import_asset):
             temp_file.seek(0)
 
             ASSET_STORAGE.save(asset_filename, temp_file)
-    except Exception:
+    except Exception as exc:
         logger.exception("Unable to download %s to %s", download_url, asset_filename)
-        raise
+        raise ImageImportFailure(
+            f"Unable to download {download_url} to {asset_filename}"
+        ) from exc
 
     filehash = hasher.hexdigest()
     response = boto3.client("s3").head_object(
@@ -614,7 +621,7 @@ def download_asset(self, import_asset):
                 asset_filename,
                 filehash,
             )
-            raise Exception(
+            raise ImageImportFailure(
                 f"ETag {etag} for {asset_filename} did not match calculated "
                 f"md5 hash {filehash}"
             )

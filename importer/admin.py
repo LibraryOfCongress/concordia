@@ -90,6 +90,7 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
         "failed",
         "status",
         "task_id",
+        "failure_reason",
     )
 
     @staticmethod
@@ -184,16 +185,17 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
 
     list_display = (
         "display_created",
-        "display_modified",
         "display_last_started",
         "display_completed",
         "url",
+        "failure_reason",
         "status",
     )
     list_filter = (
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        "failure_reason",
         ("import_item__job__created_by", admin.RelatedOnlyFieldListFilter),
         ImportItemAssetCampaignListFilter,
         ImportJobAssetProjectListFilter,

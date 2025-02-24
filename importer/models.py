@@ -9,6 +9,9 @@ from django.db import models
 
 
 class TaskStatusModel(models.Model):
+    class FailureReason(models.TextChoices):
+        IMAGE = "Image"
+
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -32,6 +35,10 @@ class TaskStatusModel(models.Model):
         help_text="UUID of the last Celery task to process this record",
         null=True,
         blank=True,
+    )
+
+    failure_reason = models.CharField(
+        max_length=50, blank=True, default="", choices=FailureReason.choices
     )
 
     class Meta:
