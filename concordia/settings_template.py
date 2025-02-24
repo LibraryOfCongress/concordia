@@ -546,3 +546,5 @@ MAINTENANCE_MODE_IGNORE_URLS = ("/healthz*", "/metrics*", "/maintenance-mode*")
 DEFAULT_AXE_SCRIPT = os.path.join(
     SITE_ROOT_DIR, "node_modules", "axe-core", "axe.min.js"
 )
+
+TRANSCRIPTION_ACCEPTED_TRACKING_KEY = "TRANSCRIPTION_ACCEPTED_{user_id}"
