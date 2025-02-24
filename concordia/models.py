@@ -1059,7 +1059,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 
 def on_transcription_save(sender, instance, **kwargs):
-    if kwargs["created"]:
+    if kwargs.get("created", False):
         user = instance.user
         attr_name = "transcribe_count"
     elif instance.reviewed_by:
@@ -1069,7 +1069,7 @@ def on_transcription_save(sender, instance, **kwargs):
         user = None
         attr_name = None
 
-    if user is not None and attr_name is not None:
+    if user is not None and attr_name is not None and user.username != "anonymous":
         user_profile_activity, created = UserProfileActivity.objects.get_or_create(
             user=user,
             campaign=instance.asset.item.project.campaign,
