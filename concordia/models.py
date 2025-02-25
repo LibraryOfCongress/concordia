@@ -20,6 +20,7 @@ from django.utils import timezone
 from PIL import Image
 
 from concordia.exceptions import RateLimitExceededError
+from configuration.utils import configuration_value
 from prometheus_metrics.models import MetricsModelMixin
 
 logger = getLogger(__name__)
@@ -124,8 +125,10 @@ class ConcordiaUser(User):
         timestamps = cache.get(key, [])
         valid_timestamps = [ts for ts in timestamps if ts >= one_minute_ago]
 
-        if len(valid_timestamps) >= 4:
-            raise RateLimitExceededError(user_message="Placeholder message")
+        if len(valid_timestamps) and len(valid_timestamps) >= configuration_value(
+            "review_rate_limit"
+        ):
+            raise RateLimitExceededError()
 
         valid_timestamps.append(now)
         cache.set(key, valid_timestamps, 60)

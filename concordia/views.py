@@ -109,6 +109,7 @@ from concordia.utils import (
     request_accepts_json,
 )
 from concordia.version import get_concordia_version
+from configuration.utils import configuration_value
 
 logger = getLogger(__name__)
 
@@ -1917,8 +1918,16 @@ def review_transcription(request, *, pk):
         concordia_user = ConcordiaUser.objects.get(id=request.user.id)
         try:
             concordia_user.check_and_track_accept_limit(transcription)
-        except RateLimitExceededError as exc:
-            return JsonResponse({"error": exc.user_message}, status=429)
+        except RateLimitExceededError:
+            return JsonResponse(
+                {
+                    "error": configuration_value("review_rate_limit_banner_message"),
+                    "popup-error": configuration_value(
+                        "review_rate_limit_popup_message"
+                    ),
+                },
+                status=429,
+            )
         transcription.accepted = now()
     else:
         transcription.rejected = now()

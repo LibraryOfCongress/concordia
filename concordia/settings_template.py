@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
+    "configuration",
     "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
@@ -169,6 +170,7 @@ TEMPLATES = [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
             ],
+            "builtins": ["configuration.templatetags.configuration_tags"],
         },
     }
 ]
