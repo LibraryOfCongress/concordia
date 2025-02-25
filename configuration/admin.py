@@ -5,4 +5,4 @@ from .models import Configuration
 
 @admin.register(Configuration)
 class ConfigurationAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("key", "value", "description")

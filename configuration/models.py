@@ -28,6 +28,9 @@ class Configuration(models.Model):
         blank=True, help_text="Optional description of the configuration setting"
     )
 
+    class Meta:
+        ordering = ["key"]
+
     def __str__(self):
         return self.key
 
