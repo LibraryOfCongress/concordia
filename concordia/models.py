@@ -1058,6 +1058,29 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
+def update_userprofileactivity_table(user, campaign, attr_name, increment=1):
+    user_profile_activity, created = UserProfileActivity.objects.get_or_create(
+        user=user,
+        campaign=campaign,
+    )
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    if created:
+        value = increment
+    else:
+        value = F(attr_name) + increment
+    setattr(user_profile_activity, attr_name, value)
+    setattr(profile, attr_name, value)
+    q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
+    user_profile_activity.asset_count = (
+        Asset.objects.filter(q)
+        .filter(item__project__campaign=campaign)
+        .distinct()
+        .count()
+    )
+    user_profile_activity.save()
+    profile.save()
+
+
 def on_transcription_save(sender, instance, **kwargs):
     if kwargs.get("created", False):
         user = instance.user
@@ -1070,26 +1093,9 @@ def on_transcription_save(sender, instance, **kwargs):
         attr_name = None
 
     if user is not None and attr_name is not None and user.username != "anonymous":
-        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-            user=user,
-            campaign=instance.asset.item.project.campaign,
+        update_userprofileactivity_table(
+            user, instance.asset.item.project.campaign, attr_name
         )
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        if created:
-            setattr(user_profile_activity, attr_name, 1)
-            setattr(profile, attr_name, 1)
-        else:
-            setattr(user_profile_activity, attr_name, F(attr_name) + 1)
-            setattr(profile, attr_name, F(attr_name) + 1)
-        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        user_profile_activity.asset_count = (
-            Asset.objects.filter(q)
-            .filter(item__project__campaign=instance.asset.item.project.campaign)
-            .distinct()
-            .count()
-        )
-        user_profile_activity.save()
-        profile.save()
 
 
 post_save.connect(on_transcription_save, sender=Transcription)
