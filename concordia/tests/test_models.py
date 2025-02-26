@@ -350,17 +350,17 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
 
 
 class SignalHandlersTest(CreateTestUsers, TestCase):
-    @mock.patch("concordia.models.update_userprofileactivity_table")
-    def test_on_transcription_save(self, mock_update_table):
+    @mock.patch("concordia.models.cache_profile_update")
+    def test_on_transcription_save(self, mock_cache_update):
         instance = mock.MagicMock()
         instance.user = self.create_test_user(username="anonymous")
         on_transcription_save(None, instance, **{"created": True})
         self.assertEqual(instance.user.username, "anonymous")
-        self.assertEqual(mock_update_table.call_count, 0)
+        self.assertEqual(mock_cache_update.call_count, 0)
 
         instance.user = self.create_test_user()
         on_transcription_save(None, instance, **{"created": True})
-        self.assertEqual(mock_update_table.call_count, 1)
+        self.assertEqual(mock_cache_update.call_count, 1)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
