@@ -76,7 +76,7 @@
 
             <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
 
-            <div class="mt-3 d-print-none d-flex flex-wrap justify-content-center align-items-center">
+            <div class="mt-3 mb-2 d-print-none d-flex flex-wrap justify-content-center align-items-center">
                 {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
                     <div class="form-check mt-0 mb-3 d-flex justify-content-center w-100">
                         <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
@@ -90,16 +90,16 @@
                     </div>
 
                     <div>
-                        <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1  mb-3" title="Save the text you entered above">
+                        <button id="save-transcription-button" disabled type="submit" class="btn btn-primary mx-1 mb-2" title="Save the text you entered above">
                             Save
                         </button>
-                        <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1 mb-3" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
+                        <button id="rollback-transcription-button" {% if not undo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1 mb-2" title="Undo" data-url="{% url 'rollback-transcription' asset_pk=asset.pk %}">
                             <span class="fas fa-undo"></span> Undo
                         </button>
-                        <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1 mb-3" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
+                        <button id="rollforward-transcription-button" {% if not redo_available %}disabled{% endif %} type="button" class="btn btn-outline-primary mx-1 mb-2" title="Redo" data-url="{% url 'rollforward-transcription' asset_pk=asset.pk %}">
                             Redo <span class="fas fa-redo"></span>
                         </button>
-                        <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1  mb-3" title="Request another volunteer to review the text you entered above">
+                        <button id="submit-transcription-button" disabled type="button" class="btn btn-primary mx-1 mb-2" title="Request another volunteer to review the text you entered above">
                             Submit for Review
                         </button>
                     </div>
