@@ -1922,7 +1922,8 @@ def review_transcription(request, *, pk):
             return JsonResponse(
                 {
                     "error": configuration_value("review_rate_limit_banner_message"),
-                    "popup-error": configuration_value(
+                    "popupTitle": configuration_value("review_rate_limit_popup_title"),
+                    "popupError": configuration_value(
                         "review_rate_limit_popup_message"
                     ),
                 },
