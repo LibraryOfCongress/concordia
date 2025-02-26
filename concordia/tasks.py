@@ -9,6 +9,7 @@ from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
@@ -33,6 +34,7 @@ from concordia.models import (
     Transcription,
     UserAssetTagCollection,
     UserProfileActivity,
+    update_userprofileactivity_table,
 )
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
@@ -1085,3 +1087,12 @@ def unusual_activity(ignore_env=False):
         )
         message.attach_alternative(html_body_message, "text/html")
         message.send()
+
+
+@celery_app.task(ignore_result=True)
+def update_from_cache():
+    for key in cache.keys("userprofileactivity_*"):
+        _, user_id, campaign_id, field = key.split("_")
+        value = cache.get(key)
+        update_userprofileactivity_table(user_id, campaign_id, field, value)
+        cache.delete(key)

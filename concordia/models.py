@@ -1059,17 +1059,18 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 
 def update_userprofileactivity_table(user, campaign, attr_name, increment=1):
+    field = attr_name + "_count"
     user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-        user=user,
-        campaign=campaign,
+        user_id=user,
+        campaign_id=campaign,
     )
-    profile, created = UserProfile.objects.get_or_create(user=user)
+    profile, _ = UserProfile.objects.get_or_create(user=user)
     if created:
         value = increment
     else:
-        value = F(attr_name) + increment
-    setattr(user_profile_activity, attr_name, value)
-    setattr(profile, attr_name, value)
+        value = F(field) + increment
+    setattr(user_profile_activity, field, value)
+    setattr(profile, field, value)
     q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
     user_profile_activity.asset_count = (
         Asset.objects.filter(q)
@@ -1081,21 +1082,28 @@ def update_userprofileactivity_table(user, campaign, attr_name, increment=1):
     profile.save()
 
 
+def cache_profile_update(key, field, increment=1):
+    value = cache.get(key, field) + increment
+    cache.set(key, field, value)
+
+
 def on_transcription_save(sender, instance, **kwargs):
     if kwargs.get("created", False):
         user = instance.user
-        attr_name = "transcribe_count"
+        attr_name = "transcribe"
     elif instance.reviewed_by:
         user = instance.reviewed_by
-        attr_name = "review_count"
+        attr_name = "review"
     else:
         user = None
         attr_name = None
 
     if user is not None and attr_name is not None and user.username != "anonymous":
-        update_userprofileactivity_table(
-            user, instance.asset.item.project.campaign, attr_name
+        key = (
+            f"userprofileactivity_{user.pk}_"
+            f"{instance.asset.item.project.campaign}_{attr_name}"
         )
+        cache_profile_update(key, attr_name)
 
 
 post_save.connect(on_transcription_save, sender=Transcription)
