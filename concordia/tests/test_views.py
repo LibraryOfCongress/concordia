@@ -1391,6 +1391,86 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         data = self.assertValidJSON(resp, expected_status=429)
         self.assertIn("error", data)
 
+    def test_transcription_review_rate_limit_superuser(self):
+        for cache in caches.all():
+            cache.clear()
+        anon = get_anonymous_user()
+        self.user = self.create_super_user()
+        self.login_user()
+        try:
+            config = Configuration.objects.get(key="review_rate_limit")
+            config.value = "4"
+            config.data_type = Configuration.DataType.NUMBER
+            config.save()
+        except Configuration.DoesNotExist:
+            Configuration.objects.create(
+                key="review_rate_limit",
+                value="4",
+                data_type=Configuration.DataType.NUMBER,
+            )
+
+        Configuration.objects.get_or_create(
+            key="review_rate_limit_popup_message",
+            defaults={
+                "value": "Test message",
+                "data_type": Configuration.DataType.HTML,
+            },
+        )
+        Configuration.objects.get_or_create(
+            key="review_rate_limit_popup_title",
+            defaults={
+                "value": "Test message",
+                "data_type": Configuration.DataType.HTML,
+            },
+        )
+        Configuration.objects.get_or_create(
+            key="review_rate_limit_banner_message",
+            defaults={
+                "value": "Test message",
+                "data_type": Configuration.DataType.HTML,
+            },
+        )
+
+        asset = create_asset()
+        t1 = create_transcription(user=anon, asset=asset)
+        t2 = create_transcription(
+            user=anon, asset=create_asset(item=asset.item, slug="test-asset-2")
+        )
+        t3 = create_transcription(
+            user=anon, asset=create_asset(item=asset.item, slug="test-asset-3")
+        )
+        t4 = create_transcription(
+            user=anon, asset=create_asset(item=asset.item, slug="test-asset-4")
+        )
+        t5 = create_transcription(
+            user=anon, asset=create_asset(item=asset.item, slug="test-asset-5")
+        )
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t2.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t3.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t4.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t5.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
     def test_transcription_review_asset_status_updates(self):
         """
         Confirm that the Asset.transcription_status field is correctly updated
