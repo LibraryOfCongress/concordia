@@ -5,6 +5,7 @@ include =
     concordia/*
     importer/*
     exporter/*
+    configuration/*
 omit =
     */migrations/*
     */tests/*
@@ -17,6 +18,7 @@ include =
     concordia/*
     importer/*
     exporter/*
+    configuration/*
 omit =
     */migrations/*
     */tests/*

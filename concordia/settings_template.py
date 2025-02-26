@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
+    "configuration",
     "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
@@ -169,6 +170,7 @@ TEMPLATES = [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
             ],
+            "builtins": ["configuration.templatetags.configuration_tags"],
         },
     }
 ]
@@ -199,6 +201,13 @@ if REDIS_ADDRESS and REDIS_PORT:
         "view_cache": {
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/2",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
+        "configuration_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/3",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
@@ -546,3 +555,7 @@ MAINTENANCE_MODE_IGNORE_URLS = ("/healthz*", "/metrics*", "/maintenance-mode*")
 DEFAULT_AXE_SCRIPT = os.path.join(
     SITE_ROOT_DIR, "node_modules", "axe-core", "axe.min.js"
 )
+
+TRANSCRIPTION_ACCEPTED_TRACKING_KEY = "TRANSCRIPTION_ACCEPTED_{user_id}"
+
+CONFIGURATION_CACHE_TIMEOUT = 3600  # One hour

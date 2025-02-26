@@ -62,6 +62,7 @@ from maintenance_mode.core import set_maintenance_mode
 from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
+from concordia.exceptions import RateLimitExceededError
 from concordia.forms import (
     AccountDeletionForm,
     ActivateAndSetPasswordForm,
@@ -96,7 +97,10 @@ from concordia.models import (
     UserAssetTagCollection,
     UserProfileActivity,
 )
-from concordia.signals.signals import reservation_obtained, reservation_released
+from concordia.signals.signals import (
+    reservation_obtained,
+    reservation_released,
+)
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import (
     get_anonymous_user,
@@ -105,6 +109,7 @@ from concordia.utils import (
     request_accepts_json,
 )
 from concordia.version import get_concordia_version
+from configuration.utils import configuration_value
 
 logger = getLogger(__name__)
 
@@ -1910,6 +1915,20 @@ def review_transcription(request, *, pk):
     transcription.reviewed_by = request.user
 
     if action == "accept":
+        concordia_user = ConcordiaUser.objects.get(id=request.user.id)
+        try:
+            concordia_user.check_and_track_accept_limit(transcription)
+        except RateLimitExceededError:
+            return JsonResponse(
+                {
+                    "error": configuration_value("review_rate_limit_banner_message"),
+                    "popupTitle": configuration_value("review_rate_limit_popup_title"),
+                    "popupError": configuration_value(
+                        "review_rate_limit_popup_message"
+                    ),
+                },
+                status=429,
+            )
         transcription.accepted = now()
     else:
         transcription.rejected = now()

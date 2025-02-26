@@ -461,6 +461,24 @@ function setupPage() {
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
                     'transcription-review-result',
                 );
+                if (jqXHR.responseJSON && jqXHR.responseJSON.popupError) {
+                    let popupErrorMessage = jqXHR.responseJSON.popupError;
+                    let popupTitle;
+                    if (jqXHR.responseJSON.popupTitle) {
+                        popupTitle = jqXHR.responseJSON.popupTitle;
+                    } else {
+                        popupTitle = 'An error occurred with your review';
+                    }
+                    $('#error-modal')
+                        .find('#error-modal-title')
+                        .first()
+                        .html(popupTitle);
+                    $('#error-modal')
+                        .find('#error-modal-message')
+                        .first()
+                        .html(popupErrorMessage);
+                    $('#error-modal').show();
+                }
             });
     }
 
