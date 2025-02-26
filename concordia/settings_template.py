@@ -205,6 +205,13 @@ if REDIS_ADDRESS and REDIS_PORT:
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
         },
+        "configuration_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/3",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
     }
 else:
     CACHES = {
@@ -550,3 +557,5 @@ DEFAULT_AXE_SCRIPT = os.path.join(
 )
 
 TRANSCRIPTION_ACCEPTED_TRACKING_KEY = "TRANSCRIPTION_ACCEPTED_{user_id}"
+
+CONFIGURATION_CACHE_TIMEOUT = 3600  # One hour

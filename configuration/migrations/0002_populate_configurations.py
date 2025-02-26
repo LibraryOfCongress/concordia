@@ -15,6 +15,12 @@ def populate_configuration(apps, schema_editor):
             "description": "Message shown in the pop-up when a user exceeds the review rate limit",
         },
         {
+            "key": "review_rate_limit_popup_title",
+            "data_type": "html",
+            "value": "You cannot yet accept this page",
+            "description": "Title of the error pop-up displayed when a user exceeds the review rate limit",
+        },
+        {
             "key": "review_rate_limit",
             "data_type": "number",
             "value": "4",
