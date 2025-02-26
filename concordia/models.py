@@ -118,20 +118,21 @@ class ConcordiaUser(User):
         return settings.TRANSCRIPTION_ACCEPTED_TRACKING_KEY.format(user_id=self.id)
 
     def check_and_track_accept_limit(self, transcription):
-        key = self.transcription_accepted_cache_key
-        now = timezone.now()
-        one_minute_ago = now - ONE_MINUTE
+        if not self.is_superuser:
+            key = self.transcription_accepted_cache_key
+            now = timezone.now()
+            one_minute_ago = now - ONE_MINUTE
 
-        timestamps = cache.get(key, [])
-        valid_timestamps = [ts for ts in timestamps if ts >= one_minute_ago]
+            timestamps = cache.get(key, [])
+            valid_timestamps = [ts for ts in timestamps if ts >= one_minute_ago]
 
-        if len(valid_timestamps) and len(valid_timestamps) >= configuration_value(
-            "review_rate_limit"
-        ):
-            raise RateLimitExceededError()
+            if len(valid_timestamps) and len(valid_timestamps) >= configuration_value(
+                "review_rate_limit"
+            ):
+                raise RateLimitExceededError()
 
-        valid_timestamps.append(now)
-        cache.set(key, valid_timestamps, 60)
+            valid_timestamps.append(now)
+            cache.set(key, valid_timestamps, 60)
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
