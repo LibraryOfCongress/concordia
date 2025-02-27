@@ -1,5 +1,7 @@
 from datetime import timedelta
+from unittest import mock
 
+from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
 
@@ -8,6 +10,7 @@ from concordia.tasks import (
     _daily_active_users,
     campaign_report,
     site_report,
+    update_from_cache,
 )
 from concordia.utils import get_anonymous_user
 
@@ -210,3 +213,16 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.topic1_report.daily_review_actions, 2)
         self.assertEqual(self.topic1_report.distinct_tags, 1)
         self.assertEqual(self.topic1_report.tag_uses, 1)
+
+
+class TaskTestCase(CreateTestUsers, TestCase):
+    @mock.patch("concordia.tasks.update_userprofileactivity_table")
+    def test_update_from_cache(self, mock_update_table):
+        user = self.create_test_user()
+        campaign = create_campaign()
+        self.assertEqual(mock_update_table.call_count, 0)
+        key = "userprofileactivity_%s_%s_transcribe" % (user.pk, campaign.pk)
+        cache.set(key, 1)
+        update_from_cache()
+        self.assertEqual(mock_update_table.call_count, 1)
+        self.assertIsNone(cache.get(key))

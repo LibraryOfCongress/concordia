@@ -18,6 +18,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserProfileActivity,
+    on_transcription_save,
     resource_file_upload_path,
     validated_get_or_create,
 )
@@ -346,6 +347,20 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
             transcription3.status,
             TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED],
         )
+
+
+class SignalHandlersTest(CreateTestUsers, TestCase):
+    @mock.patch("concordia.models.cache_profile_update")
+    def test_on_transcription_save(self, mock_cache_update):
+        instance = mock.MagicMock()
+        instance.user = self.create_test_user(username="anonymous")
+        on_transcription_save(None, instance, **{"created": True})
+        self.assertEqual(instance.user.username, "anonymous")
+        self.assertEqual(mock_cache_update.call_count, 0)
+
+        instance.user = self.create_test_user()
+        on_transcription_save(None, instance, **{"created": True})
+        self.assertEqual(mock_cache_update.call_count, 1)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
