@@ -1061,9 +1061,12 @@ def unusual_activity(ignore_env=False):
         site = Site.objects.get_current()
         now = timezone.now()
         ONE_DAY_AGO = now - datetime.timedelta(days=1)
+        title = "Unusual User Activity Report for " + now.strftime("%b %d %Y, %I:%M %p")
+        if ignore_env:
+            ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
+            title += " [%s]" % ENV_MAPPING[settings.CONCORDIA_ENVIRONMENT]
         context = {
-            "title": "Unusual User Activity Report for "
-            + now.strftime("%b %d %Y, %I:%M %p"),
+            "title": title,
             "domain": "https://" + site.domain,
             "transcriptions": Transcription.objects.transcribe_incidents(ONE_DAY_AGO),
             "reviews": Transcription.objects.review_incidents(ONE_DAY_AGO),
