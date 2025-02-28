@@ -1101,7 +1101,7 @@ def on_transcription_save(sender, instance, **kwargs):
     if user is not None and attr_name is not None and user.username != "anonymous":
         key = (
             f"userprofileactivity_{user.pk}_"
-            f"{instance.asset.item.project.campaign}_{attr_name}"
+            f"{instance.asset.item.project.campaign.pk}_{attr_name}"
         )
         cache_profile_update(key, attr_name)
 

@@ -354,6 +354,7 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
     def test_on_transcription_save(self, mock_cache_update):
         instance = mock.MagicMock()
         instance.user = self.create_test_user(username="anonymous")
+        instance.asset = create_asset()
         on_transcription_save(None, instance, **{"created": True})
         self.assertEqual(instance.user.username, "anonymous")
         self.assertEqual(mock_cache_update.call_count, 0)
@@ -361,6 +362,12 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         instance.user = self.create_test_user()
         on_transcription_save(None, instance, **{"created": True})
         self.assertEqual(mock_cache_update.call_count, 1)
+        expected_key = (
+            f"userprofileactivity_{instance.user.pk}_"
+            f"{instance.asset.item.project.campaign.pk}_transcribe"
+        )
+
+        mock_cache_update.assert_called_with(expected_key, "transcribe")
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):

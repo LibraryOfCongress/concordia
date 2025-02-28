@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import caches
+from django.db.models.signals import post_save
 from django.http import HttpResponse, JsonResponse
 from django.test import (
     Client,
@@ -24,6 +25,7 @@ from concordia.models import (
     Campaign,
     Transcription,
     TranscriptionStatus,
+    on_transcription_save,
 )
 from concordia.tasks import (
     campaign_report,
@@ -838,6 +840,10 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
 )
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
+    def setUp(self):
+        # We'll test the signal handler separately
+        post_save.disconnect(on_transcription_save, sender=Transcription)
+
     def test_asset_reservation(self):
         """
         Test the basic Asset reservation process
@@ -2199,6 +2205,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             ),
             in_progress_asset_in_item.get_absolute_url(),
         )
+
+    def tearDown(self):
+        # We'll test the signal handler separately
+        post_save.connect(on_transcription_save, sender=Transcription)
 
 
 class UserCacheControlTest(CreateTestUsers, TestCase):
