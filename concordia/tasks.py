@@ -44,6 +44,8 @@ from .celery import app as celery_app
 
 logger = getLogger(__name__)
 
+ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
+
 
 @celery_app.task
 def expire_inactive_asset_reservations():
@@ -1063,7 +1065,6 @@ def unusual_activity(ignore_env=False):
         ONE_DAY_AGO = now - datetime.timedelta(days=1)
         title = "Unusual User Activity Report for " + now.strftime("%b %d %Y, %I:%M %p")
         if ignore_env:
-            ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
             title += " [%s]" % ENV_MAPPING[settings.CONCORDIA_ENVIRONMENT]
         context = {
             "title": title,

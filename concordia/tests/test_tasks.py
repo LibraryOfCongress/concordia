@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest import mock
 
+from django.core import mail
 from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
@@ -10,6 +11,7 @@ from concordia.tasks import (
     _daily_active_users,
     campaign_report,
     site_report,
+    unusual_activity,
     update_from_cache,
 )
 from concordia.utils import get_anonymous_user
@@ -216,6 +218,17 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
 
 
 class TaskTestCase(CreateTestUsers, TestCase):
+    @mock.patch("concordia.tasks.Transcription.objects")
+    def test_unusual_activity(self, mock_transcription):
+        mock_transcription.transcribe_incidents.return_value = (
+            Transcription.objects.none()
+        )
+        mock_transcription.review_incidents.return_value = Transcription.objects.none()
+        unusual_activity(ignore_env=True)
+        self.assertEqual(len(mail.outbox), 1)
+        expected_subject = "Unusual User Activity Report"
+        self.assertIn(expected_subject, mail.outbox[0].subject)
+
     @mock.patch("concordia.tasks.update_userprofileactivity_table")
     def test_update_from_cache(self, mock_update_table):
         user = self.create_test_user()
