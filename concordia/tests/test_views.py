@@ -102,12 +102,14 @@ class CompletedCampaignListViewTests(TestCase):
         today = date.today()
         yesterday = today - timedelta(days=1)
 
+        self.research_center = create_research_center()
         self.campaign2 = create_campaign(
             published=True,
             status=Campaign.Status.COMPLETED,
             slug="test-campaign-2",
             completed_date=yesterday,
         )
+        self.campaign2.research_centers.add(self.research_center)
         self.campaign3 = create_campaign(
             published=True,
             status=Campaign.Status.RETIRED,
@@ -171,16 +173,26 @@ class CompletedCampaignListViewTests(TestCase):
         self.assertIsInstance(response.context_data, dict)
         self.assertEqual(response.context_data["result_count"], 1)
 
+        request = RequestFactory().get("/campaigns/completed/?type=completed")
+        response = CompletedCampaignListView.as_view()(request)
+        self.assertIsInstance(response.context_data, dict)
+        self.assertEqual(response.context_data["result_count"], 1)
+
+        request = RequestFactory().get(
+            f"/campaigns/completed/?research_center={self.research_center.id}"
+        )
+        response = CompletedCampaignListView.as_view()(request)
+        self.assertIsInstance(response.context_data, dict)
+        self.assertEqual(response.context_data["result_count"], 1)
+
     def test_research_centers(self):
         today = date.today()
-
-        center = create_research_center()
 
         create_campaign(
             published=True, status=Campaign.Status.COMPLETED, completed_date=today
         )
-        self.campaign2.research_centers.add(center)
-        url = f"/campaigns/completed/?research_center={center.id}"
+
+        url = f"/campaigns/completed/?research_center={self.research_center.id}"
 
         # Test queryset directly
         view = CompletedCampaignListView()
@@ -193,7 +205,7 @@ class CompletedCampaignListViewTests(TestCase):
         response = self.client.get(url)
 
         self.assertIn("research_centers", response.context)
-        self.assertEqual(response.context["research_centers"][0], center)
+        self.assertEqual(response.context["research_centers"][0], self.research_center)
 
 
 @override_settings(
@@ -208,9 +220,13 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         for cache in caches.all():
             cache.clear()
 
+            post_save.disconnect(on_transcription_save, sender=Transcription)
+
     def tearDown(self):
         for cache in caches.all():
             cache.clear()
+
+        post_save.connect(on_transcription_save, sender=Transcription)
 
     def test_ratelimit_view(self):
         c = Client()
@@ -2258,6 +2274,8 @@ class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
         self.url = reverse("transcriptions:filtered-project-detail", kwargs=self.kwargs)
         self.login_user()
 
+        post_save.disconnect(on_transcription_save, sender=Transcription)
+
     def test_get_queryset(self):
         item1 = create_item(project=self.project, item_id="testitem.012345679")
         asset1 = create_asset(item=item1)
@@ -2281,6 +2299,9 @@ class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
         response = self.client.get(self.url, self.kwargs)
         self.assertTrue(response.context.get("filter_by_reviewable"))
 
+    def tearDown(self):
+        post_save.connect(on_transcription_save, sender=Transcription)
+
 
 class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
     def setUp(self):
@@ -2292,6 +2313,8 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
         }
         self.url = reverse("transcriptions:filtered-item-detail", kwargs=self.kwargs)
         self.login_user()
+
+        post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def test_get_queryset(self):
         asset1 = create_asset(item=self.item)
@@ -2311,6 +2334,9 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
     def test_get_context_data(self):
         response = self.client.get(self.url, self.kwargs)
         self.assertTrue(response.context.get("filter_by_reviewable"))
+
+    def tearDown(self):
+        post_save.connect(on_transcription_save, sender=Transcription)
 
 
 class RateLimitTests(CreateTestUsers, TestCase):
@@ -2378,6 +2404,8 @@ class LoginTests(TestCase, CreateTestUsers):
 class TranscriptionViewTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
+
+        post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def test_rollback_transcription(self):
         path = reverse("rollback-transcription", args=[self.asset.id])
@@ -2502,3 +2530,6 @@ class TranscriptionViewTests(CreateTestUsers, TestCase):
         self.assertEqual(response_json["undo_available"], True)
         self.assertIn("redo_available", response_json)
         self.assertEqual(response_json["redo_available"], False)
+
+    def tearDown(self):
+        post_save.connect(on_transcription_save, sender=Transcription)
