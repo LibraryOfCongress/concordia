@@ -1082,9 +1082,9 @@ def update_userprofileactivity_table(user, campaign, attr_name, increment=1):
     profile.save()
 
 
-def cache_profile_update(key, field, increment=1):
-    value = cache.get(key, field) + increment
-    cache.set(key, field, value)
+def cache_profile_update(key, increment=1):
+    value = cache.get(key, 0) + increment
+    cache.set(key, value)
 
 
 def on_transcription_save(sender, instance, **kwargs):
@@ -1103,7 +1103,7 @@ def on_transcription_save(sender, instance, **kwargs):
             f"userprofileactivity_{user.pk}_"
             f"{instance.asset.item.project.campaign.pk}_{attr_name}"
         )
-        cache_profile_update(key, attr_name)
+        cache_profile_update(key)
 
 
 post_save.connect(on_transcription_save, sender=Transcription)
