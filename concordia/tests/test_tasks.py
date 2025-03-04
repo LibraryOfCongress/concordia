@@ -218,6 +218,9 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
 
 
 class TaskTestCase(CreateTestUsers, TestCase):
+    def setUp(self):
+        cache.clear()
+
     @mock.patch("concordia.tasks.Transcription.objects")
     def test_unusual_activity(self, mock_transcription):
         mock_transcription.transcribe_incidents.return_value = (
