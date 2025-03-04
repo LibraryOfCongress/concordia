@@ -6,6 +6,7 @@ import requests
 from django.core.cache import caches
 from django.core.cache.backends.base import BaseCache
 from django.core.exceptions import ValidationError
+from django.db.models import Max
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -19,7 +20,7 @@ from concordia.tests.utils import (
 from configuration.models import Configuration
 from importer import tasks
 from importer.exceptions import ImageImportFailure
-from importer.models import ImportItem, ImportJob, TaskStatusModel
+from importer.models import ImportItem, ImportItemAsset, ImportJob, TaskStatusModel
 from importer.tasks import (
     fetch_all_urls,
     get_item_id_from_item_url,
@@ -768,6 +769,13 @@ class AssetImportTests(TestCase):
             self.assertTrue(task_mock.called)
             task, called_import_asset = task_mock.call_args.args
             self.assertTrue(called_import_asset, self.import_asset)
+
+            # Test sending a bad pk
+            task_mock.reset_mock()
+            max_pk = ImportItemAsset.objects.aggregate(Max("pk"))["pk__max"]
+            with self.assertRaises(ImportItemAsset.DoesNotExist):
+                tasks.download_asset_task(max_pk + 1)
+            self.assertFalse(task_mock.called)
 
     @override_settings(
         STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
