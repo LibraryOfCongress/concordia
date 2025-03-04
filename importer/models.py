@@ -56,13 +56,14 @@ class TaskStatusModel(models.Model):
     )
 
     retry_count = models.IntegerField(
-        help_text="Number of times the task was retried", default=0
+        help_text="Number of times the task was retried", default=0, blank=True
     )
 
     failure_history = models.JSONField(
         help_text="Information about previous failures of the task, if any",
         encoder=DjangoJSONEncoder,
         default=list,
+        blank=True,
     )
 
     class Meta:
@@ -183,7 +184,7 @@ class ImportItemAsset(TaskStatusModel):
                     return False
             else:
                 logger.warning(
-                    "Task %s has reached the maximum number of retries %s "
+                    "Task %s has reached the maximum number of retries (%s) "
                     "and will not be repeated",
                     self,
                     max_retries,

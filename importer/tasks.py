@@ -30,7 +30,7 @@ from concordia.storage import ASSET_STORAGE
 from importer import models
 
 from .celery import app
-from .exceptions import ImageImportFailure, MaximumRetriesReached
+from .exceptions import ImageImportFailure
 
 logger = getLogger(__name__)
 
@@ -121,10 +121,6 @@ def update_task_status(f):
             if isinstance(exc, ImageImportFailure):
                 task_status_object.failure_reason = (
                     models.TaskStatusModel.FailureReason.IMAGE
-                )
-            elif isinstance(exc, MaximumRetriesReached):
-                task_status_object.failure_reason = (
-                    models.TaskStatusModel.FailureRason.RETRIES
                 )
             task_status_object.save()
             retry_result = task_status_object.retry_if_possible()
@@ -650,5 +646,4 @@ def download_asset(self, import_asset):
                 filehash,
             )
     else:
-        if settings.DEBUG:
-            logger.info("Checksums for %s matched. Upload successful.", asset_filename)
+        logger.debug("Checksums for %s matched. Upload successful.", asset_filename)
