@@ -1,6 +1,6 @@
 import sys
 from datetime import date, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from django import forms
 from django.conf import settings
@@ -1045,20 +1045,15 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.client.logout()
 
-        # 1 reservation check + 1 acquire + 2 get user ID
-        # + 2 get user profile from request
-
-        expected_queries = 2
+        # 1 reservation check + 1 acquire + 1 get user ID
+        expected_queries = 3
         if settings.SESSION_ENGINE.endswith("db"):
             # + 1 session check
             expected_queries += 1
 
-        with patch("concordia.utils.get_anonymous_user") as mock_get:
-            mock_user = Mock(spec=User)
-            mock_user.id = 8
-            mock_get.return_value = mock_user
-            with self.assertNumQueries(expected_queries):
-                resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
+        User.objects.create_user(username="anonymous")
+        with self.assertNumQueries(expected_queries):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
         self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(2, AssetTranscriptionReservation.objects.count())
