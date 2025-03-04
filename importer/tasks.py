@@ -17,7 +17,7 @@ from celery import group
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db.transaction import atomic
+from django.db import transaction
 from django.utils.text import slugify
 from django.utils.timezone import now
 from flags.state import flag_enabled
@@ -425,68 +425,72 @@ def import_item_task(self, import_item_pk):
 
 
 @update_task_status
-@atomic
 def import_item(self, import_item):
-    item_assets = []
-    import_assets = []
-    item_resource_url = None
+    # Using transaction.atomic here ensures the data is available in the
+    # database for the download_asset_task calls. If we don't do this, some
+    # of the tasks could execute before the transaction is committed, causing
+    # those tasks to fail since the ImportItemAsset it needs won't be in the database
+    with transaction.atomic():
+        item_assets = []
+        import_assets = []
+        item_resource_url = None
 
-    asset_urls, item_resource_url = get_asset_urls_from_item_resources(
-        import_item.item.metadata.get("resources", [])
-    )
-    relative_asset_file_path = "/".join(
-        [
-            import_item.item.project.campaign.slug,
-            import_item.item.project.slug,
-            import_item.item.item_id,
-        ]
-    )
-
-    for idx, asset_url in enumerate(asset_urls, start=1):
-        asset_title = f"{import_item.item.item_id}-{idx}"
-        item_asset = Asset(
-            item=import_item.item,
-            campaign=import_item.item.project.campaign,
-            title=asset_title,
-            slug=slugify(asset_title, allow_unicode=True),
-            sequence=idx,
-            media_url=f"{idx}.jpg",
-            media_type=MediaType.IMAGE,
-            download_url=asset_url,
-            resource_url=item_resource_url,
-            storage_image="/".join([relative_asset_file_path, f"{idx}.jpg"]),
+        asset_urls, item_resource_url = get_asset_urls_from_item_resources(
+            import_item.item.metadata.get("resources", [])
         )
-        # Previously, any asset that raised a validation error was just ignored.
-        # We don't want that--we want to see if an asset fails validation
-        try:
-            item_asset.full_clean()
-        except ValidationError as exc:
-            raise ValidationError(
-                f"Importing asset with slug '{item_asset.slug}' for "
-                f"item '{item_asset.item}' with resource URL "
-                f"'{item_asset.resource_url}' failed with the following "
-                f"exception: {exc}"
-            ) from exc
-        item_assets.append(item_asset)
-
-    Asset.objects.bulk_create(item_assets)
-
-    for asset in item_assets:
-        import_asset = models.ImportItemAsset(
-            import_item=import_item,
-            asset=asset,
-            url=asset.download_url,
-            sequence_number=asset.sequence,
+        relative_asset_file_path = "/".join(
+            [
+                import_item.item.project.campaign.slug,
+                import_item.item.project.slug,
+                import_item.item.item_id,
+            ]
         )
-        import_asset.full_clean()
-        import_assets.append(import_asset)
 
-    import_item.assets.bulk_create(import_assets)
+        for idx, asset_url in enumerate(asset_urls, start=1):
+            asset_title = f"{import_item.item.item_id}-{idx}"
+            item_asset = Asset(
+                item=import_item.item,
+                campaign=import_item.item.project.campaign,
+                title=asset_title,
+                slug=slugify(asset_title, allow_unicode=True),
+                sequence=idx,
+                media_url=f"{idx}.jpg",
+                media_type=MediaType.IMAGE,
+                download_url=asset_url,
+                resource_url=item_resource_url,
+                storage_image="/".join([relative_asset_file_path, f"{idx}.jpg"]),
+            )
+            # Previously, any asset that raised a validation error was just ignored.
+            # We don't want that--we want to see if an asset fails validation
+            try:
+                item_asset.full_clean()
+            except ValidationError as exc:
+                raise ValidationError(
+                    f"Importing asset with slug '{item_asset.slug}' for "
+                    f"item '{item_asset.item}' with resource URL "
+                    f"'{item_asset.resource_url}' failed with the following "
+                    f"exception: {exc}"
+                ) from exc
+            item_assets.append(item_asset)
+
+        Asset.objects.bulk_create(item_assets)
+
+        for asset in item_assets:
+            import_asset = models.ImportItemAsset(
+                import_item=import_item,
+                asset=asset,
+                url=asset.download_url,
+                sequence_number=asset.sequence,
+            )
+            import_asset.full_clean()
+            import_assets.append(import_asset)
+
+        import_item.assets.bulk_create(import_assets)
+
+        import_item.full_clean()
+        import_item.save()
 
     download_asset_group = group(download_asset_task.s(i.pk) for i in import_assets)
-
-    import_item.full_clean()
-    import_item.save()
 
     return download_asset_group()
 
@@ -572,7 +576,15 @@ def download_asset_task(self, import_asset_pk):
     qs = models.ImportItemAsset.objects.select_related(
         "import_item__item__project__campaign"
     )
-    import_asset = qs.get(pk=import_asset_pk)
+    try:
+        import_asset = qs.get(pk=import_asset_pk)
+    except models.ImportItemAsset.DoesNotExist:
+        logger.exception(
+            "ImportItemAsset %s could not be found while attempting to "
+            "spawn download_asset task",
+            import_asset_pk,
+        )
+        raise
 
     return download_asset(self, import_asset)
 
