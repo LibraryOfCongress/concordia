@@ -1,6 +1,6 @@
 import sys
 from datetime import date, timedelta
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django import forms
 from django.conf import settings
@@ -220,6 +220,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         for cache in caches.all():
             cache.clear()
 
+            # We'll test the signal handler separately
             post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def tearDown(self):
@@ -857,7 +858,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 )
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
     def setUp(self):
-        # We'll test the signal handler separately
+
         post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def test_asset_reservation(self):
@@ -1046,13 +1047,18 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # 1 reservation check + 1 acquire + 2 get user ID
         # + 2 get user profile from request
-        expected_queries = 6
+
+        expected_queries = 2
         if settings.SESSION_ENGINE.endswith("db"):
             # + 1 session check
             expected_queries += 1
 
-        with self.assertNumQueries(expected_queries):
-            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
+        with patch("concordia.utils.get_anonymous_user") as mock_get:
+            mock_user = Mock(spec=User)
+            mock_user.id = 8
+            mock_get.return_value = mock_user
+            with self.assertNumQueries(expected_queries):
+                resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
         self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(2, AssetTranscriptionReservation.objects.count())
