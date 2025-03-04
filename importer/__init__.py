@@ -28,7 +28,7 @@ The import process works like this:
    is in progress and our community managers quality review items before making
    them visible to the community. The asset import tasks are queued at the end
    of this step.
-5. When the asset import task runs, it downloads the remove file and saves it in
+5. When the asset import task runs, it downloads the remote file and saves it in
    Concordia's working storage. Each asset is processed independently so
    completed downloads will not consume local storage until the [potentially
    very large] item has completely downloaded, which could potentially take

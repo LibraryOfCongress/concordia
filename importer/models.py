@@ -2,8 +2,17 @@
 See the module-level docstring for implementation details
 """
 
+from logging import getLogger
+
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
+
+from configuration.utils import configuration_value
+from importer import tasks
+
+logger = getLogger(__name__)
 
 # FIXME: these classes should have names which more accurately represent what they do
 
@@ -11,6 +20,7 @@ from django.db import models
 class TaskStatusModel(models.Model):
     class FailureReason(models.TextChoices):
         IMAGE = "Image"
+        RETRIES = "Retries"
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -38,11 +48,66 @@ class TaskStatusModel(models.Model):
     )
 
     failure_reason = models.CharField(
-        max_length=50, blank=True, default="", choices=FailureReason.choices
+        help_text="Reason the task failed, if one was provided",
+        max_length=50,
+        blank=True,
+        default="",
+        choices=FailureReason.choices,
+    )
+
+    retry_count = models.IntegerField(
+        help_text="Number of times the task was retried", default=0, blank=True
+    )
+
+    failure_history = models.JSONField(
+        help_text="Information about previous failures of the task, if any",
+        encoder=DjangoJSONEncoder,
+        default=list,
+        blank=True,
     )
 
     class Meta:
         abstract = True
+
+    def retry_if_possible(self):
+        return False
+
+    def update_failure_history(self, do_save=True):
+        self.failure_history.append(
+            {
+                "failed": self.failed,
+                "failure_reason": self.failure_reason,
+                "status": self.status,
+            }
+        )
+        if do_save:
+            self.save()
+
+    def reset_for_retry(self):
+        if self.failed:
+            logger.info(
+                "Resetting task %s for retrying",
+                self,
+            )
+            self.update_failure_history(do_save=False)
+            self.failed = None
+            self.failure_reason = ""
+            self.status = "Retrying"
+            self.retry_count += 1
+            self.save()
+            return True
+        else:
+            self.status = (
+                "Task was not marked as failed, so it will "
+                "not be reset for retrying."
+            )
+            self.save()
+            logger.warning(
+                "Task %s was not marked as failed, so it will not be "
+                "reset for retrying",
+                self,
+            )
+            return False
 
 
 class ImportJob(TaskStatusModel):
@@ -101,3 +166,37 @@ class ImportItemAsset(TaskStatusModel):
 
     def __str__(self):
         return "ImportItemAsset(import_item=%s, url=%s)" % (self.import_item, self.url)
+
+    def retry_if_possible(self):
+        if self.failure_reason == TaskStatusModel.FailureReason.IMAGE:
+            max_retries = configuration_value("asset_image_import_max_retries")
+            retry_delay = configuration_value("asset_image_import_max_retry_delay")
+            if self.retry_count < max_retries and retry_delay > 0:
+                if self.reset_for_retry():
+                    return tasks.download_asset_task.apply_async(
+                        (self.pk,), countdown=retry_delay * 60  # Convert to seconds
+                    )
+                else:
+                    logger.warning(
+                        "Task %s was not reset for retrying, so it will not be retried",
+                        self,
+                    )
+                    return False
+            else:
+                logger.warning(
+                    "Task %s has reached the maximum number of retries (%s) "
+                    "and will not be repeated",
+                    self,
+                    max_retries,
+                )
+                self.update_failure_history(do_save=False)
+                self.failed = timezone.now()
+                self.status = (
+                    "Maximum number of retries reached while retrying "
+                    "image download for asset. The failure reason before retrying "
+                    "was {self.failure_reason} and the status was {self.status}"
+                )
+                self.failure_reason = TaskStatusModel.FailureReason.RETRIES
+                self.save()
+                return False
+        return False

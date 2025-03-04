@@ -91,6 +91,8 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
         "status",
         "task_id",
         "failure_reason",
+        "retry_count",
+        "failure_history",
     )
 
     @staticmethod
