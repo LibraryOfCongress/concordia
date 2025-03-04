@@ -27,11 +27,10 @@ from requests.packages.urllib3.util.retry import Retry
 
 from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
-from importer.models import ImportItem, ImportItemAsset, ImportJob
+from importer import models
 
 from .celery import app
-from .exceptions import ImageImportFailure
-from .models import TaskStatusModel
+from .exceptions import ImageImportFailure, MaximumRetriesReached
 
 logger = getLogger(__name__)
 
@@ -76,12 +75,12 @@ def requests_retry_session(
 
 def update_task_status(f):
     """
-    Decorator which causes any function which is passed a TaskStatusModel subclass
-    object to update on entry and exit and populate the status field with an exception
-    message if raised
+    Decorator which causes any function which is passed a models.TaskStatusModel
+    subclass object to update on entry and exit and populate the status field
+    with an exception message if raised
 
     Assumes that all wrapped functions get the Celery task self value as the
-    first parameter and the TaskStatusModel subclass object as the second
+    first parameter and the models.TaskStatusModel subclass object as the second
     """
 
     @wraps(f)
@@ -112,6 +111,7 @@ def update_task_status(f):
         try:
             f(self, task_status_object, *args, **kwargs)
             task_status_object.completed = now()
+            task_status_object.status = "Completed"
             task_status_object.save()
         except Exception as exc:
             task_status_object.status = "{}\n\nUnhandled exception: {}".format(
@@ -119,8 +119,21 @@ def update_task_status(f):
             ).strip()
             task_status_object.failed = now()
             if isinstance(exc, ImageImportFailure):
-                task_status_object.failure_reason = TaskStatusModel.FailureReason.IMAGE
+                task_status_object.failure_reason = (
+                    models.TaskStatusModel.FailureReason.IMAGE
+                )
+            elif isinstance(exc, MaximumRetriesReached):
+                task_status_object.failure_reason = (
+                    models.TaskStatusModel.FailureRason.RETRIES
+                )
             task_status_object.save()
+            retry_result = task_status_object.retry_if_possible()
+            if retry_result:
+                task_status_object.last_started = now()
+                task_status_object.task_id = retry_result.id
+                task_status_object.save()
+            else:
+                logger.info("Retrying task %s was not possible", task_status_object)
             raise
 
     return inner
@@ -295,7 +308,9 @@ def import_items_into_project_from_url(
         )
     url_type = m.group(1)
 
-    import_job = ImportJob(project=project, created_by=requesting_user, url=import_url)
+    import_job = models.ImportJob(
+        project=project, created_by=requesting_user, url=import_url
+    )
     import_job.full_clean()
     import_job.save()
 
@@ -311,7 +326,7 @@ def import_items_into_project_from_url(
 
 @app.task(bind=True)
 def import_collection_task(self, import_job_pk, redownload=False):
-    import_job = ImportJob.objects.get(pk=import_job_pk)
+    import_job = models.ImportJob.objects.get(pk=import_job_pk)
     return import_collection(self, import_job, redownload)
 
 
@@ -333,10 +348,9 @@ def import_collection(self, import_job, redownload=False):
 )
 def redownload_image_task(self, asset_pk):
     """
-    Given a tile.loc.gov URL and an existing asset object,
-    download the image from tile.loc.gov and save it
-    to asset storage, replacing any existing image for
-    that asset
+    Given an existing asset object with a download_url,
+    download the image and save it to asset storage, replacing
+    any existing image for that asset
     """
     asset = Asset.objects.get(pk=asset_pk)
     logger.info("Redownloading %s to %s", asset.download_url, asset.get_absolute_url())
@@ -354,13 +368,13 @@ def redownload_image_task(self, asset_pk):
 )
 def create_item_import_task(self, import_job_pk, item_url, redownload=False):
     """
-    Create an ImportItem record using the provided import job and URL by
+    Create an models.ImportItem record using the provided import job and URL by
     requesting the metadata from the URL
 
     Enqueues the actual import for the item once we have the metadata
     """
 
-    import_job = ImportJob.objects.get(pk=import_job_pk)
+    import_job = models.ImportJob.objects.get(pk=import_job_pk)
 
     # Load the Item record with metadata from the remote URL:
     resp = requests.get(item_url, params={"fo": "json"}, timeout=30)
@@ -410,7 +424,7 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
 
 @app.task(bind=True)
 def import_item_task(self, import_item_pk):
-    i = ImportItem.objects.select_related("item").get(pk=import_item_pk)
+    i = models.ImportItem.objects.select_related("item").get(pk=import_item_pk)
     return import_item(self, i)
 
 
@@ -462,7 +476,7 @@ def import_item(self, import_item):
     Asset.objects.bulk_create(item_assets)
 
     for asset in item_assets:
-        import_asset = ImportItemAsset(
+        import_asset = models.ImportItemAsset(
             import_item=import_item,
             asset=asset,
             url=asset.download_url,
@@ -559,7 +573,9 @@ def get_asset_urls_from_item_resources(resources):
 def download_asset_task(self, import_asset_pk):
     # We'll use the containing objects' slugs to construct the storage path so
     # we might as well use select_related to save extra queries:
-    qs = ImportItemAsset.objects.select_related("import_item__item__project__campaign")
+    qs = models.ImportItemAsset.objects.select_related(
+        "import_item__item__project__campaign"
+    )
     import_asset = qs.get(pk=import_asset_pk)
 
     return download_asset(self, import_asset)
