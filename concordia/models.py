@@ -1058,27 +1058,34 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
-def update_userprofileactivity_table(user, campaign, attr_name, increment=1):
+def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
     field = attr_name + "_count"
+
     user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-        user_id=user,
-        campaign_id=campaign,
+        user=user,
+        campaign_id=campaign_id,
     )
-    profile, _ = UserProfile.objects.get_or_create(user=user)
     if created:
         value = increment
     else:
         value = F(field) + increment
     setattr(user_profile_activity, field, value)
-    setattr(profile, field, value)
     q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
     user_profile_activity.asset_count = (
         Asset.objects.filter(q)
-        .filter(item__project__campaign=campaign)
+        .filter(item__project__campaign=campaign_id)
         .distinct()
         .count()
     )
     user_profile_activity.save()
+
+    if hasattr(user, "profile"):
+        profile = user.profile
+        value = F(field) + increment
+    else:
+        profile = UserProfile.objects.create(user=user)
+        value = increment
+    setattr(profile, field, value)
     profile.save()
 
 

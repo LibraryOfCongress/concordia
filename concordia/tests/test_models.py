@@ -20,6 +20,7 @@ from concordia.models import (
     UserProfileActivity,
     on_transcription_save,
     resource_file_upload_path,
+    update_userprofileactivity_table,
     validated_get_or_create,
 )
 from concordia.signals.handlers import create_user_profile
@@ -367,7 +368,7 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
             f"{instance.asset.item.project.campaign.pk}_transcribe"
         )
 
-        mock_cache_update.assert_called_with(expected_key, "transcribe")
+        mock_cache_update.assert_called_with(expected_key)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
@@ -411,15 +412,22 @@ class UserProfileActivityTestCase(TestCase):
 
 
 class UserProfileTestCase(CreateTestUsers, TestCase):
-    def test_transcription_save_creating_userprofile(self):
+    def test_update_userprofileactivity_table(self):
         signals.post_save.disconnect(
             create_user_profile, sender=settings.AUTH_USER_MODEL
         )
+
         user = self.create_test_user()
         self.assertFalse(hasattr(user, "profile"))
-        create_transcription(user=user)
+
+        transcription = create_transcription(user=user)
+        update_userprofileactivity_table(
+            user, transcription.asset.item.project.campaign.id, "transcribe"
+        )
+
         self.assertTrue(hasattr(user, "profile"))
         self.assertEqual(user.profile.transcribe_count, 1)
+
         signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
 
 

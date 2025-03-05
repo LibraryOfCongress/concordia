@@ -1097,6 +1097,7 @@ def unusual_activity(ignore_env=False):
 def update_from_cache():
     for key in cache.keys("userprofileactivity_*"):
         _, user_id, campaign_id, field = key.split("_")
+        user = User.objects.get(id=user_id)
         value = cache.get(key)
-        update_userprofileactivity_table(user_id, campaign_id, field, value)
+        update_userprofileactivity_table(user, campaign_id, field, value)
         cache.delete(key)
