@@ -1089,11 +1089,6 @@ def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
     profile.save()
 
 
-def cache_profile_update(key, increment=1):
-    value = cache.get(key, 0) + increment
-    cache.set(key, value)
-
-
 def on_transcription_save(sender, instance, **kwargs):
     if kwargs.get("created", False):
         user = instance.user
@@ -1106,11 +1101,14 @@ def on_transcription_save(sender, instance, **kwargs):
         attr_name = None
 
     if user is not None and attr_name is not None and user.username != "anonymous":
-        key = (
-            f"userprofileactivity_{user.pk}_"
-            f"{instance.asset.item.project.campaign.pk}_{attr_name}"
-        )
-        cache_profile_update(key)
+        key = f"userprofileactivity_{instance.asset.item.project.campaign.id}"
+        updates = cache.get(key, {})
+        transcribe_count, review_count = updates.get(user, (0, 0))
+        if attr_name == "transcribe":
+            transcribe_count += 1
+        else:
+            review_count += 1
+        cache.set(key, (transcribe_count, review_count))
 
 
 post_save.connect(on_transcription_save, sender=Transcription)

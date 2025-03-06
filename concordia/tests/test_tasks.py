@@ -12,7 +12,7 @@ from concordia.tasks import (
     campaign_report,
     site_report,
     unusual_activity,
-    update_from_cache,
+    update_userprofileactivity_from_cache,
 )
 from concordia.utils import get_anonymous_user
 
@@ -233,12 +233,12 @@ class TaskTestCase(CreateTestUsers, TestCase):
         self.assertIn(expected_subject, mail.outbox[0].subject)
 
     @mock.patch("concordia.tasks.update_userprofileactivity_table")
-    def test_update_from_cache(self, mock_update_table):
+    def test_update_userprofileactivity_from_cache(self, mock_update_table):
         user = self.create_test_user()
         campaign = create_campaign()
         self.assertEqual(mock_update_table.call_count, 0)
-        key = "userprofileactivity_%s_%s_transcribe" % (user.pk, campaign.pk)
-        cache.set(key, 1)
-        update_from_cache()
-        self.assertEqual(mock_update_table.call_count, 1)
+        key = f"userprofileactivity_{campaign.pk}"
+        cache.set(key, {user.pk: (1, 0)})
+        update_userprofileactivity_from_cache()
+        self.assertEqual(mock_update_table.call_count, 2)
         self.assertIsNone(cache.get(key))

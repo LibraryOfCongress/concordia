@@ -351,24 +351,20 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
 
 
 class SignalHandlersTest(CreateTestUsers, TestCase):
-    @mock.patch("concordia.models.cache_profile_update")
-    def test_on_transcription_save(self, mock_cache_update):
+    @mock.patch("django.core.cache.cache.set")
+    def test_on_transcription_save(self, mock_set):
         instance = mock.MagicMock()
         instance.user = self.create_test_user(username="anonymous")
         instance.asset = create_asset()
         on_transcription_save(None, instance, **{"created": True})
         self.assertEqual(instance.user.username, "anonymous")
-        self.assertEqual(mock_cache_update.call_count, 0)
+        self.assertEqual(mock_set.call_count, 0)
 
         instance.user = self.create_test_user()
         on_transcription_save(None, instance, **{"created": True})
-        self.assertEqual(mock_cache_update.call_count, 1)
-        expected_key = (
-            f"userprofileactivity_{instance.user.pk}_"
-            f"{instance.asset.item.project.campaign.pk}_transcribe"
-        )
-
-        mock_cache_update.assert_called_with(expected_key)
+        self.assertEqual(mock_set.call_count, 1)
+        expected_key = f"userprofileactivity_{instance.asset.item.project.campaign.pk}"
+        mock_set.assert_called_with(expected_key, (1, 0))
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
