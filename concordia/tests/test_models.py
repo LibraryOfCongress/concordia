@@ -367,7 +367,8 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         on_transcription_save(None, instance, **{"created": True})
         self.assertEqual(mock_set.call_count, 1)
         expected_key = f"userprofileactivity_{instance.asset.item.project.campaign.pk}"
-        mock_set.assert_called_with(expected_key, (1, 0))
+        expected_value = {instance.user.id: (1, 0)}
+        mock_set.assert_called_with(expected_key, expected_value)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
