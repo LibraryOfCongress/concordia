@@ -370,6 +370,12 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         expected_value = {instance.user.id: (1, 0)}
         mock_set.assert_called_with(expected_key, expected_value)
 
+        instance.reviewed_by = self.create_test_user(username="testuser2")
+        on_transcription_save(None, instance, **{"created": False})
+        self.assertEqual(mock_set.call_count, 2)
+        expected_value = {instance.reviewed_by.id: (0, 1)}
+        mock_set.assert_called_with(expected_key, expected_value)
+
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
     def setUp(self):
