@@ -50,6 +50,7 @@ class AssetTestCase(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
         self.anon = get_anonymous_user()
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         create_transcription(asset=self.asset, user=self.anon)
         create_transcription(
             asset=self.asset,
@@ -151,6 +152,7 @@ class AssetTestCase(CreateTestUsers, TestCase):
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
     def setUp(self):
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         self.transcription1 = create_transcription(
             user=self.create_user(username="tester1"),
             rejected=timezone.now() - timedelta(days=2),
@@ -288,6 +290,7 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         self.user = self.create_user("test-user-1")
         self.user2 = self.create_user("test-user-2")
         self.asset = create_asset()
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         self.transcription1 = create_transcription(
             user=self.user,
             asset=self.asset,

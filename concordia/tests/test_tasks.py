@@ -3,10 +3,11 @@ from unittest import mock
 
 from django.core import mail
 from django.core.cache import cache
+from django.db.models import signals
 from django.test import TestCase
 from django.utils import timezone
 
-from concordia.models import Campaign, SiteReport, Transcription
+from concordia.models import Campaign, SiteReport, Transcription, on_transcription_save
 from concordia.tasks import (
     _daily_active_users,
     campaign_report,
@@ -42,6 +43,7 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         cls.item1 = cls.asset1.item
         cls.project1 = cls.item1.project
         cls.campaign1 = cls.project1.campaign
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         cls.asset1_transcription1 = create_transcription(
             asset=cls.asset1, user=cls.user1, accepted=timezone.now()
         )
