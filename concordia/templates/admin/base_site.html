@@ -27,3 +27,22 @@
         }
     </style>
 {% endblock %}
+
+{% block messages %}
+    {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+        {# Remove mark-safe from tags since that's for controlling template behavior #}
+                {% with message.tags|reject:"mark-safe"|join:" " as cleaned_tags %}
+                    <li {% if cleaned_tags %} class="{{ cleaned_tags }}">{% endif %}
+                    {% if "marked-safe" in message.tags %}
+                        {{ message|safe|capfirst }}
+                    {% else %}
+                        {{ message|capfirst }}
+                    {% endif %}
+                    </li>
+                {% endwith %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock messages %}

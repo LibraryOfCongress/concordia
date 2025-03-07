@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.utils.translation import gettext_lazy as _
 
 from concordia.admin.filters import (
     CampaignListFilter,
@@ -8,7 +9,13 @@ from concordia.admin.filters import (
 )
 from concordia.models import Campaign
 
-from .models import ImportItem, ImportItemAsset, ImportJob
+from .models import (
+    DownloadAssetImageJob,
+    ImportItem,
+    ImportItemAsset,
+    ImportJob,
+    VerifyAssetImageJob,
+)
 from .tasks import download_asset_task
 
 
@@ -81,6 +88,41 @@ class ImportItemAssetCampaignListFilter(ImportCampaignListFilter):
     status_filter_parameter = "import_item__job__project__campaign__status"
 
 
+class BatchFilter(admin.SimpleListFilter):
+    title = _("Batch")
+    parameter_name = "batch"
+
+    def lookups(self, request, model_admin):
+        """
+        Show the five most recent batch values that contain incomplete jobs
+        (completed=None), plus the currently filtered batch if it's not already
+        in the list.
+        """
+        queryset = model_admin.get_queryset(request)
+        from django.db.models import Max
+
+        recent_batches = (
+            queryset.filter(completed__isnull=True)
+            .exclude(batch__isnull=True)
+            .values("batch")
+            .annotate(latest_created=Max("created"))  # Get most recent job per batch
+            .order_by("-latest_created")[:5]
+        )
+
+        batch_choices = {str(batch["batch"]) for batch in recent_batches}
+        current_batch = self.value()
+        if current_batch:
+            batch_choices.add(current_batch)
+
+        return [(batch, batch[:12] + "...") for batch in batch_choices]
+
+    def queryset(self, request, queryset):
+        batch_value = self.value()
+        if batch_value:
+            return queryset.filter(batch=batch_value)
+        return queryset
+
+
 class TaskStatusModelAdmin(admin.ModelAdmin):
     readonly_fields = (
         "created",
@@ -93,6 +135,7 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
         "failure_reason",
         "retry_count",
         "failure_history",
+        "status_history",
     )
 
     @staticmethod
@@ -203,4 +246,29 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
         ImportJobAssetProjectListFilter,
     )
     search_fields = ("url", "status")
-    actions = (retry_download_task,)
+
+
+@admin.register(VerifyAssetImageJob)
+class VerifyAssetImageJobAdmin(TaskStatusModelAdmin):
+    readonly_fields = TaskStatusModelAdmin.readonly_fields + ("asset", "batch")
+    list_filter = (
+        LastStartedFilter,
+        CompletedFilter,
+        FailedFilter,
+        "failure_reason",
+        BatchFilter,
+    )
+    search_fields = ("status",)
+
+
+@admin.register(DownloadAssetImageJob)
+class DownloadAssetImageJobAdmin(TaskStatusModelAdmin):
+    readonly_fields = TaskStatusModelAdmin.readonly_fields + ("asset", "batch")
+    list_filter = (
+        LastStartedFilter,
+        CompletedFilter,
+        FailedFilter,
+        "failure_reason",
+        BatchFilter,
+    )
+    search_fields = ("status",)
