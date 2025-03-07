@@ -9,6 +9,7 @@ from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
@@ -33,6 +34,7 @@ from concordia.models import (
     Transcription,
     UserAssetTagCollection,
     UserProfileActivity,
+    update_userprofileactivity_table,
 )
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
@@ -41,6 +43,8 @@ from concordia.utils import get_anonymous_user
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
+
+ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
 
 
 @celery_app.task
@@ -1059,9 +1063,11 @@ def unusual_activity(ignore_env=False):
         site = Site.objects.get_current()
         now = timezone.now()
         ONE_DAY_AGO = now - datetime.timedelta(days=1)
+        title = "Unusual User Activity Report for " + now.strftime("%b %d %Y, %I:%M %p")
+        if ignore_env:
+            title += " [%s]" % ENV_MAPPING[settings.CONCORDIA_ENVIRONMENT]
         context = {
-            "title": "Unusual User Activity Report for "
-            + now.strftime("%b %d %Y, %I:%M %p"),
+            "title": title,
             "domain": "https://" + site.domain,
             "transcriptions": Transcription.objects.transcribe_incidents(ONE_DAY_AGO),
             "reviews": Transcription.objects.review_incidents(ONE_DAY_AGO),
@@ -1085,3 +1091,19 @@ def unusual_activity(ignore_env=False):
         )
         message.attach_alternative(html_body_message, "text/html")
         message.send()
+
+
+@celery_app.task(ignore_result=True)
+def update_userprofileactivity_from_cache():
+    for campaign in Campaign.objects.all():
+        key = f"userprofileactivity_{campaign.pk}"
+        updates_by_user = cache.get(key)
+        cache.delete(key)
+        for user_id in updates_by_user:
+            user = User.objects.get(id=user_id)
+            update_userprofileactivity_table(
+                user, campaign.id, "transcribe", updates_by_user[user_id][0]
+            )
+            update_userprofileactivity_table(
+                user, campaign.id, "review", updates_by_user[user_id][1]
+            )
