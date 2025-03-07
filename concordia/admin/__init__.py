@@ -57,6 +57,7 @@ from .actions import (
     publish_item_action,
     unpublish_action,
     unpublish_item_action,
+    verify_assets_action,
 )
 from .filters import (
     AcceptedFilter,
@@ -255,7 +256,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "next_review_campaign",
     )
 
-    actions = (publish_action, unpublish_action)
+    actions = (publish_action, unpublish_action, verify_assets_action)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -463,7 +464,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         ProjectCampaignListFilter,
     )
 
-    actions = (publish_action, unpublish_action)
+    actions = (publish_action, unpublish_action, verify_assets_action)
 
     def lookup_allowed(self, key, value):
         if key in ("campaign__id__exact"):
@@ -576,7 +577,7 @@ class ItemAdmin(admin.ModelAdmin):
         ItemProjectListFilter,
     )
 
-    actions = (publish_item_action, unpublish_item_action)
+    actions = (publish_item_action, unpublish_item_action, verify_assets_action)
 
     def lookup_allowed(self, key, value):
         if key in ("project__campaign__id__exact",):
@@ -677,6 +678,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         unpublish_action,
         export_to_csv_action,
         export_to_excel_action,
+        verify_assets_action,
     )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")

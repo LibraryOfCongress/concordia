@@ -21,6 +21,7 @@ from django.db import transaction
 from django.utils.text import slugify
 from django.utils.timezone import now
 from flags.state import flag_enabled
+from PIL import Image
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
@@ -111,12 +112,12 @@ def update_task_status(f):
         try:
             f(self, task_status_object, *args, **kwargs)
             task_status_object.completed = now()
-            task_status_object.status = "Completed"
-            task_status_object.save()
+            task_status_object.update_status("Completed")
         except Exception as exc:
-            task_status_object.status = "{}\n\nUnhandled exception: {}".format(
+            new_status = "{}\n\nUnhandled exception: {}".format(
                 task_status_object.status, exc
             ).strip()
+            task_status_object.update_status(new_status, do_save=False)
             task_status_object.failed = now()
             if isinstance(exc, ImageImportFailure):
                 task_status_object.failure_reason = (
@@ -395,8 +396,8 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
         if item.asset_set.count() >= len(asset_urls):
             # The item has all of its assets, so we can skip it
             logger.warning("Not reprocessing existing item with all asssets: %s", item)
-            import_item.status = (
-                "Not reprocessing existing item with all assets: %s" % item
+            import_item.update_status(
+                f"Not reprocessing existing item with all assets: {item}", do_save=False
             )
             import_item.completed = import_item.last_started = now()
             import_item.task_id = self.request.id
@@ -590,22 +591,26 @@ def download_asset_task(self, import_asset_pk):
 
 
 @update_task_status
-def download_asset(self, import_asset):
+def download_asset(self, job):
     """
     Download the URL specified for an Asset and save it to working
     storage
     """
-    item = import_asset.import_item.item
-    download_url = import_asset.url
-    asset = import_asset.asset
+    asset = job.asset
+    if hasattr(job, "url"):
+        download_url = job.url
+    else:
+        download_url = asset.download_url
+    file_extension = os.path.splitext(urlparse(download_url))[1].lower()
+    if not file_extension or file_extension == "jpeg":
+        file_extension = "jpg"
 
-    asset_filename = os.path.join(
-        item.project.campaign.slug,
-        item.project.slug,
-        item.item_id,
-        "%d.jpg" % asset.sequence,
-    )
+    asset_image_filename = asset.get_asset_image_filename(file_extension)
 
+    download_and_store_asset_image(download_url, asset_image_filename)
+
+
+def download_and_store_asset_image(download_url, asset_image_filename):
     try:
         hasher = hashlib.md5(usedforsecurity=False)
         # We'll download the remote file to a temporary file
@@ -624,16 +629,18 @@ def download_asset(self, import_asset):
             temp_file.flush()
             temp_file.seek(0)
 
-            ASSET_STORAGE.save(asset_filename, temp_file)
+            ASSET_STORAGE.save(asset_image_filename, temp_file)
     except Exception as exc:
-        logger.exception("Unable to download %s to %s", download_url, asset_filename)
+        logger.exception(
+            "Unable to download %s to %s", download_url, asset_image_filename
+        )
         raise ImageImportFailure(
-            f"Unable to download {download_url} to {asset_filename}"
+            f"Unable to download {download_url} to {asset_image_filename}"
         ) from exc
 
     filehash = hasher.hexdigest()
     response = boto3.client("s3").head_object(
-        Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=asset_filename
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=asset_image_filename
     )
     etag = response.get("ETag")[1:-1]  # trim quotes around hash
     if filehash != etag:
@@ -642,11 +649,11 @@ def download_asset(self, import_asset):
                 "ETag (%s) for %s did not match calculated md5 hash (%s) and "
                 "the IMPORT_IMAGE_CHECKSUM flag is enabled",
                 etag,
-                asset_filename,
+                asset_image_filename,
                 filehash,
             )
             raise ImageImportFailure(
-                f"ETag {etag} for {asset_filename} did not match calculated "
+                f"ETag {etag} for {asset_image_filename} did not match calculated "
                 f"md5 hash {filehash}"
             )
         else:
@@ -654,8 +661,99 @@ def download_asset(self, import_asset):
                 "ETag (%s) for %s did not match calculated md5 hash (%s) but "
                 "the IMPORT_IMAGE_CHECKSUM flag is disabled",
                 etag,
-                asset_filename,
+                asset_image_filename,
                 filehash,
             )
     else:
-        logger.debug("Checksums for %s matched. Upload successful.", asset_filename)
+        logger.debug(
+            "Checksums for %s matched. Upload successful.", asset_image_filename
+        )
+
+
+@app.task(
+    bind=True,
+    autoretry_for=(HTTPError,),
+    retry_backoff=60 * 60,
+    retry_backoff_max=8 * 60 * 60,
+    retry_jitter=True,
+    retry_kwargs={"max_retries": 3},
+    rate_limit=1,
+)
+def verify_asset_image_task(self, asset_pk, batch=""):
+    try:
+        asset = Asset.objects.get(pk=asset_pk)
+    except models.ImportItemAsset.DoesNotExist:
+        logger.exception(
+            "Asset %s could not be found while attempting to "
+            "spawn verify_asset_image task",
+            asset_pk,
+        )
+        raise
+    job = models.VerifyAssetImageJob.create(asset=asset)
+
+    result = verify_asset_image(self, job)
+    if result is True:
+        job.update_status("Storage image verified")
+    return result
+
+
+@update_task_status
+def verify_asset_image(task, job):
+    asset = job.asset
+    if not asset.storage_image or not asset.storage_image.name:
+        status = f"No storage image exists on {asset} ({asset.id})"
+        logger.info(status)
+        job.update_status(status)
+        return download_asset_image_task(asset.pk, job.batch)
+
+    if not ASSET_STORAGE.exists(asset.storage_image.name):
+        status = f"Storage image for {asset} ({asset.id}) missing from storage"
+        logger.info(status)
+        job.update_status(status)
+        return download_asset_image_task(asset.pk, job.batch)
+
+    try:
+        with ASSET_STORAGE.open(asset.storage_image.name, "rb") as image_file:
+            with Image.open(image_file) as image:
+                image.verify()
+    except Exception as exc:
+        status = (
+            f"Storage image for {asset} ({asset.id}), {asset.storage_image.name}, "
+            f"is corrupt. The exception raised was {exc}"
+        )
+        logger.info(status)
+        job.update_status(status)
+        return download_asset_image_task(asset.pk, job.batch)
+
+    logger.info(
+        "Storage image for %s (%s), %s, verified successfully",
+        asset,
+        asset.id,
+        asset.storage_image.name,
+    )
+    return True
+
+
+@app.task(
+    bind=True,
+    autoretry_for=(HTTPError,),
+    retry_backoff=60 * 60,
+    retry_backoff_max=8 * 60 * 60,
+    retry_jitter=True,
+    retry_kwargs={"max_retries": 3},
+    rate_limit=1,
+)
+def download_asset_image_task(self, asset_pk, batch=""):
+    try:
+        asset = Asset.objects.get(pk=asset_pk)
+    except models.ImportItemAsset.DoesNotExist:
+        logger.exception(
+            "Asset %s could not be found while attempting to "
+            "spawn verify_asset_image task",
+            asset_pk,
+        )
+        raise
+
+    job = models.DownloadAssetImageJob.objects.create(asset=asset, batch=batch)
+
+    return download_asset(self, job)

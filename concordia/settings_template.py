@@ -170,7 +170,10 @@ TEMPLATES = [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
             ],
-            "builtins": ["configuration.templatetags.configuration_tags"],
+            "builtins": [
+                "configuration.templatetags.configuration_tags",
+                "concordia.templatetags.reject_filter",
+            ],
         },
     }
 ]

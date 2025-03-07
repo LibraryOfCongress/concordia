@@ -4,7 +4,16 @@ from logging import getLogger
 from django.contrib import admin, messages
 from django.utils.timezone import now
 
-from ..models import Asset, Transcription, TranscriptionStatus
+from importer.utils import create_verify_asset_image_job_batch
+
+from ..models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Transcription,
+    TranscriptionStatus,
+)
 
 logger = getLogger(__name__)
 
@@ -161,4 +170,43 @@ def change_status_to_in_progress(modeladmin, request, queryset):
 
     messages.info(
         request, f"Changed status of {count} assets to In Progress", fail_silently=True
+    )
+
+
+@admin.action(
+    permissions=["change"],
+    description="Verify images for all assets under the selected object",
+)
+def verify_assets_action(modeladmin, request, queryset):
+    """
+    Django admin action that verifies assets under the selected
+    Campaigns, Projects, Items or Assets.
+    """
+    batch = str(uuid.uuid4())
+
+    if modeladmin.model == Campaign:
+        asset_pks = Asset.objects.filter(campaign__in=queryset).values_list(
+            "id", flat=True
+        )
+    elif modeladmin.model == Project:
+        asset_pks = Asset.objects.filter(item__project__in=queryset).values_list(
+            "id", flat=True
+        )
+    elif modeladmin.model == Item:
+        asset_pks = Asset.objects.filter(item__in=queryset).values_list("id", flat=True)
+    elif modeladmin.model == Asset:
+        asset_pks = queryset.values_list("id", flat=True)
+    else:
+        modeladmin.message_user(
+            request, "This action is not available for this model.", level="error"
+        )
+        return
+
+    job_count, url = create_verify_asset_image_job_batch(asset_pks, batch)
+
+    modeladmin.message_user(
+        request,
+        f"Created {job_count} VerifyAssetImageJobs as part of batch {batch}. "
+        f'<a href="{url}" target="_blank">View the created jobs</a>',
+        extra_tags="marked-safe",
     )
