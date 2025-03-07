@@ -1108,7 +1108,8 @@ def on_transcription_save(sender, instance, **kwargs):
             transcribe_count += 1
         else:
             review_count += 1
-        cache.set(key, (transcribe_count, review_count))
+        updates[user] = (transcribe_count, review_count)
+        cache.set(key, updates)
 
 
 post_save.connect(on_transcription_save, sender=Transcription)
