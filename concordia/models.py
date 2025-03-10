@@ -1058,38 +1058,62 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
+def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
+    field = attr_name + "_count"
+
+    user_profile_activity, created = UserProfileActivity.objects.get_or_create(
+        user=user,
+        campaign_id=campaign_id,
+    )
+    if created:
+        value = increment
+    else:
+        value = F(field) + increment
+    setattr(user_profile_activity, field, value)
+    q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
+    user_profile_activity.asset_count = (
+        Asset.objects.filter(q)
+        .filter(item__project__campaign=campaign_id)
+        .distinct()
+        .count()
+    )
+    user_profile_activity.save()
+
+    if hasattr(user, "profile"):
+        profile = user.profile
+        value = F(field) + increment
+    else:
+        profile = UserProfile.objects.create(user=user)
+        value = increment
+    setattr(profile, field, value)
+    profile.save()
+
+
 def on_transcription_save(sender, instance, **kwargs):
-    if kwargs["created"]:
+    r"""
+    :param instance:
+        the transcription being saved
+    """
+    if kwargs.get("created", False):
         user = instance.user
-        attr_name = "transcribe_count"
+        attr_name = "transcribe"
     elif instance.reviewed_by:
         user = instance.reviewed_by
-        attr_name = "review_count"
+        attr_name = "review"
     else:
         user = None
         attr_name = None
 
-    if user is not None and attr_name is not None:
-        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-            user=user,
-            campaign=instance.asset.item.project.campaign,
-        )
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        if created:
-            setattr(user_profile_activity, attr_name, 1)
-            setattr(profile, attr_name, 1)
+    if user is not None and attr_name is not None and user.username != "anonymous":
+        key = f"userprofileactivity_{instance.asset.item.project.campaign.id}"
+        updates = cache.get(key, {})
+        transcribe_count, review_count = updates.get(user.id, (0, 0))
+        if attr_name == "transcribe":
+            transcribe_count += 1
         else:
-            setattr(user_profile_activity, attr_name, F(attr_name) + 1)
-            setattr(profile, attr_name, F(attr_name) + 1)
-        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        user_profile_activity.asset_count = (
-            Asset.objects.filter(q)
-            .filter(item__project__campaign=instance.asset.item.project.campaign)
-            .distinct()
-            .count()
-        )
-        user_profile_activity.save()
-        profile.save()
+            review_count += 1
+        updates[user.id] = (transcribe_count, review_count)
+        cache.set(key, updates)
 
 
 post_save.connect(on_transcription_save, sender=Transcription)

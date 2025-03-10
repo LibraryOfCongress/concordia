@@ -62,6 +62,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 
         create_transcription(asset=self.asset, user=user)
         user = users.get(username=self.user.username)
+        user.profile.transcribe_count = 1
+        user.profile.save()
         transcription_count = self.user_admin.transcription_count(user)
         self.assertEqual(transcription_count, 1)
 
@@ -80,6 +82,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         transcription.reviewed_by = self.user
         transcription.save()
         user = users.get(username=self.user.username)
+        user.profile.review_count = 1
+        user.profile.save()
         review_count = self.user_admin.review_count(user)
         self.assertEqual(review_count, 1)
 

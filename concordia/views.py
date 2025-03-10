@@ -947,7 +947,7 @@ class CompletedCampaignListView(APIListView):
     def get_context_data(self, **kwargs):
         campaigns = self._get_all_campaigns()
         data = super().get_context_data(**kwargs)
-        data["result_count"] = campaigns.count()
+        data["result_count"] = self.object_list.count()
         data["research_centers"] = ResearchCenter.objects.filter(
             campaign__in=campaigns
         ).distinct()

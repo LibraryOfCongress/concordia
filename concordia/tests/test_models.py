@@ -18,7 +18,9 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserProfileActivity,
+    on_transcription_save,
     resource_file_upload_path,
+    update_userprofileactivity_table,
     validated_get_or_create,
 )
 from concordia.signals.handlers import create_user_profile
@@ -48,6 +50,7 @@ class AssetTestCase(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
         self.anon = get_anonymous_user()
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         create_transcription(asset=self.asset, user=self.anon)
         create_transcription(
             asset=self.asset,
@@ -149,6 +152,7 @@ class AssetTestCase(CreateTestUsers, TestCase):
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
     def setUp(self):
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         self.transcription1 = create_transcription(
             user=self.create_user(username="tester1"),
             rejected=timezone.now() - timedelta(days=2),
@@ -286,6 +290,7 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         self.user = self.create_user("test-user-1")
         self.user2 = self.create_user("test-user-2")
         self.asset = create_asset()
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         self.transcription1 = create_transcription(
             user=self.user,
             asset=self.asset,
@@ -348,6 +353,30 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         )
 
 
+class SignalHandlersTest(CreateTestUsers, TestCase):
+    @mock.patch("django.core.cache.cache.set")
+    def test_on_transcription_save(self, mock_set):
+        instance = mock.MagicMock()
+        instance.user = self.create_test_user(username="anonymous")
+        instance.asset = create_asset()
+        on_transcription_save(None, instance, **{"created": True})
+        self.assertEqual(instance.user.username, "anonymous")
+        self.assertEqual(mock_set.call_count, 0)
+
+        instance.user = self.create_test_user()
+        on_transcription_save(None, instance, **{"created": True})
+        self.assertEqual(mock_set.call_count, 1)
+        expected_key = f"userprofileactivity_{instance.asset.item.project.campaign.pk}"
+        expected_value = {instance.user.id: (1, 0)}
+        mock_set.assert_called_with(expected_key, expected_value)
+
+        instance.reviewed_by = self.create_test_user(username="testuser2")
+        on_transcription_save(None, instance, **{"created": False})
+        self.assertEqual(mock_set.call_count, 2)
+        expected_value = {instance.reviewed_by.id: (0, 1)}
+        mock_set.assert_called_with(expected_key, expected_value)
+
+
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
@@ -389,15 +418,22 @@ class UserProfileActivityTestCase(TestCase):
 
 
 class UserProfileTestCase(CreateTestUsers, TestCase):
-    def test_transcription_save_creating_userprofile(self):
+    def test_update_userprofileactivity_table(self):
         signals.post_save.disconnect(
             create_user_profile, sender=settings.AUTH_USER_MODEL
         )
+
         user = self.create_test_user()
         self.assertFalse(hasattr(user, "profile"))
-        create_transcription(user=user)
+
+        transcription = create_transcription(user=user)
+        update_userprofileactivity_table(
+            user, transcription.asset.item.project.campaign.id, "transcribe"
+        )
+
         self.assertTrue(hasattr(user, "profile"))
         self.assertEqual(user.profile.transcribe_count, 1)
+
         signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
 
 

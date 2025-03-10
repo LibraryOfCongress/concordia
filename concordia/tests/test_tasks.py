@@ -1,13 +1,19 @@
 from datetime import timedelta
+from unittest import mock
 
+from django.core import mail
+from django.core.cache import cache
+from django.db.models import signals
 from django.test import TestCase
 from django.utils import timezone
 
-from concordia.models import Campaign, SiteReport, Transcription
+from concordia.models import Campaign, SiteReport, Transcription, on_transcription_save
 from concordia.tasks import (
     _daily_active_users,
     campaign_report,
     site_report,
+    unusual_activity,
+    update_userprofileactivity_from_cache,
 )
 from concordia.utils import get_anonymous_user
 
@@ -37,6 +43,7 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         cls.item1 = cls.asset1.item
         cls.project1 = cls.item1.project
         cls.campaign1 = cls.project1.campaign
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         cls.asset1_transcription1 = create_transcription(
             asset=cls.asset1, user=cls.user1, accepted=timezone.now()
         )
@@ -210,3 +217,30 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.topic1_report.daily_review_actions, 2)
         self.assertEqual(self.topic1_report.distinct_tags, 1)
         self.assertEqual(self.topic1_report.tag_uses, 1)
+
+
+class TaskTestCase(CreateTestUsers, TestCase):
+    def setUp(self):
+        cache.clear()
+
+    @mock.patch("concordia.tasks.Transcription.objects")
+    def test_unusual_activity(self, mock_transcription):
+        mock_transcription.transcribe_incidents.return_value = (
+            Transcription.objects.none()
+        )
+        mock_transcription.review_incidents.return_value = Transcription.objects.none()
+        unusual_activity(ignore_env=True)
+        self.assertEqual(len(mail.outbox), 1)
+        expected_subject = "Unusual User Activity Report"
+        self.assertIn(expected_subject, mail.outbox[0].subject)
+
+    @mock.patch("concordia.tasks.update_userprofileactivity_table")
+    def test_update_userprofileactivity_from_cache(self, mock_update_table):
+        user = self.create_test_user()
+        campaign = create_campaign()
+        self.assertEqual(mock_update_table.call_count, 0)
+        key = f"userprofileactivity_{campaign.pk}"
+        cache.set(key, {user.pk: (1, 0)})
+        update_userprofileactivity_from_cache()
+        self.assertEqual(mock_update_table.call_count, 2)
+        self.assertIsNone(cache.get(key))

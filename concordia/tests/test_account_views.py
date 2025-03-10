@@ -23,6 +23,7 @@ from .utils import (
     create_asset,
     create_campaign,
     create_transcription,
+    create_user_profile_activity,
 )
 
 
@@ -87,6 +88,11 @@ class ConcordiaAccountViewTests(
         t.accepted = now()
         t.reviewed_by = self.user
         t.save()
+        user_profile_activity = create_user_profile_activity(
+            campaign=asset.item.project.campaign, user=self.user
+        )
+        user_profile_activity.review_count = 1
+        user_profile_activity.save()
         response = self.client.get(reverse("user-profile"))
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
