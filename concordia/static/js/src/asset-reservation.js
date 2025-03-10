@@ -43,7 +43,6 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     $transcriptionEditor
                         .data('hasReservation', false)
                         .trigger('update-ui-state');
-                    //jQuery('#asset-reservation-failure-modal').show();
                     reservationModal.show();
                 } else {
                     displayHtmlMessage(
@@ -65,7 +64,6 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 $transcriptionEditor
                     .data('hasReservation', false)
                     .trigger('update-ui-state');
-                //jQuery('#asset-reservation-failure-modal').show();
                 reservationModal.show();
                 Sentry.captureException(errorThrown, function (scope) {
                     scope.setTransactionName(
