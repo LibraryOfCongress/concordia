@@ -11,7 +11,7 @@ def populate_configuration(apps, schema_editor):
         {
             "key": "review_rate_limit_popup_message",
             "data_type": "html",
-            "value": "You cannot yet accept this page.<br />\r\nVolunteers can only accept {% configuration_value 'review_rate_limit' %} pages per minute. Please read all transcriptions completely to ensure they are whole and accurate.<br />\r\n<a href=\"{% url 'how-to-review' %}\">See review instructions.</a>",
+            "value": "<p>Volunteers can only accept {% configuration_value 'review_rate_limit' %} pages per minute.</p>\r\n<p>Please read all transcriptions completely to ensure they are whole and accurate. <a href=\"{% url 'how-to-review' %}\">See review instructions.</a></p>",
             "description": "Message shown in the pop-up when a user exceeds the review rate limit",
         },
         {
@@ -29,7 +29,7 @@ def populate_configuration(apps, schema_editor):
         {
             "key": "review_rate_limit_banner_message",
             "data_type": "html",
-            "value": "You cannot yet accept this page. Volunteers can only accept {% configuration_value 'review_rate_limit' %} pages per minute. See <a href=\"{% url 'how-to-review' %}\">review instructions</a>.",
+            "value": "Volunteers can only accept {% configuration_value 'review_rate_limit' %} pages per minute. See <a href=\"{% url 'how-to-review' %}\">review instructions</a>.",
             "description": "Message to display on the banner when a user exceeds the review rate limit",
         },
     ]
