@@ -1,4 +1,4 @@
-/* global $ displayMessage buildErrorMessage */
+/* global $ displayMessage buildErrorMessage bootstrap */
 
 import {selectLanguage} from 'ocr';
 import {reserveAssetForEditing} from 'asset-reservation';
@@ -174,6 +174,24 @@ function setupPage() {
     var rollforwardButton = document.getElementById(
         'rollforward-transcription-button',
     );
+    // We need to do this because BS5 does not automatically initialize modals when you
+    // try to show them; without new boostrap.Modal, it doesn't recognize it as a modal
+    // at all (it's treated as ordinary HTML), so BS controls do not work
+    // We try to get Modal.getInstance in case the modal is already initialized
+    var errorModalElement = document.getElementById('error-modal');
+    var errorModal =
+        bootstrap.Modal.getInstance(errorModalElement) ||
+        new bootstrap.Modal(errorModalElement);
+    var submissionModalElement = document.getElementById(
+        'successful-submission-modal',
+    );
+    var submissionModal =
+        bootstrap.Modal.getInstance(submissionModalElement) ||
+        new bootstrap.Modal(submissionModalElement);
+    var reviewModalElement = document.getElementById('review-accepted-modal');
+    var reviewModal =
+        bootstrap.Modal.getInstance(reviewModalElement) ||
+        new bootstrap.Modal(reviewModalElement);
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -354,11 +372,13 @@ function setupPage() {
                     .removeAttr('hidden')
                     .find('#message-contributors-num')
                     .html(data.asset.contributors);
-                $('#successful-submission-modal')
-                    .show()
-                    .on('hidden.bs.modal', function () {
+                submissionModal.show();
+                submissionModalElement.addEventListener(
+                    'hidden.bs.modal',
+                    function () {
                         window.location.reload(true);
-                    });
+                    },
+                );
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
                 displayMessage(
@@ -447,11 +467,13 @@ function setupPage() {
                         .removeAttr('hidden')
                         .find('#message-contributors-num')
                         .html(data.asset.contributors);
-                    $('#review-accepted-modal')
-                        .show()
-                        .on('hidden.bs.modal', function () {
+                    reviewModal.show();
+                    reviewModalElement.addEventListener(
+                        'hidden.bs.modal',
+                        function () {
                             window.location.reload(true);
-                        });
+                        },
+                    );
                 }
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
@@ -477,7 +499,7 @@ function setupPage() {
                         .find('#error-modal-message')
                         .first()
                         .html(popupErrorMessage);
-                    $('#error-modal').show();
+                    errorModal.show();
                 }
             });
     }

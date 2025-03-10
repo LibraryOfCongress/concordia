@@ -1,4 +1,4 @@
-/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
+/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry bootstrap */
 
 const assetReservationData = document.getElementById(
     'asset-reservation-data',
@@ -6,6 +6,16 @@ const assetReservationData = document.getElementById(
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     let $transcriptionEditor = jQuery('#transcription-editor');
+    // We need to do this because BS5 does not automatically initialize modals when you
+    // try to show them; without new boostrap.Modal, it doesn't recognize it as a modal
+    // at all (it's treated as ordinary HTML), so BS controls do not work
+    var reservationModalElement = document.getElementById(
+        'asset-reservation-failure-modal',
+    );
+    // This tries to get the modal if it exists, otherwise it initializes it
+    var reservationModal =
+        bootstrap.Modal.getInstance(reservationModalElement) ||
+        new bootstrap.Modal(reservationModalElement);
 
     jQuery
         .ajax({
@@ -33,7 +43,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     $transcriptionEditor
                         .data('hasReservation', false)
                         .trigger('update-ui-state');
-                    jQuery('#asset-reservation-failure-modal').show();
+                    reservationModal.show();
                 } else {
                     displayHtmlMessage(
                         'warning',
@@ -54,7 +64,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 $transcriptionEditor
                     .data('hasReservation', false)
                     .trigger('update-ui-state');
-                jQuery('#asset-reservation-failure-modal').show();
+                reservationModal.show();
                 Sentry.captureException(errorThrown, function (scope) {
                     scope.setTransactionName(
                         '408 error when attempting to reserve asset at ' +
