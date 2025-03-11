@@ -1061,9 +1061,9 @@ def unusual_activity(ignore_env=False):
     # Don't bother running unless we're in the prod env
     if settings.CONCORDIA_ENVIRONMENT == "production" or ignore_env:
         site = Site.objects.get_current()
-        now = timezone.now()
-        ONE_DAY_AGO = now - datetime.timedelta(days=1)
-        title = "Unusual User Activity Report for " + now.strftime("%b %d %Y, %I:%M %p")
+        display_time = timezone.localtime().strftime("%b %d %Y, %I:%M %p")
+        ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
+        title = "Unusual User Activity Report for " + display_time
         if ignore_env:
             title += " [%s]" % ENV_MAPPING[settings.CONCORDIA_ENVIRONMENT]
         context = {
