@@ -3,7 +3,7 @@
         "@axe-core/cli": "^4.10.1",
         "@puppeteer/browsers": "^2.0.1",
         "child_process": "^1.0.2",
-        "chromedriver": "^119.0.1",
+        "chromedriver": "^134.0.1",
         "fancy-log": "^2.0.0",
         "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
