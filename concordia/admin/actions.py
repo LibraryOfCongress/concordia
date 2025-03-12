@@ -175,7 +175,7 @@ def change_status_to_in_progress(modeladmin, request, queryset):
 
 @admin.action(
     permissions=["change"],
-    description="Verify images for all assets under the selected object",
+    description="Verify images for all assets for selected objects",
 )
 def verify_assets_action(modeladmin, request, queryset):
     """

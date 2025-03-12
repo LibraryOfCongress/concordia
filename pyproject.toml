@@ -22,6 +22,7 @@ select = [
     "G", # flake8-logging-format
     "I", # isort
 ]
+ignore-init-module-imports = true  # Prevents removing imports from __init__.py
 
 extend-exclude = [
         "concordia/settings_dev_*.py"

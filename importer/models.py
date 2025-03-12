@@ -261,9 +261,15 @@ class VerifyAssetImageJob(BatchedJob):
     def __str__(self):
         return f"VerifyAssetImageJob for {self.asset}"
 
+    class Meta:
+        unique_together = (("asset", "batch"),)
+
 
 class DownloadAssetImageJob(BatchedJob):
     asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
 
     def __str__(self):
         return f"DownloadAssetImageJob for {self.asset}"
+
+    class Meta:
+        unique_together = (("asset", "batch"),)
