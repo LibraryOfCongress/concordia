@@ -1,18 +1,21 @@
+import uuid
 from unittest import mock
 
 from django.contrib import messages
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 
 from concordia.models import Campaign
-from concordia.tests.utils import create_campaign
+from concordia.tests.utils import create_asset, create_campaign
 from importer.admin import (
+    BatchFilter,
     ImportCampaignListFilter,
     TaskStatusModelAdmin,
     retry_download_task,
 )
-from importer.models import ImportItemAsset
+from importer.models import ImportItemAsset, VerifyAssetImageJob
 
-from .utils import create_import_asset
+from .utils import create_import_asset, create_verify_asset_image_job
 
 
 @mock.patch("importer.admin.download_asset_task.delay", autospec=True)
@@ -98,3 +101,76 @@ class TaskStatusModelAdminTest(TestCase):
         value = inner(obj)
         self.assertEqual(value, None)
         self.assertFalse(naturaltime_mock.called)
+
+
+class BatchFilterTests(TestCase):
+    def setUp(self):
+        self.request = mock.MagicMock()
+        self.model_admin = mock.MagicMock()
+        self.filter = BatchFilter(
+            self.request, {}, VerifyAssetImageJob, self.model_admin
+        )
+        self.batch1 = str(uuid.uuid4())
+        self.batch2 = str(uuid.uuid4())
+        self.batch3 = str(uuid.uuid4())
+        self.batch4 = str(uuid.uuid4())
+        self.batch5 = str(uuid.uuid4())
+        self.batch6 = str(uuid.uuid4())
+
+        asset1 = create_asset()
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        asset3 = create_asset(item=asset1.item, slug="test-asset-3")
+
+        create_verify_asset_image_job(asset=asset1, batch=self.batch1, completed=None)
+        create_verify_asset_image_job(asset=asset2, batch=self.batch2, completed=None)
+        create_verify_asset_image_job(asset=asset3, batch=self.batch3, completed=None)
+        create_verify_asset_image_job(asset=asset3, batch=self.batch4, completed=None)
+        create_verify_asset_image_job(asset=asset3, batch=self.batch5, completed=None)
+        create_verify_asset_image_job(asset=asset3, batch=self.batch6, completed=None)
+
+    @mock.patch("importer.admin.BatchFilter.value", return_value=None)
+    def test_lookups_incomplete_batches(self, mock_value):
+        self.model_admin.get_queryset.return_value = VerifyAssetImageJob.objects.all()
+        lookups = self.filter.lookups(self.request, self.model_admin)
+        self.assertEqual(len(lookups), 5)
+
+    @mock.patch("importer.admin.BatchFilter.value", return_value=None)
+    def test_lookups_includes_current_batch(self, mock_value):
+        mock_value.return_value = self.batch2
+        self.model_admin.get_queryset.return_value = VerifyAssetImageJob.objects.all()
+        lookups = self.filter.lookups(self.request, self.model_admin)
+        batch_ids = [batch[0] for batch in lookups]
+        self.assertIn(self.batch2, batch_ids)
+
+    @mock.patch("importer.admin.BatchFilter.value", return_value=None)
+    def test_lookups_includes_recent_completed_batch(self, mock_value):
+        VerifyAssetImageJob.objects.filter(batch=self.batch6).update(
+            completed=timezone.now()
+        )
+        self.model_admin.get_queryset.return_value = VerifyAssetImageJob.objects.all()
+        lookups = self.filter.lookups(self.request, self.model_admin)
+        batch_ids = [batch[0] for batch in lookups]
+        self.assertIn(self.batch6, batch_ids)
+
+    @mock.patch("importer.admin.BatchFilter.value", return_value=None)
+    def test_lookups_fills_with_completed_batches(self, mock_value):
+        batch_list = [self.batch1, self.batch2, self.batch3, self.batch4, self.batch5]
+        VerifyAssetImageJob.objects.filter(batch__in=batch_list).update(
+            completed=timezone.now()
+        )
+        self.model_admin.get_queryset.return_value = VerifyAssetImageJob.objects.all()
+        lookups = self.filter.lookups(self.request, self.model_admin)
+        self.assertEqual(len(lookups), 5)
+
+    @mock.patch("importer.admin.BatchFilter.value", return_value=None)
+    def test_queryset_filters_correctly(self, mock_value):
+        mock_value.return_value = self.batch1
+        queryset = self.filter.queryset(self.request, VerifyAssetImageJob.objects.all())
+        batch_ids = queryset.values_list("batch", flat=True)
+        self.assertTrue(all(str(batch) == self.batch1 for batch in batch_ids))
+
+    @mock.patch("importer.admin.BatchFilter.value", return_value=None)
+    def test_queryset_returns_all_when_no_batch_selected(self, mock_value):
+        mock_value.return_value = None
+        queryset = self.filter.queryset(self.request, VerifyAssetImageJob.objects.all())
+        self.assertEqual(queryset.count(), VerifyAssetImageJob.objects.count())

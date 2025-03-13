@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.db.models import Count, F, Max, Q
 from django.utils.translation import gettext_lazy as _
 
 from concordia.admin.filters import (
@@ -94,25 +95,63 @@ class BatchFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         """
-        Show the five most recent batch values that contain incomplete jobs
-        (completed=None), plus the currently filtered batch if it's not already
-        in the list.
+        Show up to five batches with incomplete jobs, plus the currently filtered batch,
+        and the most recent fully complete batch. Fill with more completed batches if
+        there are fewer than five batches shown.
         """
         queryset = model_admin.get_queryset(request)
-        from django.db.models import Max
 
-        recent_batches = (
+        # Get up to 5 batches with incomplete jobs
+        incomplete_batches = (
             queryset.filter(completed__isnull=True)
             .exclude(batch__isnull=True)
             .values("batch")
-            .annotate(latest_created=Max("created"))  # Get most recent job per batch
+            .annotate(latest_created=Max("created"))
             .order_by("-latest_created")[:5]
         )
 
-        batch_choices = {str(batch["batch"]) for batch in recent_batches}
+        batch_choices = {str(batch["batch"]) for batch in incomplete_batches}
+
+        # Ensure the currently filtered batch is included
         current_batch = self.value()
         if current_batch:
             batch_choices.add(current_batch)
+
+        # Fetch the most recent fully completed batch
+        most_recent_complete_batch = (
+            queryset.filter(batch__isnull=False)
+            .values("batch")
+            .annotate(
+                latest_created=Max("created"),
+                total_jobs=Count("id"),
+                completed_jobs=Count("id", filter=Q(completed__isnull=False)),
+            )
+            .filter(total_jobs=F("completed_jobs"))  # Only fully completed batches
+            .order_by("-latest_created")
+            .first()
+        )
+
+        if most_recent_complete_batch:
+            batch_choices.add(str(most_recent_complete_batch["batch"]))
+
+        # If we still have fewer than 5, add more completed batches
+        if len(batch_choices) < 5:
+            additional_complete_batches = (
+                queryset.filter(~Q(batch__in=batch_choices), batch__isnull=False)
+                .values("batch")
+                .annotate(
+                    latest_created=Max("created"),
+                    total_jobs=Count("id"),
+                    completed_jobs=Count("id", filter=Q(completed__isnull=False)),
+                )
+                .filter(total_jobs=F("completed_jobs"))  # Only fully completed batches
+                .order_by("-latest_created")
+            )
+
+            for batch in additional_complete_batches:
+                if len(batch_choices) >= 5:
+                    break
+                batch_choices.add(str(batch["batch"]))
 
         return [(batch, batch[:12] + "...") for batch in batch_choices]
 
@@ -251,6 +290,14 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
 @admin.register(VerifyAssetImageJob)
 class VerifyAssetImageJobAdmin(TaskStatusModelAdmin):
     readonly_fields = TaskStatusModelAdmin.readonly_fields + ("asset", "batch")
+    list_display = (
+        "display_created",
+        "display_last_started",
+        "asset",
+        "batch",
+        "failure_reason",
+        "status",
+    )
     list_filter = (
         LastStartedFilter,
         CompletedFilter,
@@ -264,6 +311,14 @@ class VerifyAssetImageJobAdmin(TaskStatusModelAdmin):
 @admin.register(DownloadAssetImageJob)
 class DownloadAssetImageJobAdmin(TaskStatusModelAdmin):
     readonly_fields = TaskStatusModelAdmin.readonly_fields + ("asset", "batch")
+    list_display = (
+        "display_created",
+        "display_last_started",
+        "asset",
+        "batch",
+        "failure_reason",
+        "status",
+    )
     list_filter = (
         LastStartedFilter,
         CompletedFilter,
