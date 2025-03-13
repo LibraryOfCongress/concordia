@@ -819,7 +819,7 @@ def verify_asset_image_task(self, asset_pk, batch=None, create_job=False):
         raise
 
     if create_job:
-        job = models.VerifyAssetImageJob.create(asset=asset, batch=batch)
+        job = models.VerifyAssetImageJob.objects.create(asset=asset, batch=batch)
     else:
         try:
             job = models.VerifyAssetImageJob.objects.get(
@@ -869,8 +869,9 @@ def verify_asset_image(task, job):
         job (VerifyAssetImageJob): Job instance representing this verification task.
     """
     asset = job.asset
+
     if not asset.storage_image or not asset.storage_image.name:
-        status = f"No storage image not set on {asset} ({asset.id})"
+        status = f"No storage image set on {asset} ({asset.id})"
         logger.info(status)
         job.update_status(status)
         create_download_asset_image_job(asset, job.batch)
@@ -895,7 +896,8 @@ def verify_asset_image(task, job):
     except Exception as exc:
         status = (
             f"Storage image for {asset} ({asset.id}), {asset.storage_image.name}, "
-            f"is corrupt. The exception raised was {exc}"
+            f"is corrupt. The exception raised was Type: {type(exc).__name__}, "
+            f"Message: {exc}"
         )
         logger.info(status)
         job.update_status(status)
@@ -1011,7 +1013,7 @@ def download_asset_image_task(self, asset_pk, batch=None, create_job=False):
     """
     try:
         asset = Asset.objects.get(pk=asset_pk)
-    except models.Asset.DoesNotExist:
+    except Asset.DoesNotExist:
         logger.exception(
             "Asset %s could not be found while attempting to "
             "spawn verify_asset_image task",
