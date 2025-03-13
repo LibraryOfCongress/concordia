@@ -159,7 +159,7 @@ class BatchedJob(TaskStatusModel):
         # Allows getting the batch url from an instance, automatically
         # using self.batch rather than needing to call the class method
         # get_batch_admin_url if you have an instance
-        return self.__class__.get_batch_url(self.batch) if self.batch else None
+        return self.__class__.get_batch_admin_url(self.batch) if self.batch else None
 
 
 class ImportJob(TaskStatusModel):
