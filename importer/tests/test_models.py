@@ -125,7 +125,7 @@ class VerifyAssetImageJobTests(TestCase):
 
     def test_get_batch_admin_url_error(self):
         with self.assertRaises(ValueError):
-            self.job.__class__.get_batch_admin_url()
+            self.job.__class__.get_batch_admin_url("")
 
     def test_update_failure_history(self):
         self.job.failed = timezone.now()
@@ -183,7 +183,7 @@ class DownloadAssetImageJobTests(TestCase):
 
     def test_get_batch_admin_url_error(self):
         with self.assertRaises(ValueError):
-            self.job.__class__.get_batch_admin_url()
+            self.job.__class__.get_batch_admin_url("")
 
     def test_update_failure_history(self):
         self.job.failed = timezone.now()
