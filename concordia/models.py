@@ -76,14 +76,11 @@ class ConcordiaUser(User):
     def validate_reconfirmation_email(self, email):
         return email == self.get_email_for_reconfirmation()
 
-    def review_incidents(self, recent_accepts, recent_rejects, threshold=THRESHOLD):
+    def review_incidents(self, recent_accepts, threshold=THRESHOLD):
         accepts = recent_accepts.filter(reviewed_by=self).values_list(
             "accepted", flat=True
         )
-        rejects = recent_rejects.filter(reviewed_by=self).values_list(
-            "rejected", flat=True
-        )
-        timestamps = list(accepts) + list(rejects)
+        timestamps = list(accepts)
         timestamps.sort()
         incidents = 0
         for i in range(len(timestamps)):
@@ -919,19 +916,13 @@ class TranscriptionManager(models.Manager):
             reviewed_by__is_superuser=False,
             reviewed_by__is_staff=False,
         )
-        recent_rejects = self.filter(
-            rejected__gte=start,
-            reviewed_by__is_superuser=False,
-            reviewed_by__is_staff=False,
-        )
-        recent_actions = recent_accepts.union(recent_rejects)
         user_ids = set(
-            recent_actions.order_by("reviewed_by").values_list("reviewed_by", flat=True)
+            recent_accepts.order_by("reviewed_by").values_list("reviewed_by", flat=True)
         )
 
         for user_id in user_ids:
             user = ConcordiaUser.objects.get(id=user_id)
-            incident_count = user.review_incidents(recent_accepts, recent_rejects)
+            incident_count = user.review_incidents(recent_accepts)
             if incident_count > 0:
                 review_count = Transcription.objects.filter(reviewed_by=user).count()
                 user_incident_count.append(
