@@ -222,7 +222,7 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
                 self.transcription1.reviewed_by.id,
                 self.transcription1.reviewed_by.username,
                 2,
-                6,
+                4,
             ),
         )
 
@@ -246,7 +246,7 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
                 self.transcription1.reviewed_by.id,
                 self.transcription1.reviewed_by.username,
                 4,
-                8,
+                6,
             ),
         )
 
