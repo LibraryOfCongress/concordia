@@ -170,7 +170,10 @@ TEMPLATES = [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
             ],
-            "builtins": ["configuration.templatetags.configuration_tags"],
+            "builtins": [
+                "configuration.templatetags.configuration_tags",
+                "concordia.templatetags.reject_filter",
+            ],
         },
     }
 ]
@@ -250,10 +253,20 @@ LOGGING = {
             "datefmt": "%Y-%m-%dT%H:%M:%S",
             "style": "{",
         },
+        "celery": {
+            "format": "[%(asctime)s: %(levelname)s/%(processName)s]%(task_id)s "
+            "%(name)s: %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
         "short": {
             "format": "[{levelname} {name}] {message}",
             "datefmt": "%Y-%m-%dT%H:%M:%S",
             "style": "{",
+        },
+    },
+    "filters": {
+        "celery_task_id": {
+            "()": "importer.logging.CeleryTaskIDFilter",
         },
     },
     "handlers": {
@@ -267,7 +280,7 @@ LOGGING = {
             "class": "logging.handlers.TimedRotatingFileHandler",
             "level": "INFO",
             "formatter": "long",
-            "filename": "{}/logs/concordia.log".format(SITE_ROOT_DIR),
+            "filename": f"{SITE_ROOT_DIR}/logs/concordia.log",
             "when": "H",
             "interval": 3,
             "backupCount": 16,
@@ -275,9 +288,10 @@ LOGGING = {
         "celery": {
             "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "{}/logs/celery.log".format(SITE_ROOT_DIR),
-            "formatter": "long",
+            "filename": f"{SITE_ROOT_DIR}/logs/celery.log",
+            "formatter": "celery",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
+            "filters": ["celery_task_id"],
         },
     },
     "loggers": {

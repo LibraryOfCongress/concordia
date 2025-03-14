@@ -1,7 +1,13 @@
 from django.utils.text import slugify
 
 from concordia.tests.utils import create_asset, create_item, create_project
-from importer.models import ImportItem, ImportItemAsset, ImportJob
+from importer.models import (
+    DownloadAssetImageJob,
+    ImportItem,
+    ImportItemAsset,
+    ImportJob,
+    VerifyAssetImageJob,
+)
 
 
 def create_import_job(*, project=None, **kwargs):
@@ -54,3 +60,25 @@ def create_import_asset(
     )
     import_asset.save()
     return import_asset
+
+
+def create_verify_asset_image_job(asset=None, batch=None, **kwargs):
+    """
+    Create a VerifyAssetImageJob instance.
+    If no asset is provided, a new one is created.
+    """
+    if asset is None:
+        asset = create_asset()
+    job = VerifyAssetImageJob.objects.create(asset=asset, batch=batch, **kwargs)
+    return job
+
+
+def create_download_asset_image_job(asset=None, batch=None, **kwargs):
+    """
+    Create a DownloadAssetImageJob instance.
+    If no asset is provided, a new one is created.
+    """
+    if asset is None:
+        asset = create_asset()
+    job = DownloadAssetImageJob.objects.create(asset=asset, batch=batch, **kwargs)
+    return job

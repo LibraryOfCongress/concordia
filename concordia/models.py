@@ -660,6 +660,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
+    def get_asset_image_filename(self, extension="jpg"):
+        item = self.item
+        project = item.project
+        campaign = project.campaign
+        return os.path.join(
+            campaign.slug,
+            project.slug,
+            item.item_id,
+            f"{self.sequence}.{extension}",
+        )
+
     def get_ocr_transcript(self, language=None):
         if language and language not in settings.PYTESSERACT_ALLOWED_LANGUAGES:
             logger.warning(

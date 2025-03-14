@@ -7,6 +7,7 @@ from logging import getLogger
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
 from configuration.utils import configuration_value
@@ -66,6 +67,13 @@ class TaskStatusModel(models.Model):
         blank=True,
     )
 
+    status_history = models.JSONField(
+        help_text="Previous statuses on the task, if any",
+        encoder=DjangoJSONEncoder,
+        default=list,
+        blank=True,
+    )
+
     class Meta:
         abstract = True
 
@@ -83,6 +91,17 @@ class TaskStatusModel(models.Model):
         if do_save:
             self.save()
 
+    def update_status(self, status, do_save=True):
+        self.status_history.append(
+            {
+                "status": self.status,
+                "timestamp": self.modified,
+            }
+        )
+        self.status = status
+        if do_save:
+            self.save()
+
     def reset_for_retry(self):
         if self.failed:
             logger.info(
@@ -92,22 +111,55 @@ class TaskStatusModel(models.Model):
             self.update_failure_history(do_save=False)
             self.failed = None
             self.failure_reason = ""
-            self.status = "Retrying"
+            self.update_status("Retrying", do_save=False)
             self.retry_count += 1
             self.save()
             return True
         else:
-            self.status = (
+            new_status = (
                 "Task was not marked as failed, so it will "
                 "not be reset for retrying."
             )
-            self.save()
+            self.update_status(new_status)
             logger.warning(
                 "Task %s was not marked as failed, so it will not be "
                 "reset for retrying",
                 self,
             )
             return False
+
+
+class BatchedJob(TaskStatusModel):
+    # Allows grouping jobs by batch.
+    # `batch` is used by the task system to group jobs
+    # and run them in smaller groups rather than spawning
+    # an arbitrarily large number at once
+    # It's also used to group jobs in the admin, allowing
+    # filtering to see all the jobs spawned by a particular
+    # action
+    batch = models.UUIDField(blank=True, null=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def get_batch_admin_url(cls, batch):
+        if not batch:
+            raise ValueError("A batch value must be provided.")
+
+        app_label = cls._meta.app_label
+        model_name = cls._meta.model_name
+
+        admin_url = reverse(f"admin:{app_label}_{model_name}_changelist")
+
+        return f"{admin_url}?batch={batch}"
+
+    @property
+    def batch_admin_url(self):
+        # Allows getting the batch url from an instance, automatically
+        # using self.batch rather than needing to call the class method
+        # get_batch_admin_url if you have an instance
+        return self.__class__.get_batch_admin_url(self.batch) if self.batch else None
 
 
 class ImportJob(TaskStatusModel):
@@ -191,12 +243,33 @@ class ImportItemAsset(TaskStatusModel):
                 )
                 self.update_failure_history(do_save=False)
                 self.failed = timezone.now()
-                self.status = (
+                new_status = (
                     "Maximum number of retries reached while retrying "
                     "image download for asset. The failure reason before retrying "
                     "was {self.failure_reason} and the status was {self.status}"
                 )
+                self.update_status(new_status, do_save=False)
                 self.failure_reason = TaskStatusModel.FailureReason.RETRIES
                 self.save()
                 return False
         return False
+
+
+class VerifyAssetImageJob(BatchedJob):
+    asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"VerifyAssetImageJob for {self.asset}"
+
+    class Meta:
+        unique_together = (("asset", "batch"),)
+
+
+class DownloadAssetImageJob(BatchedJob):
+    asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"DownloadAssetImageJob for {self.asset}"
+
+    class Meta:
+        unique_together = (("asset", "batch"),)

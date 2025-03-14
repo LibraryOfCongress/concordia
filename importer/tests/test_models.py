@@ -1,10 +1,19 @@
+import uuid
+
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
-from concordia.tests.utils import CreateTestUsers, create_project
+from concordia.tests.utils import CreateTestUsers, create_asset, create_project
 from importer.models import TaskStatusModel
 
-from .utils import create_import_asset, create_import_item, create_import_job
+from .utils import (
+    create_download_asset_image_job,
+    create_import_asset,
+    create_import_item,
+    create_import_job,
+    create_verify_asset_image_job,
+)
 
 
 class ImportJobTests(TestCase, CreateTestUsers):
@@ -88,3 +97,117 @@ class ImportItemAssetTests(TestCase, CreateTestUsers):
         asset.url = url
 
         self.assertEqual(str(asset), f"ImportItemAsset(import_item={item}, url={url})")
+
+
+class VerifyAssetImageJobTests(TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.batch_id = uuid.uuid4()
+        self.job = create_verify_asset_image_job(asset=self.asset, batch=self.batch_id)
+
+    def test_str_representation(self):
+        self.assertEqual(str(self.job), f"VerifyAssetImageJob for {self.asset}")
+
+    def test_batch_admin_url(self):
+        expected_url = (
+            reverse("admin:importer_verifyassetimagejob_changelist")
+            + f"?batch={self.batch_id}"
+        )
+        self.assertEqual(self.job.batch_admin_url, expected_url)
+
+    def test_get_batch_admin_url(self):
+        expected_url = (
+            reverse("admin:importer_verifyassetimagejob_changelist")
+            + f"?batch={self.batch_id}"
+        )
+        url = self.job.__class__.get_batch_admin_url(self.batch_id)
+        self.assertEqual(url, expected_url)
+
+    def test_get_batch_admin_url_error(self):
+        with self.assertRaises(ValueError):
+            self.job.__class__.get_batch_admin_url("")
+
+    def test_update_failure_history(self):
+        self.job.failed = timezone.now()
+        self.job.failure_reason = "Image"
+        self.job.status = "Failed due to image error"
+        self.job.update_failure_history()
+        self.assertEqual(len(self.job.failure_history), 1)
+        self.assertEqual(self.job.failure_history[0]["failure_reason"], "Image")
+
+    def test_update_status(self):
+        self.job.update_status("Processing")
+        self.assertEqual(self.job.status, "Processing")
+        self.assertEqual(len(self.job.status_history), 1)
+        self.assertEqual(self.job.status_history[0]["status"], "")
+
+    def test_reset_for_retry(self):
+        self.job.failed = timezone.now()
+        self.assertTrue(self.job.reset_for_retry())
+        self.assertIsNone(self.job.failed)
+        self.assertEqual(self.job.retry_count, 1)
+
+    def test_reset_for_retry_when_not_failed(self):
+        self.assertFalse(self.job.reset_for_retry())
+        self.assertEqual(
+            self.job.status,
+            "Task was not marked as failed, so it will not be reset for retrying.",
+        )
+
+
+class DownloadAssetImageJobTests(TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.batch_id = uuid.uuid4()
+        self.job = create_download_asset_image_job(
+            asset=self.asset, batch=self.batch_id
+        )
+
+    def test_str_representation(self):
+        self.assertEqual(str(self.job), f"DownloadAssetImageJob for {self.asset}")
+
+    def test_batch_admin_url(self):
+        expected_url = (
+            reverse("admin:importer_downloadassetimagejob_changelist")
+            + f"?batch={self.batch_id}"
+        )
+        self.assertEqual(self.job.batch_admin_url, expected_url)
+
+    def test_get_batch_admin_url(self):
+        expected_url = (
+            reverse("admin:importer_downloadassetimagejob_changelist")
+            + f"?batch={self.batch_id}"
+        )
+        url = self.job.__class__.get_batch_admin_url(self.batch_id)
+        self.assertEqual(url, expected_url)
+
+    def test_get_batch_admin_url_error(self):
+        with self.assertRaises(ValueError):
+            self.job.__class__.get_batch_admin_url("")
+
+    def test_update_failure_history(self):
+        self.job.failed = timezone.now()
+        self.job.failure_reason = "Image"
+        self.job.status = "Failed due to image error"
+        self.job.update_failure_history()
+        self.assertEqual(len(self.job.failure_history), 1)
+        self.assertEqual(self.job.failure_history[0]["failure_reason"], "Image")
+
+    def test_update_status(self):
+        self.job.update_status("Processing")
+        self.assertEqual(self.job.status, "Processing")
+        self.assertEqual(len(self.job.status_history), 1)
+        self.assertEqual(self.job.status_history[0]["status"], "")
+
+    def test_reset_for_retry(self):
+        self.job.failed = timezone.now()
+        self.assertTrue(self.job.reset_for_retry())
+        self.assertIsNone(self.job.failed)
+        self.assertEqual(self.job.retry_count, 1)
+
+    def test_reset_for_retry_when_not_failed(self):
+        self.assertFalse(self.job.reset_for_retry())
+        self.assertEqual(
+            self.job.status,
+            "Task was not marked as failed, so it will not be reset for retrying.",
+        )
