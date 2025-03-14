@@ -187,6 +187,18 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
         )
         self.transcription2.reviewed_by = self.transcription1.reviewed_by
         self.transcription2.save()
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            rejected=self.transcription2.accepted + timedelta(seconds=29),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            rejected=self.transcription2.accepted + timedelta(seconds=58),
+        )
         users = Transcription.objects.review_incidents()
         self.assertNotIn(self.transcription1.user.id, users)
 
