@@ -15,7 +15,7 @@ from django_registration.signals import user_activated, user_registered
 from flags.state import flag_enabled
 
 from ..models import Asset, Transcription, TranscriptionStatus, UserProfile
-from ..tasks import calculate_difficulty_values
+from ..tasks import calculate_difficulty_values, update_useractivity_cache
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
@@ -197,3 +197,27 @@ def remove_file_from_s3(sender, instance, using, **kwargs):
 def create_user_profile(sender, instance, *args, **kwargs):
     if not hasattr(instance, "profile"):
         UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=Transcription)
+def on_transcription_save(sender, instance, **kwargs):
+    r"""
+    :param instance:
+        the transcription being saved
+    """
+    if kwargs.get("created", False):
+        user = instance.user
+        attr_name = "transcribe"
+    elif instance.reviewed_by:
+        user = instance.reviewed_by
+        attr_name = "review"
+    else:
+        user = None
+        attr_name = None
+
+    if user is not None and attr_name is not None and user.username != "anonymous":
+        update_useractivity_cache.delay(
+            user.id,
+            instance.asset.project.item.campaign.id,
+            attr_name,
+        )

@@ -7,12 +7,15 @@ from django.db.models import signals
 from django.test import TestCase
 from django.utils import timezone
 
-from concordia.models import Campaign, SiteReport, Transcription, on_transcription_save
+from concordia.models import Campaign, SiteReport, Transcription
+from concordia.signals.handlers import on_transcription_save
 from concordia.tasks import (
+    CacheLockedError,
     _daily_active_users,
     campaign_report,
     site_report,
     unusual_activity,
+    update_useractivity_cache,
     update_userprofileactivity_from_cache,
 )
 from concordia.utils import get_anonymous_user
@@ -233,6 +236,27 @@ class TaskTestCase(CreateTestUsers, TestCase):
         self.assertEqual(len(mail.outbox), 1)
         expected_subject = "Unusual User Activity Report"
         self.assertIn(expected_subject, mail.outbox[0].subject)
+
+    @mock.patch("django.core.cache.cache.get")
+    @mock.patch("django.core.cache.cache.set")
+    @mock.patch("django.core.cache.cache.delete")
+    @mock.patch("concordia.tasks._update_useractivity_cache")
+    def update_useractivity_cache(self, mock_update, mock_delete, mock_set, mock_get):
+        user = self.create_test_user()
+        campaign = create_campaign()
+
+        mock_get.return_value = True
+        with self.assertRaises(CacheLockedError):
+            update_useractivity_cache(user.id, campaign.id, "transcribe")
+        self.assertEqual(mock_set.call_count, 0)
+        self.assertEqual(mock_update.call_count, 0)
+        self.assertEqual(mock_delete.call_count, 0)
+
+        mock_get.return_value = False
+        update_useractivity_cache(user.id, campaign.id, "transcribe")
+        self.assertEqual(mock_set.call_count, 1)
+        self.assertEqual(mock_update.call_count, 1)
+        self.assertEqual(mock_delete.call_count, 1)
 
     @mock.patch("concordia.tasks.update_userprofileactivity_table")
     def test_update_userprofileactivity_from_cache(self, mock_update_table):

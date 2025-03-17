@@ -1093,7 +1093,7 @@ def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
     profile.save()
 
 
-def update_useractivity_cache(user_id, campaign_id, attr_name):
+def _update_useractivity_cache(user_id, campaign_id, attr_name):
     key = f"userprofileactivity_{campaign_id}"
     updates = cache.get(key, {})
     transcribe_count, review_count = updates.get(user_id, (0, 0))
@@ -1103,43 +1103,6 @@ def update_useractivity_cache(user_id, campaign_id, attr_name):
         review_count += 1
     updates[user_id] = (transcribe_count, review_count)
     cache.set(key, updates)
-
-
-def on_transcription_save(sender, instance, max_retries=3, **kwargs):
-    r"""
-    :param instance:
-        the transcription being saved
-    """
-    if kwargs.get("created", False):
-        user = instance.user
-        attr_name = "transcribe"
-    elif instance.reviewed_by:
-        user = instance.reviewed_by
-        attr_name = "review"
-    else:
-        user = None
-        attr_name = None
-
-    if user is not None and attr_name is not None and user.username != "anonymous":
-        lock_key = "userprofileactivity_cache_lock"
-        for i in range(max_retries):
-            # attempt to acquire
-            lock_exists = cache.get(lock_key, False)
-            if lock_exists:
-                if i < max_retries:
-                    time.sleep(5)  # wait
-                    continue  # then try again
-            else:
-                cache.set(lock_key, True)
-                update_useractivity_cache(
-                    user.id, instance.asset.item.project.campaign.id, attr_name
-                )
-                # release
-                cache.delete(lock_key)
-                break  # exit the loop
-
-
-post_save.connect(on_transcription_save, sender=Transcription)
 
 
 class AssetTranscriptionReservation(models.Model):

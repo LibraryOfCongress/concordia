@@ -34,6 +34,7 @@ from concordia.models import (
     Transcription,
     UserAssetTagCollection,
     UserProfileActivity,
+    _update_useractivity_cache,
     update_userprofileactivity_table,
 )
 from concordia.signals.signals import reservation_released
@@ -1091,6 +1092,27 @@ def unusual_activity(ignore_env=False):
         )
         message.attach_alternative(html_body_message, "text/html")
         message.send()
+
+
+class CacheLockedError(Exception):
+    pass
+
+
+@celery_app.task(retry_backoff=True, retry_kwargs={"max_retries": 5, "countdown": 5})
+def update_useractivity_cache(user_id, campaign_id, attr_name, *args, **kwargs):
+    lock_key = "userprofileactivity_cache_lock"
+    # attempt to acquire
+    lock_exists = cache.get(lock_key, False)
+    if lock_exists:
+        logger.error(
+            "Task update_useractivity_cache failed: cache is locked. Retrying..."
+        )
+        raise CacheLockedError()
+    else:
+        cache.set(lock_key, True)
+        _update_useractivity_cache(user_id, campaign_id, attr_name)
+        # release
+        cache.delete(lock_key)
 
 
 @celery_app.task(ignore_result=True)

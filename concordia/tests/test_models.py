@@ -18,13 +18,12 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserProfileActivity,
-    on_transcription_save,
+    _update_useractivity_cache,
     resource_file_upload_path,
-    update_useractivity_cache,
     update_userprofileactivity_table,
     validated_get_or_create,
 )
-from concordia.signals.handlers import create_user_profile
+from concordia.signals.handlers import create_user_profile, on_transcription_save
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -373,7 +372,7 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         campaign = create_campaign()
         user = self.create_test_user()
         mock_get.return_value = {}
-        update_useractivity_cache(user.id, campaign.id, "transcribe")
+        _update_useractivity_cache(user.id, campaign.id, "transcribe")
         self.assertEqual(mock_set.call_count, 1)
         expected_key = f"userprofileactivity_{campaign.pk}"
         expected_value = {user.id: (1, 0)}
@@ -381,7 +380,7 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
 
         reviewed_by = self.create_test_user(username="testuser2")
         mock_get.return_value = {}
-        update_useractivity_cache(reviewed_by.id, campaign.id, "review")
+        _update_useractivity_cache(reviewed_by.id, campaign.id, "review")
         self.assertEqual(mock_set.call_count, 2)
         expected_value = {reviewed_by.id: (0, 1)}
         mock_set.assert_called_with(expected_key, expected_value)
