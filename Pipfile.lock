@@ -2367,11 +2367,12 @@
         },
         "whitenoise": {
             "hashes": [
-                "sha256:11042f39f1dcfbb3814726b9364703af6901706582d988e96494cfefdc3a89e2",
-                "sha256:196ba04ca0a80f4a3f99f88381864f218a28b5fb5b44d29feea484d501fa0ba3"
+                "sha256:8c4a7c9d384694990c26f3047e118c691557481d624f069b7f7752a2f735d609",
+                "sha256:c8a489049b7ee9889617bb4c274a153f3d979e8f51d2efd0f5b403caf41c57df"
             ],
             "index": "pypi",
-            "version": "==6.8.1"
+            "markers": "python_version >= '3.9'",
+            "version": "==6.9.0"
         },
         "wsproto": {
             "hashes": [
