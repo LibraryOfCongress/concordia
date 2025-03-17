@@ -113,8 +113,7 @@ jobs:
                   OLDPATH=$PATH
                   PATH=$PATH:$chromepath
                   pipenv run ./manage.py collectstatic --no-input
-                  pipenv run coverage run --parallel-mode ./manage.py test --parallel
-                  pipenv run coverage combine
+                  pipenv run coverage run ./manage.py test
                   pipenv run coverage report
                   pipenv run coverage report | grep 'TOTAL' | awk '{print $4}' | tr -d '%' > pr_coverage.txt
                   PATH=$OLDPATH
