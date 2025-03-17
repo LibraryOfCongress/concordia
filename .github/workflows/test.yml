@@ -203,4 +203,3 @@ jobs:
                       - **Current PR Coverage:** ${{ env.PR_COVERAGE }}%
                       - **Release Branch Coverage:** $RELEASE_COVERAGE%
                       - **${{ env.COVERAGE_CHANGE }}**
-              repo-token: ${{ secrets.GITHUB_TOKEN }}
