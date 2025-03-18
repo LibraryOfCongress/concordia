@@ -1,0 +1,18 @@
+name: Renew Coverage Cache
+
+on:
+    schedule:
+        - cron: '0 0 */5 * *' # Runs every 5 days at midnight UTC
+    workflow_dispatch:
+
+jobs:
+    renew-cache:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Access Coverage Cache to Renew Expiration
+              uses: actions/cache@v4
+              with:
+                  path: coverage.txt
+                  key: release-coverage
+                  restore-keys: |
+                      release-coverage

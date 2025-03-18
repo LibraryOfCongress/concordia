@@ -220,10 +220,10 @@ jobs:
                   echo "- **Current PR Coverage:** ${{ env.PR_COVERAGE }}" >> coverage_comment.txt
                   echo "- **Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}" >> coverage_comment.txt
                   echo "- **${{ env.COVERAGE_CHANGE }}**" >> coverage_comment.txt
-                  echo "- 📊 **[View Full Coverage Report (Download Artifact)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
+                  echo "- 📊 **[Download Full Coverage Report (Under "Artifacts")](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
                   echo "" >> coverage_comment.txt
                   echo "<details>" >> coverage_comment.txt
-                  echo "<summary>📜 **Click to view full text coverage report**</summary>" >> coverage_comment.txt
+                  echo "<summary>📜 Click to view full text coverage report</summary>" >> coverage_comment.txt
                   echo "" >> coverage_comment.txt
                   echo '```text' >> coverage_comment.txt
                   cat coverage_report/coverage.txt >> coverage_comment.txt
