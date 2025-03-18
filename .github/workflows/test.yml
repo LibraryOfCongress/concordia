@@ -123,11 +123,14 @@ jobs:
 
             - name: Run Tests with Coverage
               run: |
+                  mkdir -p coverage_report
                   pipenv run coverage run ./manage.py test
-                  pipenv run coverage report
-                  pipenv run coverage report | grep 'TOTAL' | awk '{print $6 "%"}' > pr_coverage.txt
+                  # Save full report to coverage_report/coverage.txt and just the total coverage percent to pr_coverage.txt
+                  pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6 "%"}' > pr_coverage.txt
                   echo "Stored PR coverage:"
                   cat pr_coverage.txt  # Debugging output to verify correct storage
+                  pipenv run coverage html
+                  mv htmlcov coverage_report/html  # Move HTML report into a separate directory
               env:
                   PGPASSWORD: postgres
                   # The hostname used to communicate with the PostgreSQL service container
@@ -152,6 +155,13 @@ jobs:
               with:
                   path: coverage.txt
                   key: release-coverage
+
+            # Upload full coverage report as an artifact
+            - name: Upload Full Coverage Report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage_report
 
             # Download the stored release branch coverage for PR comparison, if it exists
             - name: Restore Release Coverage (if running on PR)
@@ -185,10 +195,13 @@ jobs:
                   fi
 
                   if [ "$COMPARISON_AVAILABLE" = true ]; then
-                      if (( $(echo "$PR_COVERAGE > $RELEASE_COVERAGE" | bc -l) )); then
-                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE - $RELEASE_COVERAGE" | bc -l)%)!"
-                      elif (( $(echo "$PR_COVERAGE < $RELEASE_COVERAGE" | bc -l) )); then
-                          CHANGE="🔽 Coverage decreased (-$(echo "$RELEASE_COVERAGE - $PR_COVERAGE" | bc -l)%)!"
+                      # Strip '%' from PR_COVERAGE and RELEASE_COVERAGE for numerical comparison
+                      PR_COVERAGE_NUM=${PR_COVERAGE%\%}
+                      RELEASE_COVERAGE_NUM=${RELEASE_COVERAGE%\%}
+                      if (( $(echo "$PR_COVERAGE_NUM > $RELEASE_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE_NUM - $RELEASE_COVERAGE_NUM" | bc -l)%)!"
+                      elif (( $(echo "$PR_COVERAGE_NUM < $RELEASE_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔽 Coverage decreased (-$(echo "$RELEASE_COVERAGE_NUM - $PR_COVERAGE_NUM" | bc -l)%)!"
                       else
                           CHANGE="✅ Coverage remained the same."
                       fi
@@ -207,6 +220,8 @@ jobs:
                   echo "**Current PR Coverage:** ${{ env.PR_COVERAGE }}" >> $GITHUB_STEP_SUMMARY
                   echo "**Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}" >> $GITHUB_STEP_SUMMARY
                   echo "**Result:** ${{ env.COVERAGE_CHANGE }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "📊 **[View Full Coverage Report (Download)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})**" >> $GITHUB_STEP_SUMMARY
 
             # Post a comment on the PR with the coverage results
             - name: Comment Coverage Change on PR
@@ -218,3 +233,4 @@ jobs:
                       - **Current PR Coverage:** ${{ env.PR_COVERAGE }}
                       - **Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}
                       - **${{ env.COVERAGE_CHANGE }}**
+                      - 📊 **[View Full Coverage Report (Download)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})**
