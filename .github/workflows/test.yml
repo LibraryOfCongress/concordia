@@ -124,7 +124,8 @@ jobs:
             - name: Run Tests with Coverage
               run: |
                   mkdir -p coverage_report
-                  pipenv run coverage run ./manage.py test
+                  pipenv run coverage run --parallel-mode ./manage.py test --parallel auto
+                  pipenv run coverage combine  # Merge results from parallel test workers
                   # Save full report to coverage_report/coverage.txt and just the total coverage percent to pr_coverage.txt
                   pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6}' > pr_coverage.txt
                   echo "Stored PR coverage:"
