@@ -222,10 +222,13 @@ jobs:
                   echo "- **${{ env.COVERAGE_CHANGE }}**" >> coverage_comment.txt
                   echo "- 📊 **[View Full Coverage Report (Download Artifact)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
                   echo "" >> coverage_comment.txt
-                  echo "### 📜 Full Text Coverage Report 📜" >> coverage_comment.txt
+                  echo "<details>" >> coverage_comment.txt
+                  echo "<summary>📜 **Click to view full text coverage report**</summary>" >> coverage_comment.txt
+                  echo "" >> coverage_comment.txt
                   echo '```text' >> coverage_comment.txt
                   cat coverage_report/coverage.txt >> coverage_comment.txt
                   echo '```' >> coverage_comment.txt
+                  echo "</details>" >> coverage_comment.txt
 
             # Display the coverage summary in the GitHub Actions UI
             - name: Post Coverage Summary
