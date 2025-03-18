@@ -141,9 +141,13 @@ jobs:
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
             # Store coverage results if running on the release branch
-            - name: Cache Release Coverage (if running on release branch)
+            - name: Store Release Coverage (if running on release branch)
               if: github.ref == 'refs/heads/release'
               run: cp pr_coverage.txt coverage.txt
+
+            # Cache coverage results if running on the release branch
+            - name: Cache Release Coverage (if running on release branch)
+              if: github.ref == 'refs/heads/release'
               uses: actions/cache@v4
               with:
                   path: coverage.txt
