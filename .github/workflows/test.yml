@@ -101,22 +101,29 @@ jobs:
                   pip3 install -U pipenv
                   pipenv install --dev --deploy
 
-            - name: Run Tests with Coverage
+            - name: Configure Logs
               run: |
                   mkdir logs
                   touch ./logs/concordia-celery.log
+
+            - name: Build and Collect Static Files
+              run: |
                   npm install
                   npx gulp build
+                  pipenv run ./manage.py collectstatic --no-input
+
+            - name: Install Chrome for Testing
+              run: |
                   chromepath=$(npx @puppeteer/browsers install chrome@stable)
                   chromepath=${chromepath#* }
                   chromepath=${chromepath%/chrome}
-                  OLDPATH=$PATH
                   PATH=$PATH:$chromepath
-                  pipenv run ./manage.py collectstatic --no-input
+
+            - name: Run Tests with Coverage
+              run: |
                   pipenv run coverage run ./manage.py test
                   pipenv run coverage report
                   pipenv run coverage report | grep 'TOTAL' | awk '{print $4}' | tr -d '%' > pr_coverage.txt
-                  PATH=$OLDPATH
               env:
                   PGPASSWORD: postgres
                   # The hostname used to communicate with the PostgreSQL service container
@@ -148,9 +155,10 @@ jobs:
                   name: release-coverage
                   path: coverage.txt
 
-            # Download the stored release branch coverage for PR comparison
+            # Download the stored release branch coverage for PR comparison, if it exists
             - name: Download Release Coverage (if running on PR)
               if: github.event_name == 'pull_request'
+              continue-on-error: true
               uses: actions/download-artifact@v4
               with:
                   name: release-coverage
