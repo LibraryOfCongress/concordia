@@ -101,20 +101,36 @@ jobs:
                   pip3 install -U pipenv
                   pipenv install --dev --deploy
 
-            - name: Run Tests
+            - name: Install Node Dependencies
+              run: npm install
+
+            - name: Configure Logs
               run: |
                   mkdir logs
                   touch ./logs/concordia-celery.log
-                  npm install
+
+            - name: Build and Collect Static Files
+              run: |
                   npx gulp build
+                  pipenv run ./manage.py collectstatic --no-input
+
+            - name: Install Chrome for Testing
+              run: |
                   chromepath=$(npx @puppeteer/browsers install chrome@stable)
                   chromepath=${chromepath#* }
                   chromepath=${chromepath%/chrome}
-                  OLDPATH=$PATH
                   PATH=$PATH:$chromepath
-                  pipenv run ./manage.py collectstatic --no-input
+
+            - name: Run Tests with Coverage
+              run: |
+                  mkdir -p coverage_report
                   pipenv run coverage run ./manage.py test
-                  PATH=$OLDPATH
+                  # Save full report to coverage_report/coverage.txt and just the total coverage percent to pr_coverage.txt
+                  pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6}' > pr_coverage.txt
+                  echo "Stored PR coverage:"
+                  cat pr_coverage.txt  # Debugging output to verify correct storage
+                  pipenv run coverage html
+                  mv htmlcov coverage_report/html  # Move HTML report into a separate directory
               env:
                   PGPASSWORD: postgres
                   # The hostname used to communicate with the PostgreSQL service container
@@ -126,3 +142,101 @@ jobs:
                   # The default Redis port
                   REDIS_PORT: 6379
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+
+            # Store coverage results if running on the release branch
+            - name: Store Release Coverage (if running on release branch)
+              if: github.ref == 'refs/heads/release'
+              run: cp pr_coverage.txt coverage.txt
+
+            # Cache coverage results if running on the release branch
+            - name: Cache Release Coverage (if running on release branch)
+              if: github.ref == 'refs/heads/release'
+              uses: actions/cache@v4
+              with:
+                  path: coverage.txt
+                  key: release-coverage
+
+            # Upload full coverage report as an artifact
+            - name: Upload Full Coverage Report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage_report
+
+            # Download the stored release branch coverage for PR comparison, if it exists
+            - name: Restore Release Coverage (if running on PR)
+              if: github.event_name == 'pull_request'
+              uses: actions/cache@v4
+              with:
+                  path: coverage.txt
+                  key: release-coverage
+                  restore-keys: |
+                      release-coverage
+
+            # Compare PR coverage against stored release coverage
+            - name: Compare Coverage (if running on PR)
+              if: github.event_name == 'pull_request'
+              run: |
+                  echo "Reading PR coverage from pr_coverage.txt..."
+                  cat pr_coverage.txt || echo "⚠️ ERROR: pr_coverage.txt not found or empty"
+                  PR_COVERAGE=$(cat pr_coverage.txt)
+                  if [ -z "$PR_COVERAGE" ]; then
+                      echo "⚠️ ERROR: PR_COVERAGE is empty!"
+                      PR_COVERAGE="N/A"
+                  fi
+
+                  echo "PR Coverage: $PR_COVERAGE"
+                  if [ -f "coverage.txt" ]; then
+                      RELEASE_COVERAGE=$(cat coverage.txt)
+                      COMPARISON_AVAILABLE=true
+                  else
+                      COMPARISON_AVAILABLE=false
+                      RELEASE_COVERAGE="N/A"
+                  fi
+
+                  if [ "$COMPARISON_AVAILABLE" = true ]; then
+                      # Strip '%' from PR_COVERAGE and RELEASE_COVERAGE for numerical comparison
+                      PR_COVERAGE_NUM=${PR_COVERAGE%\%}
+                      RELEASE_COVERAGE_NUM=${RELEASE_COVERAGE%\%}
+                      if (( $(echo "$PR_COVERAGE_NUM > $RELEASE_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE_NUM - $RELEASE_COVERAGE_NUM" | bc -l)%)!"
+                      elif (( $(echo "$PR_COVERAGE_NUM < $RELEASE_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔽 Coverage decreased (-$(echo "$RELEASE_COVERAGE_NUM - $PR_COVERAGE_NUM" | bc -l)%)!"
+                      else
+                          CHANGE="✅ Coverage remained the same."
+                      fi
+                  else
+                      CHANGE="⚠️ No baseline coverage available from 'release' branch."
+                  fi
+
+                  echo "COVERAGE_CHANGE=$CHANGE" >> $GITHUB_ENV
+                  printf "RELEASE_COVERAGE=%s\n" "$RELEASE_COVERAGE" >> $GITHUB_ENV
+                  printf "PR_COVERAGE=%s\n" "$PR_COVERAGE" >> $GITHUB_ENV
+
+            # Generate and store command for display on the Action UI and PR (if any)
+            - name: Generate Coverage Report Comment
+              run: |
+                  echo "**🛡 Test Coverage Report 🛡**" > coverage_comment.txt
+                  echo "- **Current PR Coverage:** ${{ env.PR_COVERAGE }}" >> coverage_comment.txt
+                  echo "- **Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}" >> coverage_comment.txt
+                  echo "- **${{ env.COVERAGE_CHANGE }}**" >> coverage_comment.txt
+                  echo "- 📊 **[Download Full Coverage Report (Under "Artifacts")](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
+                  echo "" >> coverage_comment.txt
+                  echo "<details>" >> coverage_comment.txt
+                  echo "<summary>📜 Click to view full text coverage report</summary>" >> coverage_comment.txt
+                  echo "" >> coverage_comment.txt
+                  echo '```text' >> coverage_comment.txt
+                  cat coverage_report/coverage.txt >> coverage_comment.txt
+                  echo '```' >> coverage_comment.txt
+                  echo "</details>" >> coverage_comment.txt
+
+            # Display the coverage summary in the GitHub Actions UI
+            - name: Post Coverage Summary
+              run: cat coverage_comment.txt >> $GITHUB_STEP_SUMMARY
+
+            # Post a comment on the PR with the coverage results
+            - name: Comment Coverage Change on PR
+              if: github.event_name == 'pull_request'
+              uses: mshick/add-pr-comment@v2
+              with:
+                  message-path: coverage_comment.txt
