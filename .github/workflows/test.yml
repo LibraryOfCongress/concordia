@@ -142,9 +142,11 @@ jobs:
 
             # Store coverage results if running on the release branch
             - name: Cache Release Coverage (if running on release branch)
+              if: github.ref == 'refs/heads/release'
+              run: cp pr_coverage.txt coverage.txt
               uses: actions/cache@v4
               with:
-                  path: pr_coverage.txt
+                  path: coverage.txt
                   key: release-coverage
 
             # Download the stored release branch coverage for PR comparison, if it exists
