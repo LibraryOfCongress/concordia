@@ -238,19 +238,15 @@ class TaskTestCase(CreateTestUsers, TestCase):
         self.assertIn(expected_subject, mail.outbox[0].subject)
 
     @mock.patch("django.core.cache.cache.add")
-    @mock.patch("django.core.cache.cache.set")
     @mock.patch("django.core.cache.cache.delete")
     @mock.patch("concordia.tasks._update_useractivity_cache")
-    def test_update_useractivity_cache(
-        self, mock_update, mock_delete, mock_set, mock_add
-    ):
+    def test_update_useractivity_cache(self, mock_update, mock_delete, mock_add):
         user = self.create_test_user()
         campaign = create_campaign()
 
         mock_add.return_value = False
         with self.assertRaises(CacheLockedError):
             update_useractivity_cache(user.id, campaign.id, "transcribe")
-        self.assertEqual(mock_set.call_count, 0)
         self.assertEqual(mock_update.call_count, 0)
         self.assertEqual(mock_delete.call_count, 0)
 

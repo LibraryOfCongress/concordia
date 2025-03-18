@@ -1094,6 +1094,8 @@ def unusual_activity(ignore_env=False):
         message.send()
 
 
+# Creating a specfic error for this, since our pre-commit
+# checks will not allow us to catch generic exceptions
 class CacheLockedError(Exception):
     def __init__(self, message, details=None):
         super().__init__(message)
