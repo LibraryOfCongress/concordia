@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count, F, Q
@@ -1104,8 +1104,18 @@ def update_useractivity_cache(user_id, campaign_id, attr_name, *args, **kwargs):
     # attempt to acquire
     lock_exists = cache.get(lock_key, False)
     if lock_exists:
-        logger.error(
-            "Task update_useractivity_cache failed: cache is locked. Retrying..."
+        subject = "Task update_useractivity_cache failed: cache is locked."
+        message_body = """  user: %s
+                            campaign: %s
+                            attribute: %s
+                          """ % (
+            user_id,
+            campaign_id,
+            attr_name,
+        )
+        logger.error("%s %s Retrying...", subject, message_body)
+        send_mail(
+            subject, message_body, settings.DEFAULT_FROM_EMAIL, settings.CONCORDIA_DEVS
         )
         raise CacheLockedError()
     else:

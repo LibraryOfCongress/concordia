@@ -23,6 +23,9 @@ CACHES = {
 }
 
 DEFAULT_TO_EMAIL = "rsar@loc.gov"
+CONCORDIA_DEVS = [
+    "rsar@loc.gov",
+]
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]  # nosec
 
