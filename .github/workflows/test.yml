@@ -69,7 +69,7 @@ jobs:
 
         steps:
             - name: Remove Firefox
-              run: sudo apt purge firefox
+              run: sudo apt-get purge firefox
 
             - name: Install system packages
               run: |
@@ -103,6 +103,7 @@ jobs:
                   pip3 install -U setuptools
                   pip3 install -U pipenv
                   pipenv install --dev --deploy
+                  pipenv install tblib # For parallel test debugging
 
             - name: Install Node Dependencies
               run: npm install
@@ -124,13 +125,10 @@ jobs:
                   chromepath=${chromepath%/chrome}
                   PATH=$PATH:$chromepath
 
-            - name: Install tblib (for parallel test debugging)
-              run: pip install tblib
-
             - name: Run Tests with Coverage
               run: |
                   mkdir -p coverage_report
-                  pipenv run coverage run --parallel-mode ./manage.py test --parallel 2
+                  pipenv run coverage run --parallel-mode ./manage.py test --parallel auto
                   pipenv run coverage combine  # Merge results from parallel test workers
                   # Save full report to coverage_report/coverage.txt and just the total coverage percent to pr_coverage.txt
                   pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6}' > pr_coverage.txt
