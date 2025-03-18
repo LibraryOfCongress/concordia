@@ -7,6 +7,21 @@ DEBUG = False
 
 DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "default-location",
+    },
+    "view_cache": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "view-location",
+    },
+    "configuration_cache": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "configuration-location",
+    },
+}
+
 DEFAULT_TO_EMAIL = "rsar@loc.gov"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]  # nosec
