@@ -68,6 +68,9 @@ jobs:
                     - 6379:6379
 
         steps:
+            - name: Remove Firefox
+              run: sudo apt purge firefox
+
             - name: Install system packages
               run: |
                   sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
