@@ -4,7 +4,11 @@
         "remote_url": "",
         "wait_time": 10,
         "page_load_wait_time": 0,
-        "options": ["headless"],
+        "options": [
+            "headless",
+            "no-sandbox",
+            "disable-gpu"
+        ],
         "capabilities": {},
         "experimental_options": null,
         "extension_paths": [],
