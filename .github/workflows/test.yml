@@ -209,28 +209,31 @@ jobs:
                       CHANGE="⚠️ No baseline coverage available from 'release' branch."
                   fi
 
-                  printf "COVERAGE_CHANGE=$CHANGE" >> $GITHUB_ENV
-                  printf "RELEASE_COVERAGE=$RELEASE_COVERAGE" >> $GITHUB_ENV
-                  printf "PR_COVERAGE=$PR_COVERAGE" >> $GITHUB_ENV
+                  echo "COVERAGE_CHANGE=$CHANGE" >> $GITHUB_ENV
+                  printf "RELEASE_COVERAGE=%s\n" "$RELEASE_COVERAGE" >> $GITHUB_ENV
+                  printf "PR_COVERAGE=%s\n" "$PR_COVERAGE" >> $GITHUB_ENV
+
+            # Generate and store command for display on the Action UI and PR (if any)
+            - name: Generate Coverage Report Comment
+              run: |
+                  echo "**🛡 Test Coverage Report 🛡**" > coverage_comment.txt
+                  echo "- **Current PR Coverage:** ${{ env.PR_COVERAGE }}" >> coverage_comment.txt
+                  echo "- **Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}" >> coverage_comment.txt
+                  echo "- **${{ env.COVERAGE_CHANGE }}**" >> coverage_comment.txt
+                  echo "- 📊 **[View Full Coverage Report (Download Artifact)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
+                  echo "" >> coverage_comment.txt
+                  echo "### 📜 Full Text Coverage Report 📜" >> coverage_comment.txt
+                  echo '```text' >> coverage_comment.txt
+                  cat coverage_report/coverage.txt >> coverage_comment.txt
+                  echo '```' >> coverage_comment.txt
 
             # Display the coverage summary in the GitHub Actions UI
             - name: Post Coverage Summary
-              run: |
-                  echo "### 🛡 Test Coverage Report 🛡" >> $GITHUB_STEP_SUMMARY
-                  echo "**Current PR Coverage:** ${{ env.PR_COVERAGE }}" >> $GITHUB_STEP_SUMMARY
-                  echo "**Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}" >> $GITHUB_STEP_SUMMARY
-                  echo "**Result:** ${{ env.COVERAGE_CHANGE }}" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "📊 **[View Full Coverage Report (Download Artifact)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> $GITHUB_STEP_SUMMARY
+              run: cat coverage_comment.txt >> $GITHUB_STEP_SUMMARY
 
             # Post a comment on the PR with the coverage results
             - name: Comment Coverage Change on PR
               if: github.event_name == 'pull_request'
               uses: mshick/add-pr-comment@v2
               with:
-                  message: |
-                      **🛡 Test Coverage Report 🛡**
-                      - **Current PR Coverage:** ${{ env.PR_COVERAGE }}
-                      - **Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}
-                      - **${{ env.COVERAGE_CHANGE }}**
-                      - 📊 **[View Full Coverage Report (Download Artifact)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**
+                  message-path: coverage_comment.txt
