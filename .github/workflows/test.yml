@@ -125,7 +125,7 @@ jobs:
               run: |
                   pipenv run coverage run ./manage.py test
                   pipenv run coverage report
-                  pipenv run coverage report | grep 'TOTAL' | awk '{print $4 "%"}' > pr_coverage.txt
+                  pipenv run coverage report | grep 'TOTAL' | awk '{print $6 "%"}' > pr_coverage.txt
                   echo "Stored PR coverage:"
                   cat pr_coverage.txt  # Debugging output to verify correct storage
               env:
