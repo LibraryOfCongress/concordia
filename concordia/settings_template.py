@@ -570,6 +570,7 @@ DEFAULT_AXE_SCRIPT = os.path.join(
     SITE_ROOT_DIR, "node_modules", "axe-core", "axe.min.js"
 )
 
+# Used for tracking accepts for the review rate limit
 TRANSCRIPTION_ACCEPTED_TRACKING_KEY = "TRANSCRIPTION_ACCEPTED_{user_id}"
 
 CONFIGURATION_CACHE_TIMEOUT = 3600  # One hour
