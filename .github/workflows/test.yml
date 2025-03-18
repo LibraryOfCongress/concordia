@@ -126,7 +126,7 @@ jobs:
                   mkdir -p coverage_report
                   pipenv run coverage run ./manage.py test
                   # Save full report to coverage_report/coverage.txt and just the total coverage percent to pr_coverage.txt
-                  pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6 "%"}' > pr_coverage.txt
+                  pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6}' > pr_coverage.txt
                   echo "Stored PR coverage:"
                   cat pr_coverage.txt  # Debugging output to verify correct storage
                   pipenv run coverage html
