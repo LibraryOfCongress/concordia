@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a39ba99a2b829da5fcc01f593c6769abd8dae32ea7fd2a419d22b13106733a99"
+            "sha256": "6119bd2c7a17a55ce9afb955fe92138868c2c201f44b4b4e8853564d41062c5a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -674,11 +674,11 @@
         },
         "django-elasticsearch-dsl": {
             "hashes": [
-                "sha256:084a790edf26131a7897d13a3b5c08a6e129ca145b2b3fcbc2b2d4e902a919c1",
-                "sha256:c1be1c6d25ee6e99dc246282a4f6de8cc0630d0f8d9863ed512c0baa9d21be94"
+                "sha256:5296f1c69bc86846fc7962d2997fb90a59480dc90766ab6db4da583bd0d62e19",
+                "sha256:81c5cd72dcc7424ff4e372db56672863c70c5373624cd6ec2a4e40c83265c6d6"
             ],
             "index": "pypi",
-            "version": "==7.3"
+            "version": "==7.4"
         },
         "django-flags": {
             "hashes": [
@@ -765,6 +765,7 @@
                 "sha256:5920df0ab2630778680376d86bea349dc99860977eec9b6d2bd0860f337313f2"
             ],
             "index": "pypi",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3' and python_version < '4'",
             "version": "==7.13.4"
         },
         "elasticsearch-dsl": {
@@ -1957,7 +1958,7 @@
                 "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3",
                 "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
             "version": "==2.9.0.post0"
         },
         "python-fsutil": {
@@ -2163,11 +2164,11 @@
         },
         "six": {
             "hashes": [
-                "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926",
-                "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"
+                "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
+                "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==1.16.0"
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
+            "version": "==1.17.0"
         },
         "sniffio": {
             "hashes": [
