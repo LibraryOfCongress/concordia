@@ -218,6 +218,6 @@ def on_transcription_save(sender, instance, **kwargs):
     if user is not None and attr_name is not None and user.username != "anonymous":
         update_useractivity_cache.delay(
             user.id,
-            instance.asset.project.item.campaign.id,
+            instance.asset.item.project.campaign.id,
             attr_name,
         )
