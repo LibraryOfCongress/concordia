@@ -18,12 +18,12 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserProfileActivity,
-    on_transcription_save,
+    _update_useractivity_cache,
     resource_file_upload_path,
     update_userprofileactivity_table,
     validated_get_or_create,
 )
-from concordia.signals.handlers import create_user_profile
+from concordia.signals.handlers import create_user_profile, on_transcription_save
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -366,27 +366,38 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
 
 
 class SignalHandlersTest(CreateTestUsers, TestCase):
+    @mock.patch("django.core.cache.cache.get")
     @mock.patch("django.core.cache.cache.set")
-    def test_on_transcription_save(self, mock_set):
+    def test_update_useractivity_cache(self, mock_set, mock_get):
+        campaign = create_campaign()
+        user = self.create_test_user()
+        mock_get.return_value = {}
+        _update_useractivity_cache(user.id, campaign.id, "transcribe")
+        self.assertEqual(mock_set.call_count, 1)
+        expected_key = f"userprofileactivity_{campaign.pk}"
+        expected_value = {user.id: (1, 0)}
+        mock_set.assert_called_with(expected_key, expected_value)
+
+        reviewed_by = self.create_test_user(username="testuser2")
+        mock_get.return_value = {}
+        _update_useractivity_cache(reviewed_by.id, campaign.id, "review")
+        self.assertEqual(mock_set.call_count, 2)
+        expected_value = {reviewed_by.id: (0, 1)}
+        mock_set.assert_called_with(expected_key, expected_value)
+
+    @mock.patch("concordia.signals.handlers.update_useractivity_cache.delay")
+    def test_on_transcription_save(self, mock_update):
         instance = mock.MagicMock()
         instance.user = self.create_test_user(username="anonymous")
-        instance.asset = create_asset()
         on_transcription_save(None, instance, **{"created": True})
-        self.assertEqual(instance.user.username, "anonymous")
-        self.assertEqual(mock_set.call_count, 0)
+        self.assertEqual(mock_update.call_count, 0)
 
         instance.user = self.create_test_user()
         on_transcription_save(None, instance, **{"created": True})
-        self.assertEqual(mock_set.call_count, 1)
-        expected_key = f"userprofileactivity_{instance.asset.item.project.campaign.pk}"
-        expected_value = {instance.user.id: (1, 0)}
-        mock_set.assert_called_with(expected_key, expected_value)
+        self.assertEqual(mock_update.call_count, 1)
 
-        instance.reviewed_by = self.create_test_user(username="testuser2")
         on_transcription_save(None, instance, **{"created": False})
-        self.assertEqual(mock_set.call_count, 2)
-        expected_value = {instance.reviewed_by.id: (0, 1)}
-        mock_set.assert_called_with(expected_key, expected_value)
+        self.assertEqual(mock_update.call_count, 2)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):

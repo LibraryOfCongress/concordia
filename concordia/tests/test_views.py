@@ -25,8 +25,8 @@ from concordia.models import (
     Campaign,
     Transcription,
     TranscriptionStatus,
-    on_transcription_save,
 )
+from concordia.signals.handlers import on_transcription_save
 from concordia.tasks import (
     campaign_report,
     delete_old_tombstoned_reservations,

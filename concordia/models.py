@@ -1093,34 +1093,16 @@ def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
     profile.save()
 
 
-def on_transcription_save(sender, instance, **kwargs):
-    r"""
-    :param instance:
-        the transcription being saved
-    """
-    if kwargs.get("created", False):
-        user = instance.user
-        attr_name = "transcribe"
-    elif instance.reviewed_by:
-        user = instance.reviewed_by
-        attr_name = "review"
+def _update_useractivity_cache(user_id, campaign_id, attr_name):
+    key = f"userprofileactivity_{campaign_id}"
+    updates = cache.get(key, {})
+    transcribe_count, review_count = updates.get(user_id, (0, 0))
+    if attr_name == "transcribe":
+        transcribe_count += 1
     else:
-        user = None
-        attr_name = None
-
-    if user is not None and attr_name is not None and user.username != "anonymous":
-        key = f"userprofileactivity_{instance.asset.item.project.campaign.id}"
-        updates = cache.get(key, {})
-        transcribe_count, review_count = updates.get(user.id, (0, 0))
-        if attr_name == "transcribe":
-            transcribe_count += 1
-        else:
-            review_count += 1
-        updates[user.id] = (transcribe_count, review_count)
-        cache.set(key, updates)
-
-
-post_save.connect(on_transcription_save, sender=Transcription)
+        review_count += 1
+    updates[user_id] = (transcribe_count, review_count)
+    cache.set(key, updates)
 
 
 class AssetTranscriptionReservation(models.Model):

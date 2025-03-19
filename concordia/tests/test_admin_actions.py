@@ -20,8 +20,8 @@ from concordia.models import (
     Project,
     Transcription,
     TranscriptionStatus,
-    on_transcription_save,
 )
+from concordia.signals.handlers import on_transcription_save
 from concordia.tests.utils import (
     CreateTestUsers,
     create_asset,

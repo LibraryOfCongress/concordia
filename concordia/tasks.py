@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count, F, Q
@@ -18,6 +18,7 @@ from django.template import loader
 from django.utils import timezone
 from more_itertools.more import chunked
 
+from concordia.exceptions import CacheLockedError
 from concordia.models import (
     ONE_DAY,
     ONE_DAY_AGO,
@@ -34,6 +35,7 @@ from concordia.models import (
     Transcription,
     UserAssetTagCollection,
     UserProfileActivity,
+    _update_useractivity_cache,
     update_userprofileactivity_table,
 )
 from concordia.signals.signals import reservation_released
@@ -1091,6 +1093,50 @@ def unusual_activity(ignore_env=False):
         )
         message.attach_alternative(html_body_message, "text/html")
         message.send()
+
+
+@celery_app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=5,
+    retry_kwargs={"max_retries": 5, "countdown": 5},
+)
+def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kwargs):
+    try:
+        lock_key = "userprofileactivity_cache_lock"
+
+        # attempt to acquire
+        if not cache.add(lock_key, "locked", timeout=10):
+            raise CacheLockedError(f"Could not acquire lock for {lock_key}")
+
+        try:
+            _update_useractivity_cache(user_id, campaign_id, attr_name)
+        finally:
+            # release
+            cache.delete(lock_key)
+
+    except Exception as e:
+        if self.request.retries >= self.max_retries:
+            subject = "Task update_useractivity_cache failed: cache is locked."
+            message_body = """%s
+                            user: %s
+                            campaign: %s
+                            attribute: %s
+                          """ % (
+                e,
+                user_id,
+                campaign_id,
+                attr_name,
+            )
+            logger.error("%s %s Retrying...", subject, message_body)
+            send_mail(
+                subject,
+                message_body,
+                settings.DEFAULT_FROM_EMAIL,
+                settings.CONCORDIA_DEVS,
+            )
+        # Let celery handle retries
+        raise e
 
 
 @celery_app.task(ignore_result=True)
