@@ -1196,10 +1196,10 @@ class CreateDownloadAssetImageJobTests(TestCase):
         failed_job.failed = timezone.now()
         failed_job.save()
 
-        tasks.create_download_asset_image_job(self.asset, self.batch_id)
-        job_count = DownloadAssetImageJob.objects.filter(
-            asset=self.asset, batch=self.batch_id
-        ).count()
+        new_batch = uuid.uuid4()
+
+        tasks.create_download_asset_image_job(self.asset, new_batch)
+        job_count = DownloadAssetImageJob.objects.filter(asset=self.asset).count()
         self.assertEqual(job_count, 2)
 
 
