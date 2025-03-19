@@ -842,7 +842,7 @@ def verify_asset_image_task(self, asset_pk, batch=None, create_job=False):
 
 def create_download_asset_image_job(asset, batch):
     existing_job = models.DownloadAssetImageJob.objects.filter(
-        asset=asset, batch=batch, completed__isnull=True, failed__isnull=True
+        asset=asset, batch=batch
     ).first()
 
     if not existing_job:
