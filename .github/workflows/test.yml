@@ -68,6 +68,9 @@ jobs:
                     - 6379:6379
 
         steps:
+            - name: Remove Firefox
+              run: sudo apt-get purge firefox
+
             - name: Install system packages
               run: |
                   sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
@@ -100,6 +103,7 @@ jobs:
                   pip3 install -U setuptools
                   pip3 install -U pipenv
                   pipenv install --dev --deploy
+                  pipenv install tblib # For parallel test debugging
 
             - name: Install Node Dependencies
               run: npm install
@@ -124,7 +128,8 @@ jobs:
             - name: Run Tests with Coverage
               run: |
                   mkdir -p coverage_report
-                  pipenv run coverage run ./manage.py test
+                  pipenv run coverage run --parallel-mode ./manage.py test --parallel auto
+                  pipenv run coverage combine  # Merge results from parallel test workers
                   # Save full report to coverage_report/coverage.txt and just the total coverage percent to pr_coverage.txt
                   pipenv run coverage report | tee coverage_report/coverage.txt | grep 'TOTAL' | awk '{print $6}' > pr_coverage.txt
                   echo "Stored PR coverage:"
