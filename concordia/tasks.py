@@ -18,6 +18,7 @@ from django.template import loader
 from django.utils import timezone
 from more_itertools.more import chunked
 
+from concordia.exceptions import CacheLockedError
 from concordia.models import (
     ONE_DAY,
     ONE_DAY_AGO,
@@ -1092,14 +1093,6 @@ def unusual_activity(ignore_env=False):
         )
         message.attach_alternative(html_body_message, "text/html")
         message.send()
-
-
-# Creating a specfic error for this, since our pre-commit
-# checks will not allow us to catch generic exceptions
-class CacheLockedError(Exception):
-    def __init__(self, message, details=None):
-        super().__init__(message)
-        self.details = details
 
 
 @celery_app.task(
