@@ -395,9 +395,15 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         instance.user = self.create_test_user()
         on_transcription_save(None, instance, **{"created": True})
         self.assertEqual(mock_update.call_count, 1)
+        mock_update.assert_called_with(
+            instance.user.id, instance.asset.item.project.campaign.id, "transcribe"
+        )
 
         on_transcription_save(None, instance, **{"created": False})
         self.assertEqual(mock_update.call_count, 2)
+        mock_update.assert_called_with(
+            instance.reviewed_by.id, instance.asset.item.project.campaign.id, "review"
+        )
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
