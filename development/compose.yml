@@ -1,0 +1,105 @@
+version: '3.6'
+services:
+    redis:
+        container_name: concordia_redis
+        restart: unless-stopped
+        image: redis:latest
+        hostname: redis
+        ports:
+            - 63791:6379
+        volumes:
+            - redis_volume:/data
+
+    db:
+        container_name: concordia_db
+        restart: unless-stopped
+        image: postgres
+        environment:
+            POSTGRES_PASSWORD: ${POSTGRESQL_PW}
+            POSTGRES_USER: concordia
+            POSTGRES_MULTIPLE_DATABASES: test_concordia
+        ports:
+            - 54323:5432
+        volumes:
+            - ../postgresql:/docker-entrypoint-initdb.d:z
+            - db_volume:/var/lib/postgresql/data/
+
+    app:
+        container_name: concordia_app
+        hostname: app
+        restart: unless-stopped
+        build:
+            context: ..
+            dockerfile: development/Containerfile
+            args:
+                UID: ${CONTAINER_UID}
+                GID: ${CONTAINER_GID}
+                USERNAME: ${CONTAINER_USERNAME}
+        environment: &django-environment
+            WAIT_HOSTS: db:5432, redis:6379
+            POSTGRESQL_HOST: db
+            POSTGRESQL_PW: ${POSTGRESQL_PW}
+            CONCORDIA_ENVIRONMENT: development
+            DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-concordia.settings_template}
+            DEBUG: ${DEBUG:-}
+            REDIS_ADDRESS: redis
+            REDIS_PORT: 6379
+            AWS_PROFILE: ${AWS_PROFILE}
+            AWS_SHARED_CREDENTIALS_FILE: ${AWS_SHARED_CREDENTIALS_FILE}
+            TURNSTILE_SITEKEY: ${TURNSTILE_SITEKEY:-1x00000000000000000000AA}
+            TURNSTILE_SECRET: ${TURNSTILE_SECRET:-1x0000000000000000000000000000000AA}
+        depends_on:
+            - redis
+            - db
+        volumes:
+            - ..:/workspace:z
+            - ${HOME_DIR}/.aws:${HOME_DIR}/.aws:z
+            - ${HOME_DIR}/.gitconfig:${HOME_DIR}/.gitconfig:z
+            - ${HOME_DIR}/.ssh:${HOME_DIR}/.ssh:z
+            - images_volume:/concordia_images
+        networks:
+            - default
+        ports:
+            - 80:8000
+        stdin_open: true
+        tty: true
+
+    importer:
+        container_name: concordia_importer
+        hostname: importer
+        restart: unless-stopped
+        build:
+            context: ..
+            dockerfile: importer/Dockerfile
+        environment: *django-environment
+        depends_on:
+            - redis
+            - db
+        networks:
+            - default
+        volumes:
+            - ..:/app:z
+            - ${HOME_DIR}/.aws:${HOME_DIR}.aws:z,ro
+            - images_volume:/concordia_images
+
+    celerybeat:
+        container_name: concordia_celerybeat
+        hostname: celerybeat
+        restart: unless-stopped
+        build:
+            context: ..
+            dockerfile: celerybeat/Dockerfile
+        environment: *django-environment
+        depends_on:
+            - redis
+            - db
+        networks:
+            - default
+
+volumes:
+    db_volume:
+    images_volume:
+    redis_volume:
+
+networks:
+    default:
