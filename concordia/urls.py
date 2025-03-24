@@ -173,7 +173,6 @@ urlpatterns = [
         views.CampaignTopicListView.as_view(),
         name="campaign-topic-list",
     ),
-    path("topics/", views.TopicListView.as_view(), name="topic-list"),
     path("topics/<uslug:slug>/", views.TopicDetailView.as_view(), name="topic-detail"),
     path(
         "topics/<uslug:topic_slug>/next-transcribable-asset/",

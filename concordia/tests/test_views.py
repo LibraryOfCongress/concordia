@@ -270,31 +270,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertContains(response, campaign.title)
         self.assertNotContains(response, unlisted_campaign.title)
 
-    def test_topic_list_view(self):
-        """
-        Test the GET method for route /topics
-        """
-        campaign = create_campaign(title="Hello Everyone")
-        topic_project = create_project(campaign=campaign)
-        unlisted_campaign = create_campaign(
-            title="Hello to only certain people", unlisted=True
-        )
-        unlisted_topic_project = create_project(campaign=unlisted_campaign)
-
-        topic = create_topic(title="A Listed Topic", project=topic_project)
-        unlisted_topic = create_topic(
-            title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
-        )
-
-        response = self.client.get(reverse("topic-list"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, template_name="transcriptions/topic_list.html"
-        )
-        self.assertContains(response, topic.title)
-        self.assertNotContains(response, unlisted_topic.title)
-
     def test_campaign_list_view(self):
         """
         Test the GET method for route /campaigns

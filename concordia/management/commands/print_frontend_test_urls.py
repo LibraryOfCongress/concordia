@@ -40,7 +40,6 @@ class Command(BaseCommand):
             reverse("login"),
             reverse("transcriptions:campaign-list"),
             reverse("campaign-topic-list"),
-            reverse("topic-list"),
         ]
 
         # Database content

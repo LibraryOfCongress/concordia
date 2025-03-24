@@ -241,23 +241,6 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                     },
                 )
 
-    def test_topic_list(self):
-        resp, data = self.get_api_list_response(reverse("topic-list"))
-
-        self.assertGreater(len(data["objects"]), 0)
-
-        test_topics = {
-            i["id"]: i
-            for i in Topic.objects.published().values(
-                "id", "title", "description", "short_description", "slug"
-            )
-        }
-
-        for obj in data["objects"]:
-            self.assertIn("id", obj)
-            self.assertIn("url", obj)
-            self.assertEqual(obj, obj | test_topics[obj["id"]])
-
     def test_topic_detail(self):
         resp, data = self.get_api_response(
             reverse("topic-detail", kwargs={"slug": self.test_topic.slug})
