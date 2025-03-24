@@ -9,11 +9,13 @@ from django import forms
 from django.contrib.messages import get_messages
 from django.core import mail, signing
 from django.core.cache import cache
+from django.db.models.signals import post_save
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
 from concordia.models import ConcordiaUser, Transcription, User
+from concordia.signals.handlers import on_transcription_save
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -36,6 +38,7 @@ class ConcordiaAccountViewTests(
     """
 
     def setUp(self):
+        post_save.disconnect(on_transcription_save, sender=Transcription)
         cache.clear()
 
     def tearDown(self):
