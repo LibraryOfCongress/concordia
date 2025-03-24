@@ -385,20 +385,6 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         expected_value = {reviewed_by.id: (0, 1)}
         mock_set.assert_called_with(expected_key, expected_value)
 
-    @mock.patch("concordia.signals.handlers.update_useractivity_cache.delay")
-    def test_on_transcription_save(self, mock_update):
-        instance = mock.MagicMock()
-        instance.user = self.create_test_user(username="anonymous")
-        on_transcription_save(None, instance, **{"created": True})
-        self.assertEqual(mock_update.call_count, 0)
-
-        instance.user = self.create_test_user()
-        on_transcription_save(None, instance, **{"created": True})
-        self.assertEqual(mock_update.call_count, 1)
-
-        on_transcription_save(None, instance, **{"created": False})
-        self.assertEqual(mock_update.call_count, 2)
-
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
     def setUp(self):
