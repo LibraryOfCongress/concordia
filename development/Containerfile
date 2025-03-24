@@ -34,6 +34,8 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     tesseract-ocr tesseract-ocr-all \
     # Selenium/Chrome/chromedriver requirements
     libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxdamage1 libxkbcommon0 libasound2 libatspi2.0-0 \
+    # Additional tools for development
+    nano \
     nodejs node-gyp npm && apt-get -qy autoremove && apt-get -qy autoclean
 
 RUN locale-gen en_US.UTF-8
@@ -69,6 +71,8 @@ RUN touch /workspace/logs/concordia.log
 RUN /usr/local/bin/npm install --silent && npx gulp build
 
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
+
+RUN pre-commit install-hooks
 
 EXPOSE 80
 
