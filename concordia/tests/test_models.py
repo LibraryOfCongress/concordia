@@ -338,6 +338,19 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         with self.assertRaises(ValidationError):
             bad_transcription3.clean()
 
+    @mock.patch("concordia.tests.test_models.on_transcription_save")
+    def test_save(self, mock_handler):
+        signals.post_save.connect(on_transcription_save, sender=Transcription)
+
+        transcription = create_transcription(asset=self.asset)
+        self.assertTrue(mock_handler.called)
+        self.assertEqual(mock_handler.call_count, 1)
+
+        transcription.save()
+        self.assertEqual(mock_handler.call_count, 2)
+
+        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
+
     def test_status(self):
         transcription = create_transcription(user=self.user, asset=self.asset)
         self.assertEqual(
