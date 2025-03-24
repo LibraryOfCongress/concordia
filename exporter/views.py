@@ -283,8 +283,10 @@ class ExportProjectToBagIt(TemplateView):
         asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
-        campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
-        project_slug_dbv = Project.objects.get(slug__exact=project_slug).slug
+        campaign = Campaign.objects.get(slug__exact=campaign_slug)
+        campaign_slug_dbv = campaign.slug
+        project = Project.objects.get(campaign=campaign, slug__exact=project_slug)
+        project_slug_dbv = project.slug
 
         export_filename_base = "%s-%s" % (campaign_slug_dbv, project_slug_dbv)
 
