@@ -982,7 +982,11 @@ def calculate_asset_stats(asset_qs, ctx):
     for status_key, status_label in TranscriptionStatus.CHOICES:
         value = status_counts_by_key.get(status_key, 0)
         if value:
-            pct = round(100 * (value / asset_count))
+            pct_raw = 100 * (value / asset_count)
+            if pct_raw >= 99 and pct_raw < 100:
+                pct = 99
+            else:
+                pct = round(pct_raw)
         else:
             pct = 0
 
@@ -1006,7 +1010,11 @@ def annotate_children_with_progress_stats(children):
             count = counts[k]
 
             if total > 0:
-                pct = round(100 * (count / total))
+                pct_raw = 100 * (count / total)
+                if pct_raw >= 99 and pct_raw < 100:
+                    pct = 99
+                else:
+                    pct = round(pct_raw)
             else:
                 pct = 0
 

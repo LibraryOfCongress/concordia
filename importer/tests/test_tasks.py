@@ -320,30 +320,40 @@ class FetchAllUrlsTests(TestCase):
         self.assertEqual(totals, 0)
 
 
+@override_settings(
+    STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+    AWS_STORAGE_BUCKET_NAME="test-bucket",
+)
 class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.login_user()
         self.project = create_project()
 
-    def test_no_match(self):
+    @mock.patch("importer.tasks.create_item_import_task.delay")
+    def test_no_match(self, mock_task):
         with self.assertRaises(ValueError):
             import_items_into_project_from_url(
                 None, None, "https://www.loc.gov/resource/mss859430021/"
             )
+        self.assertFalse(mock_task.called)
 
-    def test_item(self):
+    @mock.patch("importer.tasks.create_item_import_task.delay")
+    def test_item(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user, self.project, "https://www.loc.gov/item/mss859430021/"
         )
         self.assertEqual(import_job.project, self.project)
+        self.assertTrue(mock_task.called)
 
-    def test_other_url_type(self):
+    @mock.patch("importer.tasks.create_item_import_task.delay")
+    def test_other_url_type(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user,
             self.project,
             "https://www.loc.gov/collections/branch-rickey-papers/",
         )
         self.assertEqual(import_job.project, self.project)
+        self.assertTrue(mock_task.called)
 
 
 class ImportCollectionTests(CreateTestUsers, TestCase):
@@ -351,7 +361,8 @@ class ImportCollectionTests(CreateTestUsers, TestCase):
         self.login_user()
 
     @mock.patch("importer.tasks.get_collection_items")
-    def test_import_collection(self, mock_get):
+    @mock.patch("importer.tasks.normalize_collection_url")
+    def test_import_collection(self, mock_get, mock_normalize):
         magic_mock = mock.MagicMock()
         magic_mock.request = mock.MagicMock()
         magic_mock.request.id = 1
