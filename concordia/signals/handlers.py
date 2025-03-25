@@ -8,14 +8,21 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import F, Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template import loader
 from django_registration.signals import user_activated, user_registered
 from flags.state import flag_enabled
 
-from ..models import Asset, Transcription, TranscriptionStatus, UserProfile
-from ..tasks import calculate_difficulty_values, update_useractivity_cache
+from ..models import (
+    Asset,
+    Transcription,
+    TranscriptionStatus,
+    UserProfile,
+    UserProfileActivity,
+)
+from ..tasks import calculate_difficulty_values
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
@@ -205,19 +212,34 @@ def on_transcription_save(sender, instance, **kwargs):
     :param instance:
         the transcription being saved
     """
-    if kwargs.get("created", False):
+    if kwargs["created"]:
         user = instance.user
-        attr_name = "transcribe"
+        attr_name = "transcribe_count"
     elif instance.reviewed_by:
         user = instance.reviewed_by
-        attr_name = "review"
+        attr_name = "review_count"
     else:
         user = None
         attr_name = None
 
-    if user is not None and attr_name is not None and user.username != "anonymous":
-        update_useractivity_cache.delay(
-            user.id,
-            instance.asset.item.project.campaign.id,
-            attr_name,
+    if user is not None and attr_name is not None:
+        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
+            user=user,
+            campaign=instance.asset.item.project.campaign,
         )
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        if created:
+            setattr(user_profile_activity, attr_name, 1)
+            setattr(profile, attr_name, 1)
+        else:
+            setattr(user_profile_activity, attr_name, F(attr_name) + 1)
+            setattr(profile, attr_name, F(attr_name) + 1)
+        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
+        user_profile_activity.asset_count = (
+            Asset.objects.filter(q)
+            .filter(item__project__campaign=instance.asset.item.project.campaign)
+            .distinct()
+            .count()
+        )
+        user_profile_activity.save()
+        profile.save()

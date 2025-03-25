@@ -13,7 +13,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import ConcordiaUser, Transcription, User
+from concordia.models import ConcordiaUser, Transcription, User, UserProfileActivity
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -23,7 +23,6 @@ from .utils import (
     create_asset,
     create_campaign,
     create_transcription,
-    create_user_profile_activity,
 )
 
 
@@ -88,7 +87,9 @@ class ConcordiaAccountViewTests(
         t.accepted = now()
         t.reviewed_by = self.user
         t.save()
-        user_profile_activity = create_user_profile_activity(
+        # when the transcription is saved, the handler should automatically
+        # create or updated the corresponding UserProfileActivity object
+        user_profile_activity, _ = UserProfileActivity.objects.get_or_create(
             campaign=asset.item.project.campaign, user=self.user
         )
         user_profile_activity.review_count = 1
