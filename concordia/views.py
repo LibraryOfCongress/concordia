@@ -1019,47 +1019,6 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class TopicListView(APIListView):
-    template_name = "transcriptions/topic_list.html"
-    paginate_by = 10
-    queryset = Topic.objects.published().listed().order_by("ordering", "title")
-    context_object_name = "topics"
-
-    def serialize_context(self, context):
-        data = super().serialize_context(context)
-
-        object_list = data["objects"]
-
-        topic_stats_qs = (
-            Topic.objects.filter(pk__in=[i["id"] for i in object_list])
-            .annotate(
-                **{
-                    v: Count(
-                        "project__item__asset",
-                        filter=Q(
-                            project__published=True,
-                            project__item__published=True,
-                            project__item__asset__published=True,
-                            project__item__asset__transcription_status=k,
-                        ),
-                    )
-                    for k, v in STATUS_COUNT_KEYS.items()
-                }
-            )
-            .values("pk", *STATUS_COUNT_KEYS.values())
-        )
-
-        topic_asset_counts = {}
-        for topic_stats in topic_stats_qs:
-            topic_asset_counts[topic_stats.pop("pk")] = topic_stats
-
-        for obj in object_list:
-            obj["asset_stats"] = topic_asset_counts[obj["id"]]
-
-        return data
-
-
-@method_decorator(default_cache_control, name="dispatch")
 class CampaignTopicListView(TemplateView):
     template_name = "transcriptions/campaign_topic_list.html"
 
