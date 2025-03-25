@@ -12,7 +12,16 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
+from django.db.models import (
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    JSONField,
+    Q,
+    Value,
+    When,
+)
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
@@ -227,12 +236,35 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
             # in the decimal results being dropped. We implicitly cast one field to
             # be a float through multiplication in order to do floating point division
             .annotate(
-                completed_percent=ExpressionWrapper(
-                    Round(100 * F("completed_count") * 1.0 / F("asset_count")),
+                completed_raw_percent=ExpressionWrapper(
+                    100 * F("completed_count") * 1.0 / F("asset_count"),
                     output_field=models.FloatField(),
                 ),
-                needs_review_percent=ExpressionWrapper(
-                    Round(100 * F("submitted_count") * 1.0 / F("asset_count")),
+                needs_review_raw_percent=ExpressionWrapper(
+                    100 * F("submitted_count") * 1.0 / F("asset_count"),
+                    output_field=models.FloatField(),
+                ),
+            )
+            # Due to rounding issues, we explicitly only allow a 100% value if all
+            # assets are in a particular status. Otherwise, we clamp to a maximum of
+            # 99%
+            .annotate(
+                completed_percent=Case(
+                    When(
+                        completed_raw_percent__gte=99,
+                        completed_raw_percent__lt=100,
+                        then=Value(99),
+                    ),
+                    default=Round(F("completed_raw_percent")),
+                    output_field=models.FloatField(),
+                ),
+                needs_review_percent=Case(
+                    When(
+                        needs_review_raw_percent__gte=99,
+                        needs_review_raw_percent__lt=100,
+                        then=Value(99),
+                    ),
+                    default=Round(F("needs_review_raw_percent")),
                     output_field=models.FloatField(),
                 ),
             )
