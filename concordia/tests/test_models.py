@@ -447,7 +447,7 @@ class UserProfileTestCase(CreateTestUsers, TestCase):
 
         transcription = create_transcription(user=user)
         update_userprofileactivity_table(
-            user, transcription.asset.item.project.campaign.id, "transcribe"
+            user, transcription.asset.item.project.campaign.id, "transcribe_count"
         )
 
         self.assertTrue(hasattr(user, "profile"))
