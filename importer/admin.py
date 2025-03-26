@@ -285,6 +285,7 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
         ImportJobAssetProjectListFilter,
     )
     search_fields = ("url", "status")
+    actions = (retry_download_task,)
 
 
 @admin.register(VerifyAssetImageJob)
