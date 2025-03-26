@@ -3,7 +3,9 @@
 ## Prerequisites
 
 This application can run on a single Docker host using docker-compose.
-(recommended for development environments). For production, see the
+(recommended for development environments). See the [development Readme](../development/README.md) for more information. Note that the instructions below assume you'll be developing on your host rather than in a container. The development Readme provides instructions on performing development in a purely containerized environment, without installing any dependencies (outside of git and your container tool of choice) on the host.
+
+For production, see the
 [cloudformation](https://github.com/LibraryOfCongress/concordia/tree/master/cloudformation) directory for AWS Elastic Container Service
 stack templates.
 
