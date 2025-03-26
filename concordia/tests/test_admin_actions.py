@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.db.models import signals
 from django.http import HttpRequest
 from django.test import TestCase
 
@@ -18,10 +17,8 @@ from concordia.models import (
     Campaign,
     Item,
     Project,
-    Transcription,
     TranscriptionStatus,
 )
-from concordia.signals.handlers import on_transcription_save
 from concordia.tests.utils import (
     CreateTestUsers,
     create_asset,
@@ -181,7 +178,6 @@ class AssetAdminActionTest(TestCase, CreateTestUsers):
 
     def test_change_status_to_needs_review(self):
         queryset = Asset.objects.filter(pk__in=self.asset_pks)
-        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         change_status_to_needs_review(modeladmin, self.request, queryset)
 
         reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)

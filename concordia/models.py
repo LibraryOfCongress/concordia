@@ -1094,9 +1094,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
-def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
-    field = attr_name + "_count"
-
+def update_userprofileactivity_table(user, campaign_id, field, increment=1):
     user_profile_activity, created = UserProfileActivity.objects.get_or_create(
         user=user,
         campaign_id=campaign_id,

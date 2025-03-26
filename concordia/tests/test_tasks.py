@@ -3,12 +3,10 @@ from unittest import mock
 
 from django.core import mail
 from django.core.cache import cache
-from django.db.models import signals
 from django.test import TestCase
 from django.utils import timezone
 
 from concordia.models import Campaign, SiteReport, Transcription
-from concordia.signals.handlers import on_transcription_save
 from concordia.tasks import (
     CacheLockedError,
     _daily_active_users,
@@ -46,7 +44,6 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         cls.item1 = cls.asset1.item
         cls.project1 = cls.item1.project
         cls.campaign1 = cls.project1.campaign
-        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         cls.asset1_transcription1 = create_transcription(
             asset=cls.asset1, user=cls.user1, accepted=timezone.now()
         )
@@ -253,7 +250,15 @@ class TaskTestCase(CreateTestUsers, TestCase):
         mock_add.return_value = True
         update_useractivity_cache(user.id, campaign.id, "transcribe")
         self.assertEqual(mock_update.call_count, 1)
+        mock_update.assert_called_with(user.id, campaign.id, "transcribe")
         self.assertEqual(mock_delete.call_count, 1)
+        mock_delete.assert_called_with("userprofileactivity_cache_lock")
+
+        update_useractivity_cache(user.id, campaign.id, "review")
+        self.assertEqual(mock_update.call_count, 2)
+        mock_update.assert_called_with(user.id, campaign.id, "review")
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_called_with("userprofileactivity_cache_lock")
 
     @mock.patch("concordia.tasks.update_userprofileactivity_table")
     def test_update_userprofileactivity_from_cache(self, mock_update_table):
@@ -264,4 +269,10 @@ class TaskTestCase(CreateTestUsers, TestCase):
         cache.set(key, {user.pk: (1, 0)})
         update_userprofileactivity_from_cache()
         self.assertEqual(mock_update_table.call_count, 2)
+        mock_update_table.assert_has_calls(
+            [
+                mock.call(user, campaign.id, "transcribe_count", 1),
+                mock.call(user, campaign.id, "review_count", 0),
+            ]
+        )
         self.assertIsNone(cache.get(key))

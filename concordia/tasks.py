@@ -1144,12 +1144,13 @@ def update_userprofileactivity_from_cache():
     for campaign in Campaign.objects.all():
         key = f"userprofileactivity_{campaign.pk}"
         updates_by_user = cache.get(key)
-        cache.delete(key)
-        for user_id in updates_by_user:
-            user = User.objects.get(id=user_id)
-            update_userprofileactivity_table(
-                user, campaign.id, "transcribe", updates_by_user[user_id][0]
-            )
-            update_userprofileactivity_table(
-                user, campaign.id, "review", updates_by_user[user_id][1]
-            )
+        if updates_by_user is not None:
+            cache.delete(key)
+            for user_id in updates_by_user:
+                user = User.objects.get(id=user_id)
+                update_userprofileactivity_table(
+                    user, campaign.id, "transcribe_count", updates_by_user[user_id][0]
+                )
+                update_userprofileactivity_table(
+                    user, campaign.id, "review_count", updates_by_user[user_id][1]
+                )

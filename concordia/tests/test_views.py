@@ -220,14 +220,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         for cache in caches.all():
             cache.clear()
 
-            # We'll test the signal handler separately
-            post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def tearDown(self):
         for cache in caches.all():
             cache.clear()
-
-        post_save.connect(on_transcription_save, sender=Transcription)
 
     def test_ratelimit_view(self):
         c = Client()
@@ -832,10 +827,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
 )
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
-    def setUp(self):
-
-        post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def test_asset_reservation(self):
         """
         Test the basic Asset reservation process
@@ -2250,8 +2241,6 @@ class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
         self.url = reverse("transcriptions:filtered-project-detail", kwargs=self.kwargs)
         self.login_user()
 
-        post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def test_get_queryset(self):
         item1 = create_item(project=self.project, item_id="testitem.012345679")
         asset1 = create_asset(item=item1)
@@ -2289,8 +2278,6 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
         }
         self.url = reverse("transcriptions:filtered-item-detail", kwargs=self.kwargs)
         self.login_user()
-
-        post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def test_get_queryset(self):
         asset1 = create_asset(item=self.item)
@@ -2380,8 +2367,6 @@ class LoginTests(TestCase, CreateTestUsers):
 class TranscriptionViewTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
-
-        post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def test_rollback_transcription(self):
         path = reverse("rollback-transcription", args=[self.asset.id])
