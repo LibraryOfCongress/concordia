@@ -345,7 +345,7 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         self.assertEqual(import_job.project, self.project)
         self.assertTrue(mock_task.called)
 
-    @mock.patch("importer.tasks.create_item_import_task.delay")
+    @mock.patch("importer.tasks.import_collection_task.delay")
     def test_other_url_type(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user,
@@ -354,6 +354,7 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         )
         self.assertEqual(import_job.project, self.project)
         self.assertTrue(mock_task.called)
+        mock_task.assert_called_with(import_job.pk, False)
 
 
 class ImportCollectionTests(CreateTestUsers, TestCase):
