@@ -346,6 +346,17 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         self.assertTrue(mock_task.called)
 
     @mock.patch("importer.tasks.create_item_import_task.delay")
+    def test_import_collection_task(self, mock_task):
+        url = "https://www.loc.gov/item/mcc.044"
+        with mock.patch(
+            "importer.tasks.get_collection_items", return_value=[("mcc.044", url)]
+        ):
+            import_job = create_import_job(project=self.project)
+            import_collection_task(import_job.pk)
+            self.assertTrue(mock_task.called)
+            mock_task.assert_called_with(import_job.pk, url, False)
+
+    @mock.patch("importer.tasks.import_collection_task.delay")
     def test_other_url_type(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user,
@@ -354,6 +365,7 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         )
         self.assertEqual(import_job.project, self.project)
         self.assertTrue(mock_task.called)
+        mock_task.assert_called_with(import_job.pk, False)
 
 
 class ImportCollectionTests(CreateTestUsers, TestCase):
