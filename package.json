@@ -21,7 +21,7 @@
         "openseadragon": "^5.0.1",
         "openseadragon-filtering": "^1.0.0",
         "popper.js": "^1.16.1",
-        "prettier": "^2.8.8",
+        "prettier": "^3.5.3",
         "redom": "^3.27.1",
         "remarkable": "^2.0.1",
         "sass": "^1.86.1",
