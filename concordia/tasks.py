@@ -29,6 +29,7 @@ from concordia.models import (
     CampaignRetirementProgress,
     Item,
     NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
     Project,
     ResourceFile,
     SiteReport,
@@ -42,7 +43,11 @@ from concordia.models import (
 )
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
-from concordia.utils import find_new_transcribable_campaign_assets, get_anonymous_user
+from concordia.utils import (
+    find_new_transcribable_campaign_assets,
+    find_new_transcribable_topic_assets,
+    get_anonymous_user,
+)
 
 from .celery import app as celery_app
 
@@ -1177,7 +1182,7 @@ def populate_next_transcribable_for_campaign(self, campaign_id):
         assets = assets_qs[:needed_asset_count]
     else:
         logger.info(
-            "%s already has %s next transcribable assets",
+            "Campaign %s already has %s next transcribable assets",
             campaign,
             NextTranscribableCampaignAsset.objects.target_count,
         )
@@ -1199,6 +1204,52 @@ def populate_next_transcribable_for_campaign(self, campaign_id):
                 for asset in assets
             ]
         )
-        logger.info("Added %d next transcribable assets for %s", len(objs), campaign)
+        logger.info(
+            "Added %d next transcribable assets for campaign %s", len(objs), campaign
+        )
     else:
-        logger.info("No transcribable assets found in %s", campaign)
+        logger.info("No transcribable assets found in campaign %s", campaign)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_transcribable_for_topic(self, topic_id):
+    try:
+        topic = Topic.objects.get(id=topic_id)
+    except Topic.DoesNotExist:
+        logger.error("Topic %s not found", topic_id)
+        return
+
+    needed_asset_count = NextTranscribableTopicAsset.objects.needed_for_topic(topic_id)
+    if needed_asset_count:
+        assets_qs = find_new_transcribable_topic_assets(topic).only(
+            "id", "item_id", "item__project_id", "topic_id", "transcription_status"
+        )
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Topic %s already has %s next transcribable assets",
+            topic,
+            NextTranscribableTopicAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextTranscribableTopicAsset.objects.bulk_create(
+            [
+                NextTranscribableTopicAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    topic_id=asset.topic_id,
+                    transcription_status=asset.transcription_status,
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info("Added %d next transcribable assets for topic %s", len(objs), topic)
+    else:
+        logger.info("No transcribable assets found in topic %s", topic)
