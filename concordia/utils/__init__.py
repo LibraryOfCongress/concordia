@@ -7,9 +7,14 @@ from concordia.templatetags.concordia_media_tags import asset_media_url
 from .next_asset import (
     filter_and_order_transcribable_assets,
     find_and_order_potential_transcribable_campaign_assets,
+    find_and_order_potential_transcribable_topic_assets,
     find_new_transcribable_campaign_assets,
+    find_new_transcribable_topic_assets,
     find_next_transcribable_campaign_asset,
+    find_next_transcribable_topic_asset,
+    find_next_transcribable_topic_assets,
     find_transcribable_campaign_asset,
+    find_transcribable_topic_asset,
 )
 
 __all__ = [
@@ -22,6 +27,11 @@ __all__ = [
     "find_and_order_potential_transcribable_campaign_assets",
     "find_next_transcribable_campaign_asset",
     "filter_and_order_transcribable_assets",
+    "find_and_order_potential_transcribable_topic_assets",
+    "find_new_transcribable_topic_assets",
+    "find_next_transcribable_topic_asset",
+    "find_next_transcribable_topic_assets",
+    "find_transcribable_topic_asset",
 ]
 
 

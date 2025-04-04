@@ -103,8 +103,8 @@ from concordia.signals.signals import (
 )
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import (
-    filter_and_order_transcribable_assets,
     find_next_transcribable_campaign_asset,
+    find_next_transcribable_topic_asset,
     find_transcribable_campaign_asset,
     get_anonymous_user,
     get_image_urls_from_asset,
@@ -2559,26 +2559,15 @@ def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__topics__in=(topic,),
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
+    asset = find_next_transcribable_topic_asset(topic, project_slug, item_id, asset_pk)
 
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
-    )
-
-    asset = potential_assets.first()
     return redirect_to_next_asset(asset, "transcribe", request, user)
 
 
