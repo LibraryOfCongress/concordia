@@ -1177,7 +1177,12 @@ def populate_next_transcribable_for_campaign(self, campaign_id):
     )
     if needed_asset_count:
         assets_qs = find_new_transcribable_campaign_assets(campaign).only(
-            "id", "item_id", "item__project_id", "campaign_id", "transcription_status"
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "campaign_id",
+            "transcription_status",
         )
         assets = assets_qs[:needed_asset_count]
     else:
@@ -1223,7 +1228,11 @@ def populate_next_transcribable_for_topic(self, topic_id):
     needed_asset_count = NextTranscribableTopicAsset.objects.needed_for_topic(topic_id)
     if needed_asset_count:
         assets_qs = find_new_transcribable_topic_assets(topic).only(
-            "id", "item_id", "item__project_id", "topic_id", "transcription_status"
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "transcription_status",
         )
         assets = assets_qs[:needed_asset_count]
     else:
@@ -1243,7 +1252,7 @@ def populate_next_transcribable_for_topic(self, topic_id):
                     item_item_id=asset.item.item_id,
                     project_id=asset.item.project_id,
                     project_slug=asset.item.project.slug,
-                    topic_id=asset.topic_id,
+                    topic_id=topic.id,
                     transcription_status=asset.transcription_status,
                     sequence=asset.sequence,
                 )

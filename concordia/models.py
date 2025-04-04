@@ -1434,7 +1434,29 @@ class NextAsset(models.Model):
         return self.asset.title
 
 
-class NextAssetManager(models.Manager):
+class NextTranscribableAsset(NextAsset):
+    transcription_status = models.CharField(
+        editable=False,
+        max_length=20,
+        default=TranscriptionStatus.NOT_STARTED,
+        choices=TranscriptionStatus.CHOICES,
+        db_index=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class NextReviewableAsset(NextAsset):
+    transcriber = models.ForeignKey(
+        User, blank=True, null=True, on_delete=models.SET_NULL
+    )
+
+    class Meta:
+        abstract = True
+
+
+class NextCampaignAssetManager(models.Manager):
     target_count = None  # Override in subclass
 
     def needed_for_campaign(self, campaign_id, target_count=None):
@@ -1450,55 +1472,57 @@ class NextAssetManager(models.Manager):
         return max(target_count - current_count, 0)
 
 
-class NextTranscribableAssetManager(NextAssetManager):
+class NextTopicAssetManager(models.Manager):
+    target_count = None  # Override in subclass
+
+    def needed_for_topic(self, topic_id, target_count=None):
+        if target_count is None:
+            if self.target_count is None:
+                raise NotImplementedError(
+                    "You must define `target_count` in the subclass "
+                    "or pass `target_count` explicitly."
+                )
+            target_count = self.target_count
+
+        current_count = self.filter(topic_id=topic_id).count()
+        return max(target_count - current_count, 0)
+
+
+class NextTranscribableCampaignAssetManager(NextCampaignAssetManager):
     target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
 
 
-class NextTranscribableAsset(NextAsset):
-    transcription_status = models.CharField(
-        editable=False,
-        max_length=20,
-        default=TranscriptionStatus.NOT_STARTED,
-        choices=TranscriptionStatus.CHOICES,
-        db_index=True,
-    )
+class NextTranscribableTopicAssetManager(NextTopicAssetManager):
+    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
 
-    class Meta:
-        abstract = True
+
+class NextReviewableCampaignAssetManager(NextCampaignAssetManager):
+    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
+
+
+class NextReviewableTopicAssetManager(NextTopicAssetManager):
+    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
 
 
 class NextTranscribableCampaignAsset(NextTranscribableAsset):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
-    objects = NextTranscribableAssetManager()
+    objects = NextTranscribableCampaignAssetManager()
 
 
 class NextTranscribableTopicAsset(NextTranscribableAsset):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
-    objects = NextTranscribableAssetManager()
-
-
-class NextReviewableAssetManager(NextAssetManager):
-    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
-
-
-class NextReviewableAsset(NextAsset):
-    transcriber = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.SET_NULL
-    )
-
-    class Meta:
-        abstract = True
+    objects = NextTranscribableTopicAssetManager()
 
 
 class NextReviewableCampaignAsset(NextReviewableAsset):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
-    objects = NextReviewableAssetManager()
+    objects = NextReviewableCampaignAssetManager()
 
 
 class NextReviewableTopicAsset(NextReviewableAsset):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
-    objects = NextReviewableAssetManager()
+    objects = NextReviewableTopicAssetManager()
