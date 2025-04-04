@@ -18,6 +18,7 @@ from django.template import loader
 from django.utils import timezone
 from more_itertools.more import chunked
 
+from concordia.decorators import locked_task
 from concordia.exceptions import CacheLockedError
 from concordia.models import (
     ONE_DAY,
@@ -27,6 +28,7 @@ from concordia.models import (
     Campaign,
     CampaignRetirementProgress,
     Item,
+    NextTranscribableCampaignAsset,
     Project,
     ResourceFile,
     SiteReport,
@@ -40,7 +42,7 @@ from concordia.models import (
 )
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
-from concordia.utils import get_anonymous_user
+from concordia.utils import find_new_transcribable_campaign_assets, get_anonymous_user
 
 from .celery import app as celery_app
 
@@ -1154,3 +1156,49 @@ def update_userprofileactivity_from_cache():
                 update_userprofileactivity_table(
                     user, campaign.id, "review_count", updates_by_user[user_id][1]
                 )
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_transcribable_for_campaign(self, campaign_id):
+    try:
+        campaign = Campaign.objects.get(id=campaign_id)
+    except Campaign.DoesNotExist:
+        logger.error("Campaign %s not found", campaign_id)
+        return
+
+    needed_asset_count = NextTranscribableCampaignAsset.objects.needed_for_campaign(
+        campaign_id
+    )
+    if needed_asset_count:
+        assets_qs = find_new_transcribable_campaign_assets(campaign).only(
+            "id", "item_id", "item__project_id", "campaign_id", "transcription_status"
+        )
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "%s already has %s next transcribable assets",
+            campaign,
+            NextTranscribableCampaignAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextTranscribableCampaignAsset.objects.bulk_create(
+            [
+                NextTranscribableCampaignAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    campaign_id=asset.campaign_id,
+                    transcription_status=asset.transcription_status,
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info("Added %d next transcribable assets for %s", len(objs), campaign)
+    else:
+        logger.info("No transcribable assets found in %s", campaign)

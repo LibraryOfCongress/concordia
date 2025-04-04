@@ -35,5 +35,6 @@ mss*
 config-optional-override.json
 env/
 concordia/settings_dev_*.py
+concordia/settings_test_*.py
 version.txt
 static-files
