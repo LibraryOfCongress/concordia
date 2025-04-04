@@ -28,6 +28,8 @@ from concordia.models import (
     Campaign,
     CampaignRetirementProgress,
     Item,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
     NextTranscribableCampaignAsset,
     NextTranscribableTopicAsset,
     Project,
@@ -44,6 +46,8 @@ from concordia.models import (
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
 from concordia.utils import (
+    find_new_reviewable_campaign_assets,
+    find_new_reviewable_topic_assets,
     find_new_transcribable_campaign_assets,
     find_new_transcribable_topic_assets,
     get_anonymous_user,
@@ -1262,3 +1266,148 @@ def populate_next_transcribable_for_topic(self, topic_id):
         logger.info("Added %d next transcribable assets for topic %s", len(objs), topic)
     else:
         logger.info("No transcribable assets found in topic %s", topic)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_reviewable_for_campaign(self, campaign_id):
+    try:
+        campaign = Campaign.objects.get(id=campaign_id)
+    except Campaign.DoesNotExist:
+        logger.error("Campaign %s not found", campaign_id)
+        return
+    anonymous_user = get_anonymous_user()
+    excluded_user_ids = (
+        NextReviewableCampaignAsset.objects.filter(campaign=campaign)
+        .exclude(transcriber=anonymous_user)
+        .values_list("transcriber_id", flat=True)
+        .distinct()
+    )
+
+    needed_asset_count = NextReviewableCampaignAsset.objects.needed_for_campaign(
+        campaign_id
+    )
+    if needed_asset_count:
+        assets_qs = find_new_reviewable_campaign_assets(campaign).only(
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "campaign_id",
+            "transcription__user",
+        )
+        # We prefer to not use transcribers that already exist, to avoid
+        # the situation where all possible reviewable assets have the same transcriber
+        # (since that would mean that user would miss the cache table when they try
+        # to review).
+        # If that's impossible, we just take whatever assets we can; that means only
+        # these transcribers have reviewable assets in the campaign
+        excluded_assets_qs = assets_qs.exclude(
+            transcription__user_id__in=excluded_user_ids
+        )
+        if excluded_assets_qs.exists():
+            assets_qs = excluded_assets_qs
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Campaign %s already has %s next reviewable assets",
+            campaign,
+            NextReviewableCampaignAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextReviewableCampaignAsset.objects.bulk_create(
+            [
+                NextReviewableCampaignAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    campaign_id=asset.campaign_id,
+                    transcriber_ids=list(
+                        asset.transcription_set.exclude(user=anonymous_user)
+                        .values_list("user_id", flat=True)
+                        .distinct()
+                    ),
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info(
+            "Added %d next reviewable assets for campaign %s", len(objs), campaign
+        )
+    else:
+        logger.info("No reviewable assets found in campaign %s", campaign)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_reviewable_for_topic(self, topic_id):
+    try:
+        topic = Topic.objects.get(id=topic_id)
+    except Topic.DoesNotExist:
+        logger.error("Topic %s not found", topic_id)
+        return
+    anonymous_user = get_anonymous_user()
+    excluded_user_ids = (
+        NextReviewableTopicAsset.objects.filter(topic=topic)
+        .exclude(transcriber=anonymous_user)
+        .values_list("transcriber_id", flat=True)
+        .distinct()
+    )
+
+    needed_asset_count = NextReviewableTopicAsset.objects.needed_for_topic(topic_id)
+    if needed_asset_count:
+        assets_qs = find_new_reviewable_topic_assets(topic).only(
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "transcription__user",
+        )
+        # We prefer to not use transcribers that already exist, to avoid
+        # the situation where all possible reviewable assets have the same transcriber
+        # (since that would mean that user would miss the cache table when they try
+        # to review).
+        # If that's impossible, we just take whatever assets we can; that means only
+        # these transcribers have reviewable assets in the campaign
+        excluded_assets_qs = assets_qs.exclude(
+            transcription__user_id__in=excluded_user_ids
+        )
+        if excluded_assets_qs.exists():
+            assets_qs = excluded_assets_qs
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Topic %s already has %s next reviewable assets",
+            topic,
+            NextReviewableTopicAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextReviewableTopicAsset.objects.bulk_create(
+            [
+                NextReviewableTopicAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    topic_id=topic.id,
+                    transcriber_ids=list(
+                        asset.transcription_set.exclude(user=anonymous_user)
+                        .values_list("user_id", flat=True)
+                        .distinct()
+                    ),
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info("Added %d next reviewable assets for topic %s", len(objs), topic)
+    else:
+        logger.info("No reviewable assets found in topic %s", topic)
