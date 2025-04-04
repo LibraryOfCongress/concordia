@@ -8,6 +8,8 @@ from logging import getLogger
 import pytesseract
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -1448,12 +1450,17 @@ class NextTranscribableAsset(NextAsset):
 
 
 class NextReviewableAsset(NextAsset):
-    transcriber = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.SET_NULL
+    transcriber_ids = ArrayField(
+        base_field=models.IntegerField(),
+        blank=True,
+        default=list,
     )
 
     class Meta:
         abstract = True
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]
 
 
 class NextCampaignAssetManager(models.Manager):

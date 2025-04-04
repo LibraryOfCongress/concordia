@@ -30,14 +30,10 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import (
-    Case,
     Count,
-    IntegerField,
     Max,
     Q,
-    Subquery,
     Sum,
-    When,
 )
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
@@ -103,8 +99,11 @@ from concordia.signals.signals import (
 )
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import (
+    find_next_reviewable_campaign_asset,
+    find_next_reviewable_topic_asset,
     find_next_transcribable_campaign_asset,
     find_next_transcribable_topic_asset,
+    find_reviewable_campaign_asset,
     find_transcribable_campaign_asset,
     get_anonymous_user,
     get_image_urls_from_asset,
@@ -2298,54 +2297,6 @@ def redirect_to_next_asset(asset, mode, request, user):
         return redirect("homepage")
 
 
-def filter_and_order_reviewable_assets(
-    potential_assets, project_slug, item_id, asset_id, user_pk
-):
-    potential_assets = potential_assets.filter(
-        transcription_status=TranscriptionStatus.SUBMITTED
-    )
-    potential_assets = potential_assets.exclude(transcription__user=user_pk)
-    potential_assets = potential_assets.exclude(
-        pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
-    )
-    potential_assets = potential_assets.select_related("item", "item__project")
-
-    # We'll favor assets which are in the same item or project as the original:
-    potential_assets = potential_assets.annotate(
-        same_project=Case(
-            When(item__project__slug=project_slug, then=1),
-            default=0,
-            output_field=IntegerField(),
-        ),
-        same_item=Case(
-            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
-        ),
-        next_asset=Case(
-            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
-        ),
-    ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
-
-    return potential_assets
-
-
-def find_reviewable_asset(campaign, user):
-    return (
-        Asset.objects.select_for_update(skip_locked=True, of=("self",))
-        .exclude(transcription__user=user.pk)
-        .filter(
-            campaign=campaign,
-            published=True,
-            transcription_status=TranscriptionStatus.SUBMITTED,
-        )
-        .exclude(
-            pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
-        )
-        .select_related("item", "item__project")
-        .order_by("sequence")
-        .first()
-    )
-
-
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
@@ -2374,7 +2325,7 @@ def redirect_to_next_reviewable_asset(request):
         except IndexError:
             logger.error("Next reviewable campaign %s not found", campaign_id)
             continue
-        asset = find_reviewable_asset(campaign, user)
+        asset = find_reviewable_campaign_asset(campaign, user)
         if asset:
             break
         else:
@@ -2388,7 +2339,7 @@ def redirect_to_next_reviewable_asset(request):
             .exclude(id__in=campaign_ids)
             .order_by("launch_date")
         ):
-            asset = find_reviewable_asset(campaign, user)
+            asset = find_reviewable_campaign_asset(campaign, user)
             if asset:
                 break
             else:
@@ -2423,7 +2374,7 @@ def redirect_to_next_transcribable_asset(request):
     if campaign_ids:
         random.shuffle(campaign_ids)  # nosec
     else:
-        logger.info("No configured reviewable campaigns")
+        logger.info("No configured transcribable campaigns")
 
     for campaign_id in campaign_ids:
         try:
@@ -2478,26 +2429,20 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
+    # We pass request.user instead of user here to maintain pre-existing behavior
+    # (though it's probably unintended)
+    # TODO: Re-evaluate whether we should pass in user instead
+    asset = find_next_reviewable_campaign_asset(
+        campaign, request.user, project_slug, item_id, asset_pk
     )
 
-    potential_assets = filter_and_order_reviewable_assets(
-        potential_assets, project_slug, item_id, asset_id, request.user.pk
-    )
-
-    asset = potential_assets.first()
     return redirect_to_next_asset(asset, "review", request, user)
 
 
@@ -2529,26 +2474,20 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__topics__in=(topic,),
-        item__project__published=True,
-        item__published=True,
-        published=True,
+    # We pass request.user instead of user here to maintain pre-existing behavior
+    # (though it's probably unintended)
+    # TODO: Re-evaluate whether we should pass in user instead
+    asset = find_next_reviewable_topic_asset(
+        topic, request.user, project_slug, item_id, asset_pk
     )
 
-    potential_assets = filter_and_order_reviewable_assets(
-        potential_assets, project_slug, item_id, asset_id, request.user.pk
-    )
-
-    asset = potential_assets.first()
     return redirect_to_next_asset(asset, "review", request, user)
 
 

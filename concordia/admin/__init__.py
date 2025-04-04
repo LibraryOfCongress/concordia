@@ -1116,14 +1116,14 @@ class NextReviewableCampaignAssetAdmin(admin.ModelAdmin):
         "item__title",
         "project__title",
         "campaign__title",
-        "transcriber__username",
+        "transcriber_ids",
     )
     readonly_fields = (
         "asset",
         "item",
         "project",
         "campaign",
-        "transcriber",
+        "transcriber_ids",
         "created_on",
     )
     date_hierarchy = "created_on"
@@ -1174,14 +1174,14 @@ class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
         "item__title",
         "project__title",
         "topic__title",
-        "transcriber__username",
+        "transcriber_ids",
     )
     readonly_fields = (
         "asset",
         "item",
         "project",
         "topic",
-        "transcriber",
+        "transcriber_ids",
         "created_on",
     )
     date_hierarchy = "created_on"
