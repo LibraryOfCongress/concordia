@@ -111,6 +111,7 @@ from concordia.utils.next_asset import (
     find_next_transcribable_topic_asset,
     find_reviewable_campaign_asset,
     find_transcribable_campaign_asset,
+    remove_next_asset_objects,
 )
 from concordia.version import get_concordia_version
 from configuration.utils import configuration_value
@@ -2284,6 +2285,7 @@ def redirect_to_next_asset(asset, mode, request, user):
             )
             res.full_clean()
             res.save()
+        remove_next_asset_objects(asset.id)
         return redirect(
             "transcriptions:asset-detail",
             asset.item.project.campaign.slug,
@@ -2292,9 +2294,9 @@ def redirect_to_next_asset(asset, mode, request, user):
             asset.slug,
         )
     else:
-        no_pages_message = "There are no remaining pages to %s in this project"
+        no_pages_message = f"There are no remaining pages to {mode}."
 
-        messages.info(request, no_pages_message % mode)
+        messages.info(request, no_pages_message)
 
         return redirect("homepage")
 
@@ -2348,6 +2350,7 @@ def redirect_to_next_reviewable_asset(request):
                 logger.info("No reviewable assets found in %s", campaign)
 
     if asset:
+        remove_next_asset_objects(asset.id)
         return redirect(
             "transcriptions:asset-detail",
             asset.item.project.campaign.slug,
@@ -2411,6 +2414,7 @@ def redirect_to_next_transcribable_asset(request):
         )
         res.full_clean()
         res.save()
+        remove_next_asset_objects(asset.id)
         return redirect(
             "transcriptions:asset-detail",
             asset.item.project.campaign.slug,
@@ -2419,6 +2423,7 @@ def redirect_to_next_transcribable_asset(request):
             asset.slug,
         )
     else:
+        logger.info("No transcribable assets found in any campaign")
         messages.info(request, "There are no remaining pages to transcribe")
 
         return redirect("homepage")

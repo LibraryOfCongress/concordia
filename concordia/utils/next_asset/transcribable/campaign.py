@@ -44,24 +44,32 @@ def find_transcribable_campaign_asset(campaign):
         .values_list("asset_id", flat=True)
         .first()
     )
+
+    spawn_task = False
     if next_asset:
         asset_query = concordia_models.Asset.objects.filter(id=next_asset)
     else:
         # No asset in the NextTranscribableCampaignAsset table for this campaign,
         # so fallback to manually finding on
         asset_query = find_new_transcribable_campaign_assets(campaign)
-        # Spawn a task to populate the table for this campaign
-        populate_task = get_registered_task(
-            "concordia.tasks.populate_next_transcribable_for_campaign"
-        )
-        populate_task.delay(campaign.id)
+        spawn_task = True
     # select_for_update(of=("self",)) causes the row locking only to
     # apply to the Asset table, rather than also locking joined item table
-    return (
+    asset = (
         asset_query.select_for_update(skip_locked=True, of=("self",))
         .select_related("item", "item__project")
         .first()
     )
+    if spawn_task:
+        # Spawn a task to populate the table for this campaign
+        # We wait to do this until after getting an asset because otherwise there's a
+        # a chance all valid assets get grabbed by the task and our query will return
+        # nothing
+        populate_task = get_registered_task(
+            "concordia.tasks.populate_next_transcribable_for_campaign"
+        )
+        populate_task.delay(campaign.id)
+    return asset
 
 
 def find_and_order_potential_transcribable_campaign_assets(
@@ -106,11 +114,14 @@ def find_next_transcribable_campaign_asset(
         .values_list("asset_id", flat=True)
         .first()
     )
+
+    spawn_task = False
     if asset_id:
         asset_query = concordia_models.Asset.objects.filter(id=asset_id)
     else:
         # Since we had no potential next assets in the caching table, we have to check
         # the asset table directly.
+        spawn_task = True
         asset_query = find_new_transcribable_campaign_assets(campaign)
         asset_query = asset_query.annotate(
             unstarted=Case(
@@ -139,14 +150,21 @@ def find_next_transcribable_campaign_asset(
         ).order_by(
             "-next_asset", "-unstarted", "-same_project", "-same_item", "sequence"
         )
+
+    asset = (
+        asset_query.select_for_update(skip_locked=True, of=("self",))
+        .select_related("item", "item__project")
+        .first()
+    )
+
+    if spawn_task:
         # Spawn a task to populate the table for this campaign
+        # We wait to do this until after getting an asset because otherwise there's a
+        # a chance all valid assets get grabbed by the task and our query will return
+        # nothing
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_transcribable_for_campaign"
         )
         populate_task.delay(campaign.id)
 
-    return (
-        asset_query.select_for_update(skip_locked=True, of=("self",))
-        .select_related("item", "item__project")
-        .first()
-    )
+    return asset

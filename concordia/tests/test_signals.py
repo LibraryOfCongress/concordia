@@ -20,8 +20,6 @@ class TestSignalHandlers(CreateTestUsers, TestCase):
     def test_clear_reservation_token(self):
         self.login_user()
         response = self.client.get(reverse("redirect-to-next-transcribable-asset"))
-        print(response)
-        print(response.content)
         self.assertIsNotNone(self.client.session.get("reservation_token"))
         user_logged_in.send(
             sender=self.__class__, user=self.user, request=response.wsgi_request

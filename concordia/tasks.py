@@ -1,5 +1,6 @@
 import datetime
 import os.path
+from itertools import chain
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 
@@ -1279,10 +1280,12 @@ def populate_next_reviewable_for_campaign(self, campaign_id):
     anonymous_user = get_anonymous_user()
     excluded_user_ids = (
         NextReviewableCampaignAsset.objects.filter(campaign=campaign)
-        .exclude(transcriber=anonymous_user)
-        .values_list("transcriber_id", flat=True)
+        .exclude(transcriber_ids__contains=[anonymous_user.id])
+        .values_list("transcriber_ids", flat=True)
         .distinct()
     )
+    # Flatten the list and deduplicate
+    excluded_user_ids = set(chain.from_iterable(excluded_user_ids))
 
     needed_asset_count = NextReviewableCampaignAsset.objects.needed_for_campaign(
         campaign_id
@@ -1354,10 +1357,12 @@ def populate_next_reviewable_for_topic(self, topic_id):
     anonymous_user = get_anonymous_user()
     excluded_user_ids = (
         NextReviewableTopicAsset.objects.filter(topic=topic)
-        .exclude(transcriber=anonymous_user)
-        .values_list("transcriber_id", flat=True)
+        .exclude(transcriber_ids__contains=[anonymous_user.id])
+        .values_list("transcriber_ids", flat=True)
         .distinct()
     )
+    # Flatten the list and deduplicate
+    excluded_user_ids = set(chain.from_iterable(excluded_user_ids))
 
     needed_asset_count = NextReviewableTopicAsset.objects.needed_for_topic(topic_id)
     if needed_asset_count:

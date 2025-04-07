@@ -44,24 +44,33 @@ def find_reviewable_campaign_asset(campaign, user):
         .values_list("asset_id", flat=True)
         .first()
     )
+
+    spawn_task = False
     if next_asset:
         asset_query = concordia_models.Asset.objects.filter(id=next_asset)
     else:
         # No asset in the NextReviewableCampaignAsset table for this campaign
-        # and user, so fallback to manually finding on
+        # and user, so fallback to manually finding one
+        spawn_task = True
         asset_query = find_new_reviewable_campaign_assets(campaign, user)
-        # Spawn a task to populate the table for this campaign
-        populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_campaign"
-        )
-        populate_task.delay(campaign.id)
+
     # select_for_update(of=("self",)) causes the row locking only to
     # apply to the Asset table, rather than also locking joined item table
-    return (
+    asset = (
         asset_query.select_for_update(skip_locked=True, of=("self",))
         .select_related("item", "item__project")
         .first()
     )
+    if spawn_task:
+        # Spawn a task to populate the table for this campaign
+        # We wait to do this until after getting an asset because otherwise there's a
+        # a chance all valid assets get grabbed by the task and our query will return
+        # nothing
+        populate_task = get_registered_task(
+            "concordia.tasks.populate_next_reviewable_for_campaign"
+        )
+        populate_task.delay(campaign.id)
+    return asset
 
 
 def find_and_order_potential_reviewable_campaign_assets(
@@ -93,16 +102,20 @@ def find_next_reviewable_campaign_asset(
     potential_next_assets = find_and_order_potential_reviewable_campaign_assets(
         campaign, user, project_slug, item_id, original_asset_id
     )
+
     asset_id = (
         potential_next_assets.select_for_update(skip_locked=True, of=("self",))
         .values_list("asset_id", flat=True)
         .first()
     )
+
+    spawn_task = False
     if asset_id:
         asset_query = concordia_models.Asset.objects.filter(id=asset_id)
     else:
         # Since we had no potential next assets in the caching table, we have to check
         # the asset table directly.
+        spawn_task = True
         asset_query = find_new_reviewable_campaign_assets(campaign, user)
         asset_query = asset_query.annotate(
             same_project=Case(
@@ -121,14 +134,21 @@ def find_next_reviewable_campaign_asset(
                 output_field=IntegerField(),
             ),
         ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
+
+    asset = (
+        asset_query.select_for_update(skip_locked=True, of=("self",))
+        .select_related("item", "item__project")
+        .first()
+    )
+
+    if spawn_task:
         # Spawn a task to populate the table for this campaign
+        # We wait to do this until after getting an asset because otherwise there's a
+        # a chance all valid assets get grabbed by the task and our query will return
+        # nothing
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_reviewable_for_campaign"
         )
         populate_task.delay(campaign.id)
 
-    return (
-        asset_query.select_for_update(skip_locked=True, of=("self",))
-        .select_related("item", "item__project")
-        .first()
-    )
+    return asset
