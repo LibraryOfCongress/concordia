@@ -25,7 +25,7 @@
         "redom": "^3.27.1",
         "remarkable": "^2.0.1",
         "sass": "^1.86.3",
-        "screenfull": "^5.1.0",
+        "screenfull": "^6.0.2",
         "split.js": "^1.6.2",
         "urijs": "^1.19.11"
     },
