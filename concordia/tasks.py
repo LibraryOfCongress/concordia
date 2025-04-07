@@ -45,12 +45,12 @@ from concordia.models import (
 )
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
-from concordia.utils import (
+from concordia.utils import get_anonymous_user
+from concordia.utils.next_asset import (
     find_new_reviewable_campaign_assets,
     find_new_reviewable_topic_assets,
     find_new_transcribable_campaign_assets,
     find_new_transcribable_topic_assets,
-    get_anonymous_user,
 )
 
 from .celery import app as celery_app

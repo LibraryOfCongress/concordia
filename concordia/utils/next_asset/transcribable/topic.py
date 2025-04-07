@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Subquery, When
 
 from concordia import models as concordia_models
-from concordia.celery import app as concordia_celery_app
+from concordia.utils.celery import get_registered_task
 
 
 def find_new_transcribable_topic_assets(topic):
@@ -52,11 +52,10 @@ def find_transcribable_topic_asset(topic):
         # so fallback to manually finding on
         asset_query = find_new_transcribable_topic_assets(topic)
         # Spawn a task to populate the table for this topic
-        # We use send_task to avoid a circular import
-        concordia_celery_app.send_task(
-            "concordia.tasks.populate_next_transcribable_for_topic",
-            args=[topic.id],
+        populate_task = get_registered_task(
+            "concordia.tasks.populate_next_transcribable_for_topic"
         )
+        populate_task.delay(topic.id)
     # select_for_update(of=("self",)) causes the row locking only to
     # apply to the Asset table, rather than also locking joined item table
     return (
@@ -142,11 +141,10 @@ def find_next_transcribable_topic_asset(
             "-next_asset", "-unstarted", "-same_project", "-same_item", "sequence"
         )
         # Spawn a task to populate the table for this topic
-        # We use send_task to avoid a circular import
-        concordia_celery_app.send_task(
-            "concordia.tasks.populate_next_transcribable_for_topic",
-            args=[topic.id],
+        populate_task = get_registered_task(
+            "concordia.tasks.populate_next_transcribable_for_topic"
         )
+        populate_task.delay(topic.id)
 
     return (
         asset_query.select_for_update(skip_locked=True, of=("self",))

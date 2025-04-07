@@ -4,50 +4,11 @@ from django.contrib.auth.models import User
 
 from concordia.templatetags.concordia_media_tags import asset_media_url
 
-from .next_asset import (
-    find_and_order_potential_reviewable_campaign_assets,
-    find_and_order_potential_reviewable_topic_assets,
-    find_and_order_potential_transcribable_campaign_assets,
-    find_and_order_potential_transcribable_topic_assets,
-    find_new_reviewable_campaign_assets,
-    find_new_reviewable_topic_assets,
-    find_new_transcribable_campaign_assets,
-    find_new_transcribable_topic_assets,
-    find_next_reviewable_campaign_asset,
-    find_next_reviewable_topic_asset,
-    find_next_reviewable_topic_assets,
-    find_next_transcribable_campaign_asset,
-    find_next_transcribable_topic_asset,
-    find_next_transcribable_topic_assets,
-    find_reviewable_campaign_asset,
-    find_reviewable_topic_asset,
-    find_transcribable_campaign_asset,
-    find_transcribable_topic_asset,
-)
-
 __all__ = [
     "get_anonymous_user",
     "request_accepts_json",
     "get_or_create_reservation_token",
     "get_image_urls_from_asset",
-    "find_new_transcribable_campaign_assets",
-    "find_transcribable_campaign_asset",
-    "find_and_order_potential_transcribable_campaign_assets",
-    "find_next_transcribable_campaign_asset",
-    "find_and_order_potential_transcribable_topic_assets",
-    "find_new_transcribable_topic_assets",
-    "find_next_transcribable_topic_asset",
-    "find_next_transcribable_topic_assets",
-    "find_transcribable_topic_asset",
-    "find_and_order_potential_reviewable_campaign_assets",
-    "find_and_order_potential_reviewable_topic_assets",
-    "find_new_reviewable_campaign_assets",
-    "find_new_reviewable_topic_assets",
-    "find_next_reviewable_campaign_asset",
-    "find_next_reviewable_topic_asset",
-    "find_next_reviewable_topic_assets",
-    "find_reviewable_campaign_asset",
-    "find_reviewable_topic_asset",
 ]
 
 

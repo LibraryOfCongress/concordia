@@ -99,16 +99,18 @@ from concordia.signals.signals import (
 )
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import (
+    get_anonymous_user,
+    get_image_urls_from_asset,
+    get_or_create_reservation_token,
+    request_accepts_json,
+)
+from concordia.utils.next_asset import (
     find_next_reviewable_campaign_asset,
     find_next_reviewable_topic_asset,
     find_next_transcribable_campaign_asset,
     find_next_transcribable_topic_asset,
     find_reviewable_campaign_asset,
     find_transcribable_campaign_asset,
-    get_anonymous_user,
-    get_image_urls_from_asset,
-    get_or_create_reservation_token,
-    request_accepts_json,
 )
 from concordia.version import get_concordia_version
 from configuration.utils import configuration_value
