@@ -1,4 +1,5 @@
 import concurrent.futures
+import os.path
 import uuid
 from unittest import mock
 
@@ -805,6 +806,10 @@ class AssetImportTests(TestCase):
 
             self.assertEqual(get_mock.call_args[0], ("http://example.com",))
             self.assertTrue(get_mock.call_args[1]["stream"])
+            self.assertEqual(
+                os.path.basename(self.import_asset.asset.storage_image.path),
+                self.import_asset.asset.media_url,
+            )
 
     @override_settings(
         STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
@@ -1019,7 +1024,7 @@ class AssetImportTests(TestCase):
         mock_download.return_value = "stored_image.png"
         tasks.download_asset(self.task_mock, self.job)
 
-        asset_image_filename = self.asset.get_asset_image_filename(".png")
+        asset_image_filename = self.asset.get_asset_image_filename("png")
         mock_download.assert_called_once_with(
             self.asset.download_url, asset_image_filename
         )
