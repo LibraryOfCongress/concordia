@@ -25,7 +25,7 @@
         <div class="row">
             <div class="card-columns">
                 {% for project in projects %}
-                    <div class="card" style="width: 20em">
+                    <div class="card mb-1">
                         <div class="card-header">
                             <a class="card-title" href="{% url 'transcriptions:project-detail' campaign_slug=campaign_slug slug=project.slug %}">
                                 {{ project.title }}
