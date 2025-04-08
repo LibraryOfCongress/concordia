@@ -54,6 +54,7 @@ xlsxwriter = "*"
 blinker = "<1.8.0"
 psycopg2 = "*"
 django = "==4.2.20"
+pyopenssl = ">=24.3.0"
 
 [dev-packages]
 invoke = "*"
