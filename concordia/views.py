@@ -2279,12 +2279,19 @@ def obtain_reservation(asset_pk, reservation_token):
 def redirect_to_next_asset(asset, mode, request, user):
     reservation_token = get_or_create_reservation_token(request)
     if asset:
-        if mode == "transcribe":
-            res = AssetTranscriptionReservation(
-                asset=asset, reservation_token=reservation_token
-            )
-            res.full_clean()
-            res.save()
+        # We previously created reservations for transcriptions
+        # but not reviews. This created a race condition
+        # with the next asset caching system because the
+        # non-reserved asset could be added into the cache
+        # table between when the user was redirected and
+        # when they made their own reservation, resulting in
+        # that asset being added to the caching system and
+        # possibly being sent to another user
+        res = AssetTranscriptionReservation(
+            asset=asset, reservation_token=reservation_token
+        )
+        res.full_clean()
+        res.save()
         remove_next_asset_objects(asset.id)
         return redirect(
             "transcriptions:asset-detail",
@@ -2348,20 +2355,7 @@ def redirect_to_next_reviewable_asset(request):
                 break
             else:
                 logger.info("No reviewable assets found in %s", campaign)
-
-    if asset:
-        remove_next_asset_objects(asset.id)
-        return redirect(
-            "transcriptions:asset-detail",
-            asset.item.project.campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
-        messages.info(request, "There are no remaining pages to review")
-
-        return redirect("homepage")
+    return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
@@ -2407,26 +2401,10 @@ def redirect_to_next_transcribable_asset(request):
             else:
                 logger.info("No transcribable assets found in %s", campaign)
 
-    if asset:
-        reservation_token = get_or_create_reservation_token(request)
-        res = AssetTranscriptionReservation(
-            asset=asset, reservation_token=reservation_token
-        )
-        res.full_clean()
-        res.save()
-        remove_next_asset_objects(asset.id)
-        return redirect(
-            "transcriptions:asset-detail",
-            asset.item.project.campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
+    if not asset:
         logger.info("No transcribable assets found in any campaign")
-        messages.info(request, "There are no remaining pages to transcribe")
 
-        return redirect("homepage")
+    return redirect_to_next_asset(asset, "transcribe", request, request.user)
 
 
 @never_cache

@@ -1822,7 +1822,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         asset2 = create_asset(
             item=asset1.item, slug="test-asset-2", title="Test Asset 2"
         )
-        campaign = asset2.item.project.campaign
+        asset3 = create_asset(
+            item=asset1.item, slug="test-asset-3", title="Test Asset 3"
+        )
+        campaign = asset1.item.project.campaign
 
         t1 = Transcription(asset=asset1, user=user, text="test", submitted=now())
         t1.full_clean()
@@ -1832,14 +1835,15 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.full_clean()
         t2.save()
 
+        t2 = Transcription(asset=asset3, user=anon, text="test", submitted=now())
+        t2.full_clean()
+        t2.save()
+
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
         # Test logged in user (this creates a new user)
-        # We expect that asset1 is no longer available. Even though
-        # anonymous users can't reserve assets for review, we still will
-        # have removed the asset from the NextReviewableCampaignAsset table
-        # to ensure two users don't receive the same asset
+        # asset1 is no longer available due to the request above reserving it
         self.login_user()
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
         self.assertRedirects(response, expected_url=asset2.get_absolute_url())
@@ -1856,11 +1860,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(response, expected_url="/")
 
         # Test case when a campaign is configured to be default next reviewable
-        # At this point, the NextReviewableCampaignAsset table is empty,
-        # and asset1 is not actually reserved (due to the user attemptint to)
-        # reserve it being anonymous, so we expected to get asset1
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
-        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset3.get_absolute_url())
 
         # Test when next reviewable campaign has no reviewable assets
         asset1.delete()
@@ -1951,10 +1952,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
         # Authenticated user test
-        # We expect that asset1 is no longer available. Even though
-        # anonymous users can't reserve assets for review, we still will
-        # have removed the asset from the NextReviewableCampaignAsset table
-        # to ensure two users don't receive the same asset
+        # asset1 is no longer available since the previous request reserved it
         self.login_user()
         response = self.client.get(
             reverse(
