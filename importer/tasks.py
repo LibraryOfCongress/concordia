@@ -450,17 +450,22 @@ def import_item(self, import_item):
 
         for idx, asset_url in enumerate(asset_urls, start=1):
             asset_title = f"{import_item.item.item_id}-{idx}"
+            file_extension = (
+                os.path.splitext(urlparse(asset_url).path)[1].lstrip(".").lower()
+            )
             item_asset = Asset(
                 item=import_item.item,
                 campaign=import_item.item.project.campaign,
                 title=asset_title,
                 slug=slugify(asset_title, allow_unicode=True),
                 sequence=idx,
-                media_url=f"{idx}.jpg",
+                media_url=f"{idx}.{file_extension}",
                 media_type=MediaType.IMAGE,
                 download_url=asset_url,
                 resource_url=item_resource_url,
-                storage_image="/".join([relative_asset_file_path, f"{idx}.jpg"]),
+                storage_image="/".join(
+                    [relative_asset_file_path, f"{idx}.{file_extension}"]
+                ),
             )
             # Previously, any asset that raised a validation error was just ignored.
             # We don't want that--we want to see if an asset fails validation
@@ -602,7 +607,9 @@ def download_asset(self, job):
         download_url = job.url
     else:
         download_url = asset.download_url
-    file_extension = os.path.splitext(urlparse(download_url).path)[1].lower()
+    file_extension = (
+        os.path.splitext(urlparse(download_url).path)[1].lstrip(".").lower()
+    )
     if not file_extension or file_extension == "jpeg":
         file_extension = "jpg"
 
@@ -617,6 +624,7 @@ def download_asset(self, job):
         asset.id,
     )
     asset.storage_image = storage_image
+    asset.media_url = os.path.basename(storage_image)
     asset.save()
 
 
