@@ -1515,7 +1515,7 @@ class NextTranscribableCampaignAsset(NextTranscribableAsset):
     objects = NextTranscribableCampaignAssetManager()
 
     class Meta:
-        ordering = ("-created_on",)
+        ordering = ("created_on",)
         get_latest_by = "created_on"
 
 
@@ -1525,7 +1525,7 @@ class NextTranscribableTopicAsset(NextTranscribableAsset):
     objects = NextTranscribableTopicAssetManager()
 
     class Meta:
-        ordering = ("-created_on",)
+        ordering = ("created_on",)
         get_latest_by = "created_on"
         unique_together = ("asset", "topic")
 
@@ -1536,7 +1536,7 @@ class NextReviewableCampaignAsset(NextReviewableAsset):
     objects = NextReviewableCampaignAssetManager()
 
     class Meta:
-        ordering = ("-created_on",)
+        ordering = ("created_on",)
         get_latest_by = "created_on"
         indexes = [
             GinIndex(fields=["transcriber_ids"]),
@@ -1549,7 +1549,7 @@ class NextReviewableTopicAsset(NextReviewableAsset):
     objects = NextReviewableTopicAssetManager()
 
     class Meta:
-        ordering = ("-created_on",)
+        ordering = ("created_on",)
         get_latest_by = "created_on"
         unique_together = ("asset", "topic")
         indexes = [
