@@ -253,20 +253,10 @@ LOGGING = {
             "datefmt": "%Y-%m-%dT%H:%M:%S",
             "style": "{",
         },
-        "celery": {
-            "format": "[%(asctime)s: %(levelname)s/%(processName)s]%(task_id)s "
-            "%(name)s: %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
         "short": {
             "format": "[{levelname} {name}] {message}",
             "datefmt": "%Y-%m-%dT%H:%M:%S",
             "style": "{",
-        },
-    },
-    "filters": {
-        "celery_task_id": {
-            "()": "importer.logging.CeleryTaskIDFilter",
         },
     },
     "handlers": {
@@ -289,9 +279,8 @@ LOGGING = {
             "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": f"{SITE_ROOT_DIR}/logs/celery.log",
-            "formatter": "celery",
+            "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
-            "filters": ["celery_task_id"],
         },
     },
     "loggers": {
