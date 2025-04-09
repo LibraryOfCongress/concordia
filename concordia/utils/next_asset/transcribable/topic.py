@@ -6,6 +6,22 @@ from concordia.utils.celery import get_registered_task
 
 
 def find_new_transcribable_topic_assets(topic):
+    """
+    Returns a queryset of assets in the given topic that are eligible for transcription
+    caching.
+
+    This excludes:
+    - Assets with transcription_status not NOT_STARTED or IN_PROGRESS
+    - Assets currently reserved
+    - Assets already present in the NextTranscribableTopicAsset table
+
+    Args:
+        topic (Topic): The topic to filter assets by.
+
+    Returns:
+        QuerySet: Eligible assets ordered by sequence.
+    """
+
     # Filtering this to the topic would be more costly than just getting all ids
     # in most cases because it requires joining the asset table to the item table to
     # the project table to the topic table.
@@ -34,11 +50,41 @@ def find_new_transcribable_topic_assets(topic):
 
 
 def find_next_transcribable_topic_assets(topic):
+    """
+    Returns all cached transcribable assets for a topic.
+
+    This accesses the NextTranscribableTopicAsset cache table for the given topic.
+
+    Args:
+        topic (Topic): The topic to retrieve cached assets for.
+
+    Returns:
+        QuerySet: Cached assets
+    """
+
     return concordia_models.NextTranscribableTopicAsset.objects.filter(topic=topic)
 
 
 @transaction.atomic
 def find_transcribable_topic_asset(topic):
+    """
+    Retrieves a single transcribable asset from the topic.
+
+    Attempts to retrieve an asset from the cache table (NextTranscribableTopicAsset).
+    If no eligible asset is found, falls back to computing one directly from the
+    Asset table and asynchronously schedules a background task to repopulate the cache.
+
+    Ensures database row-level locking to prevent multiple concurrent consumers
+    from selecting the same asset.
+
+    Args:
+        topic (Topic): The topic to retrieve an asset from.
+
+    Returns:
+        Asset or None: A locked asset eligible for transcription, or None if
+        unavailable.
+    """
+
     next_asset = (
         find_next_transcribable_topic_assets(topic)
         .select_for_update(skip_locked=True, of=("self",))
@@ -76,6 +122,25 @@ def find_transcribable_topic_asset(topic):
 def find_and_order_potential_transcribable_topic_assets(
     topic, project_slug, item_id, asset_pk
 ):
+    """
+    Retrieves and prioritizes cached transcribable assets based on proximity and status.
+
+    Orders results from NextTranscribableTopicAsset by:
+    - Whether the asset comes after the given asset in sequence
+    - Whether the asset is in the NOT_STARTED state
+    - Whether the asset belongs to the same project
+    - Whether the asset belongs to the same item
+
+    Args:
+        topic (Topic): The topic to filter assets by.
+        project_slug (str): Slug of the original asset's project.
+        item_id (str): Item ID of the original asset.
+        asset_pk (int): Primary key of the original asset.
+
+    Returns:
+        QuerySet: Prioritized list of candidate assets.
+    """
+
     potential_next_assets = find_next_transcribable_topic_assets(topic)
 
     # We'll favor assets which are in the same item or project as the original:
@@ -104,9 +169,32 @@ def find_and_order_potential_transcribable_topic_assets(
     return potential_next_assets
 
 
+@transaction.atomic
 def find_next_transcribable_topic_asset(
     topic, project_slug, item_id, original_asset_id
 ):
+    """
+    Retrieves the next best transcribable asset for a user within a topic.
+
+    Prioritizes assets from the cache that are:
+    - After the current asset in sequence
+    - In the NOT_STARTED state
+    - In the same project or item
+
+    Falls back to computing candidates if the cache is empty, and triggers
+    a background task to repopulate the cache after selection.
+
+    Args:
+        topic (Topic): The topic to find an asset in.
+        project_slug (str): Slug of the project the user is currently transcribing.
+        item_id (str): ID of the item the user is currently transcribing.
+        original_asset_id (int): ID of the asset the user just transcribed.
+
+    Returns:
+        Asset or None: A locked asset eligible for transcription, or None if
+        unavailable.
+    """
+
     potential_next_assets = find_and_order_potential_transcribable_topic_assets(
         topic, project_slug, item_id, original_asset_id
     )

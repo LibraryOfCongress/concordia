@@ -56,6 +56,22 @@ __all__ = [
 
 
 def remove_next_asset_objects(asset_id):
+    """
+    Remove all cached next asset entries associated with the given asset id.
+
+    This function deletes entries from the four next asset tables:
+    - NextTranscribableCampaignAsset
+    - NextTranscribableTopicAsset
+    - NextReviewableCampaignAsset
+    - NextReviewableTopicAsset
+
+    It is typically used when an asset is no longer valid for caching
+    (e.g., after transcription or review status changes, or when a user
+    reserves the asset).
+
+    Args:
+        asset_id (int): The ID of the asset to remove from next-asset tables.
+    """
     NextTranscribableCampaignAsset.objects.filter(asset_id=asset_id).delete()
     NextTranscribableTopicAsset.objects.filter(asset_id=asset_id).delete()
     NextReviewableCampaignAsset.objects.filter(asset_id=asset_id).delete()

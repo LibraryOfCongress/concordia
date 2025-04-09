@@ -2277,6 +2277,26 @@ def obtain_reservation(asset_pk, reservation_token):
 
 
 def redirect_to_next_asset(asset, mode, request, user):
+    """
+    Redirects the user to the appropriate asset view or the homepage if no asset is
+    available.
+
+    If an asset is found, a reservation is created for it and the asset is removed
+    from the relevant caching tables. The user is then redirected to the transcription
+    page for that asset.
+
+    If no asset is provided, redirects to the homepage with an informational message.
+
+    Args:
+        asset (Asset or None): The asset to redirect to, or None if unavailable.
+        mode (str): Either "transcribe" or "review", used for messaging.
+        request (HttpRequest): The request initiating the redirect.
+        user (User): The user being redirected.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the asset or homepage.
+    """
+
     reservation_token = get_or_create_reservation_token(request)
     if asset:
         # We previously created reservations for transcriptions
@@ -2311,6 +2331,17 @@ def redirect_to_next_asset(asset, mode, request, user):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
+    """
+    Attempts to redirect the user to a reviewable asset from any active reviewable
+    campaign.
+
+    Iterates through campaigns marked as next-reviewable, falling back to others if
+    needed. Skips campaigns with no eligible assets. Uses asset caching where possible.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
@@ -2361,6 +2392,17 @@ def redirect_to_next_reviewable_asset(request):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
+    """
+    Attempts to redirect the user to a transcribable asset from any active transcription
+    campaign.
+
+    Iterates through campaigns marked as next-transcribable, falling back to others if
+    needed. Skips campaigns with no eligible assets. Uses asset caching where possible.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     campaign_ids = list(
         Campaign.objects.active()
         .listed()
@@ -2410,6 +2452,22 @@ def redirect_to_next_transcribable_asset(request):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
+    """
+    Redirects the user to the next reviewable asset within a specified campaign.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently reviewed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        campaign_slug (str): Slug for the target campaign.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     # Campaign is specified: may be listed or unlisted
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
@@ -2434,6 +2492,22 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
+    """
+    Redirects the user to the next transcribable asset within a specified campaign.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently transcribed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        campaign_slug (str): Slug for the target campaign.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     # Campaign is specified: may be listed or unlisted
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
@@ -2455,6 +2529,21 @@ def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
+    """
+    Redirects the user to the next reviewable asset within a specified topic.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently reviewed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        topic_slug (str): Slug for the target topic.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
     # Topic is specified: may be listed or unlisted
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
@@ -2479,6 +2568,22 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
+    """
+    Redirects the user to the next transcribable asset within a specified topic.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently transcribed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        topic_slug (str): Slug for the target topic.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     # Topic is specified: may be listed or unlisted
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")

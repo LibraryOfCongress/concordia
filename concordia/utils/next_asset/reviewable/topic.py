@@ -6,6 +6,25 @@ from concordia.utils.celery import get_registered_task
 
 
 def find_new_reviewable_topic_assets(topic, user=None):
+    """
+    Returns a queryset of assets in the given topic that are eligible for review
+    caching.
+
+    This excludes:
+    - Assets with transcription_status not SUBMITTED
+    - Assets currently reserved
+    - Assets already present in the NextReviewableTopicAsset table
+    - Optionally, assets transcribed by the given user
+
+    Args:
+        topic (Topic): The topic to filter assets by.
+        user (User, optional): If provided, assets transcribed by this user will be
+        excluded.
+
+    Returns:
+        QuerySet: Eligible assets ordered by sequence.
+    """
+
     # Filtering this to the topic would be more costly than just getting all ids
     # in most cases because it requires joining the asset table to the item table to
     # the project table to the topic table.
@@ -34,6 +53,21 @@ def find_new_reviewable_topic_assets(topic, user=None):
 
 
 def find_next_reviewable_topic_assets(topic, user):
+    """
+    Returns cached reviewable assets for a topic that were not transcribed by the given
+    user.
+
+    This accesses the NextReviewableTopicAsset cache table and filters out any
+    assets associated with the given user via the transcriber_ids field.
+
+    Args:
+        topic (Topic): The topic to filter assets by.
+        user (User): The user requesting a reviewable asset.
+
+    Returns:
+        QuerySet: Cached assets
+    """
+
     return concordia_models.NextReviewableTopicAsset.objects.filter(
         topic=topic
     ).exclude(transcriber_ids__contains=[user.id])
@@ -41,6 +75,24 @@ def find_next_reviewable_topic_assets(topic, user):
 
 @transaction.atomic
 def find_reviewable_topic_asset(topic, user):
+    """
+    Retrieves a single reviewable asset from the topic for the given user.
+
+    Attempts to retrieve an asset from the cache table (NextReviewableTopicAsset).
+    If no eligible asset is found, falls back to computing one directly from the
+    Asset table and asynchronously schedules a background task to repopulate the cache.
+
+    Ensures database row-level locking to prevent multiple concurrent consumers
+    from selecting the same asset.
+
+    Args:
+        topic (Topic): The topic to retrieve an asset from.
+        user (User): The user requesting the asset (used to exclude their own work).
+
+    Returns:
+        Asset or None: A locked asset eligible for review, or None if unavailable.
+    """
+
     next_asset = (
         find_next_reviewable_topic_assets(topic, user)
         .select_for_update(skip_locked=True, of=("self",))
@@ -81,6 +133,25 @@ def find_reviewable_topic_asset(topic, user):
 def find_and_order_potential_reviewable_topic_assets(
     topic, user, project_slug, item_id, asset_pk
 ):
+    """
+    Retrieves and prioritizes cached reviewable assets for a user based on proximity.
+
+    Orders results from NextReviewableTopicAsset by:
+    - Whether the asset comes after the given asset in sequence
+    - Whether the asset belongs to the same project
+    - Whether the asset belongs to the same item
+
+    Args:
+        topic (Topic): The topic to filter assets by.
+        user (User): The user requesting the next asset.
+        project_slug (str): Slug of the original asset's project.
+        item_id (str): Item ID of the original asset.
+        asset_pk (int): Primary key of the original asset.
+
+    Returns:
+        QuerySet: Prioritized list of candidate assets.
+    """
+
     potential_next_assets = find_next_reviewable_topic_assets(topic, user)
 
     # We'll favor assets which are in the same item or project as the original:
@@ -101,9 +172,31 @@ def find_and_order_potential_reviewable_topic_assets(
     return potential_next_assets
 
 
+@transaction.atomic
 def find_next_reviewable_topic_asset(
     topic, user, project_slug, item_id, original_asset_id
 ):
+    """
+    Retrieves the next best reviewable asset for a user within a topic.
+
+    Prioritizes assets from the cache that are:
+    - After the current asset in sequence
+    - In the same project or item
+
+    Falls back to computing candidates if the cache is empty, and triggers
+    a background task to repopulate the cache after selection.
+
+    Args:
+        topic (Topic): The topic to find an asset in.
+        user (User): The user requesting the asset.
+        project_slug (str): Slug of the project the user is currently reviewing.
+        item_id (str): ID of the item the user is currently reviewing.
+        original_asset_id (int): ID of the asset the user just reviewed.
+
+    Returns:
+        Asset or None: A locked asset eligible for review, or None if unavailable.
+    """
+
     potential_next_assets = find_and_order_potential_reviewable_topic_assets(
         topic, user, project_slug, item_id, original_asset_id
     )
