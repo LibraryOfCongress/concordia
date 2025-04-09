@@ -1421,7 +1421,6 @@ class NextAsset(models.Model):
     id = models.UUIDField(  # noqa: A003
         primary_key=True, default=uuid.uuid4, editable=False
     )
-    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     item_item_id = models.CharField(max_length=100)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -1437,6 +1436,7 @@ class NextAsset(models.Model):
 
 
 class NextTranscribableAsset(NextAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     transcription_status = models.CharField(
         editable=False,
         max_length=20,
@@ -1450,6 +1450,7 @@ class NextTranscribableAsset(NextAsset):
 
 
 class NextReviewableAsset(NextAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     transcriber_ids = ArrayField(
         base_field=models.IntegerField(),
         blank=True,
@@ -1458,9 +1459,6 @@ class NextReviewableAsset(NextAsset):
 
     class Meta:
         abstract = True
-        indexes = [
-            GinIndex(fields=["transcriber_ids"]),
-        ]
 
 
 class NextCampaignAssetManager(models.Manager):
@@ -1516,11 +1514,20 @@ class NextTranscribableCampaignAsset(NextTranscribableAsset):
 
     objects = NextTranscribableCampaignAssetManager()
 
+    class Meta:
+        ordering = ("-created_on",)
+        get_latest_by = "created_on"
+
 
 class NextTranscribableTopicAsset(NextTranscribableAsset):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
     objects = NextTranscribableTopicAssetManager()
+
+    class Meta:
+        ordering = ("-created_on",)
+        get_latest_by = "created_on"
+        unique_together = ("asset", "topic")
 
 
 class NextReviewableCampaignAsset(NextReviewableAsset):
@@ -1528,8 +1535,23 @@ class NextReviewableCampaignAsset(NextReviewableAsset):
 
     objects = NextReviewableCampaignAssetManager()
 
+    class Meta:
+        ordering = ("-created_on",)
+        get_latest_by = "created_on"
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]
+
 
 class NextReviewableTopicAsset(NextReviewableAsset):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
     objects = NextReviewableTopicAssetManager()
+
+    class Meta:
+        ordering = ("-created_on",)
+        get_latest_by = "created_on"
+        unique_together = ("asset", "topic")
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]
