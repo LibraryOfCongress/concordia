@@ -1835,9 +1835,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.full_clean()
         t2.save()
 
-        t2 = Transcription(asset=asset3, user=anon, text="test", submitted=now())
-        t2.full_clean()
-        t2.save()
+        t3 = Transcription(asset=asset3, user=anon, text="test", submitted=now())
+        t3.full_clean()
+        t3.save()
 
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
