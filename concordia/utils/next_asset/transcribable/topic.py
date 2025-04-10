@@ -256,3 +256,36 @@ def find_next_transcribable_topic_asset(
         populate_task.delay(topic.id)
 
     return asset
+
+
+def find_invalid_next_transcribable_topic_assets(topic_id):
+    """
+    Returns a queryset of NextTranscribableTopicAsset records that are no longer valid
+    for transcription. This includes:
+    - Assets with a transcription status other than NOT_STARTED or IN_PROGRESS.
+    - Assets currently reserved via AssetTranscriptionReservation.
+
+    Args:
+        topic_id (int): The ID of the topic to filter by.
+
+    Returns:
+        QuerySet: Invalid NextTranscribableTopicAsset records.
+    """
+    reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__item__project__topics=topic_id
+    ).values("asset_id")
+
+    status_filtered = concordia_models.NextTranscribableTopicAsset.objects.filter(
+        topic_id=topic_id
+    ).exclude(
+        asset__transcription_status__in=[
+            concordia_models.TranscriptionStatus.NOT_STARTED,
+            concordia_models.TranscriptionStatus.IN_PROGRESS,
+        ]
+    )
+
+    reserved_filtered = concordia_models.NextTranscribableTopicAsset.objects.filter(
+        topic_id=topic_id, asset_id__in=Subquery(reserved_asset_ids)
+    )
+
+    return (status_filtered | reserved_filtered).distinct()

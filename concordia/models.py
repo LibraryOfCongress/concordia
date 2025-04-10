@@ -1436,7 +1436,6 @@ class NextAsset(models.Model):
 
 
 class NextTranscribableAsset(NextAsset):
-    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     transcription_status = models.CharField(
         editable=False,
         max_length=20,
@@ -1450,7 +1449,6 @@ class NextTranscribableAsset(NextAsset):
 
 
 class NextReviewableAsset(NextAsset):
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     transcriber_ids = ArrayField(
         base_field=models.IntegerField(),
         blank=True,
@@ -1510,6 +1508,7 @@ class NextReviewableTopicAssetManager(NextTopicAssetManager):
 
 
 class NextTranscribableCampaignAsset(NextTranscribableAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     objects = NextTranscribableCampaignAssetManager()
@@ -1520,6 +1519,7 @@ class NextTranscribableCampaignAsset(NextTranscribableAsset):
 
 
 class NextTranscribableTopicAsset(NextTranscribableAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
     objects = NextTranscribableTopicAssetManager()
@@ -1531,6 +1531,7 @@ class NextTranscribableTopicAsset(NextTranscribableAsset):
 
 
 class NextReviewableCampaignAsset(NextReviewableAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     objects = NextReviewableCampaignAssetManager()
@@ -1544,6 +1545,7 @@ class NextReviewableCampaignAsset(NextReviewableAsset):
 
 
 class NextReviewableTopicAsset(NextReviewableAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
     objects = NextReviewableTopicAssetManager()

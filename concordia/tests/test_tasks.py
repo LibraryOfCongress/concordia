@@ -14,15 +14,21 @@ from concordia.models import (
     NextTranscribableTopicAsset,
     SiteReport,
     Transcription,
+    TranscriptionStatus,
 )
 from concordia.tasks import (
     CacheLockedError,
     _daily_active_users,
     campaign_report,
+    clean_next_reviewable_for_campaign,
+    clean_next_reviewable_for_topic,
+    clean_next_transcribable_for_campaign,
+    clean_next_transcribable_for_topic,
     populate_next_reviewable_for_campaign,
     populate_next_reviewable_for_topic,
     populate_next_transcribable_for_campaign,
     populate_next_transcribable_for_topic,
+    renew_next_asset_cache,
     site_report,
     unusual_activity,
     update_useractivity_cache,
@@ -290,7 +296,7 @@ class TaskTestCase(CreateTestUsers, TestCase):
         self.assertIsNone(cache.get(key))
 
 
-class PopulateNextTasksTests(CreateTestUsers, TestCase):
+class PopulateNextAssetTasksTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.anon = get_anonymous_user()
         self.user = self.create_test_user()
@@ -528,3 +534,155 @@ class PopulateNextTasksTests(CreateTestUsers, TestCase):
         mock_logger.info.assert_any_call(
             "No transcribable assets found in topic %s", self.topic
         )
+
+
+class CleanNextAssetTasksTests(TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.campaign = self.asset.campaign
+        self.topic = create_topic(project=self.asset.item.project)
+        self.campaign_transcribable = NextTranscribableCampaignAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            campaign=self.campaign,
+            sequence=self.asset.sequence,
+            transcription_status=TranscriptionStatus.NOT_STARTED,
+        )
+        self.topic_transcribable = NextTranscribableTopicAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            topic=self.topic,
+            sequence=self.asset.sequence,
+            transcription_status=TranscriptionStatus.IN_PROGRESS,
+        )
+        self.campaign_reviewable = NextReviewableCampaignAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            campaign=self.campaign,
+            sequence=self.asset.sequence,
+        )
+        self.topic_reviewable = NextReviewableTopicAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            topic=self.topic,
+            sequence=self.asset.sequence,
+        )
+
+    @mock.patch("concordia.tasks.populate_next_transcribable_for_campaign.delay")
+    def test_clean_next_transcribable_for_campaign(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.COMPLETED
+        self.asset.save()
+        clean_next_transcribable_for_campaign(self.campaign.id)
+        self.assertFalse(
+            NextTranscribableCampaignAsset.objects.filter(
+                campaign=self.campaign
+            ).exists()
+        )
+        mock_delay.assert_called_once_with(self.campaign.id)
+
+    @mock.patch("concordia.tasks.populate_next_transcribable_for_topic.delay")
+    def test_clean_next_transcribable_for_topic(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.COMPLETED
+        self.asset.save()
+        clean_next_transcribable_for_topic(self.topic.id)
+        self.assertFalse(
+            NextTranscribableTopicAsset.objects.filter(topic=self.topic).exists()
+        )
+        mock_delay.assert_called_once_with(self.topic.id)
+
+    @mock.patch("concordia.tasks.populate_next_reviewable_for_campaign.delay")
+    def test_clean_next_reviewable_for_campaign(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.IN_PROGRESS
+        self.asset.save()
+        clean_next_reviewable_for_campaign(self.campaign.id)
+        self.assertFalse(
+            NextReviewableCampaignAsset.objects.filter(campaign=self.campaign).exists()
+        )
+        mock_delay.assert_called_once_with(self.campaign.id)
+
+    @mock.patch("concordia.tasks.populate_next_reviewable_for_topic.delay")
+    def test_clean_next_reviewable_for_topic(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.NOT_STARTED
+        self.asset.save()
+        clean_next_reviewable_for_topic(self.topic.id)
+        self.assertFalse(
+            NextReviewableTopicAsset.objects.filter(topic=self.topic).exists()
+        )
+        mock_delay.assert_called_once_with(self.topic.id)
+
+    @mock.patch("concordia.tasks.clean_next_reviewable_for_campaign.delay")
+    @mock.patch("concordia.tasks.clean_next_transcribable_for_campaign.delay")
+    @mock.patch("concordia.tasks.clean_next_reviewable_for_topic.delay")
+    @mock.patch("concordia.tasks.clean_next_transcribable_for_topic.delay")
+    def test_renew_next_asset_cache(
+        self,
+        mock_clean_trans_topic,
+        mock_clean_rev_topic,
+        mock_clean_trans_campaign,
+        mock_clean_rev_campaign,
+    ):
+        renew_next_asset_cache()
+        mock_clean_trans_campaign.assert_called_once_with(campaign_id=self.campaign.id)
+        mock_clean_rev_campaign.assert_called_once_with(campaign_id=self.campaign.id)
+        mock_clean_trans_topic.assert_called_once_with(topic_id=self.topic.id)
+        mock_clean_rev_topic.assert_called_once_with(topic_id=self.topic.id)
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_transcribable_for_campaign_exception(self, mock_logger):
+        with mock.patch.object(
+            self.campaign_transcribable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_transcribable_campaign_assets",
+                return_value=[self.campaign_transcribable],
+            ):
+                clean_next_transcribable_for_campaign(self.campaign.id)
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_transcribable_for_topic_exception(self, mock_logger):
+        with mock.patch.object(
+            self.topic_transcribable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_transcribable_topic_assets",
+                return_value=[self.topic_transcribable],
+            ):
+                clean_next_transcribable_for_topic(self.topic.id)
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_reviewable_for_campaign_exception(self, mock_logger):
+        with mock.patch.object(
+            self.campaign_reviewable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_reviewable_campaign_assets",
+                return_value=[self.campaign_reviewable],
+            ):
+                clean_next_reviewable_for_campaign(self.campaign.id)
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_reviewable_for_topic_exception(self, mock_logger):
+        with mock.patch.object(
+            self.topic_reviewable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_reviewable_topic_assets",
+                return_value=[self.topic_reviewable],
+            ):
+                clean_next_reviewable_for_topic(self.topic.id)
+        mock_logger.exception.assert_called_once()

@@ -256,3 +256,44 @@ def find_next_transcribable_campaign_asset(
         populate_task.delay(campaign.id)
 
     return asset
+
+
+def find_invalid_next_transcribable_campaign_assets(campaign_id):
+    """
+    Returns NextTranscribableCampaignAsset objects that are no longer valid for
+    transcription.
+
+    Assets are considered invalid if:
+    - Their transcription_status is not NOT_STARTED or IN_PROGRESS
+    - They are currently reserved via AssetTranscriptionReservation
+
+    This function is typically used to clean up the cached next-transcribable table,
+    ensuring only eligible and available assets are retained.
+
+    Args:
+        campaign_id (int): ID of the campaign to filter assets by.
+
+    Returns:
+        QuerySet: Distinct set of invalid NextTranscribableCampaignAsset objects.
+    """
+
+    reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__campaign_id=campaign_id
+    ).values("asset_id")
+
+    # Assets with transcription_status not eligible for transcription
+    status_filtered = concordia_models.NextTranscribableCampaignAsset.objects.filter(
+        campaign_id=campaign_id
+    ).exclude(
+        asset__transcription_status__in=[
+            concordia_models.TranscriptionStatus.NOT_STARTED,
+            concordia_models.TranscriptionStatus.IN_PROGRESS,
+        ]
+    )
+
+    # Assets that are reserved
+    reserved_filtered = concordia_models.NextTranscribableCampaignAsset.objects.filter(
+        campaign_id=campaign_id, asset_id__in=Subquery(reserved_asset_ids)
+    )
+
+    return (status_filtered | reserved_filtered).distinct()

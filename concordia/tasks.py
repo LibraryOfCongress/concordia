@@ -48,6 +48,10 @@ from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
 from concordia.utils import get_anonymous_user
 from concordia.utils.next_asset import (
+    find_invalid_next_reviewable_campaign_assets,
+    find_invalid_next_reviewable_topic_assets,
+    find_invalid_next_transcribable_campaign_assets,
+    find_invalid_next_transcribable_topic_assets,
     find_new_reviewable_campaign_assets,
     find_new_reviewable_topic_assets,
     find_new_transcribable_campaign_assets,
@@ -1482,3 +1486,125 @@ def populate_next_reviewable_for_topic(self, topic_id):
         logger.info("Added %d next reviewable assets for topic %s", len(objs), topic)
     else:
         logger.info("No reviewable assets found in topic %s", topic)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_transcribable_for_campaign(self, campaign_id):
+    """
+    Removes invalid cached transcribable assets for a campaign and repopulates the
+    cache.
+
+    Invalid assets include those that are reserved or no longer eligible for
+    transcription based on their transcription status. After cleaning, the corresponding
+    populate task is queued to restore the cache to the target count.
+
+    Args:
+        campaign_id (int): The ID of the campaign to clean.
+    """
+
+    for next_asset in find_invalid_next_transcribable_campaign_assets(campaign_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info(
+        "Spawning populate_next_transcribable_for_campaign for campgin %s", campaign_id
+    )
+    populate_next_transcribable_for_campaign.delay(campaign_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_transcribable_for_topic(self, topic_id):
+    """
+    Removes invalid cached transcribable assets for a topic and repopulates the cache.
+
+    Invalid assets include those that are reserved or no longer eligible for
+    transcription based on their transcription status. After cleaning, the corresponding
+    populate task is queued to restore the cache to the target count.
+
+    Args:
+        topic_id (int): The ID of the topic to clean.
+    """
+
+    for next_asset in find_invalid_next_transcribable_topic_assets(topic_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info("Spawning populate_next_transcribable_for_topic for topic %s", topic_id)
+    populate_next_transcribable_for_topic.delay(topic_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_reviewable_for_campaign(self, campaign_id):
+    """
+    Removes invalid cached reviewable assets for a campaign and repopulates the cache.
+
+    Invalid assets include those that no longer have transcription status SUBMITTED and
+    are therefore not eligible for review. After cleaning, the corresponding populate
+    task is queued to restore the cache to the target count.
+
+    Args:
+        campaign_id (int): The ID of the campaign to clean.
+    """
+
+    for next_asset in find_invalid_next_reviewable_campaign_assets(campaign_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info(
+        "Spawning populate_next_reviewable_for_campaign for campgin %s", campaign_id
+    )
+    populate_next_reviewable_for_campaign.delay(campaign_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_reviewable_for_topic(self, topic_id):
+    """
+    Removes invalid cached reviewable assets for a topic and repopulates the cache.
+
+    Invalid assets include those that no longer have transcription status SUBMITTED and
+    are therefore not eligible for review. After cleaning, the corresponding populate
+    task is queued to restore the cache to the target count.
+
+    Args:
+        topic_id (int): The ID of the topic to clean.
+    """
+
+    for next_asset in find_invalid_next_reviewable_topic_assets(topic_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info("Spawning populate_next_reviewable_for_topic for topic %s", topic_id)
+    populate_next_reviewable_for_topic.delay(topic_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def renew_next_asset_cache(self):
+    """
+    Triggers cache cleaning and repopulation for all active campaigns and published
+    topics.
+
+    This runs cleaning tasks for both transcribable and reviewable assets across all
+    campaigns and topics. Each cleaning task ensures that the next asset cache remains
+    accurate and up to date by removing invalid entries and restoring the desired count.
+    """
+
+    for campaign in Campaign.objects.active():
+        logger.info("Spawning clean_next_transcribable_for_campaign for %s", campaign)
+        clean_next_transcribable_for_campaign.delay(campaign_id=campaign.id)
+        logger.info("Spawning clean_next_reviewable_for_campaign for %s", campaign)
+        clean_next_reviewable_for_campaign.delay(campaign_id=campaign.id)
+
+    for topic in Topic.objects.published():
+        logger.info("Spawning clean_next_transcribable_for_topic for %s", topic)
+        clean_next_transcribable_for_topic.delay(topic_id=topic.id)
+        logger.info("Spawning clean_next_reviewable_for_topic for %s", topic)
+        clean_next_reviewable_for_topic.delay(topic_id=topic.id)

@@ -8,6 +8,8 @@ from concordia.models import (
 from .reviewable import (
     find_and_order_potential_reviewable_campaign_assets,
     find_and_order_potential_reviewable_topic_assets,
+    find_invalid_next_reviewable_campaign_assets,
+    find_invalid_next_reviewable_topic_assets,
     find_new_reviewable_campaign_assets,
     find_new_reviewable_topic_assets,
     find_next_reviewable_campaign_asset,
@@ -20,6 +22,8 @@ from .reviewable import (
 from .transcribable import (
     find_and_order_potential_transcribable_campaign_assets,
     find_and_order_potential_transcribable_topic_assets,
+    find_invalid_next_transcribable_campaign_assets,
+    find_invalid_next_transcribable_topic_assets,
     find_new_transcribable_campaign_assets,
     find_new_transcribable_topic_assets,
     find_next_transcribable_campaign_asset,
@@ -52,6 +56,10 @@ __all__ = [
     "find_reviewable_campaign_asset",
     "find_reviewable_topic_asset",
     "remove_next_asset_objects",
+    "find_invalid_next_reviewable_campaign_assets",
+    "find_invalid_next_reviewable_topic_assets",
+    "find_invalid_next_transcribable_campaign_assets",
+    "find_invalid_next_transcribable_topic_assets",
 ]
 
 

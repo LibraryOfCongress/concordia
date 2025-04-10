@@ -249,3 +249,31 @@ def find_next_reviewable_topic_asset(
         populate_task.delay(topic.id)
 
     return asset
+
+
+def find_invalid_next_reviewable_topic_assets(topic_id):
+    """
+    Returns a queryset of NextReviewableTopicAsset records that are no longer valid for
+    review. This includes:
+    - Assets with a transcription status other than SUBMITTED.
+    - Assets currently reserved via AssetTranscriptionReservation.
+
+    Args:
+        topic_id (int): The ID of the topic to filter by.
+
+    Returns:
+        QuerySet: Invalid NextReviewableTopicAsset records.
+    """
+    reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__item__project__topics=topic_id
+    ).values("asset_id")
+
+    status_filtered = concordia_models.NextReviewableTopicAsset.objects.exclude(
+        asset__transcription_status=concordia_models.TranscriptionStatus.SUBMITTED
+    ).filter(topic_id=topic_id)
+
+    reserved_filtered = concordia_models.NextReviewableTopicAsset.objects.filter(
+        topic_id=topic_id, asset_id__in=Subquery(reserved_asset_ids)
+    )
+
+    return (status_filtered | reserved_filtered).distinct()

@@ -245,3 +245,31 @@ def find_next_reviewable_campaign_asset(
         populate_task.delay(campaign.id)
 
     return asset
+
+
+def find_invalid_next_reviewable_campaign_assets(campaign_id):
+    """
+    Returns a queryset of NextReviewableCampaignAsset records that are no longer valid
+    for review. This includes:
+    - Assets with a transcription status other than SUBMITTED.
+    - Assets currently reserved via AssetTranscriptionReservation.
+
+    Args:
+        campaign_id (int): The ID of the campaign to filter by.
+
+    Returns:
+        QuerySet: Invalid NextReviewableCampaignAsset records.
+    """
+    reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__campaign_id=campaign_id
+    ).values("asset_id")
+
+    status_filtered = concordia_models.NextReviewableCampaignAsset.objects.exclude(
+        asset__transcription_status=concordia_models.TranscriptionStatus.SUBMITTED
+    ).filter(campaign_id=campaign_id)
+
+    reserved_filtered = concordia_models.NextReviewableCampaignAsset.objects.filter(
+        campaign_id=campaign_id, asset_id__in=Subquery(reserved_asset_ids)
+    )
+
+    return (status_filtered | reserved_filtered).distinct()

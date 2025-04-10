@@ -1126,7 +1126,6 @@ class NextReviewableCampaignAssetAdmin(admin.ModelAdmin):
         "transcriber_ids",
         "created_on",
     )
-    date_hierarchy = "created_on"
     ordering = ("-created_on",)
 
 
@@ -1165,7 +1164,7 @@ class NextTranscribableTopicAssetAdmin(admin.ModelAdmin):
 class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
     list_display = (
         "asset",
-        "campaign",
+        "topic",
         "created_on",
     )
     list_filter = (TopicListFilter,)
@@ -1184,5 +1183,4 @@ class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
         "transcriber_ids",
         "created_on",
     )
-    date_hierarchy = "created_on"
     ordering = ("-created_on",)

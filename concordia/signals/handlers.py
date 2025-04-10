@@ -15,13 +15,15 @@ from django.template import loader
 from django_registration.signals import user_activated, user_registered
 from flags.state import flag_enabled
 
-from ..models import (
+from concordia.models import (
     Asset,
     Transcription,
     TranscriptionStatus,
     UserProfile,
 )
-from ..tasks import calculate_difficulty_values
+from concordia.tasks import calculate_difficulty_values
+from concordia.utils.next_asset import remove_next_asset_objects
+
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
@@ -120,6 +122,8 @@ def update_asset_status(sender, *, instance, **kwargs):
     asset.save()
 
     logger.info("Status for %s (%s) updated", asset, asset.id)
+
+    remove_next_asset_objects(asset.id)
 
     calculate_difficulty_values(Asset.objects.filter(pk=asset.pk))
 
