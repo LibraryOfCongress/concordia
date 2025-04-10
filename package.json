@@ -10,6 +10,7 @@
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
         "@fortawesome/fontawesome-free": "^6.7.2",
+        "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.5",
         "codemirror": "^6.0.1",
         "gulp": "^5.0.0",
@@ -20,9 +21,7 @@
         "js-cookie": "^2.2.1",
         "openseadragon": "^5.0.1",
         "openseadragon-filtering": "^1.0.0",
-        "popper.js": "^1.16.1",
         "prettier": "^2.8.8",
-        "redom": "^3.27.1",
         "remarkable": "^2.0.1",
         "sass": "^1.86.3",
         "screenfull": "^5.1.0",

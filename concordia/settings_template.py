@@ -66,7 +66,7 @@ NPM_FILE_PATTERNS = {
     "remarkable": ["dist/*"],
     "jquery": ["dist/*"],
     "js-cookie": ["src/*"],
-    "popper.js": ["dist/*"],
+    "@popperjs/core": ["dist/*"],
     "bootstrap": ["dist/*"],
     "screenfull": ["dist/*"],
     "@duetds/date-picker/": ["dist/*"],
