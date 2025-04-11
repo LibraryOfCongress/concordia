@@ -95,5 +95,25 @@ paginator, and page_obj variables defined.
                 </li>
             {% endif %}
         </ul>
+        <form method="get" class="d-flex justify-content-center mt-3" role="form">
+            <div class="input-group input-group-sm" style="max-width: 240px;">
+                <label class="input-group-text" for="pageJump">Jump to</label>
+                <select class="form-select" id="pageJump" name="page">
+                    {% for i in paginator.page_range %}
+                        <option value="{{ i }}" {% if i == page_obj.number %}selected{% endif %}>
+                            Page {{ i }}{% if i == page_obj.number %} of {{ paginator.num_pages }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Go</button>
+            </div>
+
+            {# Preserve other query parameters #}
+            {% for key, value in request.GET.items %}
+                {% if key != 'page' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                {% endif %}
+            {% endfor %}
+        </form>
     </nav>
 {% endif %}
