@@ -39,11 +39,10 @@ from concordia.views import (
     CompletedCampaignListView,
     FilteredItemDetailView,
     FilteredProjectDetailView,
-    ratelimit_view,
-    registration_rate,
-    reserve_rate,
-    user_cache_control,
 )
+from concordia.views.accounts import registration_rate
+from concordia.views.decorators import reserve_rate, user_cache_control
+from concordia.views.rate_limit import ratelimit_view
 from configuration.models import Configuration
 
 from .utils import (
