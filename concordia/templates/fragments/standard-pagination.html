@@ -7,7 +7,7 @@ paginator, and page_obj variables defined.
 {% endcomment %}
 
 {% if is_paginated %}
-    <nav class="w-100" aria-label="pagination">
+    <nav class="w-100" aria-label="Pagination">
         <ul class="pagination mx-auto justify-content-center">
             {% if page_obj.has_previous %}
                 <li class="page-item">
@@ -95,10 +95,12 @@ paginator, and page_obj variables defined.
                 </li>
             {% endif %}
         </ul>
+    </nav>
+    <nav class="w-100" aria-label="Page Jump">
         <form method="get" class="d-flex justify-content-center mt-3" role="form">
             <div class="input-group input-group-sm" style="max-width: 240px;">
-                <label class="input-group-text" for="pageJump">Jump to</label>
-                <select class="form-select" id="pageJump" name="page">
+                <label class="input-group-text" for="page-jump">Jump to</label>
+                <select class="form-select" id="page-jump" name="page">
                     {% for i in paginator.page_range %}
                         <option value="{{ i }}" {% if i == page_obj.number %}selected{% endif %}>
                             Page {{ i }}{% if i == page_obj.number %} of {{ paginator.num_pages }}{% endif %}
