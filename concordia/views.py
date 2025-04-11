@@ -30,14 +30,10 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import (
-    Case,
     Count,
-    IntegerField,
     Max,
     Q,
-    Subquery,
     Sum,
-    When,
 )
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
@@ -107,6 +103,15 @@ from concordia.utils import (
     get_image_urls_from_asset,
     get_or_create_reservation_token,
     request_accepts_json,
+)
+from concordia.utils.next_asset import (
+    find_next_reviewable_campaign_asset,
+    find_next_reviewable_topic_asset,
+    find_next_transcribable_campaign_asset,
+    find_next_transcribable_topic_asset,
+    find_reviewable_campaign_asset,
+    find_transcribable_campaign_asset,
+    remove_next_asset_objects,
 )
 from concordia.version import get_concordia_version
 from configuration.utils import configuration_value
@@ -2271,16 +2276,43 @@ def obtain_reservation(asset_pk, reservation_token):
     return msg
 
 
-def redirect_to_next_asset(potential_assets, mode, request, project_slug, user):
-    asset = potential_assets.first()
+def redirect_to_next_asset(asset, mode, request, user):
+    """
+    Redirects the user to the appropriate asset view or the homepage if no asset is
+    available.
+
+    If an asset is found, a reservation is created for it and the asset is removed
+    from the relevant caching tables. The user is then redirected to the transcription
+    page for that asset.
+
+    If no asset is provided, redirects to the homepage with an informational message.
+
+    Args:
+        asset (Asset or None): The asset to redirect to, or None if unavailable.
+        mode (str): Either "transcribe" or "review", used for messaging.
+        request (HttpRequest): The request initiating the redirect.
+        user (User): The user being redirected.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the asset or homepage.
+    """
+
     reservation_token = get_or_create_reservation_token(request)
     if asset:
-        if mode == "transcribe":
-            res = AssetTranscriptionReservation(
-                asset=asset, reservation_token=reservation_token
-            )
-            res.full_clean()
-            res.save()
+        # We previously created reservations for transcriptions
+        # but not reviews. This created a race condition
+        # with the next asset caching system because the
+        # non-reserved asset could be added into the cache
+        # table between when the user was redirected and
+        # when they made their own reservation, resulting in
+        # that asset being added to the caching system and
+        # possibly being sent to another user
+        res = AssetTranscriptionReservation(
+            asset=asset, reservation_token=reservation_token
+        )
+        res.full_clean()
+        res.save()
+        remove_next_asset_objects(asset.id)
         return redirect(
             "transcriptions:asset-detail",
             asset.item.project.campaign.slug,
@@ -2289,100 +2321,27 @@ def redirect_to_next_asset(potential_assets, mode, request, project_slug, user):
             asset.slug,
         )
     else:
-        no_pages_message = "There are no remaining pages to %s in this project"
+        no_pages_message = f"There are no remaining pages to {mode}."
 
-        messages.info(request, no_pages_message % mode)
+        messages.info(request, no_pages_message)
 
         return redirect("homepage")
-
-
-def filter_and_order_transcribable_assets(
-    potential_assets, project_slug, item_id, asset_id
-):
-    potential_assets = potential_assets.filter(
-        Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-        | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
-    )
-
-    potential_assets = potential_assets.exclude(
-        pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
-    )
-    potential_assets = potential_assets.select_related("item", "item__project")
-
-    # We'll favor assets which are in the same item or project as the original:
-    potential_assets = potential_assets.annotate(
-        unstarted=Case(
-            When(transcription_status=TranscriptionStatus.NOT_STARTED, then=1),
-            default=0,
-            output_field=IntegerField(),
-        ),
-        same_project=Case(
-            When(item__project__slug=project_slug, then=1),
-            default=0,
-            output_field=IntegerField(),
-        ),
-        same_item=Case(
-            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
-        ),
-        next_asset=Case(
-            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
-        ),
-    ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
-
-    return potential_assets
-
-
-def filter_and_order_reviewable_assets(
-    potential_assets, project_slug, item_id, asset_id, user_pk
-):
-    potential_assets = potential_assets.filter(
-        transcription_status=TranscriptionStatus.SUBMITTED
-    )
-    potential_assets = potential_assets.exclude(transcription__user=user_pk)
-    potential_assets = potential_assets.exclude(
-        pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
-    )
-    potential_assets = potential_assets.select_related("item", "item__project")
-
-    # We'll favor assets which are in the same item or project as the original:
-    potential_assets = potential_assets.annotate(
-        same_project=Case(
-            When(item__project__slug=project_slug, then=1),
-            default=0,
-            output_field=IntegerField(),
-        ),
-        same_item=Case(
-            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
-        ),
-        next_asset=Case(
-            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
-        ),
-    ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
-
-    return potential_assets
-
-
-def find_reviewable_asset(campaign, user):
-    return (
-        Asset.objects.select_for_update(skip_locked=True, of=("self",))
-        .exclude(transcription__user=user.pk)
-        .filter(
-            campaign=campaign,
-            published=True,
-            transcription_status=TranscriptionStatus.SUBMITTED,
-        )
-        .exclude(
-            pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
-        )
-        .select_related("item", "item__project")
-        .order_by("sequence")
-        .first()
-    )
 
 
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
+    """
+    Attempts to redirect the user to a reviewable asset from any active reviewable
+    campaign.
+
+    Iterates through campaigns marked as next-reviewable, falling back to others if
+    needed. Skips campaigns with no eligible assets. Uses asset caching where possible.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
@@ -2408,7 +2367,7 @@ def redirect_to_next_reviewable_asset(request):
         except IndexError:
             logger.error("Next reviewable campaign %s not found", campaign_id)
             continue
-        asset = find_reviewable_asset(campaign, user)
+        asset = find_reviewable_campaign_asset(campaign, user)
         if asset:
             break
         else:
@@ -2422,46 +2381,28 @@ def redirect_to_next_reviewable_asset(request):
             .exclude(id__in=campaign_ids)
             .order_by("launch_date")
         ):
-            asset = find_reviewable_asset(campaign, user)
+            asset = find_reviewable_campaign_asset(campaign, user)
             if asset:
                 break
             else:
                 logger.info("No reviewable assets found in %s", campaign)
-
-    if asset:
-        return redirect(
-            "transcriptions:asset-detail",
-            asset.item.project.campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
-        messages.info(request, "There are no remaining pages to review")
-
-        return redirect("homepage")
-
-
-def find_transcribable_asset(campaign):
-    return (
-        Asset.objects.select_for_update(skip_locked=True, of=("self",))
-        .filter(
-            campaign=campaign,
-            published=True,
-            transcription_status=TranscriptionStatus.NOT_STARTED,
-        )
-        .exclude(
-            pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
-        )
-        .select_related("item", "item__project")
-        .order_by("sequence")
-        .first()
-    )
+    return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
+    """
+    Attempts to redirect the user to a transcribable asset from any active transcription
+    campaign.
+
+    Iterates through campaigns marked as next-transcribable, falling back to others if
+    needed. Skips campaigns with no eligible assets. Uses asset caching where possible.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     campaign_ids = list(
         Campaign.objects.active()
         .listed()
@@ -2474,7 +2415,7 @@ def redirect_to_next_transcribable_asset(request):
     if campaign_ids:
         random.shuffle(campaign_ids)  # nosec
     else:
-        logger.info("No configured reviewable campaigns")
+        logger.info("No configured transcribable campaigns")
 
     for campaign_id in campaign_ids:
         try:
@@ -2482,7 +2423,7 @@ def redirect_to_next_transcribable_asset(request):
         except IndexError:
             logger.error("Next transcribable campaign %s not found", campaign_id)
             continue
-        asset = find_transcribable_asset(campaign)
+        asset = find_transcribable_campaign_asset(campaign)
         if asset:
             break
         else:
@@ -2496,153 +2437,167 @@ def redirect_to_next_transcribable_asset(request):
             .exclude(id__in=campaign_ids)
             .order_by("-launch_date")
         ):
-            asset = find_transcribable_asset(campaign)
+            asset = find_transcribable_campaign_asset(campaign)
             if asset:
                 break
             else:
                 logger.info("No transcribable assets found in %s", campaign)
 
-    if asset:
-        reservation_token = get_or_create_reservation_token(request)
-        res = AssetTranscriptionReservation(
-            asset=asset, reservation_token=reservation_token
-        )
-        res.full_clean()
-        res.save()
-        return redirect(
-            "transcriptions:asset-detail",
-            asset.item.project.campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
-        messages.info(request, "There are no remaining pages to transcribe")
+    if not asset:
+        logger.info("No transcribable assets found in any campaign")
 
-        return redirect("homepage")
+    return redirect_to_next_asset(asset, "transcribe", request, request.user)
 
 
 @never_cache
 @atomic
 def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
+    """
+    Redirects the user to the next reviewable asset within a specified campaign.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently reviewed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        campaign_slug (str): Slug for the target campaign.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     # Campaign is specified: may be listed or unlisted
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
+    # We pass request.user instead of user here to maintain pre-existing behavior
+    # (though it's probably unintended)
+    # TODO: Re-evaluate whether we should pass in user instead
+    asset = find_next_reviewable_campaign_asset(
+        campaign, request.user, project_slug, item_id, asset_pk
     )
 
-    potential_assets = filter_and_order_reviewable_assets(
-        potential_assets, project_slug, item_id, asset_id, request.user.pk
-    )
-
-    return redirect_to_next_asset(
-        potential_assets, "review", request, project_slug, user
-    )
+    return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
 @atomic
 def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
+    """
+    Redirects the user to the next transcribable asset within a specified campaign.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently transcribed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        campaign_slug (str): Slug for the target campaign.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     # Campaign is specified: may be listed or unlisted
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
+    asset = find_next_transcribable_campaign_asset(
+        campaign, project_slug, item_id, asset_pk
     )
 
-    return redirect_to_next_asset(
-        potential_assets, "transcribe", request, project_slug, user
-    )
+    return redirect_to_next_asset(asset, "transcribe", request, user)
 
 
 @never_cache
 @atomic
 def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
+    """
+    Redirects the user to the next reviewable asset within a specified topic.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently reviewed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        topic_slug (str): Slug for the target topic.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
     # Topic is specified: may be listed or unlisted
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__topics__in=(topic,),
-        item__project__published=True,
-        item__published=True,
-        published=True,
+    # We pass request.user instead of user here to maintain pre-existing behavior
+    # (though it's probably unintended)
+    # TODO: Re-evaluate whether we should pass in user instead
+    asset = find_next_reviewable_topic_asset(
+        topic, request.user, project_slug, item_id, asset_pk
     )
 
-    potential_assets = filter_and_order_reviewable_assets(
-        potential_assets, project_slug, item_id, asset_id, request.user.pk
-    )
-
-    return redirect_to_next_asset(
-        potential_assets, "review", request, project_slug, user
-    )
+    return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
 @atomic
 def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
+    """
+    Redirects the user to the next transcribable asset within a specified topic.
+
+    Accepts optional query parameters to influence prioritization:
+    - project: Current project slug
+    - item: Current item_id (NOT item.id but item.item_id)
+    - asset: ID of the most recently transcribed asset
+
+    Args:
+        request (HttpRequest): The incoming request.
+        topic_slug (str): Slug for the target topic.
+
+    Returns:
+        HttpResponseRedirect: Redirect to the selected asset or homepage.
+    """
+
     # Topic is specified: may be listed or unlisted
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
+    asset_pk = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__topics__in=(topic,),
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
+    asset = find_next_transcribable_topic_asset(topic, project_slug, item_id, asset_pk)
 
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
-    )
-
-    return redirect_to_next_asset(
-        potential_assets, "transcribe", request, project_slug, user
-    )
+    return redirect_to_next_asset(asset, "transcribe", request, user)
 
 
 class EmailReconfirmationView(TemplateView):

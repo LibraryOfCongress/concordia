@@ -34,6 +34,10 @@ from ..models import (
     CarouselSlide,
     Guide,
     Item,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
+    NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
     Project,
     Resource,
     ResourceFile,
@@ -68,6 +72,7 @@ from .filters import (
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter,
+    NextAssetCampaignListFilter,
     OcrGeneratedFilter,
     OcrOriginatedFilter,
     ProjectCampaignListFilter,
@@ -1065,3 +1070,117 @@ class CardFamilyAdmin(admin.ModelAdmin):
 @admin.register(Guide)
 class GuideAdmin(admin.ModelAdmin):
     form = GuideAdminForm
+
+
+@admin.register(NextTranscribableCampaignAsset)
+class NextTranscribableCampaignAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "transcription_status",
+        "campaign",
+        "created_on",
+    )
+    list_filter = (
+        NextAssetCampaignListFilter,
+        "transcription_status",
+    )
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "campaign__title",
+    )
+    readonly_fields = (
+        "asset",
+        "sequence",
+        "item",
+        "item_item_id",
+        "project",
+        "project_slug",
+        "campaign",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextReviewableCampaignAsset)
+class NextReviewableCampaignAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "campaign",
+        "created_on",
+    )
+    list_filter = (NextAssetCampaignListFilter,)
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "campaign__title",
+        "transcriber_ids",
+    )
+    readonly_fields = (
+        "asset",
+        "item",
+        "project",
+        "campaign",
+        "transcriber_ids",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextTranscribableTopicAsset)
+class NextTranscribableTopicAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "transcription_status",
+        "topic",
+        "created_on",
+    )
+    list_filter = (
+        TopicListFilter,
+        "transcription_status",
+    )
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "topic__title",
+    )
+    readonly_fields = (
+        "asset",
+        "sequence",
+        "item",
+        "item_item_id",
+        "project",
+        "project_slug",
+        "topic",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextReviewableTopicAsset)
+class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "topic",
+        "created_on",
+    )
+    list_filter = (TopicListFilter,)
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "topic__title",
+        "transcriber_ids",
+    )
+    readonly_fields = (
+        "asset",
+        "item",
+        "project",
+        "topic",
+        "transcriber_ids",
+        "created_on",
+    )
+    ordering = ("-created_on",)

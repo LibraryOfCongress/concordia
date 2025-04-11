@@ -1,12 +1,15 @@
 import datetime
 import os.path
 import time
+import uuid
 from itertools import chain
 from logging import getLogger
 
 import pytesseract
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -1412,3 +1415,145 @@ def validated_get_or_create(klass, **kwargs):
         obj.full_clean()
         obj.save()
         return obj, True
+
+
+class NextAsset(models.Model):
+    id = models.UUIDField(  # noqa: A003
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item_item_id = models.CharField(max_length=100)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    project_slug = models.SlugField(max_length=80, allow_unicode=True)
+    sequence = models.PositiveIntegerField(default=1)
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.asset.title
+
+
+class NextTranscribableAsset(NextAsset):
+    transcription_status = models.CharField(
+        editable=False,
+        max_length=20,
+        default=TranscriptionStatus.NOT_STARTED,
+        choices=TranscriptionStatus.CHOICES,
+        db_index=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class NextReviewableAsset(NextAsset):
+    transcriber_ids = ArrayField(
+        base_field=models.IntegerField(),
+        blank=True,
+        default=list,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class NextCampaignAssetManager(models.Manager):
+    target_count = None  # Override in subclass
+
+    def needed_for_campaign(self, campaign_id, target_count=None):
+        if target_count is None:
+            if self.target_count is None:
+                raise NotImplementedError(
+                    "You must define `target_count` in the subclass "
+                    "or pass `target_count` explicitly."
+                )
+            target_count = self.target_count
+
+        current_count = self.filter(campaign_id=campaign_id).count()
+        return max(target_count - current_count, 0)
+
+
+class NextTopicAssetManager(models.Manager):
+    target_count = None  # Override in subclass
+
+    def needed_for_topic(self, topic_id, target_count=None):
+        if target_count is None:
+            if self.target_count is None:
+                raise NotImplementedError(
+                    "You must define `target_count` in the subclass "
+                    "or pass `target_count` explicitly."
+                )
+            target_count = self.target_count
+
+        current_count = self.filter(topic_id=topic_id).count()
+        return max(target_count - current_count, 0)
+
+
+class NextTranscribableCampaignAssetManager(NextCampaignAssetManager):
+    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+
+
+class NextTranscribableTopicAssetManager(NextTopicAssetManager):
+    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+
+
+class NextReviewableCampaignAssetManager(NextCampaignAssetManager):
+    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
+
+
+class NextReviewableTopicAssetManager(NextTopicAssetManager):
+    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
+
+
+class NextTranscribableCampaignAsset(NextTranscribableAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+
+    objects = NextTranscribableCampaignAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+
+
+class NextTranscribableTopicAsset(NextTranscribableAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+
+    objects = NextTranscribableTopicAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+        unique_together = ("asset", "topic")
+
+
+class NextReviewableCampaignAsset(NextReviewableAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+
+    objects = NextReviewableCampaignAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]
+
+
+class NextReviewableTopicAsset(NextReviewableAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+
+    objects = NextReviewableTopicAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+        unique_together = ("asset", "topic")
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]

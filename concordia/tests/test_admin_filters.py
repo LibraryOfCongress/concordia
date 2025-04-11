@@ -1,3 +1,4 @@
+from django.contrib.admin import ModelAdmin
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
@@ -12,6 +13,7 @@ from concordia.admin import (
 from concordia.admin.filters import (
     CardCampaignListFilter,
     ItemProjectListFilter,
+    NextAssetCampaignListFilter,
     OcrGeneratedFilter,
     ProjectCampaignListFilter,
     ProjectCampaignStatusListFilter,
@@ -24,6 +26,7 @@ from concordia.models import (
     Campaign,
     Card,
     Item,
+    NextTranscribableCampaignAsset,
     Project,
     Resource,
     SiteReport,
@@ -31,6 +34,7 @@ from concordia.models import (
 )
 from concordia.tests.utils import (
     CreateTestUsers,
+    create_asset,
     create_card,
     create_card_family,
     create_item,
@@ -223,3 +227,36 @@ class TopicListFilterTests(TestCase):
         )
         resources = topic_filter.queryset(None, Resource.objects.all())
         self.assertEqual(resources.count(), 1)
+
+
+class NextAssetCampaignListFilterTests(TestCase):
+    def setUp(self):
+        asset = create_asset()
+        NextTranscribableCampaignAsset.objects.create(
+            asset=asset,
+            campaign=asset.campaign,
+            item=asset.item,
+            item_item_id=asset.item.item_id,
+            project=asset.item.project,
+            project_slug=asset.item.project.slug,
+            sequence=asset.sequence,
+            transcription_status=asset.transcription_status,
+        )
+        self.campaign = asset.campaign
+
+    def test_lookups_only_includes_used_campaigns(self):
+        class DummyAdmin(ModelAdmin):
+            model = NextTranscribableCampaignAsset
+
+        request = RequestFactory().get(
+            "/admin/concordia/nexttranscribablecampaignasset/"
+        )
+        dummy_admin = DummyAdmin(NextTranscribableCampaignAsset, None)
+        fil = NextAssetCampaignListFilter(
+            request, {}, NextTranscribableCampaignAsset, dummy_admin
+        )
+
+        lookups = list(fil.lookups(request, dummy_admin))
+        self.assertEqual(len(lookups), 1)
+        self.assertEqual(lookups[0][0], self.campaign.id)
+        self.assertEqual(lookups[0][1], self.campaign.title)
