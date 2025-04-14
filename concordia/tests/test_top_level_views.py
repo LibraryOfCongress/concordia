@@ -19,7 +19,7 @@ from concordia.models import (
     SimplePage,
     SiteReport,
 )
-from concordia.views import simple_page
+from concordia.views.simple_pages import simple_page
 
 from .utils import (
     CacheControlAssertions,

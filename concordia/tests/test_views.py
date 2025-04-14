@@ -34,14 +34,11 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
-from concordia.views import (
-    AccountProfileView,
-    CompletedCampaignListView,
-    FilteredItemDetailView,
-    FilteredProjectDetailView,
-)
-from concordia.views.accounts import registration_rate
+from concordia.views.accounts import AccountProfileView, registration_rate
+from concordia.views.campaigns import CompletedCampaignListView
 from concordia.views.decorators import reserve_rate, user_cache_control
+from concordia.views.items import FilteredItemDetailView
+from concordia.views.projects import FilteredProjectDetailView
 from concordia.views.rate_limit import ratelimit_view
 from configuration.models import Configuration
 

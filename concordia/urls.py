@@ -16,7 +16,7 @@ register_converter(converters.ItemIdConverter, "item_id")
 
 tx_urlpatterns = (
     [
-        path("", views.CampaignListView.as_view(), name="campaign-list"),
+        path("", views.campaigns.CampaignListView.as_view(), name="campaign-list"),
         path(
             "completed/",
             views.campaigns.CompletedCampaignListView.as_view(),
@@ -168,7 +168,9 @@ urlpatterns = [
         name="how-to-tag-spanish",
     ),
     path(
-        "get-started-esp/<uslug:slug>/", views.simple_page, name="simple-page-spanish"
+        "get-started-esp/<uslug:slug>/",
+        views.simple_pages.simple_page,
+        name="simple-page-spanish",
     ),
     path("for-educators/", views.simple_pages.simple_page, name="for-educators"),
     path("for-staff/", views.simple_pages.simple_page, name="for-staff"),
@@ -210,7 +212,9 @@ urlpatterns = [
         name="redirect-to-next-reviewable-asset",
     ),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
-    path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),
+    path(
+        "reserve-asset/<int:asset_pk>/", views.ajax.reserve_asset, name="reserve-asset"
+    ),
     path(
         "assets/<int:asset_pk>/transcriptions/save/",
         views.ajax.save_transcription,
@@ -233,7 +237,7 @@ urlpatterns = [
     ),
     path(
         "assets/<int:asset_pk>/transcriptions/rollback/",
-        views.rollback_transcription,
+        views.ajax.rollback_transcription,
         name="rollback-transcription",
     ),
     path(

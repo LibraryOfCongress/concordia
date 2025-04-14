@@ -18,65 +18,21 @@ from concordia.forms import ContactUsForm
 from concordia.models import Banner, Campaign, CarouselSlide
 from concordia.version import get_concordia_version
 
-# The following are the imports needed to properly export views with __all__
-from .accounts import (
-    AccountDeletionView,
-    AccountLetterView,
-    AccountProfileView,
-    ConcordiaLoginView,
-    ConcordiaPasswordResetConfirmView,
-    ConcordiaPasswordResetRequestView,
-    ConcordiaRegistrationView,
-    EmailReconfirmationView,
-    get_pages,
-)
-from .ajax import (
-    ajax_messages,
-    ajax_session_status,
-    generate_ocr_transcription,
-    reserve_asset,
-    review_transcription,
-    rollback_transcription,
-    rollforward_transcription,
-    save_transcription,
-    submit_tags,
-    submit_transcription,
-)
-from .assets import (
-    AssetDetailView,
-    redirect_to_next_asset,
-    redirect_to_next_reviewable_asset,
-    redirect_to_next_reviewable_campaign_asset,
-    redirect_to_next_reviewable_topic_asset,
-    redirect_to_next_transcribable_asset,
-    redirect_to_next_transcribable_campaign_asset,
-    redirect_to_next_transcribable_topic_asset,
-)
-from .campaigns import (
-    CampaignDetailView,
-    CampaignListView,
-    CampaignTopicListView,
-    CompletedCampaignListView,
-    FilteredCampaignDetailView,
-    ReportCampaignView,
+# These imports are required to make chainted attribute access like, e.g.,
+# views.campaigns.CampaignDetailView work correctly
+from . import (
+    accounts,  # noqa: F401
+    ajax,  # noqa: F401
+    assets,  # noqa: F401
+    campaigns,  # noqa: F401
+    items,  # noqa: F401
+    maintenance_mode,  # noqa: F401
+    projects,  # noqa: F401
+    rate_limit,  # noqa: F401
+    simple_pages,  # noqa: F401
+    topics,  # noqa: F401
 )
 from .decorators import default_cache_control
-from .items import FilteredItemDetailView, ItemDetailView
-from .maintenance_mode import (
-    maintenance_mode_frontend_available,
-    maintenance_mode_frontend_unavailable,
-    maintenance_mode_off,
-    maintenance_mode_on,
-)
-from .projects import FilteredProjectDetailView, ProjectDetailView
-from .rate_limit import ratelimit_view
-from .simple_pages import (
-    HelpCenterRedirectView,
-    HelpCenterSpanishRedirectView,
-    about_simple_page,
-    simple_page,
-)
-from .topics import TopicDetailView
 
 logger = logging.getLogger(__name__)
 
@@ -203,57 +159,3 @@ class ContactUsView(FormView):
             )
 
         return redirect("contact")
-
-
-__all__ = [
-    "healthz",
-    "HomeView",
-    "ContactUsView",
-    "CampaignListView",
-    "CompletedCampaignListView",
-    "CampaignDetailView",
-    "FilteredCampaignDetailView",
-    "CampaignTopicListView",
-    "ReportCampaignView",
-    "ProjectDetailView",
-    "FilteredProjectDetailView",
-    "ItemDetailView",
-    "FilteredItemDetailView",
-    "AssetDetailView",
-    "redirect_to_next_asset",
-    "redirect_to_next_reviewable_asset",
-    "redirect_to_next_transcribable_asset",
-    "redirect_to_next_reviewable_campaign_asset",
-    "redirect_to_next_transcribable_campaign_asset",
-    "redirect_to_next_reviewable_topic_asset",
-    "redirect_to_next_transcribable_topic_asset",
-    "TopicDetailView",
-    "simple_page",
-    "about_simple_page",
-    "HelpCenterRedirectView",
-    "HelpCenterSpanishRedirectView",
-    "ajax_session_status",
-    "ajax_messages",
-    "generate_ocr_transcription",
-    "rollback_transcription",
-    "rollforward_transcription",
-    "save_transcription",
-    "submit_transcription",
-    "review_transcription",
-    "submit_tags",
-    "reserve_asset",
-    "ConcordiaRegistrationView",
-    "ConcordiaLoginView",
-    "ConcordiaPasswordResetConfirmView",
-    "ConcordiaPasswordResetRequestView",
-    "EmailReconfirmationView",
-    "AccountDeletionView",
-    "AccountLetterView",
-    "get_pages",
-    "AccountProfileView",
-    "ratelimit_view",
-    "maintenance_mode_off",
-    "maintenance_mode_on",
-    "maintenance_mode_frontend_available",
-    "maintenance_mode_frontend_unavailable",
-]

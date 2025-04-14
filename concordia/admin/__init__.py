@@ -51,7 +51,7 @@ from ..models import (
     UserProfileActivity,
 )
 from ..tasks import retire_campaign
-from ..views import ReportCampaignView
+from ..views.campaigns import ReportCampaignView
 from .actions import (
     anonymize_action,
     change_status_to_completed,
