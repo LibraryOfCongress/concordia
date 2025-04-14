@@ -112,7 +112,7 @@ class ConcordiaLoginView(LoginView):
 
 @login_required
 @never_cache
-def AccountLetterView(request):
+def account_letter(request):
     # Generates a transcriptions and reviews contribution pdf letter
     # for the user and downloads it
 

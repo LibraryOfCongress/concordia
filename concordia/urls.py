@@ -106,7 +106,7 @@ tx_urlpatterns = (
 urlpatterns = [
     path("", views.HomeView.as_view(), name="homepage"),
     path("healthz", views.healthz, name="health-check"),
-    path("letter", views.accounts.AccountLetterView, name="user-letter"),
+    path("letter", views.accounts.account_letter, name="user-letter"),
     path("about/", views.simple_pages.about_simple_page, name="about"),
     # These patterns are to make sure various links to help-center URLs don't break
     # when the URLs are changed to not include help-center and can be removed after
