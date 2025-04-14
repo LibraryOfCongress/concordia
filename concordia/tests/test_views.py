@@ -684,7 +684,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         mock.assert_called_with("spa")
         mock.reset_mock()
 
-        with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+        with patch(
+            "concordia.views.ajax.get_transcription_superseded"
+        ) as superseded_mock:
             # Test case if the trancription being replaced has already been superseded
             superseded_mock.return_value = HttpResponse(status=409)
             url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
@@ -2326,7 +2328,7 @@ class RateLimitTests(CreateTestUsers, TestCase):
     def test_registration_rate(self):
         request = self.request_factory.get("/")
         self.assertEqual(registration_rate(None, request), "10/h")
-        with patch("concordia.views.UserRegistrationForm", autospec=True):
+        with patch("concordia.views.accounts.UserRegistrationForm", autospec=True):
             # This causes the form to test as valid even though there's no data
             self.assertIsNone(registration_rate(None, request))
 
