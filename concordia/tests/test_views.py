@@ -34,16 +34,12 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
-from concordia.views import (
-    AccountProfileView,
-    CompletedCampaignListView,
-    FilteredItemDetailView,
-    FilteredProjectDetailView,
-    ratelimit_view,
-    registration_rate,
-    reserve_rate,
-    user_cache_control,
-)
+from concordia.views.accounts import AccountProfileView, registration_rate
+from concordia.views.campaigns import CompletedCampaignListView
+from concordia.views.decorators import reserve_rate, user_cache_control
+from concordia.views.items import FilteredItemDetailView
+from concordia.views.projects import FilteredProjectDetailView
+from concordia.views.rate_limit import ratelimit_view
 from configuration.models import Configuration
 
 from .utils import (
@@ -685,7 +681,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         mock.assert_called_with("spa")
         mock.reset_mock()
 
-        with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+        with patch(
+            "concordia.views.ajax.get_transcription_superseded"
+        ) as superseded_mock:
             # Test case if the trancription being replaced has already been superseded
             superseded_mock.return_value = HttpResponse(status=409)
             url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
@@ -2327,7 +2325,7 @@ class RateLimitTests(CreateTestUsers, TestCase):
     def test_registration_rate(self):
         request = self.request_factory.get("/")
         self.assertEqual(registration_rate(None, request), "10/h")
-        with patch("concordia.views.UserRegistrationForm", autospec=True):
+        with patch("concordia.views.accounts.UserRegistrationForm", autospec=True):
             # This causes the form to test as valid even though there's no data
             self.assertIsNone(registration_rate(None, request))
 

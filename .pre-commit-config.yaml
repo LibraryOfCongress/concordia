@@ -84,3 +84,10 @@ repos:
       rev: 1.7.5
       hooks:
           - id: bandit
+    - repo: local
+      hooks:
+        - id: readme-symbol-check
+          name: Ensure top-level symbols are documented in README
+          entry: tools/readme_symbol_check.py
+          language: system
+          types: [python]
