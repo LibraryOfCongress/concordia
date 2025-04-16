@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}">
 <link rel="stylesheet" href="{% static 'codemirror/addon/lint/lint.css' %}">
 
-<script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+<script src="{% static '@codemirror/view/dist/index.js' %}" type="module"></script>
 <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
 <script src="{% static 'codemirror/mode/markdown/markdown.js' %}"></script>
 <script src="{% static 'codemirror/addon/lint/html-lint.js' %}"></script>
@@ -14,7 +14,7 @@
 
 <script src="{% static 'remarkable/dist/remarkable.min.js' %}"></script>
 
-<script src="{% static 'admin/editor-preview.js' %}"></script>
+<script src="{% static 'admin/editor-preview.js' %}" type="module"></script>
 
 <style>
     .form-row.codemirror-with-preview > div {

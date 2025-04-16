@@ -61,7 +61,7 @@ NPM_FILE_PATTERNS = {
     "urijs": ["src/*"],
     "openseadragon": ["build/*"],
     "openseadragon-filtering": ["openseadragon-filtering.js"],
-    "codemirror": ["lib/*", "addon/*", "mode/*"],
+    "@codemirror/view": ["dist/*"],
     "prettier": ["*.js"],
     "remarkable": ["dist/*"],
     "jquery": ["dist/*"],
