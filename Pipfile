@@ -7,7 +7,7 @@ name = "pypi"
 gunicorn = "*"
 celery = {extras = ["redis"],version = ">=5.0.5"}
 "boto3" = ">=1.9.16"
-botocore = '>=1.12.16,<1.31.25'
+botocore = '==1.31.25'
 requests = "*"
 bagit = "*"
 django-registration = "*"
