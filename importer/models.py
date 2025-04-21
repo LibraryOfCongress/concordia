@@ -246,7 +246,7 @@ class ImportItemAsset(TaskStatusModel):
                 new_status = (
                     "Maximum number of retries reached while retrying "
                     "image download for asset. The failure reason before retrying "
-                    "was {self.failure_reason} and the status was {self.status}"
+                    f"was {self.failure_reason} and the status was {self.status}"
                 )
                 self.update_status(new_status, do_save=False)
                 self.failure_reason = TaskStatusModel.FailureReason.RETRIES
