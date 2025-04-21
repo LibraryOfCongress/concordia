@@ -947,7 +947,12 @@ class AssetImportTests(TestCase):
             self.assertFalse(task_mock.apply_async.called)
             self.assertEqual(len(import_asset.failure_history), 1)
             self.assertNotEqual(import_asset.failed, None)
-            self.assertNotEqual(import_asset.status, "Test failed status")
+            self.assertEqual(
+                import_asset.status,
+                "Maximum number of retries reached while retrying image download "
+                "for asset. The failure reason before retrying was Image and the "
+                "status was Test failed status",
+            )
             self.assertEqual(import_asset.retry_count, 1)
             self.assertEqual(
                 import_asset.failure_reason, TaskStatusModel.FailureReason.RETRIES
