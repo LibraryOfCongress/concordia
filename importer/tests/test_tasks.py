@@ -1009,6 +1009,36 @@ class AssetImportTests(TestCase):
             self.assertEqual(import_asset.retry_count, 0)
             self.assertEqual(import_asset.failure_reason, "")
 
+    @override_settings(
+        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        AWS_STORAGE_BUCKET_NAME="test-bucket",
+    )
+    def test_download_asset_manual_retry_success(self):
+        # This mimics an admin manually retrying the task, rather than
+        # the automatic retry system (such as through an admin action).
+        # We want to be sure the failure information is correctly reset.
+        import_asset = self.import_asset
+        import_asset.failed = timezone.now()
+        import_asset.completed = None
+        import_asset.failure_reason = ""
+        import_asset.status = "Test failed status"
+        import_asset.retry_count = 0
+        import_asset.failure_history = []
+        import_asset.save()
+
+        with mock.patch(
+            "importer.models.tasks.download_and_store_asset_image"
+        ) as download_mock:
+            download_mock.return_value = "image.jpg"
+            tasks.download_asset_task.delay(import_asset.pk)
+            import_asset.refresh_from_db()
+            self.assertTrue(download_mock.called)
+            self.assertEqual(import_asset.status, "Completed")
+            self.assertEqual(len(import_asset.failure_history), 0)
+            self.assertEqual(import_asset.failed, None)
+            self.assertEqual(import_asset.retry_count, 0)
+            self.assertEqual(import_asset.failure_reason, "")
+
     @mock.patch("importer.tasks.download_and_store_asset_image")
     @mock.patch("importer.tasks.logger.info")
     def test_download_url_from_asset(self, mock_logger, mock_download):

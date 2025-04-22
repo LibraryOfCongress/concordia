@@ -108,10 +108,11 @@ def update_task_status(f):
         task_status_object.last_started = now()
         task_status_object.task_id = self.request.id
         task_status_object.save()
-
         try:
             result = f(self, task_status_object, *args, **kwargs)
             task_status_object.completed = now()
+            task_status_object.failed = None
+            task_status_object.failure_reason = ""
             task_status_object.update_status("Completed")
             return result
         except Exception as exc:
