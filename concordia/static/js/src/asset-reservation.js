@@ -1,4 +1,6 @@
-/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry bootstrap */
+/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
+
+import {Modal} from 'bootstrap';
 
 const assetReservationData = document.getElementById(
     'asset-reservation-data',
@@ -14,8 +16,8 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     );
     // This tries to get the modal if it exists, otherwise it initializes it
     var reservationModal =
-        bootstrap.Modal.getInstance(reservationModalElement) ||
-        new bootstrap.Modal(reservationModalElement);
+        Modal.getInstance(reservationModalElement) ||
+        new Modal(reservationModalElement);
 
     jQuery
         .ajax({

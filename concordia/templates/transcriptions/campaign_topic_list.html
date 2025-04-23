@@ -6,6 +6,7 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    {{ block.super }}
 {% endblock head_content %}
 
 {% block breadcrumbs %}

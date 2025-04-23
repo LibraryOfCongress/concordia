@@ -10,6 +10,7 @@
 {% block title %} {{ item.title }} ({{ campaign.title }}: {{ project.title }}) {% endblock title %}
 
 {% block head_content %}
+    {{ block.super }}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}" />
 {% endblock head_content %}
 
