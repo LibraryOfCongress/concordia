@@ -13,6 +13,7 @@
     <meta name="description" content="{{ campaign.description|striptags|normalize_whitespace }}">
     <meta name="thumbnail" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
     <meta property="og:image" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+    {{ block.super }}
 {% endblock head_content %}
 
 {% block breadcrumbs %}
