@@ -32,6 +32,7 @@ from django.utils import timezone
 from PIL import Image
 
 from concordia.exceptions import RateLimitExceededError
+from concordia.storage import ASSET_STORAGE
 from configuration.utils import configuration_value
 from prometheus_metrics.models import MetricsModelMixin
 
@@ -599,15 +600,10 @@ class AssetQuerySet(PublicationQuerySet):
 
 class Asset(MetricsModelMixin("asset"), models.Model):
     def get_storage_path(self, filename):
-        s3_relative_path = "/".join(
-            [
-                self.item.project.campaign.slug,
-                self.item.project.slug,
-                self.item.item_id,
-            ]
-        )
-        filename = self.media_url
-        return os.path.join(s3_relative_path, filename)
+        extension = os.path.splitext(filename)[1].lstrip(".").lower()
+        if extension == "jpeg":
+            extension = "jpg"
+        return self.get_asset_image_filename(extension)
 
     objects = AssetQuerySet.as_manager()
 
@@ -620,9 +616,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     slug = models.SlugField(max_length=100, allow_unicode=True)
 
     description = models.TextField(blank=True)
-    # TODO: do we really need this given that we import in lock-step sequence
-    #       numbers with a fixed extension?
-    media_url = models.TextField("Path component of the URL", max_length=255)
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
@@ -648,7 +641,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
 
-    storage_image = models.ImageField(upload_to=get_storage_path, max_length=255)
+    storage_image = models.ImageField(
+        upload_to=get_storage_path, storage=ASSET_STORAGE, max_length=255
+    )
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for this asset"
@@ -692,16 +687,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
+    @staticmethod
+    def get_asset_image_path(item):
+        return os.path.join(item.project.campaign.slug, item.project.slug, item.item_id)
+
     def get_asset_image_filename(self, extension="jpg"):
-        item = self.item
-        project = item.project
-        campaign = project.campaign
         return os.path.join(
-            campaign.slug,
-            project.slug,
-            item.item_id,
-            f"{self.sequence}.{extension}",
+            self.get_asset_image_path(self.item), f"{self.sequence}.{extension}"
         )
+
+    def get_existing_storage_image_filename(self):
+        return os.path.basename(self.storage_image.name)
 
     def get_ocr_transcript(self, language=None):
         if language and language not in settings.PYTESSERACT_ALLOWED_LANGUAGES:

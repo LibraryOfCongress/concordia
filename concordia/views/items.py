@@ -96,7 +96,6 @@ class ItemDetailView(APIListView):
 
         for i, asset in enumerate(context["object_list"]):
             serialized_asset = data["objects"][i]
-            serialized_asset.pop("media_url")
             image_url, thumbnail_url = get_image_urls_from_asset(asset)
             serialized_asset["image_url"] = image_url
             serialized_asset["thumbnail_url"] = thumbnail_url

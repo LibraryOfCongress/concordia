@@ -1,7 +1,5 @@
 import logging
-from urllib.parse import urljoin
 
-from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
@@ -653,7 +651,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "year",
         "sequence",
         "difficulty",
-        "truncated_media_url",
+        "truncated_storage_image",
         "media_type",
         "truncated_metadata",
     )
@@ -661,7 +659,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     prepopulated_fields = {"slug": ("title",)}
     search_fields = [
         "title",
-        "media_url",
+        "storage_image",
         "item__project__campaign__title",
         "item__project__title",
         "item__item_id",
@@ -703,11 +701,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return obj.item.item_id
 
     @admin.display(description="Media URL")
-    def truncated_media_url(self, obj):
+    def truncated_storage_image(self, obj):
         return format_html(
             '<a target="_blank" href="{}">{}</a>',
-            urljoin(settings.MEDIA_URL, obj.media_url),
-            truncatechars(obj.media_url, 100),
+            obj.storage_image.url,
+            truncatechars(obj.get_existing_storage_image_filename(), 100),
         )
 
     def get_readonly_fields(self, request, obj=None):
