@@ -5,14 +5,7 @@
 {% block title %}Home{% endblock title %}
 
 {% block head_content %}
-    <script type="importmap">
-        {
-            "imports": {
-                "@popperjs/core": "{% static '@popperjs/core/dist/esm/popper.js' %}",
-                "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.esm.js' %}"
-            }
-        }
-    </script>
+    {{ block.super }}
     <script type="module" src="{% static 'js/homepage-carousel.js' %}"></script>
 {% endblock head_content %}
 
