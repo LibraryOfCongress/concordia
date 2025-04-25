@@ -708,18 +708,83 @@ def populate_asset_years():
 
 
 @celery_app.task
-def create_elasticsearch_indices():
-    call_command("search_index", action="create")
+def create_opensearch_indices():
+    """Create the opensearch indices, if they don't already exist."""
+    call_command(
+        "opensearch", "index", "create", verbosity=2, force=True, ignore_error=True
+    )
 
 
 @celery_app.task
-def populate_elasticsearch_indices():
-    call_command("search_index", action="populate")
+def delete_opensearch_indices():
+    """Delete opensearch indices. Also delete documents (data)."""
+    call_command("opensearch", "index", "delete", force=True, ignore_error=True)
 
 
 @celery_app.task
-def delete_elasticsearch_indices():
-    call_command("search_index", "-f", action="delete")
+def rebuild_opensearch_indices():
+    """Deletes, then creates indices."""
+    call_command(
+        "opensearch", "index", "rebuild", verbosity=2, force=True, ignore_error=True
+    )
+
+
+### all opensearch tasks below this mark are for building out the solution only
+### I intend to delete them once the solution is in place and working
+# document loading options
+
+
+@celery_app.task
+def populate_opensearch_users_indices():
+    """
+    Populate the OpenSearch index for user-related data.
+    This function indexes user data into the OpenSearch system
+    to make it searchable and accessible for queries.
+    """
+    call_command(
+        "opensearch", "document", "index", "--indices", "users", "--force", "--parallel"
+    )
+
+
+@celery_app.task
+def populate_opensearch_assets_indices():
+    """
+    Populate the OpenSearch index for user-related data.
+    This function indexes user data into the OpenSearch system
+    to make it searchable and accessible for queries.
+    """
+    call_command(
+        "opensearch",
+        "document",
+        "index",
+        "--indices",
+        "assets",
+        "--force",
+        "--parallel",
+    )
+
+
+# This works well - does all in gt 1:45 but lt 5hrs but doesn't stop
+# - so it's a loop and overrides global autosync = False
+@celery_app.task
+def populate_opensearch_indices():
+    """
+    Populate the OpenSearch index with all documents.
+    """
+    call_command("opensearch", "document", "index", "--force", "--parallel")
+
+
+# this works using documents.py django class
+# get_indexing_queryset(self, *args, **kwargs) # noqa: ERA001
+@celery_app.task
+def populate_opensearch_idx_indices():
+    """
+    Populate the OpenSearch index with all documents.
+    """
+    call_command("opensearch", "document", "index", "--force")
+
+
+### END opensearch tasks
 
 
 def _populate_activity_table(campaigns):

@@ -25,14 +25,20 @@ EMAIL_FILE_PATH = (
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
-ELASTICSEARCH_DSL_AUTOSYNC = False
+INSTALLED_APPS += ["django_opensearch_dsl"]
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
-)
-ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
+# Globally disable auto-syncing. Automatically update the index when a model is
+# created / saved / deleted.
+OPENSEARCH_DSL_AUTOSYNC = False
 
-INSTALLED_APPS += ["django_elasticsearch_dsl"]
+OPENSEARCH_DSL = {
+    "default": {"hosts": "localhost:9200"},
+    "secure": {
+        "hosts": [{"scheme": "https", "host": "192.30.255.112", "port": 9201}],
+        "http_auth": ("admin", "admin"),
+        "timeout": 120,
+    },
+}
 
 REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 

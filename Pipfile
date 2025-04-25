@@ -52,7 +52,6 @@ xlsxwriter = "*"
 blinker = "<1.8.0"
 psycopg2 = "*"
 django = "==4.2.20"
-opensearch-py = "==2.8.0"
 django-opensearch-dsl = "*"
 
 [dev-packages]
