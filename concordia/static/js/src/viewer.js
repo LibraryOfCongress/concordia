@@ -23,6 +23,9 @@ let seadragonViewer = OpenSeadragon({
     rotateRightButton: 'viewer-rotate-right',
     flipButton: 'viewer-flip',
     crossOriginPolicy: 'Anonymous',
+    drawer: 'canvas',
+    defaultZoomLevel: 0,
+    homeFillsView: false,
 });
 
 // We need to define our own fullscreen function rather than using OpenSeadragon's
@@ -220,6 +223,19 @@ thresholdDown.addEventListener('click', function () {
 
 let reset = document.getElementById('viewer-reset');
 reset.addEventListener('click', resetImageFilterForms);
+
+// After the viewer has opened, set it to the home
+// view, which insures the entire image is displayed
+// (Workaround for change in behavior introduced during
+// the upgrade to OpenSeadragon 5.0.1)
+seadragonViewer.addHandler('open', function () {
+    // We use setTimeout to make sure everything is
+    // fully loaded so the viewport is ready calculate
+    // the bounds and zoom correctly.
+    setTimeout(() => {
+        seadragonViewer.viewport.goHome(true);
+    }, 0);
+});
 
 seadragonViewer.addHandler('open-failed', function () {
     // We don't use the eventData or error message

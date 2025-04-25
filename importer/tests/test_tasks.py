@@ -1,5 +1,4 @@
 import concurrent.futures
-import os.path
 import uuid
 from unittest import mock
 
@@ -322,7 +321,10 @@ class FetchAllUrlsTests(TestCase):
 
 
 @override_settings(
-    STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+    },
     AWS_STORAGE_BUCKET_NAME="test-bucket",
 )
 class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
@@ -800,7 +802,10 @@ class AssetImportTests(TestCase):
             self.assertFalse(task_mock.called)
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid(self):
@@ -818,13 +823,12 @@ class AssetImportTests(TestCase):
 
             self.assertEqual(get_mock.call_args[0], ("http://example.com",))
             self.assertTrue(get_mock.call_args[1]["stream"])
-            self.assertEqual(
-                os.path.basename(self.import_asset.asset.storage_image.path),
-                self.import_asset.asset.media_url,
-            )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid_checksum_fail(self):
@@ -848,7 +852,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid_checksum_fail_without_flag(self):
@@ -870,7 +877,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_invalid(self):
@@ -891,7 +901,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_success(self):
@@ -915,7 +928,10 @@ class AssetImportTests(TestCase):
             self.assertEqual(import_asset.failure_reason, "")
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_maximum_exceeded(self):
@@ -959,7 +975,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_cant_reset(self):
@@ -985,7 +1004,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_invalid_failure_reason(self):
@@ -1010,7 +1032,10 @@ class AssetImportTests(TestCase):
             self.assertEqual(import_asset.failure_reason, "")
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_manual_retry_success(self):

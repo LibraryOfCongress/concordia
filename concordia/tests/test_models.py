@@ -93,7 +93,7 @@ class AssetTestCase(CreateTestUsers, TestCase):
 
     def test_get_storage_path(self):
         self.assertEqual(
-            self.asset.get_storage_path(filename=self.asset.storage_image),
+            self.asset.get_storage_path(filename=self.asset.storage_image.name),
             "test-campaign/test-project/testitem.0123456789/1.jpg",
         )
 
@@ -104,7 +104,6 @@ class AssetTestCase(CreateTestUsers, TestCase):
                 title="No campaign",
                 slug="no-campaign",
                 media_type=MediaType.IMAGE,
-                media_url="1.jpg",
                 storage_image="unittest1.jpg",
             )
         except (ValidationError, ObjectDoesNotExist):

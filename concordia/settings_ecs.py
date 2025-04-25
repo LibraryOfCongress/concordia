@@ -64,6 +64,12 @@ STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
     },
+    "assets": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "querystring_auth": False,
+        },
+    },
 }
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs

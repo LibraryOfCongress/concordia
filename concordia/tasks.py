@@ -634,65 +634,6 @@ def calculate_difficulty_values(asset_qs=None):
 
 
 @celery_app.task
-def populate_storage_image_values(asset_qs=None):
-    """
-    For Assets that existed prior to implementing the storage_image ImageField, build
-    the relative S3 storage key for the asset and update the storage_image value
-    """
-    # As a reference point - how many records have a null storage image field?
-    asset_storage_qs = Asset.objects.filter(
-        storage_image__isnull=True
-    ) | Asset.objects.filter(storage_image__exact="")
-    storage_image_empty_count = asset_storage_qs.count()
-    asset_qs = (
-        Asset.objects.filter(storage_image__isnull=True)
-        | Asset.objects.filter(storage_image__exact="")
-        .order_by("id")
-        .select_related("item__project__campaign")
-        .only(
-            "id",
-            "storage_image",
-            "media_url",
-            "item",
-            "item__item_id",
-            "item__project",
-            "item__project__slug",
-            "item__project__campaign",
-            "item__project__campaign__slug",
-        )[:5000]
-    )
-    logger.debug("Total Storage image empty count %s", storage_image_empty_count)
-    logger.debug("Start storage image chunking")
-
-    updated_count = 0
-
-    # We'll process assets in chunks using an iterator to avoid saving objects
-    # which will never be used again in memory. We will build the S3 relative key for
-    # each existing asset and pass them to bulk_update() to be saved in a single query.
-    for asset_chunk in chunked(asset_qs.iterator(), 1000):
-        for asset in asset_chunk:
-            asset.storage_image = "/".join(
-                [
-                    asset.item.project.campaign.slug,
-                    asset.item.project.slug,
-                    asset.item.item_id,
-                    asset.media_url,
-                ]
-            )
-
-        # We will only save the new storage image value both for performance
-        # and to avoid any possibility of race conditions causing stale data
-        # to be saved:
-
-        Asset.objects.bulk_update(asset_chunk, ["storage_image"])
-        updated_count += len(asset_chunk)
-
-        logger.debug("Storage image updated count %s", updated_count)
-
-    return updated_count, storage_image_empty_count
-
-
-@celery_app.task
 def populate_asset_years():
     """
     Pull out date info from raw Item metadata and populate it for each Asset

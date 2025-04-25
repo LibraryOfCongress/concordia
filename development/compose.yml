@@ -79,7 +79,7 @@ services:
             - default
         volumes:
             - ..:/app:z
-            - ${HOME_DIR}/.aws:${HOME_DIR}.aws:z,ro
+            - ${HOME_DIR}/.aws:${HOME_DIR}/.aws:z
             - images_volume:/concordia_images
 
     celerybeat:
