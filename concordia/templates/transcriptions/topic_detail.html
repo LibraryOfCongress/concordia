@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load concordia_text_tags %}
+{% load concordia_querystring %}
 
 {% block title %}{{ topic.title }}{% endblock title %}
 
@@ -47,8 +48,9 @@
                 <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
                     <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
                         {% url 'transcriptions:project-detail' project.campaign.slug project.slug as project_url %}
+                        {% qs_alter sublevel_querystring transcription_status=project.url_filter as project_query %}
 
-                        <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
+                        <a href="{{ project_url }}?{{ project_query }}" aria-hidden="true">
                             <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
                         </a>
 
@@ -59,12 +61,12 @@
                         </div>
 
                         <h6 class="text-center primary-text m-0 concordia-object-card-title">
-                            <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.campaign.title }} - {{ project.title }}</a>
+                            <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}?{{ project_query }}">{{ project.campaign.title }} - {{ project.title }}</a>
                         </h6>
 
                         {% if project.lowest_transcription_status == 'completed' %}
                             <div class="card-actions">
-                                <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
+                                <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ project_query }}">
                                     <span class="fas fa-check tx-completed"></span>
                                     Complete
                                 </a>
