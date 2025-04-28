@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db.models import Count
-from django_elasticsearch_dsl import Document, fields
-from django_elasticsearch_dsl.registries import registry
+from django_opensearch_dsl import Document, fields
+from django_opensearch_dsl.registries import registry
 
 from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
 
@@ -102,7 +102,7 @@ class TagCollectionDocument(Document):
         model = UserAssetTagCollection
         fields = ["created_on", "updated_on"]
 
-    def get_queryset(self):
+    def get_queryset(self, filter_=None, exclude=None, count=None):
         return (
             super()
             .get_queryset()
@@ -161,7 +161,7 @@ class TranscriptionDocument(Document):
             "submitted",
         ]
 
-    def get_queryset(self):
+    def get_queryset(self, filter_=None, exclude=None, count=None):
         return (
             super()
             .get_queryset()
@@ -223,7 +223,7 @@ class AssetDocument(Document):
         model = Asset
         fields = ["published", "difficulty", "slug", "sequence", "year"]
 
-    def get_queryset(self):
+    def get_queryset(self, filter_=None, exclude=None, count=None):
         return (
             super()
             .get_queryset()
