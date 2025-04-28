@@ -37,6 +37,7 @@ from ..models import (
     NextTranscribableCampaignAsset,
     NextTranscribableTopicAsset,
     Project,
+    ProjectTopic,
     Resource,
     ResourceFile,
     SimplePage,
@@ -99,6 +100,7 @@ from .forms import (
     GuideAdminForm,
     ItemAdminForm,
     ProjectAdminForm,
+    ProjectTopicInlineForm,
     TopicAdminForm,
 )
 
@@ -432,9 +434,20 @@ class ResourceFileAdmin(admin.ModelAdmin):
         return ("name", "resource")
 
 
+class TopicProjectInline(admin.TabularInline):
+    model = ProjectTopic
+    form = ProjectTopicInlineForm
+    extra = 1
+    autocomplete_fields = ["project"]
+    fields = ["project", "url_filter"]
+    fk_name = "topic"
+
+
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
     form = TopicAdminForm
+
+    inlines = [TopicProjectInline]
 
     list_display = (
         "id",
@@ -450,11 +463,20 @@ class TopicAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
 
 
+class ProjectTopicInline(admin.TabularInline):
+    model = ProjectTopic
+    form = ProjectTopicInlineForm
+    extra = 1
+    autocomplete_fields = ["topic"]
+    fields = ["topic", "url_filter"]
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     form = ProjectAdminForm
 
-    # todo: add foreignKey link for campaign
+    inlines = [ProjectTopicInline]
+
     list_display = ("id", "title", "slug", "campaign", "published", "ordering")
     list_editable = ("ordering",)
     list_display_links = ("id", "title", "slug")
