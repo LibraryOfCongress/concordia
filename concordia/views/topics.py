@@ -1,15 +1,18 @@
 from urllib.parse import urlencode
 
 from django.db.models import Count, Prefetch, Q
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from concordia.api_views import APIDetailView
 from concordia.models import Asset, ProjectTopic, Topic, TranscriptionStatus
 
+from .decorators import default_cache_control
 from .utils import annotate_children_with_progress_stats, calculate_asset_stats
 
 
-# @method_decorator(default_cache_control, name="dispatch")
-# @method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
+@method_decorator(cache_page(60 * 60, cache="view_cache"), name="dispatch")
 class TopicDetailView(APIDetailView):
     template_name = "transcriptions/topic_detail.html"
     context_object_name = "topic"
@@ -48,10 +51,7 @@ class TopicDetailView(APIDetailView):
 
         # Attach the url_filter, if any, to the project itself to access in the template
         for project in projects:
-            if project.topic_links:
-                project.url_filter = project.topic_links[0].url_filter
-            else:
-                project.url_filter = None
+            project.url_filter = project.topic_links[0].url_filter
 
         ctx["filters"] = filters = {}
         status = self.request.GET.get("transcription_status")
