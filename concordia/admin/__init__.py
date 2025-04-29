@@ -461,6 +461,9 @@ class TopicAdmin(admin.ModelAdmin):
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = [
+        "title",
+    ]
 
 
 class ProjectTopicInline(admin.TabularInline):
