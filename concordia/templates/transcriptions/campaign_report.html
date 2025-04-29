@@ -22,10 +22,10 @@
                 </tbody>
             </table>
         </div>
-        <div class="row">
-            <div class="card-columns">
-                {% for project in projects %}
-                    <div class="card mb-1">
+        <div class="row justify-content-center">
+            {% for project in projects %}
+                <div class="card-column col-lg-4 mb-1">
+                    <div class="card h-100">
                         <div class="card-header">
                             <a class="card-title" href="{% url 'transcriptions:project-detail' campaign_slug=campaign_slug slug=project.slug %}">
                                 {{ project.title }}
@@ -66,8 +66,8 @@
                             </table>
                         </div>
                     </div>
-                {% endfor %}
-            </div>
+                </div>
+            {% endfor %}
         </div>
 
         <div class="row mt-3">
