@@ -9,9 +9,9 @@ from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
 @registry.register_document
 class UserDocument(Document):
     class Index:
-        # Name of the Elasticsearch index
+        # Name of the Opensearch index
         name = "users"
-        # See Elasticsearch Indices API reference for available settings
+        # See Opensearch Indices API reference for available settings
         settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
     transcription_count = fields.IntegerField()
@@ -28,9 +28,9 @@ class UserDocument(Document):
 @registry.register_document
 class SiteReportDocument(Document):
     class Index:
-        # Name of the Elasticsearch index
+        # Name of the Opensearch index
         name = "site_reports"
-        # See Elasticsearch Indices API reference for available settings
+        # See Opensearch Indices API reference for available settings
         settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
     campaign = fields.ObjectField(properties={"slug": fields.KeywordField()})
@@ -70,9 +70,9 @@ class SiteReportDocument(Document):
 @registry.register_document
 class TagCollectionDocument(Document):
     class Index:
-        # Name of the Elasticsearch index
+        # Name of the Opensearch index
         name = "tags"
-        # See Elasticsearch Indices API reference for available settings
+        # See Opensearch Indices API reference for available settings
         settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
     tags = fields.NestedField(properties={"value": fields.TextField()})
@@ -116,9 +116,9 @@ class TagCollectionDocument(Document):
 @registry.register_document
 class TranscriptionDocument(Document):
     class Index:
-        # Name of the Elasticsearch index
+        # Name of the Opensearch index
         name = "transcriptions"
-        # See Elasticsearch Indices API reference for available settings
+        # See Opensearch Indices API reference for available settings
         settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
     asset = fields.ObjectField(
@@ -178,9 +178,9 @@ class TranscriptionDocument(Document):
 @registry.register_document
 class AssetDocument(Document):
     class Index:
-        # Name of the Elasticsearch index
+        # Name of the Opensearch index
         name = "assets"
-        # See Elasticsearch Indices API reference for available settings
+        # See Opensearch Indices API reference for available settings
         settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
     item = fields.ObjectField(
