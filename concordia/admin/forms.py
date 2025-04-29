@@ -3,7 +3,16 @@ from django import forms
 from django.core.cache import caches
 from tinymce.widgets import TinyMCE
 
-from ..models import Campaign, Card, Guide, Item, Project, Topic
+from ..models import (
+    Campaign,
+    Card,
+    Guide,
+    Item,
+    Project,
+    ProjectTopic,
+    Topic,
+    TranscriptionStatus,
+)
 
 FRAGMENT_ALLOWED_TAGS = {
     "a",
@@ -115,6 +124,17 @@ class ProjectAdminForm(SanitizedDescriptionAdminForm):
         widgets = {
             "description": TinyMCE(),
         }
+
+
+class ProjectTopicInlineForm(forms.ModelForm):
+    url_filter = forms.ChoiceField(
+        choices=[("", "-- All Statuses --")] + list(TranscriptionStatus.CHOICES),
+        required=False,
+    )
+
+    class Meta:
+        model = ProjectTopic
+        fields = ["topic", "url_filter"]
 
 
 class ItemAdminForm(forms.ModelForm):

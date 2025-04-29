@@ -23,6 +23,7 @@ from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
     Campaign,
+    ProjectTopic,
     Transcription,
     TranscriptionStatus,
 )
@@ -279,6 +280,16 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertContains(response, campaign.title)
         self.assertNotContains(response, unlisted_campaign.title)
 
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+            "view_cache": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+        }
+    )
     def test_topic_detail_view(self):
         """
         Test GET on route /topics/<slug-value> (topic)
@@ -307,6 +318,103 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertIn("sublevel_querystring", context)
         self.assertEqual(
             context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
+        # Testing url_filter
+        campaign = create_campaign(title="Filter Test Campaign", slug="filter-test")
+
+        project_with_filter = create_project(
+            campaign=campaign, title="Project With Filter", slug="with-filter"
+        )
+        project_without_filter = create_project(
+            campaign=campaign, title="Project Without Filter", slug="without-filter"
+        )
+
+        ProjectTopic.objects.create(
+            project=project_with_filter,
+            topic=c,
+            url_filter=TranscriptionStatus.SUBMITTED,
+        )
+
+        ProjectTopic.objects.create(
+            project=project_without_filter,
+            topic=c,
+            url_filter=None,
+        )
+
+        response = self.client.get(reverse("topic-detail", args=(c.slug,)))
+        self.assertEqual(response.status_code, 200)
+
+        # Check that the project_with_filter has the correct transcription_status
+        # in its links
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_with_filter.slug}/?transcription_status=submitted",
+            2,
+        )
+
+        # Check that the project_without_filter does not have any transcription_status
+        # added (It will only have whatever the existing sublevel_querystring is,
+        # which is empty by default) So it should not have transcription_status=
+        # in the href
+        self.assertNotContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_without_filter.slug}/?transcription_status=",
+        )
+
+        # Test with url_filter and a sublevel_qerystring. Only transcription_status is
+        # included in sublevel_querystring; all other parameters are dropped
+        response = self.client.get(
+            reverse("topic-detail", args=(c.slug,)),
+            {"transcription_status": "not_started", "another_param": "some_value"},
+        )
+        self.assertIn("sublevel_querystring", response.context)
+        self.assertEqual(
+            response.context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
+        # Because the projects have no items/assets, they will be excluded when we add a
+        # transcription_status to the querystring, so we shouldn't see those projects:
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_with_filter.slug}/?transcription_status=not_started",
+            0,
+        )
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_without_filter.slug}/?transcription_status=not_started",
+            0,
+        )
+
+        # Add assets to the projects so they'll display
+        item_with_filter = create_item(project=project_with_filter)
+        create_asset(item=item_with_filter)
+        item_without_filter = create_item(project=project_without_filter)
+        create_asset(item=item_without_filter)
+
+        response = self.client.get(
+            reverse("topic-detail", args=(c.slug,)),
+            {"transcription_status": "not_started", "another_param": "some_value"},
+        )
+        self.assertIn("sublevel_querystring", response.context)
+        self.assertEqual(
+            response.context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
+        # Check that the project_with_filter has the correct transcription_status in
+        # its links. The sublevel_querystring should override the url_filter setting
+        # if it includes transcription_status
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_with_filter.slug}/?transcription_status=not_started",
+            2,
+        )
+
+        # Check that the project_without_filter uses the sublevel_querystring
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_without_filter.slug}/?transcription_status=not_started",
+            2,
         )
 
     def test_unlisted_topic_detail_view(self):
