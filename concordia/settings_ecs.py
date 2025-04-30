@@ -84,7 +84,9 @@ INSTALLED_APPS += ["django_opensearch_dsl"]
 # Globally disable auto-syncing
 OPENSEARCH_DSL_AUTOSYNC = os.getenv("OPENSEARCH_DSL_AUTOSYNC", False)
 
-OPENSEARCH_DSL = {"default": {"hosts": os.getenv("OPENSEARCH_ENDPOINT", "elk:9200")}}
+OPENSEARCH_DSL = {
+    "default": {"hosts": os.getenv("OPENSEARCH_ENDPOINT", "opensearch-node:9200")}
+}
 
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.

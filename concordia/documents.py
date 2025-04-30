@@ -1,3 +1,4 @@
+# Contains OpenSearch documents for indexing models in the Concordia application.
 from django.contrib.auth.models import User
 from django.db.models import Count
 from django_opensearch_dsl import Document, fields
