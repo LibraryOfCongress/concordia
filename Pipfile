@@ -10,8 +10,6 @@ requests = "==2.32.3"
 bagit = "==1.8.1"
 django-registration = "==3.4"
 django-tinymce = "==4.1.0"
-elasticsearch = "==7.13.4"
-django-elasticsearch-dsl = "==7.3"
 django-debug-toolbar = "==5.1.0"
 whitenoise = "==6.9.0"
 openpyxl = "==3.1.5"
@@ -52,6 +50,7 @@ blinker = "==1.7.0"
 psycopg2 = "==2.9.10"
 django = "==4.2.20"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
+django-opensearch-dsl = "==0.7.0"
 
 [dev-packages]
 invoke = "==2.2.0"

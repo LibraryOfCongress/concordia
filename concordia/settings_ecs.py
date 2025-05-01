@@ -79,15 +79,13 @@ if CONCORDIA_ENVIRONMENT == "production":
 else:
     MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
-ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ELASTICSEARCH_DSL_AUTOSYNC", False)
+INSTALLED_APPS += ["django_opensearch_dsl"]
 
-INSTALLED_APPS += ["django_elasticsearch_dsl"]
+# Globally disable auto-syncing
+OPENSEARCH_DSL_AUTOSYNC = os.getenv("OPENSEARCH_DSL_AUTOSYNC", False)
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
-)
-ELASTICSEARCH_DSL = {
-    "default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}
+OPENSEARCH_DSL = {
+    "default": {"hosts": os.getenv("OPENSEARCH_ENDPOINT", "opensearch-node:9200")}
 }
 
 # HMAC activation flow provide the two-step registration process,
