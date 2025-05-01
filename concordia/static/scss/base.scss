@@ -718,6 +718,10 @@ $card-img-height: 14.8rem;
 $card-btn-height: 31px;
 $card-progress-height: 12px;
 
+.card-header {
+    min-height: 65px;
+}
+
 .card-body {
     padding: 1rem 0.5rem;
 }

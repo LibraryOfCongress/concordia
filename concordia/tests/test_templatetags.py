@@ -84,3 +84,9 @@ class TestTemplateTags(TestCase):
             base_template + "{% qs_alter data foo='bar' as new_data %}" "{{ new_data }}"
         ).render(Context({"data": data}))
         self.assertEqual(out, "bar=baz&amp;bar=foo&amp;baz=taz&amp;foo=bar")
+
+        # Test add_if_missing when the key already exists (should not overwrite)
+        out = Template(
+            base_template + "{% qs_alter data add_if_missing:bar='newvalue' %}"
+        ).render(Context({"data": data}))
+        self.assertEqual(out, "bar=baz&amp;bar=foo&amp;baz=taz")

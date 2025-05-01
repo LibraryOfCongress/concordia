@@ -39,6 +39,10 @@ class QueryStringAlterer(Node):
 
             delete_value:field_name,value
 
+         Conditionally add a parameter if it does not exist:
+
+            add_if_missing:name=value
+
     Examples:
 
     Query string provided as QueryDict::
@@ -50,6 +54,10 @@ class QueryStringAlterer(Node):
     Remove one facet from a list::
 
         {% qs_alter request.GET foo=bar baaz=quux delete_value:"facets",value %}
+
+    Conditionally add a parameter only if missing::
+
+        {% qs_alter request.GET add_if_missing:foo=bar %}
 
     Query string provided as string::
 
@@ -93,7 +101,10 @@ class QueryStringAlterer(Node):
                 if value in f_list:
                     f_list.remove(value)
                     qs.setlist(field, f_list)
-
+            elif arg.startswith("add_if_missing:"):
+                k, v = arg[15:].split("=", 2)
+                if k not in qs:
+                    qs[k] = Variable(v).resolve(context)
             else:
                 k, v = arg.split("=", 2)
                 qs[k] = Variable(v).resolve(context)

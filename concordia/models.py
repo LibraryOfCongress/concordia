@@ -517,7 +517,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     description = models.TextField(blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
-    topics = models.ManyToManyField(Topic)
+    topics = models.ManyToManyField("Topic", through="ProjectTopic")
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for all assets of this project"
@@ -1553,3 +1553,22 @@ class NextReviewableTopicAsset(NextReviewableAsset):
         indexes = [
             GinIndex(fields=["transcriber_ids"]),
         ]
+
+
+class ProjectTopic(models.Model):
+    project = models.ForeignKey("Project", on_delete=models.CASCADE)
+    topic = models.ForeignKey("Topic", on_delete=models.CASCADE)
+
+    url_filter = models.CharField(
+        max_length=20,
+        choices=TranscriptionStatus.CHOICES,
+        blank=True,
+        null=True,
+        help_text="Optional filter on the status for this project-topic link",
+    )
+
+    class Meta:
+        db_table = (
+            "concordia_project_topics"  # pre-existing table, so we reuse the name
+        )
+        unique_together = ("project", "topic")
