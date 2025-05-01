@@ -1,6 +1,6 @@
 /* global $ */
 
-import {Carousel} from '/static/bootstrap/dist/js/bootstrap.esm.js';
+import {Carousel} from 'bootstrap';
 
 // initialization
 var carouselElement = document.getElementById('homepage-carousel');
