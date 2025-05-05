@@ -16,23 +16,26 @@ Parameters:
 
 Resources:
     RedisService:
-        Type: AWS::ElastiCache::CacheCluster
+        Type: AWS::ElastiCache::ReplicationGroup
         Properties:
-            VpcSecurityGroupIds:
+            ReplicationGroupDescription: Feature branch Valkey cluster
+            SecurityGroupIds:
                 - !Ref 'SecurityGroup'
             CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
             CacheNodeType: !Ref 'CacheNodeType'
-            ClusterName: !Sub '${EnvironmentName}-valkey'
+            CacheParameterGroupName: 'default.valkey8.0.1'
+            ReplicationGroupId: !Sub '${EnvironmentName}-valkey'
+            EngineVersion: '8.0.1'
             Engine: valkey
             AutoMinorVersionUpgrade: true
-            NumCacheNodes: 1
+            NumCacheClusters: 1
             SnapshotRetentionLimit: 1
 
 Outputs:
     RedisAddress:
-        Description: Redis endpoint address
-        Value: !GetAtt 'RedisService.RedisEndpoint.Address'
+        Description: Primary endpoint address
+        Value: !GetAtt 'RedisService.PrimaryEndPoint.Address'
 
     RedisPort:
-        Description: Redis endpoint port
-        Value: !GetAtt 'RedisService.RedisEndpoint.Port'
+        Description: Primary endpoint port
+        Value: !GetAtt 'RedisService.PrimaryEndPoint.Port'
