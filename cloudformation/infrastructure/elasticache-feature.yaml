@@ -22,8 +22,8 @@ Resources:
                 - !Ref 'SecurityGroup'
             CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
             CacheNodeType: !Ref 'CacheNodeType'
-            ClusterName: !Sub '${EnvironmentName}-redis'
-            Engine: redis
+            ClusterName: !Sub '${EnvironmentName}-valkey'
+            Engine: valkey
             AutoMinorVersionUpgrade: true
             NumCacheNodes: 1
             SnapshotRetentionLimit: 1
