@@ -23,6 +23,7 @@ Resources:
                 - !Ref 'SecurityGroup'
             CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
             CacheNodeType: !Ref 'CacheNodeType'
+            TransitEncryptionEnabled: false
             ReplicationGroupId: !Sub '${EnvironmentName}-valkey'
             EngineVersion: '8.0'
             Engine: valkey
