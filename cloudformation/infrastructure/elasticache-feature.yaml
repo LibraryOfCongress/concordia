@@ -27,6 +27,7 @@ Resources:
             ReplicationGroupId: !Sub '${EnvironmentName}-valkey'
             EngineVersion: '8.0.1'
             Engine: valkey
+            AutomaticFailoverEnabled: false
             AutoMinorVersionUpgrade: true
             NumCacheClusters: 1
             SnapshotRetentionLimit: 1
