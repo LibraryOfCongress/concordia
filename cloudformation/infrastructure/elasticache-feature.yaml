@@ -23,7 +23,6 @@ Resources:
                 - !Ref 'SecurityGroup'
             CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
             CacheNodeType: !Ref 'CacheNodeType'
-            CacheParameterGroupName: 'default.valkey8.0.1'
             ReplicationGroupId: !Sub '${EnvironmentName}-valkey'
             EngineVersion: '8.0'
             Engine: valkey
