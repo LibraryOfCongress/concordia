@@ -25,7 +25,7 @@ Resources:
             CacheNodeType: !Ref 'CacheNodeType'
             CacheParameterGroupName: 'default.valkey8.0.1'
             ReplicationGroupId: !Sub '${EnvironmentName}-valkey'
-            EngineVersion: '8.0.1'
+            EngineVersion: '8.0'
             Engine: valkey
             AutomaticFailoverEnabled: false
             AutoMinorVersionUpgrade: true
