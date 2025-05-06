@@ -9,11 +9,15 @@ from .utils import create_asset
 class S3StorageAPITest(TestCase):
     def setUp(self):
         super().setUp()
+        # Reset ASSET_STORAGE so it's evaluated with
+        # the new settings
         from concordia.storage import ASSET_STORAGE
 
         ASSET_STORAGE._wrapped = None
 
     def tearDown(self):
+        # Reset ASSET_STORAGE so it doesn't keep
+        # the overriden settings in future tests
         from concordia.storage import ASSET_STORAGE
 
         ASSET_STORAGE._wrapped = None
@@ -34,20 +38,21 @@ class S3StorageAPITest(TestCase):
         },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
+    @patch("botocore.auth.SigV4Auth.add_auth")
     @patch("botocore.endpoint.Endpoint._send")
-    def test_s3_upload_api_layer(self, mock_send):
-        # We import this here to stop it from being
-        # evaluated before we override the storage settings
-        from concordia.storage import ASSET_STORAGE
-
-        ASSET_STORAGE._setup()
-
-        # Prevent actual S3 network call
+    def test_s3_upload_api_layer(self, mock_send, mock_add_auth):
+        # Set up mocked response to prevent real network call
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.headers = {}
         mock_response.content = b""
         mock_send.return_value = mock_response
+
+        # We import this here to stop it from being
+        # evaluated before we override the storage settings
+        from concordia.storage import ASSET_STORAGE
+
+        ASSET_STORAGE._setup()
 
         # Simulate manually saving to the storage backend
         asset_image_filename = "test-campaign/test-project/1.jpg"
