@@ -6,9 +6,12 @@ from django.contrib.auth.signals import user_logged_in
 from django.core import mail
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from django_registration.signals import user_activated, user_registered
 
-from .utils import CreateTestUsers, create_asset
+from concordia.models import TranscriptionStatus
+
+from .utils import CreateTestUsers, create_asset, create_transcription
 
 
 class TestSignalHandlers(CreateTestUsers, TestCase):
@@ -69,3 +72,73 @@ class TestSignalHandlers(CreateTestUsers, TestCase):
             self.user,
             Group.objects.get(name=settings.NEWSLETTER_GROUP_NAME).user_set.all(),
         )
+
+
+class UpdateAssetStatusSignalTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.user1 = self.create_user("user-1")
+        self.user2 = self.create_user("user-2")
+        self.asset = create_asset()
+
+    def test_accepted_transcription_sets_completed_status(self):
+        create_transcription(asset=self.asset, user=self.user1, accepted=timezone.now())
+
+        self.asset.refresh_from_db()
+        self.assertEqual(self.asset.transcription_status, TranscriptionStatus.COMPLETED)
+
+    def test_submitted_transcription_sets_submitted_status(self):
+        create_transcription(
+            asset=self.asset, user=self.user1, submitted=timezone.now()
+        )
+
+        self.asset.refresh_from_db()
+        self.assertEqual(self.asset.transcription_status, TranscriptionStatus.SUBMITTED)
+
+    def test_rejected_transcription_sets_in_progress_status(self):
+        create_transcription(asset=self.asset, user=self.user1, rejected=timezone.now())
+
+        self.asset.refresh_from_db()
+        self.assertEqual(
+            self.asset.transcription_status, TranscriptionStatus.IN_PROGRESS
+        )
+
+    def test_default_transcription_sets_in_progress_status(self):
+        create_transcription(asset=self.asset, user=self.user1)
+
+        self.asset.refresh_from_db()
+        self.assertEqual(
+            self.asset.transcription_status, TranscriptionStatus.IN_PROGRESS
+        )
+
+    def test_outdated_transcription_does_not_update_status(self):
+        t1 = create_transcription(
+            asset=self.asset, user=self.user1, submitted=timezone.now()
+        )
+        create_transcription(asset=self.asset, user=self.user2, accepted=timezone.now())
+
+        # Now "re-save" the older one to trigger the signal
+        # Expecting this save to trigger the warning logger since t1 is no longer latest
+        with self.assertLogs("concordia.signals.handlers", level="WARNING") as log_cm:
+            t1.rejected = timezone.now()
+            t1.save()
+
+        self.asset.refresh_from_db()
+        # Status should remain COMPLETED due to latest transcription not being t1
+        self.assertEqual(self.asset.transcription_status, TranscriptionStatus.COMPLETED)
+
+        # Verify that a warning was indeed logged about outdated transcription
+        self.assertTrue(
+            any("An older transcription" in message for message in log_cm.output)
+        )
+        self.assertTrue(any(str(t1.id) in message for message in log_cm.output))
+        self.assertTrue(any(str(self.asset.id) in message for message in log_cm.output))
+
+    @mock.patch("concordia.signals.handlers.remove_next_asset_objects")
+    @mock.patch("concordia.signals.handlers.calculate_difficulty_values")
+    def test_tasks_called_on_latest_transcription(self, mock_calc, mock_remove):
+        create_transcription(asset=self.asset, user=self.user1, accepted=timezone.now())
+
+        mock_remove.assert_called_once_with(self.asset.id)
+        mock_calc.assert_called_once()
+        args, _ = mock_calc.call_args
+        self.assertEqual(list(args[0].values_list("pk", flat=True)), [self.asset.pk])
