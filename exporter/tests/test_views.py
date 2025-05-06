@@ -109,7 +109,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         export_filename = "%s.zip" % (campaign_slug,)
-        self.assertEquals(
+        self.assertEqual(
             response.get("Content-Disposition"),
             "attachment; filename=%s" % export_filename,
         )
@@ -139,7 +139,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         export_filename = "%s-%s.zip" % (campaign_slug, project_slug)
-        self.assertEquals(
+        self.assertEqual(
             response.get("Content-Disposition"),
             "attachment; filename=%s" % export_filename,
         )
