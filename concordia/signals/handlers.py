@@ -99,6 +99,9 @@ def add_user_to_newsletter(sender, user, request, **kwargs):
 @receiver(post_save, sender=Transcription)
 def update_asset_status(sender, *, instance, **kwargs):
     logger.info("update_asset_status for %s", instance.id)
+
+    asset = instance.asset
+
     new_status = TranscriptionStatus.IN_PROGRESS
 
     if instance.rejected:
@@ -108,7 +111,30 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    asset = instance.asset
+    # Before we do anything, we need to make sure this
+    # is the latest transcription for the asset.
+    current_latest_transcription = asset.latest_transcription()
+    if instance != current_latest_transcription:
+        # A transcription lower down in the asset's history has been updated.
+        # This shouldn't happen outside of extraordinary circumstances.
+        # We'll log this occurrence then skip the rest of the signal because
+        # we don't want to change the asset's status since changing an older
+        # transcription doesn't logically affect the status or anything else
+        logger.warning(
+            "An older transcription (%s) was updated for asset %s (%s). This "
+            "would have updated the status to %s, but this was prevented and "
+            "the status remained %s. The current latest_transcription is %s. "
+            "The sender was %s.",
+            instance.id,
+            asset,
+            asset.id,
+            new_status,
+            asset.transcription_status,
+            current_latest_transcription,
+            sender,
+        )
+        return
+
     logger.info(
         "Updating asset status for %s (%s) from %s to %s",
         asset,
