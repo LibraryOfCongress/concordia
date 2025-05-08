@@ -1,9 +1,12 @@
+from __future__ import annotations  # Necessary until Python 3.12
+
 import datetime
 import os.path
 import time
 import uuid
 from itertools import chain
 from logging import getLogger
+from typing import Optional, Tuple, Union
 
 import pytesseract
 from django.conf import settings
@@ -726,7 +729,31 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def turn_off_ocr(self):
         return self.disable_ocr or self.item.turn_off_ocr()
 
-    def can_rollback(self):
+    def can_rollback(
+        self,
+    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+        """
+        Determine whether the latest transcription on this asset can be rolled back.
+
+        This checks the transcription history for the most recent non-rolled-forward
+        transcription that precedes the current latest transcription, excluding any
+        transcriptions that are rollforwards or are sources of rollforwards.
+
+        Returns:
+            tuple:
+                - (True, target, original) if a rollback is possible, where:
+                    * target is the transcription to roll back to.
+                    * original is the current latest transcription.
+                - (False, reason, None) if a rollback is not possible, where:
+                    * reason is a string explaining why.
+
+        A rollback is only possible if:
+            - There is more than one transcription.
+            - There is a prior transcription that is not a rollforward
+              or a source of one.
+
+        This method does not perform the rollback, only checks feasibility.
+        """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
         # but if it's a rolled forward or backward transcription, we use it to
@@ -741,6 +768,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollback transcription on an asset "
                     "with no transcriptions"
                 ),
+                None,
             )
         # If the latest transcription has a source (i.e., is a rollback
         # or rollforward transcription), we want the original transcription
@@ -769,11 +797,34 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollback transcription on an asset "
                     "with no non-rollforward older transcriptions"
                 ),
+                None,
             )
 
         return True, transcription_to_rollback_to, original_latest_transcription
 
-    def rollback_transcription(self, user):
+    def rollback_transcription(self, user: User) -> Transcription:
+        """
+        Perform a rollback of the latest transcription on this asset.
+
+        This creates a new transcription that copies the text of the most recent
+        eligible prior transcription (as determined by `can_rollback`) and marks it
+        as rolled back. It also updates the original latest transcription to reflect
+        that it has been superseded.
+
+        Args:
+            user (User): The user initiating the rollback.
+
+        Returns:
+            Transcription: The newly created rollback transcription.
+
+        Raises:
+            ValueError: If rollback is not possible (e.g. no eligible transcription).
+
+        The new transcription will:
+            - Have `rolled_back=True`.
+            - Set its `source` to the transcription it is rolled back to.
+            - Set `supersedes` to the current latest transcription.
+        """
         results = self.can_rollback()
         if results[0] is not True:
             raise ValueError(results[1])
@@ -793,12 +844,35 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription.save()
         return new_transcription
 
-    def can_rollforward(self):
+    def can_rollforward(
+        self,
+    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+        """
+        Determine whether a previous rollback on this asset can be rolled forward.
+
+        This checks whether the most recent transcription is a rollback transcription
+        and whether the transcription it replaced (its `supersedes`) can be restored.
+
+        Returns:
+            tuple:
+                - (True, target, original) if rollforward is possible, where:
+                    * target is the transcription to roll forward to.
+                    * original is the current latest transcription.
+                - (False, reason, None) if rollforward is not possible, where:
+                    * reason is a string explaining why.
+
+        This method handles cases where multiple rollforwards were applied,
+        walking backward through the transcription chain to find the appropriate
+        rollback origin.
+
+        A rollforward is only possible if:
+            - The latest transcription is a rollback.
+            - The rollback's superseded transcription exists and can be restored.
+        """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
         # but if it's a rolled forward transcription, we use it to find the most
         # recent non-rolled-forward transcription and store that in latest_transcription
-
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
@@ -810,6 +884,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollforward transcription on an asset "
                     "with no transcriptions"
                 ),
+                None,
             )
 
         if latest_transcription.rolled_forward:
@@ -826,6 +901,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                         "Can not rollforward transcription on an asset with no "
                         "non-rollforward transcriptions"
                     ),
+                    None,
                 )
             # latest_transcription is now the most recent non-rolled-forward
             # transcription, but we need to go back fruther based on the number
@@ -853,6 +929,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                         "transcriptions, which shouldn't be possible. Possibly "
                         "incorrectly modified transcriptions for this asset."
                     ),
+                    None,
                 )
 
         # If the latest_transcription we end up with is a rollback transcription,
@@ -867,6 +944,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollforward transcription on an asset if the latest "
                     "non-rollforward transcription is not a rollback transcription"
                 ),
+                None,
             )
 
         # If that replaced transcription doesn't exist, we can't do anything
@@ -879,11 +957,33 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollforward transcription on an asset if the latest "
                     "rollback transcription did not supersede a previous transcription"
                 ),
+                None,
             )
 
         return True, transcription_to_rollforward, original_latest_transcription
 
-    def rollforward_transcription(self, user):
+    def rollforward_transcription(self, user: User) -> Transcription:
+        """
+        Perform a rollforward of the most recent rollback transcription.
+
+        This creates a new transcription that restores the text from the
+        rollback's superseded transcription and marks it as a rollforward.
+
+        Args:
+            user (User): The user initiating the rollforward.
+
+        Returns:
+            Transcription: The newly created rollforward transcription.
+
+        Raises:
+            ValueError: If rollforward is not possible (e.g. no valid rollback
+                        history or malformed transcription chain).
+
+        The new transcription will:
+            - Have `rolled_forward=True`.
+            - Set its `source` to the transcription being rolled forward to.
+            - Set `supersedes` to the current latest transcription.
+        """
         results = self.can_rollforward()
         if results[0] is not True:
             raise ValueError(results[1])
