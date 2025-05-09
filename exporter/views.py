@@ -72,7 +72,7 @@ def get_original_asset_id(download_url):
         pattern = (
             r"/service:([A-Za-z0-9:.\-\_]+)/"
             + r"|/master/([A-Za-z0-9/]+)([0-9.]+)"
-            + r"|/public:music:([A-Za-z0-9:.\-\_]+)/"
+            + r"|/public:[A-Za-z0-9]+:([A-Za-z0-9:.\-_]+?)/"
         )
         asset_id = re.search(pattern, download_url)
         if not asset_id:
