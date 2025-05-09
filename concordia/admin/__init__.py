@@ -1,7 +1,5 @@
 import logging
-from urllib.parse import urljoin
 
-from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
@@ -34,7 +32,12 @@ from ..models import (
     CarouselSlide,
     Guide,
     Item,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
+    NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
     Project,
+    ProjectTopic,
     Resource,
     ResourceFile,
     SimplePage,
@@ -47,7 +50,7 @@ from ..models import (
     UserProfileActivity,
 )
 from ..tasks import retire_campaign
-from ..views import ReportCampaignView
+from ..views.campaigns import ReportCampaignView
 from .actions import (
     anonymize_action,
     change_status_to_completed,
@@ -68,6 +71,7 @@ from .filters import (
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter,
+    NextAssetCampaignListFilter,
     OcrGeneratedFilter,
     OcrOriginatedFilter,
     ProjectCampaignListFilter,
@@ -96,6 +100,7 @@ from .forms import (
     GuideAdminForm,
     ItemAdminForm,
     ProjectAdminForm,
+    ProjectTopicInlineForm,
     TopicAdminForm,
 )
 
@@ -429,9 +434,20 @@ class ResourceFileAdmin(admin.ModelAdmin):
         return ("name", "resource")
 
 
+class TopicProjectInline(admin.TabularInline):
+    model = ProjectTopic
+    form = ProjectTopicInlineForm
+    extra = 1
+    autocomplete_fields = ["project"]
+    fields = ["project", "url_filter"]
+    fk_name = "topic"
+
+
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
     form = TopicAdminForm
+
+    inlines = [TopicProjectInline]
 
     list_display = (
         "id",
@@ -445,13 +461,25 @@ class TopicAdmin(admin.ModelAdmin):
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = [
+        "title",
+    ]
+
+
+class ProjectTopicInline(admin.TabularInline):
+    model = ProjectTopic
+    form = ProjectTopicInlineForm
+    extra = 1
+    autocomplete_fields = ["topic"]
+    fields = ["topic", "url_filter"]
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     form = ProjectAdminForm
 
-    # todo: add foreignKey link for campaign
+    inlines = [ProjectTopicInline]
+
     list_display = ("id", "title", "slug", "campaign", "published", "ordering")
     list_editable = ("ordering",)
     list_display_links = ("id", "title", "slug")
@@ -648,7 +676,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "year",
         "sequence",
         "difficulty",
-        "truncated_media_url",
+        "truncated_storage_image",
         "media_type",
         "truncated_metadata",
     )
@@ -656,7 +684,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     prepopulated_fields = {"slug": ("title",)}
     search_fields = [
         "title",
-        "media_url",
+        "storage_image",
         "item__project__campaign__title",
         "item__project__title",
         "item__item_id",
@@ -698,11 +726,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return obj.item.item_id
 
     @admin.display(description="Media URL")
-    def truncated_media_url(self, obj):
+    def truncated_storage_image(self, obj):
         return format_html(
             '<a target="_blank" href="{}">{}</a>',
-            urljoin(settings.MEDIA_URL, obj.media_url),
-            truncatechars(obj.media_url, 100),
+            obj.storage_image.url,
+            truncatechars(obj.get_existing_storage_image_filename(), 100),
         )
 
     def get_readonly_fields(self, request, obj=None):
@@ -1065,3 +1093,117 @@ class CardFamilyAdmin(admin.ModelAdmin):
 @admin.register(Guide)
 class GuideAdmin(admin.ModelAdmin):
     form = GuideAdminForm
+
+
+@admin.register(NextTranscribableCampaignAsset)
+class NextTranscribableCampaignAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "transcription_status",
+        "campaign",
+        "created_on",
+    )
+    list_filter = (
+        NextAssetCampaignListFilter,
+        "transcription_status",
+    )
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "campaign__title",
+    )
+    readonly_fields = (
+        "asset",
+        "sequence",
+        "item",
+        "item_item_id",
+        "project",
+        "project_slug",
+        "campaign",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextReviewableCampaignAsset)
+class NextReviewableCampaignAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "campaign",
+        "created_on",
+    )
+    list_filter = (NextAssetCampaignListFilter,)
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "campaign__title",
+        "transcriber_ids",
+    )
+    readonly_fields = (
+        "asset",
+        "item",
+        "project",
+        "campaign",
+        "transcriber_ids",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextTranscribableTopicAsset)
+class NextTranscribableTopicAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "transcription_status",
+        "topic",
+        "created_on",
+    )
+    list_filter = (
+        TopicListFilter,
+        "transcription_status",
+    )
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "topic__title",
+    )
+    readonly_fields = (
+        "asset",
+        "sequence",
+        "item",
+        "item_item_id",
+        "project",
+        "project_slug",
+        "topic",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextReviewableTopicAsset)
+class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "topic",
+        "created_on",
+    )
+    list_filter = (TopicListFilter,)
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "topic__title",
+        "transcriber_ids",
+    )
+    readonly_fields = (
+        "asset",
+        "item",
+        "project",
+        "topic",
+        "transcriber_ids",
+        "created_on",
+    )
+    ordering = ("-created_on",)

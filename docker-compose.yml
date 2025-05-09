@@ -1,29 +1,62 @@
 version: '3.6'
 services:
-    elasticsearch:
-        restart: unless-stopped
-        image: elasticsearch:6.7.0
+    opensearch-node:
+        image: public.ecr.aws/opensearchproject/opensearch:1
+        container_name: opensearch-node
+        environment:
+            - cluster.name=opensearch-cluster
+            - node.name=opensearch-node
+            - discovery.type=single-node
+            - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+            - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+            - 'DISABLE_INSTALL_DEMO_CONFIG=true' # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
+            - 'DISABLE_SECURITY_PLUGIN=true' # initial local setup - Disables security plugin
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+            nofile:
+                soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+                hard: 65536
+        volumes:
+            - opensearch-data:/usr/share/opensearch/data
         ports:
-            - 9200:9200
+            - 9200:9200 # REST API
+            - 9600:9600 # Performance Analyzer
+        networks:
+            - default
+
+    opensearch-dashboards:
+        image: public.ecr.aws/opensearchproject/opensearch-dashboards:1
+        container_name: opensearch-dashboards
+        ports:
+            - 5601:5601
+        expose:
+            - '5601'
+        environment:
+            - 'OPENSEARCH_HOSTS=http://opensearch-node:9200'
+            - 'DISABLE_SECURITY_DASHBOARDS_PLUGIN=true' # disables security dashboards plugin in OpenSearch Dashboards
+        networks:
+            - default
 
     redis:
         restart: unless-stopped
         image: redis:latest
         hostname: redis
         ports:
-            - 63791:6379
+            - 6379:6379
         volumes:
             - redis_volume:/data
 
     db:
         restart: unless-stopped
-        image: postgres
+        image: postgres:15
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
             POSTGRES_USER: concordia
             POSTGRES_MULTIPLE_DATABASES: test_concordia
         ports:
-            - 54323:5432
+            - 5432:5432
         volumes:
             - ./postgresql:/docker-entrypoint-initdb.d
             - db_volume:/var/lib/postgresql/data/
@@ -48,7 +81,7 @@ services:
             - images_volume:/concordia_images
         networks:
             - default
-        ports:
+        ports: # if running locally use 80:80, if running in local container use 8000:80
             - 80:80
 
     importer:
@@ -81,6 +114,7 @@ volumes:
     db_volume:
     images_volume:
     redis_volume:
+    opensearch-data:
 
 networks:
     default:

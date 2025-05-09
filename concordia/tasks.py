@@ -1,5 +1,6 @@
 import datetime
 import os.path
+from itertools import chain
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 
@@ -18,6 +19,7 @@ from django.template import loader
 from django.utils import timezone
 from more_itertools.more import chunked
 
+from concordia.decorators import locked_task
 from concordia.exceptions import CacheLockedError
 from concordia.models import (
     ONE_DAY,
@@ -27,6 +29,10 @@ from concordia.models import (
     Campaign,
     CampaignRetirementProgress,
     Item,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
+    NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
     Project,
     ResourceFile,
     SiteReport,
@@ -41,6 +47,16 @@ from concordia.models import (
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE
 from concordia.utils import get_anonymous_user
+from concordia.utils.next_asset import (
+    find_invalid_next_reviewable_campaign_assets,
+    find_invalid_next_reviewable_topic_assets,
+    find_invalid_next_transcribable_campaign_assets,
+    find_invalid_next_transcribable_topic_assets,
+    find_new_reviewable_campaign_assets,
+    find_new_reviewable_topic_assets,
+    find_new_transcribable_campaign_assets,
+    find_new_transcribable_topic_assets,
+)
 
 from .celery import app as celery_app
 
@@ -618,65 +634,6 @@ def calculate_difficulty_values(asset_qs=None):
 
 
 @celery_app.task
-def populate_storage_image_values(asset_qs=None):
-    """
-    For Assets that existed prior to implementing the storage_image ImageField, build
-    the relative S3 storage key for the asset and update the storage_image value
-    """
-    # As a reference point - how many records have a null storage image field?
-    asset_storage_qs = Asset.objects.filter(
-        storage_image__isnull=True
-    ) | Asset.objects.filter(storage_image__exact="")
-    storage_image_empty_count = asset_storage_qs.count()
-    asset_qs = (
-        Asset.objects.filter(storage_image__isnull=True)
-        | Asset.objects.filter(storage_image__exact="")
-        .order_by("id")
-        .select_related("item__project__campaign")
-        .only(
-            "id",
-            "storage_image",
-            "media_url",
-            "item",
-            "item__item_id",
-            "item__project",
-            "item__project__slug",
-            "item__project__campaign",
-            "item__project__campaign__slug",
-        )[:5000]
-    )
-    logger.debug("Total Storage image empty count %s", storage_image_empty_count)
-    logger.debug("Start storage image chunking")
-
-    updated_count = 0
-
-    # We'll process assets in chunks using an iterator to avoid saving objects
-    # which will never be used again in memory. We will build the S3 relative key for
-    # each existing asset and pass them to bulk_update() to be saved in a single query.
-    for asset_chunk in chunked(asset_qs.iterator(), 1000):
-        for asset in asset_chunk:
-            asset.storage_image = "/".join(
-                [
-                    asset.item.project.campaign.slug,
-                    asset.item.project.slug,
-                    asset.item.item_id,
-                    asset.media_url,
-                ]
-            )
-
-        # We will only save the new storage image value both for performance
-        # and to avoid any possibility of race conditions causing stale data
-        # to be saved:
-
-        Asset.objects.bulk_update(asset_chunk, ["storage_image"])
-        updated_count += len(asset_chunk)
-
-        logger.debug("Storage image updated count %s", updated_count)
-
-    return updated_count, storage_image_empty_count
-
-
-@celery_app.task
 def populate_asset_years():
     """
     Pull out date info from raw Item metadata and populate it for each Asset
@@ -710,18 +667,65 @@ def populate_asset_years():
 
 
 @celery_app.task
-def create_elasticsearch_indices():
-    call_command("search_index", action="create")
+def create_opensearch_indices():
+    """Create the opensearch indices, if they don't already exist."""
+    call_command(
+        "opensearch", "index", "create", verbosity=2, force=True, ignore_error=True
+    )
 
 
 @celery_app.task
-def populate_elasticsearch_indices():
-    call_command("search_index", action="populate")
+def delete_opensearch_indices():
+    """Delete opensearch indices - index and data (a.k.a. documents)."""
+    call_command("opensearch", "index", "delete", force=True, ignore_error=True)
 
 
 @celery_app.task
-def delete_elasticsearch_indices():
-    call_command("search_index", "-f", action="delete")
+def rebuild_opensearch_indices():
+    """Deletes, then creates opensearch indices."""
+    call_command(
+        "opensearch", "index", "rebuild", verbosity=2, force=True, ignore_error=True
+    )
+
+
+@celery_app.task
+def populate_opensearch_users_indices():
+    """
+    Populate the "users" OpenSearch index. This function loads the indices
+    in Opensearch as defined in the UserDocument class to make it searchable
+    and accessible for queries in the Opensearch Dashboards.
+    """
+    call_command(
+        "opensearch", "document", "index", "--indices", "users", "--force", "--parallel"
+    )
+
+
+@celery_app.task
+def populate_opensearch_assets_indices():
+    """
+    Populate the "assets" OpenSearch index. This function loads the indices
+    in Opensearch as defined in the AssetDocument class to make it searchable
+    and accessible for queries in the Opensearch Dashboards.
+    """
+    call_command(
+        "opensearch",
+        "document",
+        "index",
+        "--indices",
+        "assets",
+        "--force",
+        "--parallel",
+    )
+
+
+@celery_app.task
+def populate_opensearch_indices():
+    """
+    Populate the OpenSearch index with all documents.
+    --force - stops interactive confirmation prompt.
+    --parallel - invokes opensearch in parallel mode.
+    """
+    call_command("opensearch", "document", "index", "--force", "--parallel")
 
 
 def _populate_activity_table(campaigns):
@@ -1139,17 +1143,457 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
         raise e
 
 
-@celery_app.task(ignore_result=True)
-def update_userprofileactivity_from_cache():
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def update_userprofileactivity_from_cache(self):
     for campaign in Campaign.objects.all():
         key = f"userprofileactivity_{campaign.pk}"
         updates_by_user = cache.get(key)
-        cache.delete(key)
-        for user_id in updates_by_user:
-            user = User.objects.get(id=user_id)
-            update_userprofileactivity_table(
-                user, campaign.id, "transcribe", updates_by_user[user_id][0]
-            )
-            update_userprofileactivity_table(
-                user, campaign.id, "review", updates_by_user[user_id][1]
-            )
+        if updates_by_user is not None:
+            cache.delete(key)
+            for user_id in updates_by_user:
+                user = User.objects.get(id=user_id)
+                update_userprofileactivity_table(
+                    user, campaign.id, "transcribe_count", updates_by_user[user_id][0]
+                )
+                update_userprofileactivity_table(
+                    user, campaign.id, "review_count", updates_by_user[user_id][1]
+                )
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_transcribable_for_campaign(self, campaign_id):
+    """
+    Populate the cache table of next transcribable assets for a given campaign.
+
+    This task checks how many transcribable assets are still needed for the campaign,
+    finds eligible assets, and inserts them into the NextTranscribableCampaignAsset
+    table up to the target count.
+
+    Only a single instance of the task will run at a time for a particular campaign_id,
+    using the cache locking system to avoid duplication. This can be overriden with
+    the `force` kwarg, which is stripped out by the decorator and not passed to the
+    task itself. See the `locked_task` documentation for more information.
+
+    Args:
+        campaign_id (int): The primary key of the Campaign to process.
+    """
+    try:
+        campaign = Campaign.objects.get(id=campaign_id)
+    except Campaign.DoesNotExist:
+        logger.error("Campaign %s not found", campaign_id)
+        return
+
+    needed_asset_count = NextTranscribableCampaignAsset.objects.needed_for_campaign(
+        campaign_id
+    )
+    if needed_asset_count:
+        assets_qs = find_new_transcribable_campaign_assets(campaign).only(
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "campaign_id",
+            "transcription_status",
+        )
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Campaign %s already has %s next transcribable assets",
+            campaign,
+            NextTranscribableCampaignAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextTranscribableCampaignAsset.objects.bulk_create(
+            [
+                NextTranscribableCampaignAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    campaign_id=asset.campaign_id,
+                    transcription_status=asset.transcription_status,
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info(
+            "Added %d next transcribable assets for campaign %s", len(objs), campaign
+        )
+    else:
+        logger.info("No transcribable assets found in campaign %s", campaign)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_transcribable_for_topic(self, topic_id):
+    """
+    Populate the cache table of next transcribable assets for a given topic.
+
+    This task checks how many transcribable assets are still needed for the topic,
+    finds eligible assets, and inserts them into the NextTranscribableTopicAsset table
+    up to the target count.
+
+    Only a single instance of the task will run at a time for a particular topic_id,
+    using the cache locking system to avoid duplication. This can be overriden with
+    the `force` kwarg, which is stripped out by the decorator and not passed to the
+    task itself. See the `locked_task` documentation for more information.
+
+    Args:
+        topic_id (int): The primary key of the Topic to process.
+    """
+    try:
+        topic = Topic.objects.get(id=topic_id)
+    except Topic.DoesNotExist:
+        logger.error("Topic %s not found", topic_id)
+        return
+
+    needed_asset_count = NextTranscribableTopicAsset.objects.needed_for_topic(topic_id)
+    if needed_asset_count:
+        assets_qs = find_new_transcribable_topic_assets(topic).only(
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "transcription_status",
+        )
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Topic %s already has %s next transcribable assets",
+            topic,
+            NextTranscribableTopicAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextTranscribableTopicAsset.objects.bulk_create(
+            [
+                NextTranscribableTopicAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    topic_id=topic.id,
+                    transcription_status=asset.transcription_status,
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info("Added %d next transcribable assets for topic %s", len(objs), topic)
+    else:
+        logger.info("No transcribable assets found in topic %s", topic)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_reviewable_for_campaign(self, campaign_id):
+    """
+    Populate the cache table of next reviewable assets for a given campaign.
+
+    This task checks how many reviewable assets are still needed for the campaign,
+    finds eligible assets, and inserts them into the NextReviewableCampaignAsset table
+    up to the target count.
+
+    The task prioritizes assets not transcribed by transcribers already in the table,
+    to avoid review bottlenecks.
+
+    Only a single instance of the task will run at a time for a particular campaign_id,
+    using the cache locking system to avoid duplication. This can be overriden with
+    the `force` kwarg, which is stripped out by the decorator and not passed to the
+    task itself. See the `locked_task` documentation for more information.
+
+    Args:
+        campaign_id (int): The primary key of the Campaign to process.
+    """
+    try:
+        campaign = Campaign.objects.get(id=campaign_id)
+    except Campaign.DoesNotExist:
+        logger.error("Campaign %s not found", campaign_id)
+        return
+    anonymous_user = get_anonymous_user()
+    excluded_user_ids = (
+        NextReviewableCampaignAsset.objects.filter(campaign=campaign)
+        .exclude(transcriber_ids__contains=[anonymous_user.id])
+        .values_list("transcriber_ids", flat=True)
+        .distinct()
+    )
+    # Flatten the list and deduplicate
+    excluded_user_ids = set(chain.from_iterable(excluded_user_ids))
+
+    needed_asset_count = NextReviewableCampaignAsset.objects.needed_for_campaign(
+        campaign_id
+    )
+    if needed_asset_count:
+        assets_qs = find_new_reviewable_campaign_assets(campaign).only(
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "campaign_id",
+            "transcription__user",
+        )
+        # We prefer to not use transcribers that already exist, to avoid
+        # the situation where all possible reviewable assets have the same transcriber
+        # (since that would mean that user would miss the cache table when they try
+        # to review).
+        # If that's impossible, we just take whatever assets we can; that means only
+        # these transcribers have reviewable assets in the campaign
+        excluded_assets_qs = assets_qs.exclude(
+            transcription__user_id__in=excluded_user_ids
+        )
+        if excluded_assets_qs.exists():
+            assets_qs = excluded_assets_qs
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Campaign %s already has %s next reviewable assets",
+            campaign,
+            NextReviewableCampaignAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextReviewableCampaignAsset.objects.bulk_create(
+            [
+                NextReviewableCampaignAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    campaign_id=asset.campaign_id,
+                    transcriber_ids=list(
+                        asset.transcription_set.exclude(user=anonymous_user)
+                        .values_list("user_id", flat=True)
+                        .distinct()
+                    ),
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info(
+            "Added %d next reviewable assets for campaign %s", len(objs), campaign
+        )
+    else:
+        logger.info("No reviewable assets found in campaign %s", campaign)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_next_reviewable_for_topic(self, topic_id):
+    """
+    Populate the cache table of next reviewable assets for a given topic.
+
+    This task checks how many reviewable assets are still needed for the topic,
+    finds eligible assets, and inserts them into the NextReviewableTopicAsset table
+    up to the target count.
+
+    The task prioritizes assets not transcribed by transcribers already in the table,
+    to avoid review bottlenecks.
+
+    Only a single instance of the task will run at a time for a particular topic_id,
+    using the cache locking system to avoid duplication. This can be overriden with
+    the `force` kwarg, which is stripped out by the decorator and not passed to the
+    task itself. See the `locked_task` documentation for more information.
+
+    Args:
+        topic_id (int): The primary key of the Topic to process.
+    """
+    try:
+        topic = Topic.objects.get(id=topic_id)
+    except Topic.DoesNotExist:
+        logger.error("Topic %s not found", topic_id)
+        return
+    anonymous_user = get_anonymous_user()
+    excluded_user_ids = (
+        NextReviewableTopicAsset.objects.filter(topic=topic)
+        .exclude(transcriber_ids__contains=[anonymous_user.id])
+        .values_list("transcriber_ids", flat=True)
+        .distinct()
+    )
+    # Flatten the list and deduplicate
+    excluded_user_ids = set(chain.from_iterable(excluded_user_ids))
+
+    needed_asset_count = NextReviewableTopicAsset.objects.needed_for_topic(topic_id)
+    if needed_asset_count:
+        assets_qs = find_new_reviewable_topic_assets(topic).only(
+            "id",
+            "item_id",
+            "item__project_id",
+            "item__project__slug",
+            "transcription__user",
+        )
+        # We prefer to not use transcribers that already exist, to avoid
+        # the situation where all possible reviewable assets have the same transcriber
+        # (since that would mean that user would miss the cache table when they try
+        # to review).
+        # If that's impossible, we just take whatever assets we can; that means only
+        # these transcribers have reviewable assets in the campaign
+        excluded_assets_qs = assets_qs.exclude(
+            transcription__user_id__in=excluded_user_ids
+        )
+        if excluded_assets_qs.exists():
+            assets_qs = excluded_assets_qs
+        assets = assets_qs[:needed_asset_count]
+    else:
+        logger.info(
+            "Topic %s already has %s next reviewable assets",
+            topic,
+            NextReviewableTopicAsset.objects.target_count,
+        )
+        return
+
+    if assets:
+        objs = NextReviewableTopicAsset.objects.bulk_create(
+            [
+                NextReviewableTopicAsset(
+                    asset_id=asset.id,
+                    item_id=asset.item_id,
+                    item_item_id=asset.item.item_id,
+                    project_id=asset.item.project_id,
+                    project_slug=asset.item.project.slug,
+                    topic_id=topic.id,
+                    transcriber_ids=list(
+                        asset.transcription_set.exclude(user=anonymous_user)
+                        .values_list("user_id", flat=True)
+                        .distinct()
+                    ),
+                    sequence=asset.sequence,
+                )
+                for asset in assets
+            ]
+        )
+        logger.info("Added %d next reviewable assets for topic %s", len(objs), topic)
+    else:
+        logger.info("No reviewable assets found in topic %s", topic)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_transcribable_for_campaign(self, campaign_id):
+    """
+    Removes invalid cached transcribable assets for a campaign and repopulates the
+    cache.
+
+    Invalid assets include those that are reserved or no longer eligible for
+    transcription based on their transcription status. After cleaning, the corresponding
+    populate task is queued to restore the cache to the target count.
+
+    Args:
+        campaign_id (int): The ID of the campaign to clean.
+    """
+
+    for next_asset in find_invalid_next_transcribable_campaign_assets(campaign_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info(
+        "Spawning populate_next_transcribable_for_campaign for campgin %s", campaign_id
+    )
+    populate_next_transcribable_for_campaign.delay(campaign_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_transcribable_for_topic(self, topic_id):
+    """
+    Removes invalid cached transcribable assets for a topic and repopulates the cache.
+
+    Invalid assets include those that are reserved or no longer eligible for
+    transcription based on their transcription status. After cleaning, the corresponding
+    populate task is queued to restore the cache to the target count.
+
+    Args:
+        topic_id (int): The ID of the topic to clean.
+    """
+
+    for next_asset in find_invalid_next_transcribable_topic_assets(topic_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info("Spawning populate_next_transcribable_for_topic for topic %s", topic_id)
+    populate_next_transcribable_for_topic.delay(topic_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_reviewable_for_campaign(self, campaign_id):
+    """
+    Removes invalid cached reviewable assets for a campaign and repopulates the cache.
+
+    Invalid assets include those that no longer have transcription status SUBMITTED and
+    are therefore not eligible for review. After cleaning, the corresponding populate
+    task is queued to restore the cache to the target count.
+
+    Args:
+        campaign_id (int): The ID of the campaign to clean.
+    """
+
+    for next_asset in find_invalid_next_reviewable_campaign_assets(campaign_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info(
+        "Spawning populate_next_reviewable_for_campaign for campgin %s", campaign_id
+    )
+    populate_next_reviewable_for_campaign.delay(campaign_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def clean_next_reviewable_for_topic(self, topic_id):
+    """
+    Removes invalid cached reviewable assets for a topic and repopulates the cache.
+
+    Invalid assets include those that no longer have transcription status SUBMITTED and
+    are therefore not eligible for review. After cleaning, the corresponding populate
+    task is queued to restore the cache to the target count.
+
+    Args:
+        topic_id (int): The ID of the topic to clean.
+    """
+
+    for next_asset in find_invalid_next_reviewable_topic_assets(topic_id):
+        try:
+            next_asset.delete()
+        except Exception:
+            logger.exception("Error deleting cached asset %s", next_asset.id)
+    logger.info("Spawning populate_next_reviewable_for_topic for topic %s", topic_id)
+    populate_next_reviewable_for_topic.delay(topic_id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def renew_next_asset_cache(self):
+    """
+    Triggers cache cleaning and repopulation for all active campaigns and published
+    topics.
+
+    This runs cleaning tasks for both transcribable and reviewable assets across all
+    campaigns and topics. Each cleaning task ensures that the next asset cache remains
+    accurate and up to date by removing invalid entries and restoring the desired count.
+    """
+
+    for campaign in Campaign.objects.active():
+        logger.info("Spawning clean_next_transcribable_for_campaign for %s", campaign)
+        clean_next_transcribable_for_campaign.delay(campaign_id=campaign.id)
+        logger.info("Spawning clean_next_reviewable_for_campaign for %s", campaign)
+        clean_next_reviewable_for_campaign.delay(campaign_id=campaign.id)
+
+    for topic in Topic.objects.published():
+        logger.info("Spawning clean_next_transcribable_for_topic for %s", topic)
+        clean_next_transcribable_for_topic.delay(topic_id=topic.id)
+        logger.info("Spawning clean_next_reviewable_for_topic for %s", topic)
+        clean_next_reviewable_for_topic.delay(topic_id=topic.id)

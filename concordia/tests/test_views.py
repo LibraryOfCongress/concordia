@@ -23,6 +23,7 @@ from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
     Campaign,
+    ProjectTopic,
     Transcription,
     TranscriptionStatus,
 )
@@ -34,16 +35,12 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
-from concordia.views import (
-    AccountProfileView,
-    CompletedCampaignListView,
-    FilteredItemDetailView,
-    FilteredProjectDetailView,
-    ratelimit_view,
-    registration_rate,
-    reserve_rate,
-    user_cache_control,
-)
+from concordia.views.accounts import AccountProfileView, registration_rate
+from concordia.views.campaigns import CompletedCampaignListView
+from concordia.views.decorators import reserve_rate, user_cache_control
+from concordia.views.items import FilteredItemDetailView
+from concordia.views.projects import FilteredProjectDetailView
+from concordia.views.rate_limit import ratelimit_view
 from configuration.models import Configuration
 
 from .utils import (
@@ -220,14 +217,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         for cache in caches.all():
             cache.clear()
 
-            # We'll test the signal handler separately
-            post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def tearDown(self):
         for cache in caches.all():
             cache.clear()
-
-        post_save.connect(on_transcription_save, sender=Transcription)
 
     def test_ratelimit_view(self):
         c = Client()
@@ -270,31 +262,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertContains(response, campaign.title)
         self.assertNotContains(response, unlisted_campaign.title)
 
-    def test_topic_list_view(self):
-        """
-        Test the GET method for route /topics
-        """
-        campaign = create_campaign(title="Hello Everyone")
-        topic_project = create_project(campaign=campaign)
-        unlisted_campaign = create_campaign(
-            title="Hello to only certain people", unlisted=True
-        )
-        unlisted_topic_project = create_project(campaign=unlisted_campaign)
-
-        topic = create_topic(title="A Listed Topic", project=topic_project)
-        unlisted_topic = create_topic(
-            title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
-        )
-
-        response = self.client.get(reverse("topic-list"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, template_name="transcriptions/topic_list.html"
-        )
-        self.assertContains(response, topic.title)
-        self.assertNotContains(response, unlisted_topic.title)
-
     def test_campaign_list_view(self):
         """
         Test the GET method for route /campaigns
@@ -313,6 +280,16 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertContains(response, campaign.title)
         self.assertNotContains(response, unlisted_campaign.title)
 
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+            "view_cache": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+        }
+    )
     def test_topic_detail_view(self):
         """
         Test GET on route /topics/<slug-value> (topic)
@@ -341,6 +318,103 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertIn("sublevel_querystring", context)
         self.assertEqual(
             context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
+        # Testing url_filter
+        campaign = create_campaign(title="Filter Test Campaign", slug="filter-test")
+
+        project_with_filter = create_project(
+            campaign=campaign, title="Project With Filter", slug="with-filter"
+        )
+        project_without_filter = create_project(
+            campaign=campaign, title="Project Without Filter", slug="without-filter"
+        )
+
+        ProjectTopic.objects.create(
+            project=project_with_filter,
+            topic=c,
+            url_filter=TranscriptionStatus.SUBMITTED,
+        )
+
+        ProjectTopic.objects.create(
+            project=project_without_filter,
+            topic=c,
+            url_filter=None,
+        )
+
+        response = self.client.get(reverse("topic-detail", args=(c.slug,)))
+        self.assertEqual(response.status_code, 200)
+
+        # Check that the project_with_filter has the correct transcription_status
+        # in its links
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_with_filter.slug}/?transcription_status=submitted",
+            2,
+        )
+
+        # Check that the project_without_filter does not have any transcription_status
+        # added (It will only have whatever the existing sublevel_querystring is,
+        # which is empty by default) So it should not have transcription_status=
+        # in the href
+        self.assertNotContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_without_filter.slug}/?transcription_status=",
+        )
+
+        # Test with url_filter and a sublevel_qerystring. Only transcription_status is
+        # included in sublevel_querystring; all other parameters are dropped
+        response = self.client.get(
+            reverse("topic-detail", args=(c.slug,)),
+            {"transcription_status": "not_started", "another_param": "some_value"},
+        )
+        self.assertIn("sublevel_querystring", response.context)
+        self.assertEqual(
+            response.context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
+        # Because the projects have no items/assets, they will be excluded when we add a
+        # transcription_status to the querystring, so we shouldn't see those projects:
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_with_filter.slug}/?transcription_status=not_started",
+            0,
+        )
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_without_filter.slug}/?transcription_status=not_started",
+            0,
+        )
+
+        # Add assets to the projects so they'll display
+        item_with_filter = create_item(project=project_with_filter)
+        create_asset(item=item_with_filter)
+        item_without_filter = create_item(project=project_without_filter)
+        create_asset(item=item_without_filter)
+
+        response = self.client.get(
+            reverse("topic-detail", args=(c.slug,)),
+            {"transcription_status": "not_started", "another_param": "some_value"},
+        )
+        self.assertIn("sublevel_querystring", response.context)
+        self.assertEqual(
+            response.context["sublevel_querystring"], "transcription_status=not_started"
+        )
+
+        # Check that the project_with_filter has the correct transcription_status in
+        # its links. The sublevel_querystring should override the url_filter setting
+        # if it includes transcription_status
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_with_filter.slug}/?transcription_status=not_started",
+            2,
+        )
+
+        # Check that the project_without_filter uses the sublevel_querystring
+        self.assertContains(
+            response,
+            f"/campaigns/{campaign.slug}/{project_without_filter.slug}/?transcription_status=not_started",
+            2,
         )
 
     def test_unlisted_topic_detail_view(self):
@@ -715,7 +789,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         mock.assert_called_with("spa")
         mock.reset_mock()
 
-        with patch("concordia.views.get_transcription_superseded") as superseded_mock:
+        with patch(
+            "concordia.views.ajax.get_transcription_superseded"
+        ) as superseded_mock:
             # Test case if the trancription being replaced has already been superseded
             superseded_mock.return_value = HttpResponse(status=409)
             url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
@@ -857,10 +933,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
 )
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
-    def setUp(self):
-
-        post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def test_asset_reservation(self):
         """
         Test the basic Asset reservation process
@@ -1852,9 +1924,14 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
         self.assertRedirects(response, expected_url="/")
 
-        asset1 = create_asset(slug="test-asset-1")
-        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
-        campaign = asset2.item.project.campaign
+        asset1 = create_asset(slug="test-asset-1", title="Test Asset 1")
+        asset2 = create_asset(
+            item=asset1.item, slug="test-asset-2", title="Test Asset 2"
+        )
+        asset3 = create_asset(
+            item=asset1.item, slug="test-asset-3", title="Test Asset 3"
+        )
+        campaign = asset1.item.project.campaign
 
         t1 = Transcription(asset=asset1, user=user, text="test", submitted=now())
         t1.full_clean()
@@ -1864,13 +1941,18 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         t2.full_clean()
         t2.save()
 
+        t3 = Transcription(asset=asset3, user=anon, text="test", submitted=now())
+        t3.full_clean()
+        t3.save()
+
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
-        # Test logged in user
+        # Test logged in user (this creates a new user)
+        # asset1 is no longer available due to the request above reserving it
         self.login_user()
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
-        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
 
         # Configure campaign to be next review cmpaign for tests below
         campaign.next_review_campaign = True
@@ -1885,7 +1967,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # Test case when a campaign is configured to be default next reviewable
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
-        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset3.get_absolute_url())
 
         # Test when next reviewable campaign has no reviewable assets
         asset1.delete()
@@ -1951,8 +2033,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
     def test_find_next_reviewable_campaign(self):
         anon = get_anonymous_user()
 
-        asset1 = create_asset(slug="test-review-asset-1")
-        asset2 = create_asset(item=asset1.item, slug="test-review-asset-2")
+        asset1 = create_asset(slug="test-review-asset-1", title="Test Asset 1")
+        asset2 = create_asset(
+            item=asset1.item, slug="test-review-asset-2", title="Test Asset 2"
+        )
 
         t1 = Transcription(asset=asset1, user=anon, text="test", submitted=now())
         t1.full_clean()
@@ -1974,6 +2058,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
         # Authenticated user test
+        # asset1 is no longer available since the previous request reserved it
         self.login_user()
         response = self.client.get(
             reverse(
@@ -1981,7 +2066,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
-        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
 
     def test_find_next_reviewable_topic(self):
         anon = get_anonymous_user()
@@ -2009,6 +2094,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
         # Authenticated user test
+        # We expect that asset1 is no longer available. Even though
+        # anonymous users can't reserve assets for review, we still will
+        # have removed the asset from the NextReviewableTopicAsset table
+        # to ensure two users don't receive the same asset
         self.login_user()
         response = self.client.get(
             reverse(
@@ -2016,7 +2105,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
                 kwargs={"topic_slug": topic.slug},
             )
         )
-        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
 
     def test_find_next_reviewable_unlisted_campaign(self):
         anon = get_anonymous_user()
@@ -2275,8 +2364,6 @@ class FilteredProjectDetailViewTests(CreateTestUsers, TestCase):
         self.url = reverse("transcriptions:filtered-project-detail", kwargs=self.kwargs)
         self.login_user()
 
-        post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def test_get_queryset(self):
         item1 = create_item(project=self.project, item_id="testitem.012345679")
         asset1 = create_asset(item=item1)
@@ -2315,8 +2402,6 @@ class FilteredItemDetailViewTests(CreateTestUsers, TestCase):
         self.url = reverse("transcriptions:filtered-item-detail", kwargs=self.kwargs)
         self.login_user()
 
-        post_save.disconnect(on_transcription_save, sender=Transcription)
-
     def test_get_queryset(self):
         asset1 = create_asset(item=self.item)
         create_transcription(asset=asset1, user=get_anonymous_user(), submitted=now())
@@ -2348,7 +2433,7 @@ class RateLimitTests(CreateTestUsers, TestCase):
     def test_registration_rate(self):
         request = self.request_factory.get("/")
         self.assertEqual(registration_rate(None, request), "10/h")
-        with patch("concordia.views.UserRegistrationForm", autospec=True):
+        with patch("concordia.views.accounts.UserRegistrationForm", autospec=True):
             # This causes the form to test as valid even though there's no data
             self.assertIsNone(registration_rate(None, request))
 
@@ -2405,8 +2490,6 @@ class LoginTests(TestCase, CreateTestUsers):
 class TranscriptionViewTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
-
-        post_save.disconnect(on_transcription_save, sender=Transcription)
 
     def test_rollback_transcription(self):
         path = reverse("rollback-transcription", args=[self.asset.id])

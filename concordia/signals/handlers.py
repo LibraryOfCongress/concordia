@@ -7,22 +7,23 @@ from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import F, Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template import loader
 from django_registration.signals import user_activated, user_registered
 from flags.state import flag_enabled
 
-from ..models import (
+from concordia.models import (
     Asset,
     Transcription,
     TranscriptionStatus,
     UserProfile,
-    UserProfileActivity,
 )
-from ..tasks import calculate_difficulty_values
+from concordia.tasks import calculate_difficulty_values
+from concordia.utils.next_asset import remove_next_asset_objects
+
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
@@ -98,6 +99,9 @@ def add_user_to_newsletter(sender, user, request, **kwargs):
 @receiver(post_save, sender=Transcription)
 def update_asset_status(sender, *, instance, **kwargs):
     logger.info("update_asset_status for %s", instance.id)
+
+    asset = instance.asset
+
     new_status = TranscriptionStatus.IN_PROGRESS
 
     if instance.rejected:
@@ -107,7 +111,30 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    asset = instance.asset
+    # Before we do anything, we need to make sure this
+    # is the latest transcription for the asset.
+    current_latest_transcription = asset.latest_transcription()
+    if instance != current_latest_transcription:
+        # A transcription lower down in the asset's history has been updated.
+        # This shouldn't happen outside of extraordinary circumstances.
+        # We'll log this occurrence then skip the rest of the signal because
+        # we don't want to change the asset's status since changing an older
+        # transcription doesn't logically affect the status or anything else
+        logger.warning(
+            "An older transcription (%s) was updated for asset %s (%s). This "
+            "would have updated the status to %s, but this was prevented and "
+            "the status remained %s. The current latest_transcription is %s. "
+            "The sender was %s.",
+            instance.id,
+            asset,
+            asset.id,
+            new_status,
+            asset.transcription_status,
+            current_latest_transcription,
+            sender,
+        )
+        return
+
     logger.info(
         "Updating asset status for %s (%s) from %s to %s",
         asset,
@@ -121,6 +148,8 @@ def update_asset_status(sender, *, instance, **kwargs):
     asset.save()
 
     logger.info("Status for %s (%s) updated", asset, asset.id)
+
+    remove_next_asset_objects(asset.id)
 
     calculate_difficulty_values(Asset.objects.filter(pk=asset.pk))
 
@@ -212,7 +241,7 @@ def on_transcription_save(sender, instance, **kwargs):
     :param instance:
         the transcription being saved
     """
-    if kwargs["created"]:
+    if kwargs.get("created", False):
         user = instance.user
         attr_name = "transcribe_count"
     elif instance.reviewed_by:
@@ -222,24 +251,13 @@ def on_transcription_save(sender, instance, **kwargs):
         user = None
         attr_name = None
 
-    if user is not None and attr_name is not None:
-        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-            user=user,
-            campaign=instance.asset.item.project.campaign,
-        )
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        if created:
-            setattr(user_profile_activity, attr_name, 1)
-            setattr(profile, attr_name, 1)
+    if user is not None and attr_name is not None and user.username != "anonymous":
+        key = f"userprofileactivity_{instance.asset.item.project.campaign.id}"
+        updates = cache.get(key, {})
+        transcribe_count, review_count = updates.get(user.id, (0, 0))
+        if attr_name == "transcribe_count":
+            transcribe_count += 1
         else:
-            setattr(user_profile_activity, attr_name, F(attr_name) + 1)
-            setattr(profile, attr_name, F(attr_name) + 1)
-        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        user_profile_activity.asset_count = (
-            Asset.objects.filter(q)
-            .filter(item__project__campaign=instance.asset.item.project.campaign)
-            .distinct()
-            .count()
-        )
-        user_profile_activity.save()
-        profile.save()
+            review_count += 1
+        updates[user.id] = (transcribe_count, review_count)
+        cache.set(key, updates)

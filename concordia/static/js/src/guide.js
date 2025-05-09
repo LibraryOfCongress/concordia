@@ -27,7 +27,10 @@ function closeOffcanvas() {
     guide.classList.add('offscreen');
     guide.style.border = 'none';
 
-    document.getElementById('open-guide').style.background = '#0076AD';
+    let openGuide = document.getElementById('open-guide');
+    if (openGuide) {
+        openGuide.style.background = '#0076AD';
+    }
 }
 
 $('#open-guide').on('click', openOffcanvas);

@@ -718,6 +718,10 @@ $card-img-height: 14.8rem;
 $card-btn-height: 31px;
 $card-progress-height: 12px;
 
+.card-header {
+    min-height: 65px;
+}
+
 .card-body {
     padding: 1rem 0.5rem;
 }
@@ -911,6 +915,7 @@ li.breadcrumb-item.active {
 .concordia-object-card .card-img-container {
     display: block;
     height: 100%;
+    overflow: hidden;
     width: 100%;
 }
 
@@ -1057,6 +1062,19 @@ body .disabled > .page-link {
 /*
  * Homepage customizations
  */
+
+.play-pause-button {
+    position: absolute;
+    top: 5px;
+    right: 20px;
+    height: 40px;
+    width: 40px;
+    z-index: 2;
+
+    i {
+        color: $white;
+    }
+}
 
 .carousel-item {
     img {

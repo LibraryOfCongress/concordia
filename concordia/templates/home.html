@@ -4,6 +4,11 @@
 
 {% block title %}Home{% endblock title %}
 
+{% block head_content %}
+    {{ block.super }}
+    <script type="module" src="{% static 'js/homepage-carousel.js' %}"></script>
+{% endblock head_content %}
+
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
 
 {% block extra_main_classes %}{% endblock %}
@@ -66,7 +71,10 @@
     {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
 
     {% if CAROUSEL_CMS %}
-        <div id="homepage-carousel" class="carousel slide container" data-bs-ride="carousel" data-bs-pause="hover">
+        <div id="homepage-carousel" class="carousel slide container">
+            <button type="button" id="play-pause-button" class="btn btn-primary play-pause-button" aria-label="pause">
+                <i class="fa fa-solid fa-pause"></i>
+            </button>
             <div class="carousel-indicators d-none d-lg-flex">
                 {% for slide in slides %}
                     <button type="button" data-bs-target="#homepage-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true" {% endif %}aria-label="Slide {{ forloop.counter }}"></button>

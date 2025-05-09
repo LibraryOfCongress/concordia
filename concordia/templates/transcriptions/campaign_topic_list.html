@@ -6,6 +6,7 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    {{ block.super }}
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -17,7 +18,7 @@
         <h1>All Campaigns</h1>
         {% if topics %}
             <div>
-                <h2 class="h5"><a href="{% url 'topic-list' %}">Explore by topic</a></h2>
+                <h2 class="h5">Explore by topic</h2>
                 <ul class="list-inline">
                     {% for topic in topics %}
                         <li class="list-inline-item my-1 ">

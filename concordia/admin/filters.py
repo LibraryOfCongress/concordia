@@ -213,6 +213,18 @@ class UserAssetTagCollectionCampaignListFilter(CampaignListFilter):
     status_filter_parameter = "asset__item__project__campaign__status"
 
 
+class NextAssetCampaignListFilter(CampaignListFilter):
+    parameter_name = "campaign__id__exact"
+
+    def lookups(self, request, model_admin):
+        campaigns = Campaign.objects.filter(
+            pk__in=model_admin.model.objects.values_list(
+                "campaign_id", flat=True
+            ).distinct()
+        )
+        return campaigns.values_list("id", "title").order_by("title")
+
+
 class CampaignProjectListFilter(admin.SimpleListFilter):
     title = "ProjectRedux"
     parameter_name = "project"

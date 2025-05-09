@@ -66,7 +66,7 @@ NPM_FILE_PATTERNS = {
     "remarkable": ["dist/*"],
     "jquery": ["dist/*"],
     "js-cookie": ["src/*"],
-    "popper.js": ["dist/*"],
+    "@popperjs/core": ["dist/*"],
     "bootstrap": ["dist/*"],
     "screenfull": ["dist/*"],
     "@duetds/date-picker/": ["dist/*"],
@@ -352,6 +352,9 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+    "assets": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
@@ -563,3 +566,7 @@ DEFAULT_AXE_SCRIPT = os.path.join(
 TRANSCRIPTION_ACCEPTED_TRACKING_KEY = "TRANSCRIPTION_ACCEPTED_{user_id}"
 
 CONFIGURATION_CACHE_TIMEOUT = 3600  # One hour
+
+# The number of assets to store for next_transcribabe/next_reviewable, per campaign
+NEXT_TRANSCRIBABE_ASSET_COUNT = 100
+NEXT_REVIEWABLE_ASSET_COUNT = NEXT_TRANSCRIBABE_ASSET_COUNT

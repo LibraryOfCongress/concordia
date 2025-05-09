@@ -19,7 +19,7 @@ from concordia.models import (
     SimplePage,
     SiteReport,
 )
-from concordia.views import simple_page
+from concordia.views.simple_pages import simple_page
 
 from .utils import (
     CacheControlAssertions,
@@ -324,7 +324,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.login_user()
         set_maintenance_mode(True)
 
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_off")),
@@ -335,7 +335,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_test_user()
         self.login_user()
         set_maintenance_mode(True)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_off")),
@@ -350,7 +350,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_super_user()
         self.login_user()
         set_maintenance_mode(False)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_on")),
@@ -362,7 +362,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_test_user()
         self.login_user()
         set_maintenance_mode(False)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_on")),
@@ -376,7 +376,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_super_user()
         self.login_user()
         set_maintenance_mode(False)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_on")),
@@ -387,7 +387,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_test_user()
         self.login_user()
         set_maintenance_mode(False)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_on")),
@@ -399,7 +399,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_super_user()
         self.login_user()
         cache.set("maintenance_mode_frontend_available", False, None)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_frontend_available")),
@@ -410,7 +410,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_test_user()
         self.login_user()
         cache.set("maintenance_mode_frontend_available", False, None)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_frontend_available")),
@@ -422,7 +422,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_super_user()
         self.login_user()
         cache.set("maintenance_mode_frontend_available", True, None)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_frontend_unavailable")),
@@ -433,7 +433,7 @@ class MaintenanceModeTests(TestCase, CreateTestUsers):
         self.user = self.create_test_user()
         self.login_user()
         cache.set("maintenance_mode_frontend_available", True, None)
-        with patch("concordia.views.time") as mock:
+        with patch("concordia.views.maintenance_mode.time") as mock:
             mock.return_value = self.timestamp_value
             self.assertRedirects(
                 self.client.get(reverse("maintenance_mode_frontend_unavailable")),

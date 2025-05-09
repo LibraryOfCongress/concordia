@@ -35,7 +35,9 @@
     <script type="importmap">
         {
             "imports": {
+                "@popperjs/core": "{% static '@popperjs/core/dist/esm/popper.js' %}",
                 "asset-reservation": "{% static 'js/asset-reservation.js' %}",
+                "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.esm.js' %}",
                 "ocr": "{% static 'js/ocr.js' %}",
                 "viewer": "{% static 'js/viewer.js' %}",
                 "turnstile" : "{% static 'js/modules/turnstile.js' %}"

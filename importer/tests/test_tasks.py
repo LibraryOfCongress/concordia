@@ -321,30 +321,44 @@ class FetchAllUrlsTests(TestCase):
         self.assertEqual(totals, 0)
 
 
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+    },
+    AWS_STORAGE_BUCKET_NAME="test-bucket",
+)
 class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.login_user()
         self.project = create_project()
 
-    def test_no_match(self):
+    @mock.patch("importer.tasks.create_item_import_task.delay")
+    def test_no_match(self, mock_task):
         with self.assertRaises(ValueError):
             import_items_into_project_from_url(
                 None, None, "https://www.loc.gov/resource/mss859430021/"
             )
+        self.assertFalse(mock_task.called)
 
-    def test_item(self):
+    @mock.patch("importer.tasks.create_item_import_task.delay")
+    def test_item(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user, self.project, "https://www.loc.gov/item/mss859430021/"
         )
         self.assertEqual(import_job.project, self.project)
+        self.assertTrue(mock_task.called)
 
-    def test_other_url_type(self):
+    @mock.patch("importer.tasks.import_collection_task.delay")
+    def test_other_url_type(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user,
             self.project,
             "https://www.loc.gov/collections/branch-rickey-papers/",
         )
         self.assertEqual(import_job.project, self.project)
+        self.assertTrue(mock_task.called)
+        mock_task.assert_called_with(import_job.pk, False)
 
 
 class ImportCollectionTests(CreateTestUsers, TestCase):
@@ -352,7 +366,8 @@ class ImportCollectionTests(CreateTestUsers, TestCase):
         self.login_user()
 
     @mock.patch("importer.tasks.get_collection_items")
-    def test_import_collection(self, mock_get):
+    @mock.patch("importer.tasks.normalize_collection_url")
+    def test_import_collection(self, mock_get, mock_normalize):
         magic_mock = mock.MagicMock()
         magic_mock.request = mock.MagicMock()
         magic_mock.request.id = 1
@@ -788,7 +803,10 @@ class AssetImportTests(TestCase):
             self.assertFalse(task_mock.called)
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid(self):
@@ -812,7 +830,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid_checksum_fail(self):
@@ -836,7 +857,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_valid_checksum_fail_without_flag(self):
@@ -858,7 +882,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_invalid(self):
@@ -879,7 +906,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_success(self):
@@ -903,7 +933,10 @@ class AssetImportTests(TestCase):
             self.assertEqual(import_asset.failure_reason, "")
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_maximum_exceeded(self):
@@ -935,14 +968,22 @@ class AssetImportTests(TestCase):
             self.assertFalse(task_mock.apply_async.called)
             self.assertEqual(len(import_asset.failure_history), 1)
             self.assertNotEqual(import_asset.failed, None)
-            self.assertNotEqual(import_asset.status, "Test failed status")
+            self.assertEqual(
+                import_asset.status,
+                "Maximum number of retries reached while retrying image download "
+                "for asset. The failure reason before retrying was Image and the "
+                "status was Test failed status",
+            )
             self.assertEqual(import_asset.retry_count, 1)
             self.assertEqual(
                 import_asset.failure_reason, TaskStatusModel.FailureReason.RETRIES
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_cant_reset(self):
@@ -968,7 +1009,10 @@ class AssetImportTests(TestCase):
             )
 
     @override_settings(
-        STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}},
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
     def test_download_asset_retry_invalid_failure_reason(self):
@@ -989,6 +1033,39 @@ class AssetImportTests(TestCase):
             self.assertEqual(import_asset.status, "Test failed status")
             self.assertEqual(len(import_asset.failure_history), 0)
             self.assertNotEqual(import_asset.failed, None)
+            self.assertEqual(import_asset.retry_count, 0)
+            self.assertEqual(import_asset.failure_reason, "")
+
+    @override_settings(
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+            "assets": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        },
+        AWS_STORAGE_BUCKET_NAME="test-bucket",
+    )
+    def test_download_asset_manual_retry_success(self):
+        # This mimics an admin manually retrying the task, rather than
+        # the automatic retry system (such as through an admin action).
+        # We want to be sure the failure information is correctly reset.
+        import_asset = self.import_asset
+        import_asset.failed = timezone.now()
+        import_asset.completed = None
+        import_asset.failure_reason = ""
+        import_asset.status = "Test failed status"
+        import_asset.retry_count = 0
+        import_asset.failure_history = []
+        import_asset.save()
+
+        with mock.patch(
+            "importer.models.tasks.download_and_store_asset_image"
+        ) as download_mock:
+            download_mock.return_value = "image.jpg"
+            tasks.download_asset_task.delay(import_asset.pk)
+            import_asset.refresh_from_db()
+            self.assertTrue(download_mock.called)
+            self.assertEqual(import_asset.status, "Completed")
+            self.assertEqual(len(import_asset.failure_history), 0)
+            self.assertEqual(import_asset.failed, None)
             self.assertEqual(import_asset.retry_count, 0)
             self.assertEqual(import_asset.failure_reason, "")
 

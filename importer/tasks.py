@@ -108,10 +108,11 @@ def update_task_status(f):
         task_status_object.last_started = now()
         task_status_object.task_id = self.request.id
         task_status_object.save()
-
         try:
             result = f(self, task_status_object, *args, **kwargs)
             task_status_object.completed = now()
+            task_status_object.failed = None
+            task_status_object.failure_reason = ""
             task_status_object.update_status("Completed")
             return result
         except Exception as exc:
@@ -448,8 +449,8 @@ def import_item(self, import_item):
             ]
         )
 
-        for idx, asset_url in enumerate(asset_urls, start=1):
-            asset_title = f"{import_item.item.item_id}-{idx}"
+        for sequence, asset_url in enumerate(asset_urls, start=1):
+            asset_title = f"{import_item.item.item_id}-{sequence}"
             file_extension = (
                 os.path.splitext(urlparse(asset_url).path)[1].lstrip(".").lower()
             )
@@ -457,14 +458,12 @@ def import_item(self, import_item):
                 item=import_item.item,
                 campaign=import_item.item.project.campaign,
                 title=asset_title,
-                slug=slugify(asset_title, allow_unicode=True),
-                sequence=idx,
-                media_url=f"{idx}.{file_extension}",
+                sequence=sequence,
                 media_type=MediaType.IMAGE,
                 download_url=asset_url,
                 resource_url=item_resource_url,
                 storage_image="/".join(
-                    [relative_asset_file_path, f"{idx}.{file_extension}"]
+                    [relative_asset_file_path, f"{sequence}.{file_extension}"]
                 ),
             )
             # Previously, any asset that raised a validation error was just ignored.

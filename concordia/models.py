@@ -1,18 +1,33 @@
+from __future__ import annotations  # Necessary until Python 3.12
+
 import datetime
 import os.path
 import time
+import uuid
 from itertools import chain
 from logging import getLogger
+from typing import Optional, Tuple, Union
 
 import pytesseract
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
+from django.db.models import (
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    JSONField,
+    Q,
+    Value,
+    When,
+)
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
@@ -20,6 +35,7 @@ from django.utils import timezone
 from PIL import Image
 
 from concordia.exceptions import RateLimitExceededError
+from concordia.storage import ASSET_STORAGE
 from configuration.utils import configuration_value
 from prometheus_metrics.models import MetricsModelMixin
 
@@ -227,12 +243,35 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
             # in the decimal results being dropped. We implicitly cast one field to
             # be a float through multiplication in order to do floating point division
             .annotate(
-                completed_percent=ExpressionWrapper(
-                    Round(100 * F("completed_count") * 1.0 / F("asset_count")),
+                completed_raw_percent=ExpressionWrapper(
+                    100 * F("completed_count") * 1.0 / F("asset_count"),
                     output_field=models.FloatField(),
                 ),
-                needs_review_percent=ExpressionWrapper(
-                    Round(100 * F("submitted_count") * 1.0 / F("asset_count")),
+                needs_review_raw_percent=ExpressionWrapper(
+                    100 * F("submitted_count") * 1.0 / F("asset_count"),
+                    output_field=models.FloatField(),
+                ),
+            )
+            # Due to rounding issues, we explicitly only allow a 100% value if all
+            # assets are in a particular status. Otherwise, we clamp to a maximum of
+            # 99%
+            .annotate(
+                completed_percent=Case(
+                    When(
+                        completed_raw_percent__gte=99,
+                        completed_raw_percent__lt=100,
+                        then=Value(99),
+                    ),
+                    default=Round(F("completed_raw_percent")),
+                    output_field=models.FloatField(),
+                ),
+                needs_review_percent=Case(
+                    When(
+                        needs_review_raw_percent__gte=99,
+                        needs_review_raw_percent__lt=100,
+                        then=Value(99),
+                    ),
+                    default=Round(F("needs_review_raw_percent")),
                     output_field=models.FloatField(),
                 ),
             )
@@ -481,7 +520,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     description = models.TextField(blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
-    topics = models.ManyToManyField(Topic)
+    topics = models.ManyToManyField("Topic", through="ProjectTopic")
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for all assets of this project"
@@ -564,15 +603,10 @@ class AssetQuerySet(PublicationQuerySet):
 
 class Asset(MetricsModelMixin("asset"), models.Model):
     def get_storage_path(self, filename):
-        s3_relative_path = "/".join(
-            [
-                self.item.project.campaign.slug,
-                self.item.project.slug,
-                self.item.item_id,
-            ]
-        )
-        filename = self.media_url
-        return os.path.join(s3_relative_path, filename)
+        extension = os.path.splitext(filename)[1].lstrip(".").lower()
+        if extension == "jpeg":
+            extension = "jpg"
+        return self.get_asset_image_filename(extension)
 
     objects = AssetQuerySet.as_manager()
 
@@ -585,9 +619,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     slug = models.SlugField(max_length=100, allow_unicode=True)
 
     description = models.TextField(blank=True)
-    # TODO: do we really need this given that we import in lock-step sequence
-    #       numbers with a fixed extension?
-    media_url = models.TextField("Path component of the URL", max_length=255)
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
@@ -613,7 +644,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
 
-    storage_image = models.ImageField(upload_to=get_storage_path, max_length=255)
+    storage_image = models.ImageField(
+        upload_to=get_storage_path, storage=ASSET_STORAGE, max_length=255
+    )
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for this asset"
@@ -657,16 +690,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
+    @staticmethod
+    def get_asset_image_path(item):
+        return os.path.join(item.project.campaign.slug, item.project.slug, item.item_id)
+
     def get_asset_image_filename(self, extension="jpg"):
-        item = self.item
-        project = item.project
-        campaign = project.campaign
         return os.path.join(
-            campaign.slug,
-            project.slug,
-            item.item_id,
-            f"{self.sequence}.{extension}",
+            self.get_asset_image_path(self.item), f"{self.sequence}.{extension}"
         )
+
+    def get_existing_storage_image_filename(self):
+        return os.path.basename(self.storage_image.name)
 
     def get_ocr_transcript(self, language=None):
         if language and language not in settings.PYTESSERACT_ALLOWED_LANGUAGES:
@@ -695,7 +729,31 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def turn_off_ocr(self):
         return self.disable_ocr or self.item.turn_off_ocr()
 
-    def can_rollback(self):
+    def can_rollback(
+        self,
+    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+        """
+        Determine whether the latest transcription on this asset can be rolled back.
+
+        This checks the transcription history for the most recent non-rolled-forward
+        transcription that precedes the current latest transcription, excluding any
+        transcriptions that are rollforwards or are sources of rollforwards.
+
+        Returns:
+            tuple:
+                - (True, target, original) if a rollback is possible, where:
+                    * target is the transcription to roll back to.
+                    * original is the current latest transcription.
+                - (False, reason, None) if a rollback is not possible, where:
+                    * reason is a string explaining why.
+
+        A rollback is only possible if:
+            - There is more than one transcription.
+            - There is a prior transcription that is not a rollforward
+              or a source of one.
+
+        This method does not perform the rollback, only checks feasibility.
+        """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
         # but if it's a rolled forward or backward transcription, we use it to
@@ -710,6 +768,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollback transcription on an asset "
                     "with no transcriptions"
                 ),
+                None,
             )
         # If the latest transcription has a source (i.e., is a rollback
         # or rollforward transcription), we want the original transcription
@@ -738,11 +797,34 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollback transcription on an asset "
                     "with no non-rollforward older transcriptions"
                 ),
+                None,
             )
 
         return True, transcription_to_rollback_to, original_latest_transcription
 
-    def rollback_transcription(self, user):
+    def rollback_transcription(self, user: User) -> Transcription:
+        """
+        Perform a rollback of the latest transcription on this asset.
+
+        This creates a new transcription that copies the text of the most recent
+        eligible prior transcription (as determined by `can_rollback`) and marks it
+        as rolled back. It also updates the original latest transcription to reflect
+        that it has been superseded.
+
+        Args:
+            user (User): The user initiating the rollback.
+
+        Returns:
+            Transcription: The newly created rollback transcription.
+
+        Raises:
+            ValueError: If rollback is not possible (e.g. no eligible transcription).
+
+        The new transcription will:
+            - Have `rolled_back=True`.
+            - Set its `source` to the transcription it is rolled back to.
+            - Set `supersedes` to the current latest transcription.
+        """
         results = self.can_rollback()
         if results[0] is not True:
             raise ValueError(results[1])
@@ -762,12 +844,35 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription.save()
         return new_transcription
 
-    def can_rollforward(self):
+    def can_rollforward(
+        self,
+    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+        """
+        Determine whether a previous rollback on this asset can be rolled forward.
+
+        This checks whether the most recent transcription is a rollback transcription
+        and whether the transcription it replaced (its `supersedes`) can be restored.
+
+        Returns:
+            tuple:
+                - (True, target, original) if rollforward is possible, where:
+                    * target is the transcription to roll forward to.
+                    * original is the current latest transcription.
+                - (False, reason, None) if rollforward is not possible, where:
+                    * reason is a string explaining why.
+
+        This method handles cases where multiple rollforwards were applied,
+        walking backward through the transcription chain to find the appropriate
+        rollback origin.
+
+        A rollforward is only possible if:
+            - The latest transcription is a rollback.
+            - The rollback's superseded transcription exists and can be restored.
+        """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
         # but if it's a rolled forward transcription, we use it to find the most
         # recent non-rolled-forward transcription and store that in latest_transcription
-
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
@@ -779,6 +884,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollforward transcription on an asset "
                     "with no transcriptions"
                 ),
+                None,
             )
 
         if latest_transcription.rolled_forward:
@@ -795,6 +901,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                         "Can not rollforward transcription on an asset with no "
                         "non-rollforward transcriptions"
                     ),
+                    None,
                 )
             # latest_transcription is now the most recent non-rolled-forward
             # transcription, but we need to go back fruther based on the number
@@ -822,6 +929,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                         "transcriptions, which shouldn't be possible. Possibly "
                         "incorrectly modified transcriptions for this asset."
                     ),
+                    None,
                 )
 
         # If the latest_transcription we end up with is a rollback transcription,
@@ -836,6 +944,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollforward transcription on an asset if the latest "
                     "non-rollforward transcription is not a rollback transcription"
                 ),
+                None,
             )
 
         # If that replaced transcription doesn't exist, we can't do anything
@@ -848,11 +957,33 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     "Can not rollforward transcription on an asset if the latest "
                     "rollback transcription did not supersede a previous transcription"
                 ),
+                None,
             )
 
         return True, transcription_to_rollforward, original_latest_transcription
 
-    def rollforward_transcription(self, user):
+    def rollforward_transcription(self, user: User) -> Transcription:
+        """
+        Perform a rollforward of the most recent rollback transcription.
+
+        This creates a new transcription that restores the text from the
+        rollback's superseded transcription and marks it as a rollforward.
+
+        Args:
+            user (User): The user initiating the rollforward.
+
+        Returns:
+            Transcription: The newly created rollforward transcription.
+
+        Raises:
+            ValueError: If rollforward is not possible (e.g. no valid rollback
+                        history or malformed transcription chain).
+
+        The new transcription will:
+            - Have `rolled_forward=True`.
+            - Set its `source` to the transcription being rolled forward to.
+            - Set `supersedes` to the current latest transcription.
+        """
         results = self.can_rollforward()
         if results[0] is not True:
             raise ValueError(results[1])
@@ -1062,9 +1193,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
-def update_userprofileactivity_table(user, campaign_id, attr_name, increment=1):
-    field = attr_name + "_count"
-
+def update_userprofileactivity_table(user, campaign_id, field, increment=1):
     user_profile_activity, created = UserProfileActivity.objects.get_or_create(
         user=user,
         campaign_id=campaign_id,
@@ -1382,3 +1511,164 @@ def validated_get_or_create(klass, **kwargs):
         obj.full_clean()
         obj.save()
         return obj, True
+
+
+class NextAsset(models.Model):
+    id = models.UUIDField(  # noqa: A003
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item_item_id = models.CharField(max_length=100)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    project_slug = models.SlugField(max_length=80, allow_unicode=True)
+    sequence = models.PositiveIntegerField(default=1)
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.asset.title
+
+
+class NextTranscribableAsset(NextAsset):
+    transcription_status = models.CharField(
+        editable=False,
+        max_length=20,
+        default=TranscriptionStatus.NOT_STARTED,
+        choices=TranscriptionStatus.CHOICES,
+        db_index=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class NextReviewableAsset(NextAsset):
+    transcriber_ids = ArrayField(
+        base_field=models.IntegerField(),
+        blank=True,
+        default=list,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class NextCampaignAssetManager(models.Manager):
+    target_count = None  # Override in subclass
+
+    def needed_for_campaign(self, campaign_id, target_count=None):
+        if target_count is None:
+            if self.target_count is None:
+                raise NotImplementedError(
+                    "You must define `target_count` in the subclass "
+                    "or pass `target_count` explicitly."
+                )
+            target_count = self.target_count
+
+        current_count = self.filter(campaign_id=campaign_id).count()
+        return max(target_count - current_count, 0)
+
+
+class NextTopicAssetManager(models.Manager):
+    target_count = None  # Override in subclass
+
+    def needed_for_topic(self, topic_id, target_count=None):
+        if target_count is None:
+            if self.target_count is None:
+                raise NotImplementedError(
+                    "You must define `target_count` in the subclass "
+                    "or pass `target_count` explicitly."
+                )
+            target_count = self.target_count
+
+        current_count = self.filter(topic_id=topic_id).count()
+        return max(target_count - current_count, 0)
+
+
+class NextTranscribableCampaignAssetManager(NextCampaignAssetManager):
+    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+
+
+class NextTranscribableTopicAssetManager(NextTopicAssetManager):
+    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+
+
+class NextReviewableCampaignAssetManager(NextCampaignAssetManager):
+    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
+
+
+class NextReviewableTopicAssetManager(NextTopicAssetManager):
+    target_count = getattr(settings, "NEXT_REVIEWABLE_ASSET_COUNT", 100)
+
+
+class NextTranscribableCampaignAsset(NextTranscribableAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+
+    objects = NextTranscribableCampaignAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+
+
+class NextTranscribableTopicAsset(NextTranscribableAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+
+    objects = NextTranscribableTopicAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+        unique_together = ("asset", "topic")
+
+
+class NextReviewableCampaignAsset(NextReviewableAsset):
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+
+    objects = NextReviewableCampaignAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]
+
+
+class NextReviewableTopicAsset(NextReviewableAsset):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+
+    objects = NextReviewableTopicAssetManager()
+
+    class Meta:
+        ordering = ("created_on",)
+        get_latest_by = "created_on"
+        unique_together = ("asset", "topic")
+        indexes = [
+            GinIndex(fields=["transcriber_ids"]),
+        ]
+
+
+class ProjectTopic(models.Model):
+    project = models.ForeignKey("Project", on_delete=models.CASCADE)
+    topic = models.ForeignKey("Topic", on_delete=models.CASCADE)
+
+    url_filter = models.CharField(
+        max_length=20,
+        choices=TranscriptionStatus.CHOICES,
+        blank=True,
+        null=True,
+        help_text="Optional filter on the status for this project-topic link",
+    )
+
+    class Meta:
+        db_table = (
+            "concordia_project_topics"  # pre-existing table, so we reuse the name
+        )
+        unique_together = ("project", "topic")
