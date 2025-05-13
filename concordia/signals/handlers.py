@@ -1,6 +1,7 @@
 import logging
 from time import time
 
+import structlog
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -13,6 +14,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template import loader
 from django_registration.signals import user_activated, user_registered
+from django_structlog import signals
 from flags.state import flag_enabled
 
 from concordia.models import (
@@ -261,3 +263,24 @@ def on_transcription_save(sender, instance, **kwargs):
             review_count += 1
         updates[user.id] = (transcribe_count, review_count)
         cache.set(key, updates)
+
+
+@receiver(signals.update_failure_response)
+@receiver(signals.bind_extra_request_finished_metadata)
+def add_request_id_to_response(response, logger, **kwargs):
+    cache_control = response.get("Cache-Control", "").lower()
+
+    is_public = "public" in cache_control or "max-age" in cache_control
+    is_private = (
+        "private" in cache_control
+        or "no-store" in cache_control
+        or "no-cache" in cache_control
+    )
+
+    if is_public and not is_private:
+        # Don't add header to potentially cacheable responses
+        # to avoid the cache storing a bad request_id
+        return
+
+    context = structlog.contextvars.get_merged_contextvars(logger)
+    response["X-Request-ID"] = context["request_id"]

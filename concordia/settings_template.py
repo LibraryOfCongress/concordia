@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
+    "django_structlog",
     "django_bootstrap5",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
@@ -135,6 +136,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
@@ -161,6 +163,7 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
                 "concordia.context_processors.maintenance_mode_frontend_available",
+                "concordia.context_processors.request_id_context",
                 "concordia.turnstile.context_processors.turnstile_default_settings",
             ],
             "libraries": {

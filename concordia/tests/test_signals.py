@@ -4,12 +4,15 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in
 from django.core import mail
+from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from django_registration.signals import user_activated, user_registered
+from structlog.contextvars import bind_contextvars, clear_contextvars
 
 from concordia.models import TranscriptionStatus
+from concordia.signals.handlers import add_request_id_to_response
 
 from .utils import CreateTestUsers, create_asset, create_transcription
 
@@ -142,3 +145,55 @@ class UpdateAssetStatusSignalTests(CreateTestUsers, TestCase):
         mock_calc.assert_called_once()
         args, _ = mock_calc.call_args
         self.assertEqual(list(args[0].values_list("pk", flat=True)), [self.asset.pk])
+
+
+class RequestIDHeaderTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        clear_contextvars()
+        bind_contextvars(request_id="test-id-123")
+
+    def tearDown(self):
+        clear_contextvars()
+
+    def make_response(self, cache_control_header=None):
+        response = HttpResponse("ok")
+        if cache_control_header:
+            response["Cache-Control"] = cache_control_header
+        return response
+
+    @mock.patch(
+        "structlog.contextvars.get_merged_contextvars",
+        return_value={"request_id": "test-id-123"},
+    )
+    def test_adds_header_when_no_cache_control(self, mock_contextvars):
+        response = self.make_response()
+        add_request_id_to_response(response=response, logger=None)
+        self.assertEqual(response["X-Request-ID"], "test-id-123")
+
+    @mock.patch(
+        "structlog.contextvars.get_merged_contextvars",
+        return_value={"request_id": "test-id-123"},
+    )
+    def test_adds_header_when_private(self, mock_contextvars):
+        response = self.make_response("private, no-store")
+        add_request_id_to_response(response=response, logger=None)
+        self.assertEqual(response["X-Request-ID"], "test-id-123")
+
+    @mock.patch(
+        "structlog.contextvars.get_merged_contextvars",
+        return_value={"request_id": "test-id-123"},
+    )
+    def test_skips_header_when_public_with_max_age(self, mock_contextvars):
+        response = self.make_response("public, max-age=600")
+        add_request_id_to_response(response=response, logger=None)
+        self.assertNotIn("X-Request-ID", response)
+
+    @mock.patch(
+        "structlog.contextvars.get_merged_contextvars",
+        return_value={"request_id": "test-id-123"},
+    )
+    def test_adds_header_when_no_store_present(self, mock_contextvars):
+        response = self.make_response("public, no-store")
+        add_request_id_to_response(response=response, logger=None)
+        self.assertEqual(response["X-Request-ID"], "test-id-123")
