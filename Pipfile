@@ -47,10 +47,10 @@ pillow = "==11.2.1"
 prometheus-client = "==0.21.0"
 xlsxwriter = "==3.2.2"
 blinker = "==1.7.0"
-psycopg2 = "==2.9.10"
 django = "==4.2.20"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
+psycopg = {extras = ["c"], version = "==3.2.9"}
 
 [dev-packages]
 invoke = "==2.2.0"
