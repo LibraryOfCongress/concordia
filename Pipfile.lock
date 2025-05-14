@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f9332e832a7e22a17ec985b96bd0f8d46c0601f77c8dd500589b45415316147b"
+            "sha256": "91400ab1af18a14bd2e4574d80ecb431eb6ad68a677fffce293e7d551d026e70"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -147,6 +147,22 @@
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==1.7.0"
+        },
+        "boto3": {
+            "hashes": [
+                "sha256:dca60f7a3ead91c05cf471f7750e54d63b92bfc0e61fa122e2e3f5140e020a8d",
+                "sha256:f2239b8c2816dd03a2a97297d33d5f7899f23be3a261db9a09ca691c32b7ddc2"
+            ],
+            "markers": "python_version >= '3.9'",
+            "version": "==1.38.15"
+        },
+        "botocore": {
+            "hashes": [
+                "sha256:6adb3b1b0739153d5dc9758e5e06f7596290999c07ed8f9167ca62a1f97c6592",
+                "sha256:9cc149ef56c3b99aff5436f26b71ad9558a45e4ac6b25b7b7046b0889279e601"
+            ],
+            "markers": "python_version >= '3.9'",
+            "version": "==1.38.15"
         },
         "brotli": {
             "hashes": [
@@ -750,6 +766,17 @@
             "markers": "python_version >= '3.7'",
             "version": "==6.1"
         },
+        "django-storages": {
+            "extras": [
+                "s3"
+            ],
+            "hashes": [
+                "sha256:11b7b6200e1cb5ffcd9962bd3673a39c7d6a6109e8096f0e03d46fab3d3aabd9",
+                "sha256:7a25ce8f4214f69ac9c7ce87e2603887f7ae99326c316bc8d2d75375e09341c9"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==1.14.6"
+        },
         "django-structlog": {
             "extras": [
                 "celery"
@@ -1278,6 +1305,14 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==3.1.6"
+        },
+        "jmespath": {
+            "hashes": [
+                "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980",
+                "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==1.0.1"
         },
         "kombu": {
             "hashes": [
@@ -2121,6 +2156,14 @@
             ],
             "markers": "python_full_version >= '3.8.0'",
             "version": "==13.9.4"
+        },
+        "s3transfer": {
+            "hashes": [
+                "sha256:35b314d7d82865756edab59f7baebc6b477189e6ab4c53050e28c1de4d9cce18",
+                "sha256:8ac58bc1989a3fdb7c7f3ee0918a66b160d038a147c7b5db1500930a607e9a1c"
+            ],
+            "markers": "python_version >= '3.9'",
+            "version": "==0.12.0"
         },
         "selenium": {
             "hashes": [

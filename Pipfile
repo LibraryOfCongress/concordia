@@ -51,6 +51,7 @@ django-opensearch-dsl = "==0.7.0"
 django = "==4.2.21"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
 psycopg = {extras = ["c"], version = "==3.2.9"}
+django-storages = {extras = ["s3"], version = "==1.14.6"}
 
 [dev-packages]
 invoke = "==2.2.0"
