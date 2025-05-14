@@ -3,6 +3,7 @@ import re
 from time import time
 from typing import Union
 
+import structlog
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.messages import get_messages
@@ -41,6 +42,7 @@ from .decorators import reserve_rate, validate_anonymous_user
 from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
+structured_logger = structlog.get_logger(f"structlog.{__name__}")
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -252,9 +254,26 @@ def rollback_transcription(
         transcription = asset.rollback_transcription(user)
     except ValueError as e:
         logger.exception("No previous transcription available for rollback", exc_info=e)
+        structured_logger.warning(
+            "transcription_rollback_failed",
+            action="rollback",
+            result="error",
+            asset_id=asset.pk,
+            user_id=user.id if user.is_authenticated else "anonymous",
+            error=str(e),
+        )
         return JsonResponse(
             {"error": "No previous transcription available"}, status=400
         )
+
+    structured_logger.info(
+        "transcription_rollback_success",
+        action="rollback",
+        result="success",
+        asset_id=asset.pk,
+        user_id=user.id if user.is_authenticated else "anonymous",
+        transcription_id=transcription.pk,
+    )
 
     return JsonResponse(
         {
@@ -344,7 +363,24 @@ def rollforward_transcription(
         transcription = asset.rollforward_transcription(user)
     except ValueError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
+        structured_logger.warning(
+            "transcription_rollforward_failed",
+            action="rollforward",
+            result="error",
+            asset_id=asset.pk,
+            user_id=user.id if user.is_authenticated else "anonymous",
+            error=str(e),
+        )
         return JsonResponse({"error": "No transcription to restore"}, status=400)
+
+    structured_logger.info(
+        "transcription_rollforward_success",
+        action="rollforward",
+        result="success",
+        asset_id=asset.pk,
+        user_id=user.id if user.is_authenticated else "anonymous",
+        transcription_id=transcription.pk,
+    )
 
     return JsonResponse(
         {

@@ -954,12 +954,18 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # Acquire the reservation: 1 acquire
         # + 1 reservation check
-        # + 1 session if not anonymous and using a database:
+        # + 1 logging if not anonymous
+        # + 1 session if not anonymous and using a database session engine:
         expected_update_queries = 2
-        if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_update_queries += 1
-        # + 1 get user ID from request
-        expected_acquire_queries = expected_update_queries + 1
+        if not anonymous:
+            expected_update_queries += 1  # Added by django-structlog middleware
+            if settings.SESSION_ENGINE.endswith("db"):
+                expected_update_queries += 1  # Added by database session engine
+            # We don't need to add an extra query for accessing request.user
+            # because the django-structlog middleware will do that for non-anonymous
+            expected_acquire_queries = expected_update_queries
+        else:
+            expected_acquire_queries = expected_update_queries + 1
 
         with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -984,11 +990,14 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertLess(reservation.created_on, updated_reservation.updated_on)
 
         # Release the reservation now that we're done:
-        # 1 release + 1 session if not anonymous and using a database:
-        if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_release_queries = 2
-        else:
-            expected_release_queries = 1
+        # 1 release
+        # + 1 logging if not anonymous
+        # + 1 session if not anonymous and using a database
+        expected_release_queries = 1
+        if not anonymous:
+            expected_release_queries += 1  # Added by django-structlog middleware
+            if settings.SESSION_ENGINE.endswith("db"):
+                expected_release_queries += 1
 
         with self.assertNumQueries(expected_release_queries):
             resp = self.client.post(
@@ -1101,11 +1110,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.tombstoned, True)
 
-        # 1 session check + 1 reservation check
+        # 1 session check + 1 reservation check + 1 logging
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 2
+            expected_queries = 3
         else:
-            expected_queries = 1
+            expected_queries = 2
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -1169,11 +1178,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         delete_old_tombstoned_reservations()
         self.assertEqual(0, AssetTranscriptionReservation.objects.count())
 
-        # 1 session check + 1 reservation check + 1 acquire
+        # 1 session check + 1 reservation check + 1 acquire + 1logging
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 3
+            expected_queries = 4
         else:
-            expected_queries = 2
+            expected_queries = 3
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
