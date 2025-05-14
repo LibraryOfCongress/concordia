@@ -1,6 +1,7 @@
 import os
 
 import sentry_sdk
+import structlog
 from django.contrib import messages
 from django.core.management.utils import get_random_secret_key
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -261,6 +262,14 @@ LOGGING = {
             "datefmt": "%Y-%m-%dT%H:%M:%S",
             "style": "{",
         },
+        "structlog_json": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.JSONRenderer(),
+        },
+        "structlog_console": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer(),
+        },
     },
     "handlers": {
         "stream": {
@@ -285,13 +294,54 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
+        "structlog_file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "level": "INFO",
+            "formatter": "structlog_json",
+            "filename": f"{SITE_ROOT_DIR}/logs/concordia-json.log",
+            "when": "H",
+            "interval": 3,
+            "backupCount": 16,
+        },
+        "structlog_console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "structlog_console",
+        },
     },
     "loggers": {
         "django": {"handlers": ["file"], "level": "INFO"},
         "celery": {"handlers": ["celery"], "level": "INFO"},
         "concordia": {"handlers": ["file"], "level": "INFO"},
+        "structlog": {
+            "handlers": ["structlog_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django_structlog": {
+            "handlers": ["structlog_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
+
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
 
 
 ################################################################################

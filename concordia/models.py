@@ -9,6 +9,7 @@ from logging import getLogger
 from typing import Optional, Tuple, Union
 
 import pytesseract
+import structlog
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
@@ -40,6 +41,7 @@ from configuration.utils import configuration_value
 from prometheus_metrics.models import MetricsModelMixin
 
 logger = getLogger(__name__)
+structured_logger = structlog.get_logger(f"structlog.{__name__}")
 
 metadata_default = dict
 
@@ -762,6 +764,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             self.latest_transcription()
         )
         if original_latest_transcription is None:
+            structured_logger.debug(
+                "rollback_check_failed_no_transcriptions",
+                asset_id=self.id,
+            )
             return (
                 False,
                 (
@@ -791,6 +797,11 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             # transcription to rollback to, because everything before
             # is either a rollforward or the source of a rollforward
             # (or there just isn't an earlier transcription at all)
+            structured_logger.debug(
+                "rollback_check_failed_no_eligible_transcription",
+                asset_id=self.id,
+                latest_transcription_id=original_latest_transcription.id,
+            )
             return (
                 False,
                 (
@@ -827,6 +838,12 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         results = self.can_rollback()
         if results[0] is not True:
+            structured_logger.warning(
+                "rollback_attempt_failed",
+                asset_id=self.id,
+                user_id=user.id,
+                reason=results[1],
+            )
             raise ValueError(results[1])
         transcription_to_rollback_to = results[1]
         original_latest_transcription = results[2]
@@ -842,6 +859,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription = Transcription(**kwargs)
         new_transcription.full_clean()
         new_transcription.save()
+        structured_logger.info(
+            "rollback_performed",
+            asset_id=self.id,
+            user_id=user.id,
+            new_transcription_id=new_transcription.id,
+            rolled_back_from_id=original_latest_transcription.id,
+            rolled_back_to_id=transcription_to_rollback_to.id,
+        )
         return new_transcription
 
     def can_rollforward(
@@ -878,6 +903,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         )
 
         if original_latest_transcription is None:
+            structured_logger.debug(
+                "rollforward_check_failed_no_transcriptions", asset_id=self.id
+            )
             return (
                 False,
                 (
@@ -922,6 +950,11 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 # when the loop continues
                 # In either case, his should only happen if the transcription
                 # history was manually edited.
+                structured_logger.warning(
+                    "rollforward_check_corrupt_state",
+                    asset_id=self.id,
+                    latest_transcription_id=original_latest_transcription.id,
+                )
                 return (
                     False,
                     (
@@ -986,6 +1019,12 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         results = self.can_rollforward()
         if results[0] is not True:
+            structured_logger.warning(
+                "rollforward_attempt_failed",
+                asset_id=self.id,
+                user_id=user.id,
+                reason=results[1],
+            )
             raise ValueError(results[1])
         transcription_to_rollforward = results[1]
         original_latest_transcription = results[2]
@@ -1001,6 +1040,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription = Transcription(**kwargs)
         new_transcription.full_clean()
         new_transcription.save()
+        structured_logger.info(
+            "rollforward_performed",
+            asset_id=self.id,
+            user_id=user.id,
+            new_transcription_id=new_transcription.id,
+            rolled_forward_from_id=original_latest_transcription.id,
+            rolled_forward_to_id=transcription_to_rollforward.id,
+        )
         return new_transcription
 
 
