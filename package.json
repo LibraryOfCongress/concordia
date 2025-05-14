@@ -3,7 +3,7 @@
         "@axe-core/cli": "^4.10.1",
         "@puppeteer/browsers": "^2.8.0",
         "child_process": "^1.0.2",
-        "chromedriver": "^135.0.4",
+        "chromedriver": "^136.0.0",
         "fancy-log": "^2.0.0",
         "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
@@ -11,7 +11,7 @@
         "@duetds/date-picker": "^1.4.0",
         "@fortawesome/fontawesome-free": "^6.7.2",
         "@popperjs/core": "^2.11.8",
-        "bootstrap": "^5.3.5",
+        "bootstrap": "^5.3.6",
         "codemirror": "^5.65.19",
         "gulp": "^5.0.0",
         "gulp-rename": "^2.0.0",
