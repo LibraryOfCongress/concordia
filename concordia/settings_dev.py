@@ -6,12 +6,22 @@ from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
 LOGGING["handlers"]["celery"]["level"] = "DEBUG"
+LOGGING["handlers"]["structlog"]["level"] = "DEBUG"
+LOGGING["handlers"]["django_structlog"]["level"] = "DEBUG"
 LOGGING["loggers"] = {
     "django": {"handlers": ["file", "stream"], "level": "DEBUG"},
     "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
     "concordia": {"handlers": ["file", "stream"], "level": "DEBUG"},
     "django.utils.autoreload": {"level": "INFO"},
     "django.template": {"level": "INFO"},
+    "structlog": {
+        "handlers": ["structlog_file", "structlog_console"],
+        "level": "INFO",
+    },
+    "django_structlog": {
+        "handlers": ["structlog_file", "structlog_console"],
+        "level": "INFO",
+    },
 }
 
 DEBUG = True

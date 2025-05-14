@@ -21,7 +21,7 @@ django-ratelimit = "==4.1.0"
 pylibmc = "==1.6.3"
 django-celery-beat = "==2.7.0"
 kombu = "==5.4.2"
-django-flags = "==5.0.13"
+django-flags = "==5.0.14"
 sentry-sdk = "==2.22.0"
 channels = { extras = ["daphne"], version = "==4.1.0" }
 channels-redis = "==4.2.0"
@@ -47,9 +47,9 @@ pillow = "==11.2.1"
 prometheus-client = "==0.21.0"
 xlsxwriter = "==3.2.2"
 blinker = "==1.7.0"
-django = "==4.2.20"
-django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
+django = "==4.2.21"
+django-structlog = {extras = ["celery"], version = "==9.1.1"}
 psycopg = {extras = ["c"], version = "==3.2.9"}
 
 [dev-packages]

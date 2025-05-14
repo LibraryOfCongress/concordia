@@ -1,14 +1,16 @@
 import logging
 import re
 from time import time
+from typing import Union
 
+import structlog
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.timezone import now
@@ -40,6 +42,7 @@ from .decorators import reserve_rate, validate_anonymous_user
 from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
+structured_logger = structlog.get_logger(f"structlog.{__name__}")
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -186,7 +189,60 @@ def generate_ocr_transcription(request, *, asset_pk):
 @validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
-def rollback_transcription(request, *, asset_pk):
+def rollback_transcription(
+    request: HttpRequest, *, asset_pk: Union[int, str]
+) -> JsonResponse:
+    """
+    Perform a rollback on the latest transcription for the given asset.
+
+    Requires the asset to have at least one earlier transcription that is not
+    a rollforward or the source of a rollforward. If rollback is not possible,
+    returns a 400 response.
+
+    Anonymous users are supported and handled via get_anonymous_user(). They must
+    be validated through validate_anonymous_user (this happens seamlessly if
+    Turnstile validation is included.)
+
+    Args:
+        request (HttpRequest): The incoming HTTP request.
+        asset_pk (int or str): Primary key of the asset to roll back.
+
+    Returns:
+        JsonResponse: A JSON object with the following fields:
+
+        - **id** (int): ID of the created transcription. Example: `123`
+        - **sent** (float): Timestamp (UNIX epoch) when the response was sent.
+          Example: `1715091212.123456`
+        - **submissionUrl** (str): URL where the transcription can be edited.
+          Example: `"/transcriptions/submit/123/"`
+        - **text** (str): Text of the transcription.
+        - **asset** (dict):
+            - **id** (int): ID of the asset. Example: `456`
+            - **status** (str): Current transcription status. Example: `"completed"`
+            - **contributors** (int): Number of distinct contributors. Example: `3`
+        - **message** (str): Status message.
+          Example: `"Successfully rolled back transcription to previous version"`
+        - **undo_available** (bool): Whether a rollback is currently possible.
+        - **redo_available** (bool): Whether a rollforward is currently possible.
+
+        Example:
+            ```json
+            {
+                "id": 123,
+                "sent": 1715091212.123456,
+                "submissionUrl": "/transcriptions/submit/123/",
+                "text": "Transcribed text...",
+                "asset": {
+                    "id": 456,
+                    "status": "completed",
+                    "contributors": 3
+                },
+                "message": "Successfully rolled back transcription to previous version",
+                "undo_available": true,
+                "redo_available": false
+            }
+            ```
+    """
     asset = get_object_or_404(Asset, pk=asset_pk)
 
     if request.user.is_anonymous:
@@ -198,9 +254,26 @@ def rollback_transcription(request, *, asset_pk):
         transcription = asset.rollback_transcription(user)
     except ValueError as e:
         logger.exception("No previous transcription available for rollback", exc_info=e)
+        structured_logger.warning(
+            "transcription_rollback_failed",
+            action="rollback",
+            result="error",
+            asset_id=asset.pk,
+            user_id=user.id if user.is_authenticated else "anonymous",
+            error=str(e),
+        )
         return JsonResponse(
             {"error": "No previous transcription available"}, status=400
         )
+
+    structured_logger.info(
+        "transcription_rollback_success",
+        action="rollback",
+        result="success",
+        asset_id=asset.pk,
+        user_id=user.id if user.is_authenticated else "anonymous",
+        transcription_id=transcription.pk,
+    )
 
     return JsonResponse(
         {
@@ -225,7 +298,60 @@ def rollback_transcription(request, *, asset_pk):
 @validate_anonymous_user
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
-def rollforward_transcription(request, *, asset_pk):
+def rollforward_transcription(
+    request: HttpRequest, *, asset_pk: Union[int, str]
+) -> JsonResponse:
+    """
+    Perform a rollforward to the transcription previously replaced by a rollback.
+
+    Requires the most recent transcription to be a rollback, and for the
+    transcription it superseded to exist and be valid. If rollforward is not
+    possible, returns a 400 response.
+
+    Anonymous users are supported and handled via get_anonymous_user(). They must
+    be validated through validate_anonymous_user (this happens seamlessly if
+    Turnstile validation is included.)
+
+    Args:
+        request (HttpRequest): The incoming HTTP request.
+        asset_pk (int or str): Primary key of the asset to roll forward.
+
+    Returns:
+        JsonResponse: A JSON object with the following fields:
+
+        - **id** (int): ID of the created transcription. Example: `123`
+        - **sent** (float): Timestamp (UNIX epoch) when the response was sent.
+          Example: `1715091212.123456`
+        - **submissionUrl** (str): URL where the transcription can be edited.
+          Example: `"/transcriptions/submit/123/"`
+        - **text** (str): Text of the transcription.
+        - **asset** (dict):
+            - **id** (int): ID of the asset. Example: `456`
+            - **status** (str): Current transcription status. Example: `"completed"`
+            - **contributors** (int): Number of distinct contributors. Example: `3`
+        - **message** (str): Status message.
+          Example: `"Successfully restored transcription to next version"`
+        - **undo_available** (bool): Whether a rollback is currently possible.
+        - **redo_available** (bool): Whether a rollforward is currently possible.
+
+        Example:
+            ```json
+            {
+                "id": 123,
+                "sent": 1715091212.123456,
+                "submissionUrl": "/transcriptions/submit/123/",
+                "text": "Transcribed text...",
+                "asset": {
+                    "id": 456,
+                    "status": "completed",
+                    "contributors": 3
+                },
+                "message": "Successfully restored transcription to next version",
+                "undo_available": true,
+                "redo_available": false
+            }
+            ```
+    """
     asset = get_object_or_404(Asset, pk=asset_pk)
 
     if request.user.is_anonymous:
@@ -237,7 +363,24 @@ def rollforward_transcription(request, *, asset_pk):
         transcription = asset.rollforward_transcription(user)
     except ValueError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
+        structured_logger.warning(
+            "transcription_rollforward_failed",
+            action="rollforward",
+            result="error",
+            asset_id=asset.pk,
+            user_id=user.id if user.is_authenticated else "anonymous",
+            error=str(e),
+        )
         return JsonResponse({"error": "No transcription to restore"}, status=400)
+
+    structured_logger.info(
+        "transcription_rollforward_success",
+        action="rollforward",
+        result="success",
+        asset_id=asset.pk,
+        user_id=user.id if user.is_authenticated else "anonymous",
+        transcription_id=transcription.pk,
+    )
 
     return JsonResponse(
         {

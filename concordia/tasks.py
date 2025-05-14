@@ -1143,8 +1143,9 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
         raise e
 
 
-@celery_app.task(ignore_result=True)
-def update_userprofileactivity_from_cache():
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def update_userprofileactivity_from_cache(self):
     for campaign in Campaign.objects.all():
         key = f"userprofileactivity_{campaign.pk}"
         updates_by_user = cache.get(key)

@@ -1,6 +1,7 @@
 import logging
 from time import time
 
+import structlog
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -13,6 +14,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template import loader
 from django_registration.signals import user_activated, user_registered
+from django_structlog import signals
 from flags.state import flag_enabled
 
 from concordia.models import (
@@ -99,6 +101,9 @@ def add_user_to_newsletter(sender, user, request, **kwargs):
 @receiver(post_save, sender=Transcription)
 def update_asset_status(sender, *, instance, **kwargs):
     logger.info("update_asset_status for %s", instance.id)
+
+    asset = instance.asset
+
     new_status = TranscriptionStatus.IN_PROGRESS
 
     if instance.rejected:
@@ -108,7 +113,30 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    asset = instance.asset
+    # Before we do anything, we need to make sure this
+    # is the latest transcription for the asset.
+    current_latest_transcription = asset.latest_transcription()
+    if instance != current_latest_transcription:
+        # A transcription lower down in the asset's history has been updated.
+        # This shouldn't happen outside of extraordinary circumstances.
+        # We'll log this occurrence then skip the rest of the signal because
+        # we don't want to change the asset's status since changing an older
+        # transcription doesn't logically affect the status or anything else
+        logger.warning(
+            "An older transcription (%s) was updated for asset %s (%s). This "
+            "would have updated the status to %s, but this was prevented and "
+            "the status remained %s. The current latest_transcription is %s. "
+            "The sender was %s.",
+            instance.id,
+            asset,
+            asset.id,
+            new_status,
+            asset.transcription_status,
+            current_latest_transcription,
+            sender,
+        )
+        return
+
     logger.info(
         "Updating asset status for %s (%s) from %s to %s",
         asset,
@@ -235,3 +263,24 @@ def on_transcription_save(sender, instance, **kwargs):
             review_count += 1
         updates[user.id] = (transcribe_count, review_count)
         cache.set(key, updates)
+
+
+@receiver(signals.update_failure_response)
+@receiver(signals.bind_extra_request_finished_metadata)
+def add_request_id_to_response(response, logger, **kwargs):
+    cache_control = response.get("Cache-Control", "").lower()
+
+    is_public = "public" in cache_control or "max-age" in cache_control
+    is_private = (
+        "private" in cache_control
+        or "no-store" in cache_control
+        or "no-cache" in cache_control
+    )
+
+    if is_public and not is_private:
+        # Don't add header to potentially cacheable responses
+        # to avoid the cache storing a bad request_id
+        return
+
+    context = structlog.contextvars.get_merged_contextvars(logger)
+    response["X-Request-ID"] = context["request_id"]
