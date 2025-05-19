@@ -3,6 +3,7 @@ import tempfile
 import zipfile
 from unittest.mock import patch
 
+from django.http import HttpResponseRedirect
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -150,8 +151,25 @@ class ViewTests(TestCase):
         fallback_url = "http://example.com/image.jpg"
         self.assertEqual(get_original_asset_id(fallback_url), fallback_url)
 
+    def test_get_original_asset_id_service_match(self):
+        url = "http://tile.loc.gov/image-services/iiif/service:mss:mss38299:mss38299_016:0588/full/pct:100/0/default.jpg"
+        result = get_original_asset_id(url)
+        self.assertEqual(result, "mss:mss38299:mss38299_016:0588")
+
+    def test_get_original_asset_id_master_match(self):
+        # This is a made-up URL because no current Assets
+        # have a "master" URL to test against
+        url = "http://tile.loc.gov/image-services/iiif/master/mus/123/456/mus123456.002/full/pct:100/0/default.jpg"
+        result = get_original_asset_id(url)
+        self.assertEqual(result, "mus/123/456/mus123456")
+
+    def test_get_original_asset_id_public_match(self):
+        url = "https://tile.loc.gov/image-services/iiif/public:music:musbernstein-100020080:musbernstein-100020080.0021/full/pct:100.0/0/default.jpg"
+        result = get_original_asset_id(url)
+        self.assertEqual(result, "musbernstein-100020080:musbernstein-100020080.0021")
+
     def test_get_original_asset_id_failure(self):
-        invalid_url = "http://tile.loc.gov/image-services/iiif/master/no/match/here"
+        invalid_url = "http://tile.loc.gov/image-services/iiif/master/foo/bar/baz/full/pct:100/0/default.jpg"
         with self.assertRaises(ValueError):
             get_original_asset_id(invalid_url)
 
@@ -190,3 +208,15 @@ class ViewTests(TestCase):
     def test_get_latest_transcription_data(self):
         assets = get_latest_transcription_data(Asset.objects.filter(pk=self.asset.pk))
         self.assertEqual(list(assets)[0].latest_transcription, "Sample")
+
+    @override_settings(EXPORT_S3_BUCKET_NAME="fake-bucket")
+    @patch("exporter.views.boto3.resource")
+    @patch("exporter.views.logger")
+    def test_do_bagit_export_with_s3(self, mock_logger, mock_boto):
+        assets = get_latest_transcription_data(Asset.objects.filter(pk=self.asset.pk))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            response = do_bagit_export(assets, tmpdir, "sample-bagit")
+            self.assertIsInstance(response, HttpResponseRedirect)
+            self.assertIn("fake-bucket.s3.amazonaws.com", response["Location"])
+            mock_boto().Bucket().upload_file.assert_called()
