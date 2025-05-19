@@ -7,7 +7,14 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from concordia.models import Asset, MediaType, Transcription, User
+from concordia.models import (
+    Asset,
+    Item,
+    MediaType,
+    Transcription,
+    TranscriptionStatus,
+    User,
+)
 from concordia.tests.utils import (
     create_asset,
     create_campaign,
@@ -19,6 +26,8 @@ from exporter.views import (
     do_bagit_export,
     get_latest_transcription_data,
     get_original_asset_id,
+    get_tag_values,
+    remove_incomplete_items,
     write_distinct_asset_resource_file,
 )
 
@@ -110,8 +119,6 @@ class ViewTests(TestCase):
         self.assertIn("data/mss/mal/003/0036300/002.txt", zipped.namelist())
 
     def test_project_csv_export(self):
-        # We test this view directly because it's not accessible except
-        # through the admin, and so is not in urls.py
         request = self.client.get("/").wsgi_request
         request.user = self.user
         request.user.is_staff = True
@@ -165,3 +172,21 @@ class ViewTests(TestCase):
             response = do_bagit_export(assets, tmpdir, "sample-bagit")
             self.assertEqual(response.status_code, 200)
             self.assertIn("application/zip", response["Content-Type"])
+
+    def test_remove_incomplete_items(self):
+        item2 = create_item(
+            project=self.project, published=True, item_id="different-id"
+        )
+        create_asset(item=item2, transcription_status=TranscriptionStatus.NOT_STARTED)
+
+        asset_qs = remove_incomplete_items(Item.objects.filter(project=self.project))
+        self.assertEqual(asset_qs.count(), 1)
+        self.assertEqual(asset_qs.first(), self.asset)
+
+    def test_get_tag_values_empty(self):
+        assets = get_tag_values(Asset.objects.filter(pk=self.asset.pk))
+        self.assertEqual(list(assets.values_list("tag_values", flat=True))[0], "")
+
+    def test_get_latest_transcription_data(self):
+        assets = get_latest_transcription_data(Asset.objects.filter(pk=self.asset.pk))
+        self.assertEqual(list(assets)[0].latest_transcription, "Sample")
