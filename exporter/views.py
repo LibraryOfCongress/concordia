@@ -255,8 +255,10 @@ class ExportItemToBagIt(TemplateView):
 
         assets = get_latest_transcription_data(asset_qs)
 
-        campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
-        project_slug_dbv = Project.objects.get(slug__exact=project_slug).slug
+        campaign = Campaign.objects.get(slug__exact=campaign_slug)
+        campaign_slug_dbv = campaign.slug
+        project = Project.objects.get(campaign=campaign, slug__exact=project_slug)
+        project_slug_dbv = project.slug
         item_id_dbv = Item.objects.get(item_id__exact=item_id).item_id
 
         export_filename_base = "%s-%s-%s" % (
@@ -322,8 +324,11 @@ class ExportProjectToCSV(TemplateView):
 
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
-        project = Project.objects.get(slug=self.kwargs["project_slug"])
-        campaign = project.campaign
+        campaign_slug = self.kwargs["campaign_slug"]
+        project_slug = self.kwargs["project_slug"]
+
+        campaign = Campaign.objects.get(slug__exact=campaign_slug)
+        project = Project.objects.get(campaign=campaign, slug__exact=project_slug)
 
         asset_qs = Asset.objects.filter(item__project=project)
         assets = get_latest_transcription_data(asset_qs)

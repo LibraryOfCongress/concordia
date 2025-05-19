@@ -5,7 +5,7 @@
 {% block object-tools-items %}
     {% if original.pk %}
         <li>
-            <a href="{% url 'admin:concordia_project_export-csv' original.slug %}" class="viewsitelink">
+            <a href="{% url 'admin:concordia_project_export-csv' original.campaign.slug original.slug %}" class="viewsitelink">
                 Export CSV
             </a>
         </li>
