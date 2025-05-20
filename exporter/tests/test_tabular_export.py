@@ -145,6 +145,9 @@ class CoreTests(TestCase):
             resp["Content-Type"],
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+        self.assertEqual(
+            "attachment; filename*=UTF-8''file.xlsx", resp["Content-Disposition"]
+        )
 
     @override_settings(TABULAR_RESPONSE_DEBUG=False)
     def test_export_to_excel_response_with_datetime(self):
@@ -152,6 +155,13 @@ class CoreTests(TestCase):
         rows = [[datetime.datetime(2022, 1, 1, 12, 0)]]
         resp = export_to_excel_response("datetime.xlsx", headers, rows)
         self.assertIsInstance(resp, HttpResponse)
+        self.assertEqual(
+            resp["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertEqual(
+            "attachment; filename*=UTF-8''datetime.xlsx", resp["Content-Disposition"]
+        )
 
     @override_settings(TABULAR_RESPONSE_DEBUG=True)
     def test_export_to_excel_response_debug(self):
@@ -179,6 +189,10 @@ class AdminTests(TestCase):
         self.assertIn(
             "application/vnd.openxmlformats-officedocument", response["Content-Type"]
         )
+        self.assertEqual(
+            "attachment; filename*=UTF-8''dummy%20models.xlsx",
+            response["Content-Disposition"],
+        )
 
     def test_export_to_excel_action_with_custom_filename_and_fields(self):
         response = export_to_excel_action(
@@ -190,6 +204,12 @@ class AdminTests(TestCase):
             extra_verbose_names={"name": "Custom Name"},
         )
         self.assertIsInstance(response, HttpResponse)
+        self.assertIn(
+            "application/vnd.openxmlformats-officedocument", response["Content-Type"]
+        )
+        self.assertEqual(
+            "attachment; filename*=UTF-8''custom.xlsx", response["Content-Disposition"]
+        )
 
     def test_export_to_csv_action_default_filename(self):
         response = export_to_csv_action(self.modeladmin, self.request, self.queryset)
