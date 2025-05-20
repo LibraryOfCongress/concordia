@@ -513,7 +513,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 name=f"{app_label}_{model_name}_item-import",
             ),
             path(
-                "exportCSV/<path:project_slug>",
+                "exportCSV/<path:campaign_slug>/<path:project_slug>/",
                 exporter_views.ExportProjectToCSV.as_view(),
                 name=f"{app_label}_{model_name}_export-csv",
             ),
