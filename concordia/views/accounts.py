@@ -1,6 +1,7 @@
 import logging
 import uuid
 from smtplib import SMTPException
+from typing import Any, Optional, Type
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,7 +19,8 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.forms import Form
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.template import loader
 from django.template.loader import render_to_string
@@ -53,7 +55,7 @@ class ConcordiaPasswordResetConfirmView(PasswordResetConfirmView):
     View for confirming a password reset and automatically logging in the user.
 
     Overrides Django's built-in
-    [`PasswordResetConfirmView`](https://docs.djangoproject.com/en/stable/topics/auth/default/#django.contrib.auth.views.PasswordResetConfirmView)
+    `PasswordResetConfirmView <https://docs.djangoproject.com/en/stable/topics/auth/default/#django.contrib.auth.views.PasswordResetConfirmView>`__
     to use a custom form and enable automatic login after a successful reset.
 
     Attributes:
@@ -70,8 +72,8 @@ class ConcordiaPasswordResetConfirmView(PasswordResetConfirmView):
         after successful password change and login.
     """
 
-    post_reset_login = True
-    form_class = ActivateAndSetPasswordForm
+    post_reset_login: bool = True
+    form_class: type[Form] = ActivateAndSetPasswordForm
 
 
 class ConcordiaPasswordResetRequestView(PasswordResetView):
@@ -79,13 +81,13 @@ class ConcordiaPasswordResetRequestView(PasswordResetView):
     View for requesting a password reset, supporting inactive users.
 
     Overrides Django's built-in
-    [`PasswordResetView`](https://docs.djangoproject.com/en/stable/topics/auth/default/#django.contrib.auth.views.PasswordResetView)
+    `PasswordResetView <https://docs.djangoproject.com/en/stable/topics/auth/default/#django.contrib.auth.views.PasswordResetView>`__
     to use a custom form that allows inactive users to reset their password
     and activate their account in one step.
 
     Attributes:
         form_class (Form): The form used to validate and process the password
-        reset request. This allows inactive accounts to activate during reset.
+            reset request. This allows inactive accounts to activate during reset.
 
     Args:
         request (HttpRequest): The HTTP request initiating the reset.
@@ -95,15 +97,15 @@ class ConcordiaPasswordResetRequestView(PasswordResetView):
         successful submission.
     """
 
-    form_class = AllowInactivePasswordResetForm
+    form_class: type[Form] = AllowInactivePasswordResetForm
 
 
-def registration_rate(group, request):
+def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
     """
     Determines the throttling rate for registration attempts.
 
     Used with the
-    [`ratelimit`](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)
+    `ratelimit <https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit>`__
     decorator from django-ratelimit to dynamically adjust the rate based on
     whether the registration form is valid.
 
@@ -113,12 +115,13 @@ def registration_rate(group, request):
     Args:
         group (str): The rate limit group name. Example: `"registration"`
         request (HttpRequest): The incoming request containing POST data from
-        the registration form.
+            the registration form.
 
     Returns:
         str or None: The rate limit string (e.g., `"10/h"`) if the form is invalid;
         otherwise, `None` to indicate no throttling.
     """
+
     registration_form = UserRegistrationForm(request.POST)
     if registration_form.is_valid():
         return None
@@ -139,15 +142,13 @@ def registration_rate(group, request):
 )
 class ConcordiaRegistrationView(RegistrationView):
     """
-    User registration view with rate limiting and no client-side caching.
+    User registration view with rate limiting.
 
     Extends
-    [`django_registration.views.RegistrationView`](https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.RegistrationView)
+    `django_registration.views.RegistrationView <https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.RegistrationView>`__
     to apply a POST-specific rate limit using
-    [`django-ratelimit`](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit).
+    `django-ratelimit <https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit>`__.
     This protects against registration abuse based on form validation.
-
-    Caching is disabled via `never_cache` to ensure fresh page loads.
 
     Attributes:
         form_class (Form): The form used to collect and validate user registration data.
@@ -157,22 +158,20 @@ class ConcordiaRegistrationView(RegistrationView):
 
     Returns:
         HttpResponse: Renders the registration form or redirects after
-            successful registration
+            successful registration.
     """
 
-    form_class = UserRegistrationForm
+    form_class: Type[Form] = UserRegistrationForm
 
 
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaLoginView(LoginView):
     """
-    Login view with Turnstile validation and no client-side caching.
+    Login view with Turnstile validation.
 
     Extends Django's
-    [`LoginView`](https://docs.djangoproject.com/en/stable/topics/auth/default/#django.contrib.auth.views.LoginView)
+    `LoginView <https://docs.djangoproject.com/en/stable/topics/auth/default/#django.contrib.auth.views.LoginView>`__
     to integrate Turnstile CAPTCHA validation during POST requests.
-
-    Also disables client-side caching via `never_cache` to ensure fresh session handling
 
     Attributes:
         form_class (Form): The login form used to authenticate users.
@@ -186,12 +185,12 @@ class ConcordiaLoginView(LoginView):
             - On POST:
                 - If both login and Turnstile succeed: Redirects to the next page.
                 - If Turnstile fails: Returns the login form with an error message.
-                - If login form is invalid: Returns the form with validation errors
+                - If login form is invalid: Returns the form with validation errors.
     """
 
     form_class = UserLoginForm
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         form = self.get_form()
         if form.is_valid():
             turnstile_form = TurnstileForm(request.POST)
@@ -206,7 +205,7 @@ class ConcordiaLoginView(LoginView):
         else:
             return self.form_invalid(form)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context_data(**kwargs)
 
         ctx["turnstile_form"] = TurnstileForm(auto_id=False)
@@ -216,7 +215,7 @@ class ConcordiaLoginView(LoginView):
 
 @login_required
 @never_cache
-def account_letter(request):
+def account_letter(request: HttpRequest) -> HttpResponse:
     """
     Generate and return a PDF letter summarizing a user's contributions.
 
@@ -224,7 +223,7 @@ def account_letter(request):
     their transcription and review activity. It uses an HTML template rendered
     with contribution data and converts it to a PDF using WeasyPrint.
 
-    Requires the user to be authenticated. Client-side caching is disabled.
+    Requires the user to be authenticated.
 
     Args:
         request (HttpRequest): The request from the authenticated user.
@@ -239,7 +238,6 @@ def account_letter(request):
         - Total transcriptions and reviews
         - List of assets they contributed to
     """
-
     image_url = "file://{0}/{1}/img/logo.jpg".format(
         settings.SITE_ROOT_DIR, settings.STATIC_ROOT
     )
@@ -268,7 +266,7 @@ def account_letter(request):
 
 @login_required
 @never_cache
-def get_pages(request):
+def get_pages(request: HttpRequest) -> JsonResponse:
     """
     Return a paginated and filtered list of the user's contributed assets as HTML.
 
@@ -276,16 +274,16 @@ def get_pages(request):
     optionally filters by campaign, activity type, status, and date range.
     Renders the results into a fragment of HTML for use in dynamic page updates.
 
-    Requires the user to be authenticated. Client-side caching is disabled.
+    Requires the user to be authenticated.
 
     Args:
-        request (HttpRequest): The request from the authenticated user. The following
-        GET query parameters are supported:
+        request (HttpRequest): The request from the authenticated user.
+            The following GET query parameters are supported:
 
             - page (int): Page number to display. Example: `2`
             - campaign (int): Filter by campaign ID. Example: `17`
             - status (list[str]): Filter by asset statuses.
-                Example: `["in_progress", "submitted"]`
+              Example: `["in_progress", "submitted"]`
             - activity (str): Filter by activity type. Example: `"transcribe"`
             - order_by (str): Sort order. Example: `"date-descending"`
             - start (str): Start date in YYYY-MM-DD format. Example: `"2023-01-01"`
@@ -297,11 +295,11 @@ def get_pages(request):
         - **content** (str): Rendered HTML fragment for recent pages.
 
     Example:
-        ```json
-        {
-            "content": "<div class='page-results'>...</div>"
-        }
-        ```
+        ::
+
+            {
+                "content": "<div class='page-results'>...</div>"
+            }
     """
     asset_list = _get_pages(request)
     paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
@@ -337,9 +335,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     Display and update user account profile and contribution history.
 
     Combines functionality from:
-    - [`LoginRequiredMixin`](https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin)
-    - [`FormView`](https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview)
-    - [`ListView`](https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-display/#listview)
+    - `LoginRequiredMixin <https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin>`__
+    - `FormView <https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview>`__
+    - `ListView <https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-display/#listview>`__
 
     to allow authenticated users to:
     - Update their email address and name.
@@ -347,7 +345,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     - See aggregate statistics on their transcription and review activity.
 
     Email changes may require reconfirmation if `REQUIRE_EMAIL_RECONFIRMATION` is set.
-    Caching is disabled via `never_cache`.
 
     Attributes:
         template_name (str): Template used to render the profile page.
@@ -368,7 +365,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     Args:
         request (HttpRequest): The request from the authenticated user, with
-        optional GET or POST data including:
+            optional GET or POST data including:
 
             - page (int): Page number to display. Example: `1`
             - campaign (int): Campaign filter. Example: `42`
@@ -385,19 +382,21 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     """
 
     template_name = "account/profile.html"
-    form_class = UserProfileForm
+    form_class: Type[Form] = UserProfileForm
     success_url = reverse_lazy("user-profile")
-    reconfirmation_email_body_template = "emails/email_reconfirmation_body.txt"
-    reconfirmation_email_subject_template = "emails/email_reconfirmation_subject.txt"
+    reconfirmation_email_body_template: str = "emails/email_reconfirmation_body.txt"
+    reconfirmation_email_subject_template: str = (
+        "emails/email_reconfirmation_subject.txt"
+    )
 
     # This view will list the assets which the user has contributed to
     # along with their most recent action on each asset. This will be
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
-    allow_empty = True
-    paginate_by = 30
+    allow_empty: bool = True
+    paginate_by: int = 30
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.object_list = self.get_queryset()
         if "submit_name" in request.POST:
             form = UserNameForm(request.POST)
@@ -410,10 +409,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             return super().post(request, *args, **kwargs)
 
-    def get_queryset(self):
+    def get_queryset(self) -> Any:
         return _get_pages(self.request)
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context_data(*args, **kwargs)
 
         page = self.request.GET.get("page", None)
@@ -458,19 +457,19 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["name_form"] = UserNameForm()
         return ctx
 
-    def get_initial(self):
+    def get_initial(self) -> dict[str, Any]:
         initial = super().get_initial()
         initial["email"] = self.request.user.email
         return initial
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         # We'll expose the request object to the form so we can validate that an
         # email is not in use:
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: Form) -> HttpResponse:
         user = self.request.user
         new_email = form.cleaned_data["email"]
         # This is annoying, but there's no better way to get the proxy model here
@@ -491,24 +490,24 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         return super().form_valid(form)
 
-    def form_invalid(self, form):
+    def form_invalid(self, form: Form) -> HttpResponse:
         self.request.session["valid"] = False
         return self.render_to_response(
             self.get_context_data(form=form, active_tab="account")
         )
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         # automatically open the Account Settings tab
         return "{}#account".format(super().get_success_url())
 
-    def get_reconfirmation_email_context(self, confirmation_key):
+    def get_reconfirmation_email_context(self, confirmation_key: str) -> dict[str, Any]:
         return {
             "confirmation_key": confirmation_key,
             "expiration_days": settings.EMAIL_RECONFIRMATION_DAYS,
             "site": get_current_site(self.request),
         }
 
-    def send_reconfirmation_email(self, user):
+    def send_reconfirmation_email(self, user: ConcordiaUser) -> None:
         confirmation_key = user.get_email_reconfirmation_key()
         context = self.get_reconfirmation_email_context(confirmation_key)
         context["user"] = user
@@ -548,56 +547,53 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
     View for handling user-initiated account deletion.
 
     Extends:
-    - [`LoginRequiredMixin`](https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin)
-    - [`FormView`](https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview)
+    - `LoginRequiredMixin <https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin>`__
+    - `FormView <https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview>`__
 
     Provides a confirmation form and, upon validation, either deletes or anonymizes
     the user account based on whether they have existing transcriptions.
 
-    After account deletion, logs the user out and sends a confirmation email
-    to the address associated with the account before deletion.
+    After account deletion, logs the user out and sends a confirmation email to the
+    address associated with the account before deletion.
 
     Attributes:
-        template_name (str): Path to the template used for rendering the
-            confirmation page.
-            Example: `"account/account_deletion.html"`
+        template_name (str): Path to the template used for rendering the confirmation
+            page. Example: `"account/account_deletion.html"`
         form_class (Form): Form used to confirm account deletion.
             Example: `AccountDeletionForm`
         success_url (str): Redirect URL after account deletion.
             Example: `"/"`
-        email_body_template (str): Template for the body of the deletion
-            confirmation email.
-            Example: `"emails/delete_account_body.txt"`
+        email_body_template (str): Template for the body of the deletion confirmation
+            email. Example: `"emails/delete_account_body.txt"`
         email_subject_template (str): Template for the subject of the deletion
-            confirmation email.
-            Example: `"emails/delete_account_subject.txt"`
+            confirmation email. Example: `"emails/delete_account_subject.txt"`
 
     Args:
         request (HttpRequest): The deletion request from the authenticated user.
 
     Returns:
-        HttpResponse: A redirect to the homepage after account deletion,
-        or re-renders the form with validation errors.
+        HttpResponse: A redirect to the homepage after account deletion, or re-renders
+        the form with validation errors.
     """
 
     template_name = "account/account_deletion.html"
-    form_class = AccountDeletionForm
+    form_class: Type[Form] = AccountDeletionForm
     success_url = reverse_lazy("homepage")
-    email_body_template = "emails/delete_account_body.txt"
-    email_subject_template = "emails/delete_account_subject.txt"
+    email_body_template: str = "emails/delete_account_body.txt"
+    email_subject_template: str = "emails/delete_account_subject.txt"
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         # We expose the request object to the form so we can use it
         # to log the user out after deletion
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: Form) -> HttpResponse:
         self.delete_user(form.request.user, form.request)
         return super().form_valid(form)
 
-    def delete_user(self, user, request):
+    def delete_user(self, user: ConcordiaUser, request: HttpRequest) -> None:
         logger.info("Deletion request for %s", user)
         email = user.email
         if user.transcription_set.exists():
@@ -617,7 +613,7 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
         self.send_deletion_email(email)
         logout(request)
 
-    def send_deletion_email(self, email):
+    def send_deletion_email(self, email: str) -> None:
         context = {}
         subject = render_to_string(
             template_name=self.email_subject_template,
@@ -654,11 +650,11 @@ class EmailReconfirmationView(TemplateView):
     Handle email reconfirmation via a signed URL token.
 
     Extends:
-    - [`TemplateView`](https://docs.djangoproject.com/en/stable/ref/class-based-views/base/#templateview)
+    - `TemplateView <https://docs.djangoproject.com/en/stable/ref/class-based-views/base/#templateview>`__
 
-    This view validates a signed confirmation key sent to the user's email
-    during an address change. If valid and not expired, the email update is applied.
-    If invalid or expired, an error message is rendered on a failure page.
+    This view validates a signed confirmation key sent to the user's email during an
+    address change. If valid and not expired, the email update is applied. If invalid
+    or expired, an error message is rendered on a failure page.
 
     Attributes:
         template_name (str): Template rendered when confirmation fails.
@@ -689,23 +685,23 @@ class EmailReconfirmationView(TemplateView):
     success_url = reverse_lazy("user-profile")
     template_name = "account/email_reconfirmation_failed.html"
 
-    BAD_USERNAME_MESSAGE = _("The account you attempted to confirm is invalid.")
-    BAD_EMAIL_MESSAGE = _("The email you attempted to confirm is invalid.")
-    EXPIRED_MESSAGE = _(
+    BAD_USERNAME_MESSAGE: str = _("The account you attempted to confirm is invalid.")
+    BAD_EMAIL_MESSAGE: str = _("The email you attempted to confirm is invalid.")
+    EXPIRED_MESSAGE: str = _(
         "The confirmation key you provided is expired. Email confirmation links "
         "expire after 7 days. If your key is expired, you will need to re-enter "
         "your new email address"
     )
-    INVALID_KEY_MESSAGE = _(
+    INVALID_KEY_MESSAGE: str = _(
         "The confirmation key you provided is invalid. Email confirmation links "
         "expire after 7 days. If your key is expired, you will need to re-enter "
         "your new email address."
     )
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "{}#account".format(self.success_url)
 
-    def get(self, *args, **kwargs):
+    def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
         extra_context = {}
         try:
             self.confirm(*args, **kwargs)
@@ -721,7 +717,7 @@ class EmailReconfirmationView(TemplateView):
         else:
             return HttpResponseRedirect(self.get_success_url())
 
-    def confirm(self, *args, **kwargs):
+    def confirm(self, *args: Any, **kwargs: Any) -> ConcordiaUser:
         username, email = self.validate_key(kwargs.get("confirmation_key"))
         user = self.get_user(username)
         if not user.validate_reconfirmation_email(email):
@@ -735,7 +731,7 @@ class EmailReconfirmationView(TemplateView):
         user.delete_email_for_reconfirmation()
         return user
 
-    def validate_key(self, confirmation_key):
+    def validate_key(self, confirmation_key: str) -> tuple[str, str]:
         try:
             context = signing.loads(
                 confirmation_key, max_age=settings.EMAIL_RECONFIRMATION_TIMEOUT
@@ -750,7 +746,7 @@ class EmailReconfirmationView(TemplateView):
                 params={"confirmation_key": confirmation_key},
             ) from exc
 
-    def get_user(self, username):
+    def get_user(self, username: str) -> ConcordiaUser:
         try:
             user = ConcordiaUser.objects.get(username=username)
             return user
