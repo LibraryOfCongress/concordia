@@ -83,9 +83,7 @@ def get_original_asset_id(download_url):
                 f"Couldn't find a matching asset ID in download URL {download_url}"
             )
         else:
-            for matching_asset_id in asset_id.groups():
-                if matching_asset_id:
-                    break
+            matching_asset_id = next((group for group in asset_id.groups() if group))
             logger.debug(
                 "Found asset ID %s in download URL %s", matching_asset_id, download_url
             )

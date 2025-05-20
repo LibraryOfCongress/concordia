@@ -169,6 +169,7 @@ class ViewTests(TestCase):
         self.assertEqual(result, "musbernstein-100020080:musbernstein-100020080.0021")
 
     def test_get_original_asset_id_failure(self):
+        # This tests if a URL doesn't match any of the patterns
         invalid_url = "http://tile.loc.gov/image-services/iiif/master/foo/bar/baz/full/pct:100/0/default.jpg"
         with self.assertRaises(ValueError):
             get_original_asset_id(invalid_url)
@@ -220,3 +221,40 @@ class ViewTests(TestCase):
             self.assertIsInstance(response, HttpResponseRedirect)
             self.assertIn("fake-bucket.s3.amazonaws.com", response["Location"])
             mock_boto().Bucket().upload_file.assert_called()
+
+    @override_settings(EXPORT_S3_BUCKET_NAME=None)
+    @patch("exporter.views.logger")
+    def test_do_bagit_export_without_transcription(self, mock_logger):
+        asset = create_asset(
+            item=self.item,
+            sequence=99,
+            title="No Transcription",
+            download_url=DOWNLOAD_URL,
+            resource_url=RESOURCE_URL,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            assets = get_latest_transcription_data(Asset.objects.filter(pk=asset.pk))
+            response = do_bagit_export(assets, tmpdir, "sample-bagit-no-txt")
+
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("application/zip", response["Content-Type"])
+
+            # Read contents of the zip
+            zip_bytes = io.BytesIO(response.content)
+            with zipfile.ZipFile(zip_bytes, "r") as zip_file:
+                file_list = zip_file.namelist()
+
+            # There should be no .txt transcription files
+            transcription_files = [
+                f
+                for f in file_list
+                if f.endswith(".txt")
+                and f.startswith("data/")
+                and not f.endswith("item-resource-urls.txt")
+            ]
+            self.assertEqual(
+                transcription_files,
+                [],
+                f"Unexpected transcription files: {transcription_files}",
+            )
