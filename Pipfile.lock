@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6fa21844a1317d85fc9775cf80e414710832d29aabce2a4312dceda3b2ee8d51"
+            "sha256": "87b3a1dda6d0057d618e77547fe9b1c75f5469d33e4f25507c244eb3244c053e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -914,11 +914,12 @@
         },
         "fpdf2": {
             "hashes": [
-                "sha256:2dace3a7cfa9ebfbfa08a4d40d97d8944838370b3cee739e4b1549c48afc4811",
-                "sha256:72deaec4d0172e10025f4febddaa306edc5cfad28a3fa0069a368d9d896caa46"
+                "sha256:0529d7bf1c46e7031768f442e7def37545b619b1bcd34e9c540de3d866f61550",
+                "sha256:494dc0bd935271c9ce16fb3a47c98b6f59b8d160cd519c2d3a7ed243c3852456"
             ],
             "index": "pypi",
-            "version": "==2.5.5"
+            "markers": "python_version >= '3.7'",
+            "version": "==2.8.3"
         },
         "gevent": {
             "hashes": [
