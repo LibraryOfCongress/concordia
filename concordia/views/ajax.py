@@ -232,15 +232,16 @@ def generate_ocr_transcription(
     """
     Create and save a new OCR-generated transcription for an asset.
 
-    If no prior transcription exists, creates a blank transcription to serve
-    as the superseded record. Otherwise, the specified previous transcription
-    is superseded by the new OCR transcription.
+    If no prior transcription exists, creates a blank transcription to serve as
+    the superseded record. Otherwise, the specified previous transcription is
+    superseded by the new OCR transcription.
 
     Requires the user to be authenticated.
 
-    Args:
-        request (HttpRequest): The POST request initiating OCR transcription.
-        asset_pk (int or str): The primary key of the asset to transcribe.
+    Request Parameters:
+        - `supersedes` (int or str, optional): The ID of the transcription being
+          superseded.
+        - `language` (str, optional): The language code to influence OCR output.
 
     Returns:
         response (JsonResponse): A dictionary describing the new transcription
@@ -554,9 +555,10 @@ def save_transcription(
     checks for supersession rules. If valid, creates and saves a new transcription
     associated with the current or anonymous user.
 
-    Args:
-        request (HttpRequest): The POST request containing transcription text.
-        asset_pk (int or str): The primary key of the asset being transcribed.
+    Request Parameters:
+        - `text` (str): The transcription text.
+        - `supersedes` (int or str, optional): The ID of the transcription being
+          superseded. Example: `"123"`
 
     Returns:
         response (JsonResponse): A dictionary describing the saved transcription
@@ -954,16 +956,16 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
     If no active reservation exists, creates a new one using the session's
     reservation token. If a reservation exists for this session, updates it.
     If the asset is reserved by another session, returns a conflict response.
-    Handles reservation release if `release` is set in the POST body.
+    Handles reservation release if `release` is set in the request body.
 
-    Args:
-        request (HttpRequest): The POST request to reserve or release the asset.
-        asset_pk (int or str): The primary key of the asset to reserve.
+    Request Parameters:
+        - `release` (bool, optional): If present and true, releases the current
+          reservation instead of acquiring or updating it. Example: `"true"`
 
     Returns:
         response (JsonResponse or HttpResponse): A dictionary indicating the
-            reservation status and token, or an HTTP 408/409 response for timeout
-            or conflict.
+        reservation status and token, or an HTTP 408/409 response for timeout
+        or conflict.
 
     Response Format - Success:
         - `asset_pk` (int): The ID of the reserved asset.
@@ -981,6 +983,7 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
         }
         ```
     """
+
     reservation_token = get_or_create_reservation_token(request)
 
     if request.POST.get("release"):
