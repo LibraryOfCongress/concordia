@@ -98,14 +98,16 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
     """
     Determine the throttling rate for registration attempts.
 
-    Used with the `ratelimit` decorator from `django-ratelimit` to dynamically
-    adjust the request rate based on form validation.
+    Used with the
+    `[ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)`
+    decorator from `django-ratelimit` to dynamically adjust the request rate based
+    on form validation.
 
-    If the submitted registration form is valid, no throttling is applied.
-    If it is invalid, the rate is limited to 10 requests per hour.
+    If the submitted form is invalid, limits requests to 10 per hour. If the
+    form is valid, allows the request without throttling.
 
     Args:
-        group (str): The rate limit group name.
+        group (str): The rate limit group name. Example: `"registration"`
         request (HttpRequest): The request containing registration form data.
 
     Returns:
@@ -132,12 +134,14 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
 )
 class ConcordiaRegistrationView(RegistrationView):
     """
-    User registration view with POST-specific rate limiting.
+    User registration view with rate limiting.
 
-    Extends `django_registration.views.RegistrationView` to apply a POST-specific
-    rate limit using the `django-ratelimit` decorator. This protects against
-    abuse by restricting failed registration attempts while allowing valid
-    submissions to proceed freely.
+    Extends
+    `[django_registration.views.RegistrationView](https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.RegistrationView)`
+    to apply a POST-specific rate limit using the
+    `[django-ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)`
+    decorator. This protects against abuse by restricting failed registration attempts
+    while  allowing valid submissions to proceed freely.
 
     Attributes:
         form_class (Form): The form used to collect and validate user registration
@@ -336,15 +340,19 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     Attributes:
         template_name (str): Template used to render the profile page.
+            Example: `"account/profile.html"`
         form_class (Form): Form used to update the user's email address.
+            Example: `UserProfileForm`
         success_url (str): Redirect URL after successful form submission.
+            Example: `"/accounts/profile/"`
         allow_empty (bool): Whether to render the page if the user has no
-            contributions.
+            contributions. Default is `True`
         paginate_by (int): Number of contributed assets to show per page.
+            Default is `30`.
         reconfirmation_email_body_template (str): Path to the plain text email
-            body template.
+            body template. Example: `"emails/email_reconfirmation_body.txt"`
         reconfirmation_email_subject_template (str): Path to the email subject
-            template.
+            template. Example: `"emails/email_reconfirmation_subject.txt"`
 
     Returns:
         response (HttpResponse): The rendered profile page with contribution data
@@ -526,6 +534,10 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
     """
     Handle user-initiated account deletion.
 
+    Extends:
+    - `[LoginRequiredMixin](https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin)`
+    - `[FormView](https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview)`
+
     Provides a confirmation form for deleting the user's account. If the user has
     contributed transcriptions, their data is anonymized instead of being deleted.
     Otherwise, the account is fully removed. A confirmation email is sent to the
@@ -630,9 +642,12 @@ class EmailReconfirmationView(TemplateView):
     """
     Handle email reconfirmation via a signed URL token.
 
+    Extends:
+    - `[TemplateView](https://docs.djangoproject.com/en/stable/ref/class-based-views/base/#templateview)`
+
     Validates a confirmation key sent to the user's new email address during
     an address change. If valid and not expired, applies the email update. If
-    invalid, expired, or mismatched, renders an error message.
+    invalid, expired or mismatched, renders an error message.
 
     Attributes:
         template_name (str): Template rendered if the confirmation fails.
@@ -648,7 +663,7 @@ class EmailReconfirmationView(TemplateView):
         response (HttpResponse): Redirects to the profile page with `#account`
             on success, or renders the failure template with error details.
 
-    URL Parameters:
+    Request Parameters:
         confirmation_key (str): A signed token containing the username and new
             email. Example: `"ZHVtbXl1c2VyOnNvbWVvbmVAZXhhbXBsZS5jb20="`
     """

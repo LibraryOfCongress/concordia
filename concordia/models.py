@@ -735,13 +735,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         self,
     ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
         """
-        Check whether the latest transcription can be rolled back.
+        Determine whether the latest transcription on this asset can be rolled back.
+
+        This checks the transcription history for the most recent non-rolled-forward
+        transcription that precedes the current latest transcription, excluding any
+        transcriptions that are rollforwards or are sources of rollforwards.
 
         A rollback is only possible if:
         - There is more than one transcription.
         - There is a prior transcription that is not a rollforward or source of one.
 
-        This method does not perform the rollback—only checks feasibility.
+        This method does not perform the rollback, only checks feasibility.
 
         Returns:
             result (tuple): A (bool, value, latest) tuple describing rollback
@@ -813,12 +817,19 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def rollback_transcription(self, user: User) -> Transcription:
         """
-        Create a rollback transcription using the most recent eligible prior version.
+        Perform a rollback of the latest transcription on this asset.
 
-        If rollback is not possible, raises a `ValueError`. The new transcription will:
-        - Set `rolled_back=True`
-        - Set `source` to the prior eligible transcription
-        - Set `supersedes` to the current latest transcription
+        This creates a new transcription that copies the text of the most recent
+        eligible prior transcription (as determined by `can_rollback`) and marks it
+        as rolled back. It also updates the original latest transcription to reflect
+        that it has been superseded.
+
+        If rollback is not possible, raises a `ValueError`.
+
+        The new transcription will:
+            - Have `rolled_back=True`.
+            - Set its `source` to the transcription it is rolled back to.
+            - Set `supersedes` to the current latest transcription.
 
         Args:
             user (User): The user performing the rollback.
@@ -866,13 +877,20 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         self,
     ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
         """
-        Check whether a previous rollback can be rolled forward.
+        Determine whether a previous rollback on this asset can be rolled forward.
+
+        This checks whether the most recent transcription is a rollback transcription
+        and whether the transcription it replaced (its `supersedes`) can be restored.
+
+        This method handles cases where multiple rollforwards were applied,
+        walking backward through the transcription chain to find the appropriate
+        rollback origin.
 
         A rollforward is only possible if:
         - The latest transcription is a rollback.
         - The rollback’s superseded transcription still exists and can be restored.
 
-        This method does not perform the rollforward—only checks feasibility.
+        This method does not perform the rollforward, only checks feasibility.
 
         Returns:
             result (tuple): A (bool, value, latest) tuple describing rollforward
@@ -994,10 +1012,12 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         possible if the latest transcription is a rollback and the replaced
         transcription still exists.
 
-        Attributes:
-            rolled_forward (bool): Set to `True` for the new transcription.
-            source (Transcription): Set to the transcription being restored.
-            supersedes (Transcription): Set to the current latest transcription.
+        If rollforward is not possible, raises a `ValueError`.
+
+        The new transcription will:
+            - Have `rolled_forward=True`.
+            - Set its `source` to the transcription being rolled forward to.
+            - Set `supersedes` to the current latest transcription.
 
         Args:
             user (User): The user initiating the rollforward.
