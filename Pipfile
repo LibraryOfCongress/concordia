@@ -48,7 +48,7 @@ blinker = "==1.7.0"
 psycopg2 = "==2.9.10"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
-django = "==4.2.21"
+django = "==5.1.9"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
 locust = "==2.37.4"
 
