@@ -47,12 +47,42 @@ structured_logger = structlog.get_logger(f"structlog.{__name__}")
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
 @csrf_exempt
-def ajax_session_status(request):
+def ajax_session_status(request: HttpRequest) -> JsonResponse:
     """
-    Returns the user-specific information which would otherwise make many pages
-    uncacheable
-    """
+    Return a JSON object describing the authenticated session state.
 
+    If the user is authenticated, this includes a truncated username and
+    navigational links to profile, logout, and admin pages (if staff or superuser).
+    If the user is anonymous, returns an empty dictionary.
+
+    Args:
+        request (HttpRequest): The HTTP request initiating the session status check.
+
+    Returns:
+        response (JsonResponse): A dictionary containing either session information
+            or empty data.
+
+    Response Format - Success:
+        - `username` (str): The first 15 characters of the user's username.
+        - `links` (list[dict]): A list of links relevant to the user's session.
+            - `title` (str): The label for the link (e.g., "Profile", "Logout").
+            - `url` (str): The absolute URL for the link.
+
+    Example:
+        ```json
+        // If the user is authenticated:
+        {
+            "username": "johndoe",
+            "links": [
+                {"title": "Profile", "url": "https://example.com/accounts/profile/"},
+                {"title": "Logout", "url": "https://example.com/accounts/logout/"}
+            ]
+        }
+
+        // If the user is anonymous:
+        {}
+        ```
+    """
     user = request.user
     if user.is_anonymous:
         res = {}
@@ -85,11 +115,39 @@ def ajax_session_status(request):
 @never_cache
 @login_required
 @csrf_exempt
-def ajax_messages(request):
+def ajax_messages(request: HttpRequest) -> JsonResponse:
     """
-    Returns any messages queued for the current user
-    """
+    Return a JSON object containing the user's queued messages.
 
+    Retrieves Django messages for the current request and formats them
+    as a list of dictionaries, each containing the message text and its
+    severity level.
+
+    Requires the user to be authenticated.
+
+    Args:
+        request (HttpRequest): The request from the authenticated user.
+
+    Returns:
+        response (JsonResponse): A dictionary with a `messages` field containing
+            a list of message entries.
+
+    Response Format - Success:
+        - `messages` (list[dict]): A list of user-visible messages.
+            - `level` (str): The severity level of the message
+              (e.g., "info", "warning", "error").
+            - `message` (str): The text content of the message.
+
+    Example:
+        ```json
+        {
+            "messages": [
+                {"level": "info", "message": "You have been logged out."},
+                {"level": "warning", "message": "Your session is about to expire."}
+            ]
+        }
+        ```
+    """
     return JsonResponse(
         {
             "messages": [
@@ -100,7 +158,47 @@ def ajax_messages(request):
     )
 
 
-def get_transcription_superseded(asset, supersedes_pk):
+def get_transcription_superseded(
+    asset: Asset, supersedes_pk: Union[int, str, None]
+) -> Union[Transcription, JsonResponse, None]:
+    """
+    Determine the superseded transcription, if any, for a new transcription.
+
+    If a valid `supersedes_pk` is provided, returns the corresponding transcription
+    unless it has already been superseded. If no `supersedes_pk` is provided,
+    checks whether the asset already has an open transcription.
+
+    This helper may return an error response to be passed directly to the client,
+    or a transcription object used when saving a new one.
+
+    Args:
+        asset (Asset): The asset the transcription is associated with.
+        supersedes_pk (int or str or None): The primary key of the transcription
+            being superseded, or `None` if this is the first transcription.
+
+    Returns:
+        response (Transcription or JsonResponse or None): A valid transcription,
+            an error response, or `None`.
+
+    Return Behavior:
+        - If a valid transcription is found, a `Transcription` object is returned.
+        - If the request is invalid or the transcription has already been superseded,
+          a `JsonResponse` with an error is returned.
+        - If there is no previous transcription to supersede, `None` is returned.
+
+    Response Format - Error:
+        - `error` (str): Explanation of why the transcription cannot be created.
+            - "An open transcription already exists"
+            - "This transcription has been superseded"
+            - "Invalid supersedes value"
+
+    Example:
+        ```json
+        {
+            "error": "An open transcription already exists"
+        }
+        ```
+    """
     if not supersedes_pk:
         if asset.transcription_set.filter(supersedes=None).exists():
             return JsonResponse(
@@ -128,7 +226,56 @@ def get_transcription_superseded(asset, supersedes_pk):
 @login_required
 @atomic
 @ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
-def generate_ocr_transcription(request, *, asset_pk):
+def generate_ocr_transcription(
+    request: HttpRequest, *, asset_pk: Union[int, str]
+) -> JsonResponse:
+    """
+    Create and save a new OCR-generated transcription for an asset.
+
+    If no prior transcription exists, creates a blank transcription to serve as
+    the superseded record. Otherwise, the specified previous transcription is
+    superseded by the new OCR transcription.
+
+    Requires the user to be authenticated.
+
+    Request Parameters:
+        - `supersedes` (int or str, optional): The ID of the transcription being
+          superseded.
+        - `language` (str, optional): The language code to influence OCR output.
+
+    Returns:
+        response (JsonResponse): A dictionary describing the new transcription
+            and asset status.
+
+    Response Format - Success:
+        - `id` (int): ID of the new transcription.
+        - `sent` (float): UNIX timestamp when the transcription was created.
+        - `submissionUrl` (str): URL to submit the transcription.
+        - `text` (str): The OCR-generated transcription content.
+        - `asset` (dict):
+            - `id` (int): ID of the associated asset.
+            - `status` (str): Current transcription status.
+            - `contributors` (int): Number of users who have contributed.
+        - `undo_available` (bool): Whether the user can roll back this transcription.
+        - `redo_available` (bool): Whether the user can roll forward to another version.
+
+    Example:
+        ```json
+        {
+            "id": 123,
+            "sent": 1716294920.927134,
+            "submissionUrl": "/transcriptions/123/submit/",
+            "text": "Detected OCR content...",
+            "asset": {
+                "id": 456,
+                "status": "in_progress",
+                "contributors": 2
+            },
+            "undo_available": true,
+            "redo_available": false
+        }
+        ```
+    """
     asset = get_object_or_404(Asset, pk=asset_pk)
     user = request.user
 
@@ -195,53 +342,54 @@ def rollback_transcription(
     """
     Perform a rollback on the latest transcription for the given asset.
 
-    Requires the asset to have at least one earlier transcription that is not
-    a rollforward or the source of a rollforward. If rollback is not possible,
-    returns a 400 response.
+    Restores the asset's transcription to the previous version in its history.
+    If rollback is not possible (e.g., no prior version exists), returns an error.
 
-    Anonymous users are supported and handled via get_anonymous_user(). They must
-    be validated through validate_anonymous_user (this happens seamlessly if
-    Turnstile validation is included.)
+    Anonymous users are supported and handled via `get_anonymous_user()`. The caller
+    must be validated via `validate_anonymous_user`.
 
     Args:
-        request (HttpRequest): The incoming HTTP request.
-        asset_pk (int or str): Primary key of the asset to roll back.
+        request (HttpRequest): The POST request to initiate rollback.
+        asset_pk (int or str): The primary key of the asset being rolled back.
 
     Returns:
-        JsonResponse: A JSON object with the following fields:
+        response (JsonResponse): A dictionary containing the restored transcription
+            and asset status, or an error response if rollback fails.
 
-        - **id** (int): ID of the created transcription. Example: `123`
-        - **sent** (float): Timestamp (UNIX epoch) when the response was sent.
-          Example: `1715091212.123456`
-        - **submissionUrl** (str): URL where the transcription can be edited.
-          Example: `"/transcriptions/submit/123/"`
-        - **text** (str): Text of the transcription.
-        - **asset** (dict):
-            - **id** (int): ID of the asset. Example: `456`
-            - **status** (str): Current transcription status. Example: `"completed"`
-            - **contributors** (int): Number of distinct contributors. Example: `3`
-        - **message** (str): Status message.
-          Example: `"Successfully rolled back transcription to previous version"`
-        - **undo_available** (bool): Whether a rollback is currently possible.
-        - **redo_available** (bool): Whether a rollforward is currently possible.
+    Response Format - Success:
+        - `id` (int): ID of the restored transcription.
+        - `sent` (float): UNIX timestamp of the response.
+        - `submissionUrl` (str): URL to submit the transcription.
+        - `text` (str): The restored transcription text.
+        - `asset` (dict):
+            - `id` (int): ID of the asset.
+            - `status` (str): Current transcription status.
+            - `contributors` (int): Number of users who contributed.
+        - `message` (str): Confirmation message.
+        - `undo_available` (bool): Whether rollback is possible again.
+        - `redo_available` (bool): Whether rollforward is now available.
 
-        Example:
-            ```json
-            {
-                "id": 123,
-                "sent": 1715091212.123456,
-                "submissionUrl": "/transcriptions/submit/123/",
-                "text": "Transcribed text...",
-                "asset": {
-                    "id": 456,
-                    "status": "completed",
-                    "contributors": 3
-                },
-                "message": "Successfully rolled back transcription to previous version",
-                "undo_available": true,
-                "redo_available": false
-            }
-            ```
+    Response Format - Error:
+        - `error` (str): Explanation of the failure.
+            - "No previous transcription available"
+
+    Example:
+        ```json
+        {
+            "id": 123,
+            "sent": 1716295121.113204,
+            "submissionUrl": "/transcriptions/123/submit/",
+            "text": "Previous transcription text",
+            "asset": {
+                "id": 456,
+                "status": "in_progress",
+                "contributors": 1
+            },
+            "message": "Successfully rolled back transcription to previous version",
+            "undo_available": false,
+            "redo_available": true
+        }
+        ```
     """
     asset = get_object_or_404(Asset, pk=asset_pk)
 
@@ -304,53 +452,54 @@ def rollforward_transcription(
     """
     Perform a rollforward to the transcription previously replaced by a rollback.
 
-    Requires the most recent transcription to be a rollback, and for the
-    transcription it superseded to exist and be valid. If rollforward is not
-    possible, returns a 400 response.
+    Restores the asset's transcription to the next version in its history,
+    if a valid rollforward target exists. If not, returns an error response.
 
-    Anonymous users are supported and handled via get_anonymous_user(). They must
-    be validated through validate_anonymous_user (this happens seamlessly if
-    Turnstile validation is included.)
+    Anonymous users are supported and handled via `get_anonymous_user()`. The caller
+    must be validated via `validate_anonymous_user`.
 
     Args:
-        request (HttpRequest): The incoming HTTP request.
-        asset_pk (int or str): Primary key of the asset to roll forward.
+        request (HttpRequest): The POST request to initiate rollforward.
+        asset_pk (int or str): The primary key of the asset being rolled forward.
 
     Returns:
-        JsonResponse: A JSON object with the following fields:
+        response (JsonResponse): A dictionary containing the restored transcription
+            and asset status, or an error response if rollforward fails.
 
-        - **id** (int): ID of the created transcription. Example: `123`
-        - **sent** (float): Timestamp (UNIX epoch) when the response was sent.
-          Example: `1715091212.123456`
-        - **submissionUrl** (str): URL where the transcription can be edited.
-          Example: `"/transcriptions/submit/123/"`
-        - **text** (str): Text of the transcription.
-        - **asset** (dict):
-            - **id** (int): ID of the asset. Example: `456`
-            - **status** (str): Current transcription status. Example: `"completed"`
-            - **contributors** (int): Number of distinct contributors. Example: `3`
-        - **message** (str): Status message.
-          Example: `"Successfully restored transcription to next version"`
-        - **undo_available** (bool): Whether a rollback is currently possible.
-        - **redo_available** (bool): Whether a rollforward is currently possible.
+    Response Format - Success:
+        - `id` (int): ID of the restored transcription.
+        - `sent` (float): UNIX timestamp of the response.
+        - `submissionUrl` (str): URL to submit the transcription.
+        - `text` (str): The restored transcription text.
+        - `asset` (dict):
+            - `id` (int): ID of the asset.
+            - `status` (str): Current transcription status.
+            - `contributors` (int): Number of users who contributed.
+        - `message` (str): Confirmation message.
+        - `undo_available` (bool): Whether rollback is now possible.
+        - `redo_available` (bool): Whether another rollforward is possible.
 
-        Example:
-            ```json
-            {
-                "id": 123,
-                "sent": 1715091212.123456,
-                "submissionUrl": "/transcriptions/submit/123/",
-                "text": "Transcribed text...",
-                "asset": {
-                    "id": 456,
-                    "status": "completed",
-                    "contributors": 3
-                },
-                "message": "Successfully restored transcription to next version",
-                "undo_available": true,
-                "redo_available": false
-            }
-            ```
+    Response Format - Error:
+        - `error` (str): Explanation of the failure.
+            - "No transcription to restore"
+
+    Example:
+        ```json
+        {
+            "id": 124,
+            "sent": 1716295243.029184,
+            "submissionUrl": "/transcriptions/124/submit/",
+            "text": "Next transcription text",
+            "asset": {
+                "id": 456,
+                "status": "in_progress",
+                "contributors": 1
+            },
+            "message": "Successfully restored transcription to next version",
+            "undo_available": true,
+            "redo_available": false
+        }
+        ```
     """
     asset = get_object_or_404(Asset, pk=asset_pk)
 
@@ -404,7 +553,59 @@ def rollforward_transcription(
 @require_POST
 @validate_anonymous_user
 @atomic
-def save_transcription(request, *, asset_pk):
+def save_transcription(
+    request: HttpRequest, *, asset_pk: Union[int, str]
+) -> JsonResponse:
+    """
+    Save a transcription draft for a given asset.
+
+    Validates the transcription text for disallowed content (e.g., URLs) and
+    checks for supersession rules. If valid, creates and saves a new transcription
+    associated with the current or anonymous user.
+
+    Request Parameters:
+        - `text` (str): The transcription text.
+        - `supersedes` (int or str, optional): The ID of the transcription being
+          superseded. Example: `"123"`
+
+    Returns:
+        response (JsonResponse): A dictionary describing the saved transcription
+            and asset status, or an error response if validation fails.
+
+    Response Format - Success:
+        - `id` (int): ID of the saved transcription.
+        - `sent` (float): UNIX timestamp of the response.
+        - `submissionUrl` (str): URL to submit the transcription.
+        - `asset` (dict):
+            - `id` (int): ID of the associated asset.
+            - `status` (str): Current transcription status.
+            - `contributors` (int): Number of users who contributed.
+        - `undo_available` (bool): Whether rollback is currently possible.
+        - `redo_available` (bool): Whether rollforward is currently possible.
+
+    Response Format - Error:
+        - `error` (str): Explanation of the validation failure.
+            - "It looks like your text contains URLs."
+            - "An open transcription already exists"
+            - "This transcription has been superseded"
+            - "Invalid supersedes value"
+
+    Example:
+        ```json
+        {
+            "id": 125,
+            "sent": 1716295310.743182,
+            "submissionUrl": "/transcriptions/125/submit/",
+            "asset": {
+                "id": 456,
+                "status": "in_progress",
+                "contributors": 1
+            },
+            "undo_available": true,
+            "redo_available": false
+        }
+        ```
+    """
     asset = get_object_or_404(Asset, pk=asset_pk)
     logger.info("Saving transcription for %s (%s)", asset, asset.id)
 
@@ -467,7 +668,54 @@ def save_transcription(request, *, asset_pk):
 
 @require_POST
 @validate_anonymous_user
-def submit_transcription(request, *, pk):
+def submit_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonResponse:
+    """
+    Submit a transcription for review.
+
+    Marks the transcription as submitted and clears any rejection state.
+    Prevents submission if the transcription has already been accepted or
+    superseded.
+
+    Anonymous users are supported and handled via `get_anonymous_user()`. The caller
+    must be validated via `validate_anonymous_user`.
+
+    Args:
+        request (HttpRequest): The POST request to submit the transcription.
+        pk (int or str): The primary key of the transcription to submit.
+
+    Returns:
+        response (JsonResponse): A dictionary with the asset status and submission
+            metadata, or an error response if submission is not allowed.
+
+    Response Format - Success:
+        - `id` (int): ID of the submitted transcription.
+        - `sent` (float): UNIX timestamp of the response.
+        - `asset` (dict):
+            - `id` (int): ID of the associated asset.
+            - `status` (str): Current transcription status.
+            - `contributors` (int): Number of users who contributed.
+        - `undo_available` (bool): Always `false` after submission.
+        - `redo_available` (bool): Always `false` after submission.
+
+    Response Format - Error:
+        - `error` (str): Explanation of the submission failure.
+            - "This transcription has already been updated."
+
+    Example:
+        ```json
+        {
+            "id": 126,
+            "sent": 1716295421.019122,
+            "asset": {
+                "id": 456,
+                "status": "submitted",
+                "contributors": 1
+            },
+            "undo_available": false,
+            "redo_available": false
+        }
+        ```
+    """
     transcription = get_object_or_404(Transcription, pk=pk)
     asset = transcription.asset
 
@@ -521,7 +769,50 @@ def submit_transcription(request, *, pk):
 @require_POST
 @login_required
 @never_cache
-def review_transcription(request, *, pk):
+def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonResponse:
+    """
+    Review and accept or reject a submitted transcription.
+
+    Only non-authors may accept a transcription. Users are limited by a
+    rate limit when accepting transcriptions. Review actions are rejected
+    if the transcription has already been reviewed or is invalid.
+
+    Args:
+        request (HttpRequest): The POST request containing the review action.
+        pk (int or str): The primary key of the transcription to review.
+
+    Returns:
+        response (JsonResponse): A dictionary with updated asset status and
+            metadata, or an error response if the review fails.
+
+    Response Format - Success:
+        - `id` (int): ID of the reviewed transcription.
+        - `sent` (float): UNIX timestamp of the response.
+        - `asset` (dict):
+            - `id` (int): ID of the associated asset.
+            - `status` (str): Updated transcription status.
+            - `contributors` (int): Number of users who contributed.
+
+    Response Format - Error:
+        - `error` (str): Explanation of the review failure.
+            - "Invalid action"
+            - "This transcription has already been reviewed"
+            - "You cannot accept your own transcription"
+            - Configuration-based rate limit messages
+
+    Example:
+        ```json
+        {
+            "id": 127,
+            "sent": 1716295502.642184,
+            "asset": {
+                "id": 456,
+                "status": "completed",
+                "contributors": 2
+            }
+        }
+        ```
+    """
     action = request.POST.get("action")
 
     if action not in ("accept", "reject"):
@@ -592,7 +883,36 @@ def review_transcription(request, *, pk):
 @require_POST
 @login_required
 @atomic
-def submit_tags(request, *, asset_pk):
+def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonResponse:
+    """
+    Submit a new set of tags for an asset from the current user.
+
+    Creates any new tags as needed and updates the user's tag collection
+    for the asset. Removes tags that are no longer present in the submission.
+
+    Args:
+        request (HttpRequest): The POST request containing tag values.
+        asset_pk (int or str): The primary key of the asset to tag.
+
+    Returns:
+        response (JsonResponse): A dictionary containing the updated user-specific
+            and global tag lists for the asset.
+
+    Response Format - Success:
+        - `user_tags` (list[str]): Tags currently assigned to the asset by this user.
+        - `all_tags` (list[str]): All tags currently applied to the asset by any user.
+
+    Response Format - Error:
+        - `error` (list[str]): Validation error messages for malformed/duplicate tags.
+
+    Example:
+        ```json
+        {
+            "user_tags": ["map", "handwritten"],
+            "all_tags": ["handwritten", "map", "note"]
+        }
+        ```
+    """
     asset = get_object_or_404(Asset, pk=asset_pk)
 
     user_tags, created = UserAssetTagCollection.objects.get_or_create(
@@ -616,7 +936,6 @@ def submit_tags(request, *, asset_pk):
     # collection and remove anything which is no longer present.
 
     all_submitted_tags = list(existing_tags) + new_tags
-
     existing_user_tags = user_tags.tags.all()
 
     for tag in all_submitted_tags:
@@ -631,7 +950,6 @@ def submit_tags(request, *, asset_pk):
                 collection.tags.remove(tag)
 
     all_tags = all_tags_qs.order_by("value")
-
     final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)
     all_tags = all_tags.values_list("value", flat=True).distinct()
 
@@ -645,13 +963,39 @@ def submit_tags(request, *, asset_pk):
 )
 @require_POST
 @never_cache
-def reserve_asset(request, *, asset_pk):
+def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonResponse:
     """
-    Receives an asset PK and attempts to create/update a reservation for it
+    Attempt to reserve an asset for transcription by the current session.
 
-    Returns JSON message with reservation token on success
+    If no active reservation exists, creates a new one using the session's
+    reservation token. If a reservation exists for this session, updates it.
+    If the asset is reserved by another session, returns a conflict response.
+    Handles reservation release if `release` is set in the request body.
 
-    Returns HTTP 409 when the record is in use
+    Request Parameters:
+        - `release` (bool, optional): If present and true, releases the current
+          reservation instead of acquiring or updating it. Example: `"true"`
+
+    Returns:
+        response (JsonResponse or HttpResponse): A dictionary indicating the
+        reservation status and token, or an HTTP 408/409 response for timeout
+        or conflict.
+
+    Response Format - Success:
+        - `asset_pk` (int): The ID of the reserved asset.
+        - `reservation_token` (str): A unique identifier for the reservation session.
+
+    Response Format - Error:
+        - `408 Request Timeout`: The current session's reservation is tombstoned.
+        - `409 Conflict`: The asset is actively reserved by another session.
+
+    Example:
+        ```json
+        {
+            "asset_pk": 789,
+            "reservation_token": "abc123xyz"
+        }
+        ```
     """
 
     reservation_token = get_or_create_reservation_token(request)
@@ -724,6 +1068,7 @@ def reserve_asset(request, *, asset_pk):
             logger.debug("Updating reservation %s", reservation_token)
 
         if is_someone_else_tombstoned:
+            # No reservations = no activity = go ahead and do an insert
             msg = obtain_reservation(asset_pk, reservation_token)
             logger.debug(
                 "Obtaining reservation for %s from tombstoned user", reservation_token
@@ -737,7 +1082,34 @@ def reserve_asset(request, *, asset_pk):
     return JsonResponse(msg)
 
 
-def update_reservation(asset_pk, reservation_token):
+def update_reservation(
+    asset_pk: Union[int, str], reservation_token: str
+) -> dict[str, Union[int, str]]:
+    """
+    Update the timestamp on an existing active reservation for an asset.
+
+    Refreshes the reservation's `updated_on` field to extend its validity
+    and emits the `reservation_obtained` signal.
+
+    Args:
+        asset_pk (int or str): The primary key of the reserved asset.
+        reservation_token (str): The session's reservation token.
+
+    Returns:
+        response (dict): A dictionary confirming the updated reservation state.
+
+    Response Format - Success:
+        - `asset_pk` (int): The ID of the reserved asset.
+        - `reservation_token` (str): The reservation token used by the session.
+
+    Example:
+        ```json
+        {
+            "asset_pk": 789,
+            "reservation_token": "abc123xyz"
+        }
+        ```
+    """
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -757,7 +1129,34 @@ def update_reservation(asset_pk, reservation_token):
     return msg
 
 
-def obtain_reservation(asset_pk, reservation_token):
+def obtain_reservation(
+    asset_pk: Union[int, str], reservation_token: str
+) -> dict[str, Union[int, str]]:
+    """
+    Create a new reservation entry for an asset.
+
+    Inserts a new reservation row in the database for the given asset and
+    session token. Emits the `reservation_obtained` signal to notify listeners.
+
+    Args:
+        asset_pk (int or str): The primary key of the asset to reserve.
+        reservation_token (str): The session's reservation token.
+
+    Returns:
+        response (dict): A dictionary confirming the newly obtained reservation.
+
+    Response Format - Success:
+        - `asset_pk` (int): The ID of the reserved asset.
+        - `reservation_token` (str): The reservation token used by the session.
+
+    Example:
+        ```json
+        {
+            "asset_pk": 789,
+            "reservation_token": "abc123xyz"
+        }
+        ```
+    """
     with connection.cursor() as cursor:
         cursor.execute(
             """

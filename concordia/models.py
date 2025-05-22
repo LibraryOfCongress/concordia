@@ -741,20 +741,22 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         transcription that precedes the current latest transcription, excluding any
         transcriptions that are rollforwards or are sources of rollforwards.
 
-        Returns:
-            tuple:
-                - (True, target, original) if a rollback is possible, where:
-                    * target is the transcription to roll back to.
-                    * original is the current latest transcription.
-                - (False, reason, None) if a rollback is not possible, where:
-                    * reason is a string explaining why.
-
         A rollback is only possible if:
-            - There is more than one transcription.
-            - There is a prior transcription that is not a rollforward
-              or a source of one.
+        - There is more than one transcription.
+        - There is a prior transcription that is not a rollforward or source of one.
 
         This method does not perform the rollback, only checks feasibility.
+
+        Returns:
+            result (tuple): A (bool, value, latest) tuple describing rollback
+                possibility.
+
+        Return Behavior:
+            - If no transcriptions exist: returns (False, reason_string, None).
+            - If no eligible rollback target exists: returns (False, reason_string,
+              None).
+            - If rollback is possible: returns (True, target_transcription,
+              latest_transcription).
         """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
@@ -822,19 +824,21 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         as rolled back. It also updates the original latest transcription to reflect
         that it has been superseded.
 
-        Args:
-            user (User): The user initiating the rollback.
-
-        Returns:
-            Transcription: The newly created rollback transcription.
-
-        Raises:
-            ValueError: If rollback is not possible (e.g. no eligible transcription).
+        If rollback is not possible, raises a `ValueError`.
 
         The new transcription will:
             - Have `rolled_back=True`.
             - Set its `source` to the transcription it is rolled back to.
             - Set `supersedes` to the current latest transcription.
+
+        Args:
+            user (User): The user performing the rollback.
+
+        Returns:
+            transcription (Transcription): The newly created rollback transcription.
+
+        Raises:
+            ValueError: If rollback is not possible due to invalid or missing history.
         """
         results = self.can_rollback()
         if results[0] is not True:
@@ -878,21 +882,25 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         This checks whether the most recent transcription is a rollback transcription
         and whether the transcription it replaced (its `supersedes`) can be restored.
 
-        Returns:
-            tuple:
-                - (True, target, original) if rollforward is possible, where:
-                    * target is the transcription to roll forward to.
-                    * original is the current latest transcription.
-                - (False, reason, None) if rollforward is not possible, where:
-                    * reason is a string explaining why.
-
         This method handles cases where multiple rollforwards were applied,
         walking backward through the transcription chain to find the appropriate
         rollback origin.
 
         A rollforward is only possible if:
-            - The latest transcription is a rollback.
-            - The rollback's superseded transcription exists and can be restored.
+        - The latest transcription is a rollback.
+        - The rollback’s superseded transcription still exists and can be restored.
+
+        This method does not perform the rollforward, only checks feasibility.
+
+        Returns:
+            result (tuple): A (bool, value, latest) tuple describing rollforward
+                possibility.
+
+        Return Behavior:
+            - If no transcriptions exist: returns (False, reason_string, None).
+            - If the rollback chain is malformed: returns (False, reason_string, None).
+            - If rollforward is possible: returns (True, target_transcription,
+              latest_transcription).
         """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
@@ -999,23 +1007,34 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         Perform a rollforward of the most recent rollback transcription.
 
-        This creates a new transcription that restores the text from the
-        rollback's superseded transcription and marks it as a rollforward.
+        This creates a new transcription that restores the text from the rollback's
+        superseded transcription and marks it as a rollforward. A rollforward is only
+        possible if the latest transcription is a rollback and the replaced
+        transcription still exists.
 
-        Args:
-            user (User): The user initiating the rollforward.
-
-        Returns:
-            Transcription: The newly created rollforward transcription.
-
-        Raises:
-            ValueError: If rollforward is not possible (e.g. no valid rollback
-                        history or malformed transcription chain).
+        If rollforward is not possible, raises a `ValueError`.
 
         The new transcription will:
             - Have `rolled_forward=True`.
             - Set its `source` to the transcription being rolled forward to.
             - Set `supersedes` to the current latest transcription.
+
+        Args:
+            user (User): The user initiating the rollforward.
+
+        Returns:
+            transcription (Transcription): The newly created rollforward transcription.
+
+        Raises:
+            ValueError: If rollforward is not possible, such as when no rollback
+                exists or the history is malformed.
+
+        Return Behavior:
+            - If rollforward is possible:
+                - Creates a new transcription restoring the original text.
+                - Marks it with `rolled_forward=True`.
+            - If rollforward is not possible:
+                - Raises `ValueError` with a descriptive message.
         """
         results = self.can_rollforward()
         if results[0] is not True:
