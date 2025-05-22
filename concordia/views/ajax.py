@@ -283,9 +283,17 @@ def generate_ocr_transcription(
     language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
+        # If superseded is an HttpResponse, that means
+        # this transcription has already been superseded, so
+        # we won't run OCR and instead send back an error
+        # Otherwise, we just have thr transcription the OCR
+        # is gong to supersede, so we can continue
         if isinstance(superseded, HttpResponse):
             return superseded
     else:
+        # This means this is the first transcription on this asset.
+        # To enable undoing of the OCR transcription, we create
+        # an empty transcription for the OCR transcription to supersede
         superseded = Transcription(
             asset=asset,
             user=get_anonymous_user(),
@@ -606,6 +614,8 @@ def save_transcription(
     else:
         user = request.user
 
+    # Check whether this transcription text contains any URLs
+    # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
     url_match = re.search(URL_REGEX, transcription_text)
     if url_match:
@@ -921,6 +931,10 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
 
     Tag.objects.bulk_create(new_tags)
 
+    # At this point we now have Tag objects for everything in the POSTed
+    # request. We'll add anything which wasn't previously in this user's tag
+    # collection and remove anything which is no longer present.
+
     all_submitted_tags = list(existing_tags) + new_tags
     existing_user_tags = user_tags.tags.all()
 
@@ -986,6 +1000,8 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
 
     reservation_token = get_or_create_reservation_token(request)
 
+    # If the browser is letting us know of a specific reservation release,
+    # let it go even if it's within the grace period.
     if request.POST.get("release"):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -996,6 +1012,7 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
                 [asset_pk, reservation_token],
             )
 
+        # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
         logger.info("Releasing reservation with token %s", reservation_token)
         reservation_released.send(sender="reserve_asset", **msg)
@@ -1005,6 +1022,7 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
         asset_id__exact=asset_pk
     )
 
+    # Default: pretend there is no activity on the asset
     is_it_already_mine = False
     am_i_tombstoned = False
     is_someone_else_tombstoned = False
@@ -1035,16 +1053,18 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
                     )
 
         if am_i_tombstoned:
-            return HttpResponse(status=408)
+            return HttpResponse(status=408)  # Request Timed Out
 
         if is_someone_else_active:
-            return HttpResponse(status=409)
+            return HttpResponse(status=409)  # Conflict
 
         if is_it_already_mine:
+            # This user already has the reservation and it's not tombstoned
             msg = update_reservation(asset_pk, reservation_token)
             logger.debug("Updating reservation %s", reservation_token)
 
         if is_someone_else_tombstoned:
+            # No reservations = no activity = go ahead and do an insert
             msg = obtain_reservation(asset_pk, reservation_token)
             logger.debug(
                 "Obtaining reservation for %s from tombstoned user", reservation_token
@@ -1098,6 +1118,7 @@ def update_reservation(
         """.strip(),
             [asset_pk, reservation_token],
         )
+    # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
     return msg
@@ -1142,6 +1163,7 @@ def obtain_reservation(
         """.strip(),
             [asset_pk, reservation_token],
         )
+    # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
     return msg
