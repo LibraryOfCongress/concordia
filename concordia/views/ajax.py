@@ -36,6 +36,7 @@ from concordia.utils import (
     get_anonymous_user,
     get_or_create_reservation_token,
 )
+from concordia.utils.logging import get_logging_user_id
 from configuration.utils import configuration_value
 
 from .decorators import reserve_rate, validate_anonymous_user
@@ -403,23 +404,26 @@ def rollback_transcription(
     except ValueError as e:
         logger.exception("No previous transcription available for rollback", exc_info=e)
         structured_logger.warning(
-            "transcription_rollback_failed",
-            action="rollback",
-            result="error",
+            "Rollback failed: no previous transcription to revert to.",
+            event="rollback_failed",
+            reason_code="no_valid_target",
+            reason=str(e),
             asset_id=asset.pk,
-            user_id=user.id if user.is_authenticated else "anonymous",
-            error=str(e),
+            campaign_slug=asset.campaign.slug,
+            item_id=asset.item.item_id,
+            user_id=get_logging_user_id(user),
         )
         return JsonResponse(
             {"error": "No previous transcription available"}, status=400
         )
 
     structured_logger.info(
-        "transcription_rollback_success",
-        action="rollback",
-        result="success",
+        "Rollback successfully performed.",
+        event="rollback_success",
         asset_id=asset.pk,
-        user_id=user.id if user.is_authenticated else "anonymous",
+        campaign_slug=asset.campaign.slug,
+        item_id=asset.item.item_id,
+        user_id=get_logging_user_id(user),
         transcription_id=transcription.pk,
     )
 
@@ -513,21 +517,24 @@ def rollforward_transcription(
     except ValueError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
         structured_logger.warning(
-            "transcription_rollforward_failed",
-            action="rollforward",
-            result="error",
+            "Rollforward failed: no transcription available to restore.",
+            event="rollforward_failed",
+            reason_code="no_valid_target",
+            reason=str(e),
             asset_id=asset.pk,
-            user_id=user.id if user.is_authenticated else "anonymous",
-            error=str(e),
+            campaign_slug=asset.campaign.slug,
+            item_id=asset.item.item_id,
+            user_id=get_logging_user_id(user),
         )
         return JsonResponse({"error": "No transcription to restore"}, status=400)
 
     structured_logger.info(
-        "transcription_rollforward_success",
-        action="rollforward",
-        result="success",
+        "Rollforward successfully performed.",
+        event="rollforward_success",
         asset_id=asset.pk,
-        user_id=user.id if user.is_authenticated else "anonymous",
+        campaign_slug=asset.campaign.slug,
+        item_id=asset.item.item_id,
+        user_id=get_logging_user_id(user),
         transcription_id=transcription.pk,
     )
 

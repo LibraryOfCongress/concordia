@@ -1,3 +1,5 @@
+import structlog
+
 from concordia.models import (
     NextReviewableCampaignAsset,
     NextReviewableTopicAsset,
@@ -62,6 +64,8 @@ __all__ = [
     "find_invalid_next_transcribable_topic_assets",
 ]
 
+structured_logger = structlog.get_logger(f"structlog.{__name__}")
+
 
 def remove_next_asset_objects(asset_id):
     """
@@ -80,6 +84,10 @@ def remove_next_asset_objects(asset_id):
     Args:
         asset_id (int): The ID of the asset to remove from next-asset tables.
     """
+    structured_logger.info(
+        "remove_next_asset_objects",
+        asset_id=asset_id,
+    )
     NextTranscribableCampaignAsset.objects.filter(asset_id=asset_id).delete()
     NextTranscribableTopicAsset.objects.filter(asset_id=asset_id).delete()
     NextReviewableCampaignAsset.objects.filter(asset_id=asset_id).delete()
