@@ -99,7 +99,7 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
     Determine the throttling rate for registration attempts.
 
     Used with the
-    `[ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)`
+    [ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)
     decorator from `django-ratelimit` to dynamically adjust the request rate based
     on form validation.
 
@@ -137,9 +137,9 @@ class ConcordiaRegistrationView(RegistrationView):
     User registration view with rate limiting.
 
     Extends
-    `[django_registration.views.RegistrationView](https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.RegistrationView)`
+    [django_registration.views.RegistrationView](https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.RegistrationView)
     to apply a POST-specific rate limit using the
-    `[django-ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)`
+    [django-ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)
     decorator. This protects against abuse by restricting failed registration attempts
     while  allowing valid submissions to proceed freely.
 
@@ -535,8 +535,8 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
     Handle user-initiated account deletion.
 
     Extends:
-    - `[LoginRequiredMixin](https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin)`
-    - `[FormView](https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview)`
+        - [LoginRequiredMixin](https://docs.djangoproject.com/en/stable/topics/auth/default/#the-loginrequiredmixin-mixin)
+        - [FormView](https://docs.djangoproject.com/en/stable/ref/class-based-views/generic-editing/#formview)
 
     Provides a confirmation form for deleting the user's account. If the user has
     contributed transcriptions, their data is anonymized instead of being deleted.
@@ -643,7 +643,7 @@ class EmailReconfirmationView(TemplateView):
     Handle email reconfirmation via a signed URL token.
 
     Extends:
-    - `[TemplateView](https://docs.djangoproject.com/en/stable/ref/class-based-views/base/#templateview)`
+        - [TemplateView](https://docs.djangoproject.com/en/stable/ref/class-based-views/base/#templateview)
 
     Validates a confirmation key sent to the user's new email address during
     an address change. If valid and not expired, applies the email update. If
