@@ -1018,6 +1018,10 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
         reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
+    # We're relying on the database to meet our integrity requirements and since
+    # this is called periodically we want to be fairly fast until we switch to
+    # something like Redis.
+
     reservations = AssetTranscriptionReservation.objects.filter(
         asset_id__exact=asset_pk
     )
@@ -1071,6 +1075,7 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
             )
 
     else:
+        # No reservations = no activity = go ahead and do an insert
         msg = obtain_reservation(asset_pk, reservation_token)
         logger.debug("No activity, just get the reservation %s", reservation_token)
 
