@@ -405,7 +405,7 @@ def rollback_transcription(
         logger.exception("No previous transcription available for rollback", exc_info=e)
         structured_logger.warning(
             "Rollback failed: no previous transcription to revert to.",
-            event="rollback_failed",
+            event_code="rollback_failed",
             reason_code="no_valid_target",
             reason=str(e),
             asset_id=asset.pk,
@@ -419,7 +419,7 @@ def rollback_transcription(
 
     structured_logger.info(
         "Rollback successfully performed.",
-        event="rollback_success",
+        event_code="rollback_success",
         asset_id=asset.pk,
         campaign_slug=asset.campaign.slug,
         item_id=asset.item.item_id,
@@ -518,7 +518,7 @@ def rollforward_transcription(
         logger.exception("No transcription available for rollforward", exc_info=e)
         structured_logger.warning(
             "Rollforward failed: no transcription available to restore.",
-            event="rollforward_failed",
+            event_code="rollforward_failed",
             reason_code="no_valid_target",
             reason=str(e),
             asset_id=asset.pk,
@@ -530,7 +530,7 @@ def rollforward_transcription(
 
     structured_logger.info(
         "Rollforward successfully performed.",
-        event="rollforward_success",
+        event_code="rollforward_success",
         asset_id=asset.pk,
         campaign_slug=asset.campaign.slug,
         item_id=asset.item.item_id,

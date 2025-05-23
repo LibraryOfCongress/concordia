@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
@@ -432,7 +433,7 @@ class NextTranscribableTopicAssetTests(CreateTestUsers, TestCase):
 class LoggingTests(CreateTestUsers, TestCase):
     def test_get_logging_user_id_authenticated_user(self):
         user = self.create_test_user()
-        self.assertEqual(get_logging_user_id(user), user.id)
+        self.assertEqual(get_logging_user_id(user), str(user.id))
 
     def test_get_logging_user_id_anonymous_user(self):
         anon = get_anonymous_user()
@@ -443,3 +444,8 @@ class LoggingTests(CreateTestUsers, TestCase):
         mock_user = object()
         # Should fallback to "anonymous" since getattr will not find .is_authenticated
         self.assertEqual(get_logging_user_id(mock_user), "anonymous")
+
+    def test_get_logging_user_id_authenticated_no_id(self):
+        user = SimpleNamespace(is_authenticated=True, username="someuser")
+        # Intentionally omit 'id' to trigger the final check
+        self.assertEqual(get_logging_user_id(user), "anonymous")

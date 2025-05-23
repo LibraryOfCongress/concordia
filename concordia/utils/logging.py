@@ -1,14 +1,25 @@
-from typing import Union
+from typing import Any
 
 
-def get_logging_user_id(user) -> Union[int, str]:
+def get_logging_user_id(user: Any) -> str:
     """
     Return a consistent identifier for logging purposes.
 
     Args:
-        user (User): A Django user object (possibly anonymous).
+        user (Any): A Django user object (possibly anonymous).
 
     Returns:
-        Union[int, str]: User's ID or "anonymous" if unauthenticated.
+        user_id (str): User's ID or "anonymous" if unauthenticated, represents
+                         the Concordia anonymous user, or has no ID.
     """
-    return getattr(user, "id", None) if user.is_authenticated else "anonymous"
+    if not getattr(user, "is_authenticated", False):
+        return "anonymous"
+
+    if getattr(user, "username", None) == "anonymous":
+        return "anonymous"
+
+    user_id = getattr(user, "id", None)
+    if user_id is None:
+        return "anonymous"
+
+    return str(user_id)

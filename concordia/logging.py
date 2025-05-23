@@ -239,7 +239,7 @@ class ConcordiaLogger:
         level: str,
         message: str,
         *,
-        event: str,
+        event_code: str,
         reason: Optional[str] = None,
         reason_code: Optional[str] = None,
         **context: Any,
@@ -252,7 +252,7 @@ class ConcordiaLogger:
         Args:
             level (str): Logging level ('debug', 'info', 'warning', 'error').
             message (str): Human-readable log message.
-            event (str): Required short machine-readable identifier.
+            event_code (str): Required short machine-readable identifier.
             reason (str, optional): Human-readable reason for failure (required for
                 warnings/errors).
             reason_code (str, optional): Short identifier for reason (required for
@@ -264,14 +264,14 @@ class ConcordiaLogger:
         """
         if not message:
             raise ValueError("Log message is required.")
-        if not event:
-            raise ValueError("Structured logs must include an 'event' field.")
+        if not event_code:
+            raise ValueError("Structured logs must include an 'event_code' field.")
         if level in ("warning", "error") and (not reason or not reason_code):
             raise ValueError(
                 "Warnings and errors must include both 'reason' and 'reason_code'."
             )
 
-        context_data = {"event": event}
+        context_data = {"event_code": event_code}
         if reason:
             context_data["reason"] = reason
         if reason_code:
@@ -306,35 +306,35 @@ class ConcordiaLogger:
 
         getattr(self._logger, level)(message, **context_data)
 
-    def debug(self, message: str, *, event: str, **kwargs):
+    def debug(self, message: str, *, event_code: str, **kwargs):
         """Emit a debug-level structured log."""
-        self.log("debug", message, event=event, **kwargs)
+        self.log("debug", message, event_code=event_code, **kwargs)
 
-    def info(self, message: str, *, event: str, **kwargs):
+    def info(self, message: str, *, event_code: str, **kwargs):
         """Emit an info-level structured log."""
-        self.log("info", message, event=event, **kwargs)
+        self.log("info", message, event_code=event_code, **kwargs)
 
     def warning(
-        self, message: str, *, event: str, reason: str, reason_code: str, **kwargs
+        self, message: str, *, event_code: str, reason: str, reason_code: str, **kwargs
     ):
         """Emit a warning-level structured log. Requires reason and reason_code."""
         self.log(
             "warning",
             message,
-            event=event,
+            event_code=event_code,
             reason=reason,
             reason_code=reason_code,
             **kwargs,
         )
 
     def error(
-        self, message: str, *, event: str, reason: str, reason_code: str, **kwargs
+        self, message: str, *, event_code: str, reason: str, reason_code: str, **kwargs
     ):
         """Emit an error-level structured log. Requires reason and reason_code."""
         self.log(
             "error",
             message,
-            event=event,
+            event_code=event_code,
             reason=reason,
             reason_code=reason_code,
             **kwargs,

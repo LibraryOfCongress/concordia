@@ -9,7 +9,6 @@ from logging import getLogger
 from typing import Optional, Tuple, Union
 
 import pytesseract
-import structlog
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
@@ -33,16 +32,17 @@ from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from PIL import Image
 
 from concordia.exceptions import RateLimitExceededError
+from concordia.logging import ConcordiaLogger
 from concordia.storage import ASSET_STORAGE
-from concordia.utils.logging import get_logging_user_id
 from configuration.utils import configuration_value
 from prometheus_metrics.models import MetricsModelMixin
 
 logger = getLogger(__name__)
-structured_logger = structlog.get_logger(f"structlog.{__name__}")
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 metadata_default = dict
 
@@ -690,6 +690,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             },
         )
 
+    @cached_property
+    def logger(self):
+        return structured_logger.bind(asset=self)
+
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
@@ -767,23 +771,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             self.latest_transcription()
         )
         if original_latest_transcription is None:
-            structured_logger.debug(
+            self.logger.debug(
                 "No transcriptions exist for this asset.",
-                event="rollback_check_failed",
+                event_code="rollback_check_failed",
                 reason_code="no_transcriptions",
                 reason="This asset has no transcriptions, so rollback is not possible.",
-                asset_id=self.id,
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
             )
             return (
                 False,
-                (
-                    "Can not rollback transcription on an asset "
-                    "with no transcriptions"
-                ),
+                "Can not rollback transcription on an asset with no transcriptions",
                 None,
             )
+
         # If the latest transcription has a source (i.e., is a rollback
         # or rollforward transcription), we want the original transcription
         # that it's based on, back to the original source
@@ -791,17 +790,12 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             latest_transcription = latest_transcription.source
 
         if original_latest_transcription.source:
-            structured_logger.debug(
-                (
-                    "Using source transcription as effective latest transcription "
-                    "for rollback."
-                ),
-                event="rollback_resolve_source",
-                asset_id=self.id,
+            self.logger.debug(
+                "Using source transcription as effective latest transcription "
+                "for rollback.",
+                event_code="rollback_resolve_source",
                 original_transcription_id=original_latest_transcription.id,
                 resolved_transcription_id=latest_transcription.id,
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
             )
 
         # We look back from the latest non-rolled transcription,
@@ -819,21 +813,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             # transcription to rollback to, because everything before
             # is either a rollforward or the source of a rollforward
             # (or there just isn't an earlier transcription at all)
-            structured_logger.debug(
+            self.logger.debug(
                 "No eligible transcription found for rollback.",
-                event="rollback_check_failed",
+                event_code="rollback_check_failed",
                 reason_code="no_eligible_transcription",
                 reason=(
                     "There are no earlier transcriptions that can be rolled back to. "
                     "All earlier transcriptions are rollforwards or sources of "
                     "rollforwards."
                 ),
-                asset_id=self.id,
                 latest_transcription_id=original_latest_transcription.id,
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
             )
-
             return (
                 False,
                 (
@@ -843,18 +833,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 None,
             )
 
-        structured_logger.debug(
+        self.logger.debug(
             "Eligible rollback target found.",
-            event="rollback_check_passed",
+            event_code="rollback_check_passed",
             reason_code="rollback_target_identified",
             reason="Found older transcription not marked as rollforward.",
-            asset_id=self.id,
             target_transcription_id=transcription_to_rollback_to.id,
             latest_transcription_id=original_latest_transcription.id,
-            campaign_slug=self.campaign.slug,
-            item_id=self.item.item_id,
         )
-
         return True, transcription_to_rollback_to, original_latest_transcription
 
     def rollback_transcription(self, user: User) -> Transcription:
@@ -884,29 +870,24 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         results = self.can_rollback()
         if results[0] is not True:
-            structured_logger.warning(
+            self.logger.warning(
                 "Rollback attempt failed: no valid rollback target.",
-                event="rollback_attempt_failed",
+                event_code="rollback_attempt_failed",
                 reason_code="no_valid_target",
                 reason=results[1],
-                asset_id=self.id,
-                user_id=get_logging_user_id(user),
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
+                user=user,
             )
             raise ValueError(results[1])
+
         transcription_to_rollback_to = results[1]
         original_latest_transcription = results[2]
 
-        structured_logger.debug(
+        self.logger.debug(
             "Preparing rollback transcription.",
-            event="rollback_prepare",
-            asset_id=self.id,
-            user_id=get_logging_user_id(user),
+            event_code="rollback_prepare",
+            user=user,
             source_transcription_id=transcription_to_rollback_to.id,
             superseded_transcription_id=original_latest_transcription.id,
-            campaign_slug=self.campaign.slug,
-            item_id=self.item.item_id,
         )
 
         kwargs = {
@@ -920,16 +901,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription = Transcription(**kwargs)
         new_transcription.full_clean()
         new_transcription.save()
-        structured_logger.info(
+
+        self.logger.info(
             "Rollback successfully performed.",
-            event="rollback_success",
-            asset_id=self.id,
-            user_id=get_logging_user_id(user),
+            event_code="rollback_success",
+            user=user,
             new_transcription_id=new_transcription.id,
             rolled_back_from_id=original_latest_transcription.id,
             rolled_back_to_id=transcription_to_rollback_to.id,
-            campaign_slug=self.campaign.slug,
-            item_id=self.item.item_id,
         )
         return new_transcription
 
@@ -948,9 +927,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         A rollforward is only possible if:
         - The latest transcription is a rollback.
-        - The rollback’s superseded transcription still exists and can be restored.
+        - The rollback's superseded transcription still exists and can be restored.
 
         This method does not perform the rollforward, only checks feasibility.
+
 
         Returns:
             result (tuple): A (bool, value, latest) tuple describing rollforward
@@ -958,9 +938,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         Return Behavior:
             - If no transcriptions exist: returns (False, reason_string, None).
-            - If the rollback chain is malformed: returns (False, reason_string, None).
-            - If rollforward is possible: returns (True, target_transcription,
-              latest_transcription).
+            - If rollforward is not possible: returns (False, reason_string, None).
+            - If rollforward is possible: returns
+              (True, transcription_to_rollforward, latest_transcription).
         """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
@@ -971,17 +951,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         )
 
         if original_latest_transcription is None:
-            structured_logger.debug(
+            self.logger.debug(
                 "No transcriptions exist for this asset.",
-                event="rollforward_check_failed",
+                event_code="rollforward_check_failed",
                 reason_code="no_transcriptions",
                 reason=(
                     "This asset has no transcriptions, "
                     "so rollforward is not possible."
                 ),
-                asset_id=self.id,
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
             )
             return (
                 False,
@@ -992,6 +969,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 None,
             )
 
+        # Rollforwards can be chained through multiple rollback/forward cycles,
+        # so we may need to walk back the supersedes chain to find the original.
         if latest_transcription.rolled_forward:
             # We need to find the latest transcription that wasn't rolled forward
             rolled_forward_count = 0
@@ -999,35 +978,29 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 while latest_transcription.rolled_forward:
                     latest_transcription = latest_transcription.supersedes
                     rolled_forward_count += 1
-                structured_logger.debug(
+                self.logger.debug(
                     "Walking back through rolled_forward transcriptions.",
-                    event="rollforward_resolve_chain",
+                    event_code="rollforward_resolve_chain",
                     reason_code="resolve_rolled_forward_chain",
                     reason=(
                         f"Resolved {rolled_forward_count} rolled_forward "
                         "transcription(s) before identifying rollback target."
                     ),
-                    asset_id=self.id,
                     rolled_forward_count=rolled_forward_count,
-                    campaign_slug=self.campaign.slug,
-                    item_id=self.item.item_id,
                 )
             except AttributeError:
-                structured_logger.warning(
+                self.logger.warning(
                     (
                         "Rollforward failed: unable to resolve chain of "
                         "rolled_forward transcriptions."
                     ),
-                    event="rollforward_check_failed",
+                    event_code="rollforward_check_failed",
                     reason_code="unresolvable_rolled_forward_chain",
                     reason=(
                         "Could not walk back through rolled_forward transcriptions "
                         "to find a valid rollback base. Possibly malformed "
                         "transcription history (missing supersedes)."
                     ),
-                    asset_id=self.id,
-                    campaign_slug=self.campaign.slug,
-                    item_id=self.item.item_id,
                 )
                 return (
                     False,
@@ -1056,22 +1029,19 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 # when the loop continues
                 # In either case, his should only happen if the transcription
                 # history was manually edited.
-                structured_logger.warning(
+                self.logger.warning(
                     (
                         "Corrupt transcription state: too "
                         "many rollforwards without originals."
                     ),
-                    event="rollforward_check_failed",
+                    event_code="rollforward_check_failed",
                     reason_code="corrupt_state",
                     reason=(
                         "More rollforward transcriptions exist than "
                         "non-rollforward ones. This suggests a manually "
                         "corrupted transcription history."
                     ),
-                    asset_id=self.id,
                     latest_transcription_id=original_latest_transcription.id,
-                    campaign_slug=self.campaign.slug,
-                    item_id=self.item.item_id,
                 )
                 return (
                     False,
@@ -1089,17 +1059,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         if latest_transcription.rolled_back:
             transcription_to_rollforward = latest_transcription.supersedes
         else:
-            structured_logger.debug(
+            self.logger.debug(
                 "Rollforward failed: latest transcription is not a rollback.",
-                event="rollforward_check_failed",
+                event_code="rollforward_check_failed",
                 reason_code="not_a_rollback",
                 reason=(
                     "Can not rollforward transcription on an asset if the latest "
                     "non-rollforward transcription is not a rollback transcription."
                 ),
-                asset_id=self.id,
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
             )
             return (
                 False,
@@ -1114,17 +1081,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         # This shouldn't be possible normally, but if a transcription history
         # is manually edited, you could end up in this state.
         if not transcription_to_rollforward:
-            structured_logger.debug(
+            self.logger.debug(
                 "Rollforward failed: rollback transcription has no superseded value.",
-                event="rollforward_check_failed",
+                event_code="rollforward_check_failed",
                 reason_code="no_superseded_transcription",
                 reason=(
                     "Can not rollforward transcription on an asset if the latest "
                     "rollback transcription did not supersede a previous transcription."
                 ),
-                asset_id=self.id,
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
             )
             return (
                 False,
@@ -1135,21 +1099,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 None,
             )
 
-        structured_logger.debug(
+        self.logger.debug(
             "Eligible rollforward target found.",
-            event="rollforward_check_passed",
-            asset_id=self.id,
+            event_code="rollforward_check_passed",
             target_transcription_id=transcription_to_rollforward.id,
             latest_transcription_id=original_latest_transcription.id,
-            campaign_slug=self.campaign.slug,
-            item_id=self.item.item_id,
         )
 
         return True, transcription_to_rollforward, original_latest_transcription
 
     def rollforward_transcription(self, user: User) -> Transcription:
         """
-        Perform a rollforward of the most recent rollback transcription.
+         Perform a rollforward of the most recent rollback transcription.
 
         This creates a new transcription that restores the text from the rollback's
         superseded transcription and marks it as a rollforward. A rollforward is only
@@ -1182,29 +1143,24 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         results = self.can_rollforward()
         if results[0] is not True:
-            structured_logger.warning(
+            self.logger.warning(
                 "Rollforward attempt failed: no valid rollforward target.",
-                event="rollforward_attempt_failed",
+                event_code="rollforward_attempt_failed",
                 reason_code="no_valid_target",
                 reason=results[1],
-                asset_id=self.id,
-                user_id=get_logging_user_id(user),
-                campaign_slug=self.campaign.slug,
-                item_id=self.item.item_id,
+                user=user,
             )
             raise ValueError(results[1])
+
         transcription_to_rollforward = results[1]
         original_latest_transcription = results[2]
 
-        structured_logger.debug(
+        self.logger.debug(
             "Preparing rollforward transcription.",
-            event="rollforward_prepare",
-            asset_id=self.id,
-            user_id=get_logging_user_id(user),
+            event_code="rollforward_prepare",
+            user=user,
             source_transcription_id=transcription_to_rollforward.id,
             superseded_transcription_id=original_latest_transcription.id,
-            campaign_slug=self.campaign.slug,
-            item_id=self.item.item_id,
         )
 
         kwargs = {
@@ -1218,16 +1174,14 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription = Transcription(**kwargs)
         new_transcription.full_clean()
         new_transcription.save()
-        structured_logger.info(
+
+        self.logger.info(
             "Rollforward successfully performed.",
-            event="rollforward_success",
-            asset_id=self.id,
-            user_id=user.id,
+            event_code="rollforward_success",
+            user=user,
             new_transcription_id=new_transcription.id,
             rolled_forward_from_id=original_latest_transcription.id,
             rolled_forward_to_id=transcription_to_rollforward.id,
-            campaign_slug=self.campaign.slug,
-            item_id=self.item.item_id,
         )
         return new_transcription
 

@@ -13,70 +13,74 @@ class ConcordiaLoggerTests(TestCase):
         self.logger = ConcordiaLogger(self.mock_structlog_logger)
 
     def test_debug_logs_with_event(self):
-        self.logger.debug("debug msg", event="debug_event", key1="value1")
+        self.logger.debug("debug msg", event_code="debug_event", key1="value1")
         self.mock_structlog_logger.debug.assert_called_once()
         args, kwargs = self.mock_structlog_logger.debug.call_args
         self.assertEqual(args[0], "debug msg")
-        self.assertEqual(kwargs["event"], "debug_event")
+        self.assertEqual(kwargs["event_code"], "debug_event")
         self.assertEqual(kwargs["key1"], "value1")
 
     def test_info_logs_with_event(self):
-        self.logger.info("info msg", event="info_event", key2="value2")
+        self.logger.info("info msg", event_code="info_event", key2="value2")
         self.mock_structlog_logger.info.assert_called_once()
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertEqual(args[0], "info msg")
-        self.assertEqual(kwargs["event"], "info_event")
+        self.assertEqual(kwargs["event_code"], "info_event")
         self.assertEqual(kwargs["key2"], "value2")
 
     def test_warning_requires_reason_and_reason_code(self):
         with self.assertRaises(TypeError):
-            self.logger.warning("warning msg", event="warn_event", reason="only_reason")
+            self.logger.warning(
+                "warning msg", event_code="warn_event", reason="only_reason"
+            )
 
         self.logger.warning(
             "warning msg",
-            event="warn_event",
+            event_code="warn_event",
             reason="test reason",
             reason_code="warn_code",
             key3="value3",
         )
         self.mock_structlog_logger.warning.assert_called_once()
         args, kwargs = self.mock_structlog_logger.warning.call_args
-        self.assertEqual(kwargs["event"], "warn_event")
+        self.assertEqual(kwargs["event_code"], "warn_event")
         self.assertEqual(kwargs["reason"], "test reason")
         self.assertEqual(kwargs["reason_code"], "warn_code")
         self.assertEqual(kwargs["key3"], "value3")
 
     def test_error_requires_reason_and_reason_code(self):
         with self.assertRaises(TypeError):
-            self.logger.error("error msg", event="error_event", reason_code="only_code")
+            self.logger.error(
+                "error msg", event_code="error_event", reason_code="only_code"
+            )
 
         self.logger.error(
             "error msg",
-            event="error_event",
+            event_code="error_event",
             reason="error reason",
             reason_code="error_code",
         )
         self.mock_structlog_logger.error.assert_called_once()
         args, kwargs = self.mock_structlog_logger.error.call_args
-        self.assertEqual(kwargs["event"], "error_event")
+        self.assertEqual(kwargs["event_code"], "error_event")
         self.assertEqual(kwargs["reason"], "error reason")
         self.assertEqual(kwargs["reason_code"], "error_code")
 
     def test_missing_event_raises(self):
         with self.assertRaises(ValueError):
-            self.logger.info("msg", event=None)
+            self.logger.info("msg", event_code=None)
 
     def test_log_merges_context_correctly(self):
         mock_obj = SimpleNamespace(id=42)
         self.logger.register_extractor("thing", lambda o: {"thing_id": o.id})
-        self.logger.info("msg", event="test_event", thing=mock_obj)
+        self.logger.info("msg", event_code="test_event", thing=mock_obj)
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertEqual(kwargs["thing_id"], 42)
 
     def test_log_explicit_key_overrides_extracted(self):
         mock_obj = SimpleNamespace(id=42)
         self.logger.register_extractor("thing", lambda o: {"thing_id": 123})
-        self.logger.info("msg", event="test_event", thing=mock_obj, thing_id=999)
+        self.logger.info("msg", event_code="test_event", thing=mock_obj, thing_id=999)
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertEqual(kwargs["thing_id"], 999)
 
@@ -89,7 +93,7 @@ class ConcordiaLoggerTests(TestCase):
     def test_bind_merges_context_into_logging(self):
         bound = self.logger.bind(user="uval")
         bound.register_extractor("user", lambda o: {"user_id": o})
-        bound.info("msg", event="bound_event")
+        bound.info("msg", event_code="bound_event")
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertEqual(kwargs["user_id"], "uval")
 
@@ -114,19 +118,19 @@ class ConcordiaLoggerTests(TestCase):
 
     def test_log_raises_when_message_is_none(self):
         with self.assertRaises(ValueError):
-            self.logger.info(None, event="event")
+            self.logger.info(None, event_code="event")
 
     def test_log_raises_when_message_is_none_direct(self):
         with self.assertRaises(ValueError):
-            self.logger.log("info", None, event="event")
+            self.logger.log("info", None, event_code="event")
 
     def test_log_raises_when_message_is_empty(self):
         with self.assertRaises(ValueError):
-            self.logger.info("", event="event")
+            self.logger.info("", event_code="event")
 
     def test_log_raises_when_message_is_empty_direct(self):
         with self.assertRaises(ValueError):
-            self.logger.log("info", "", event="event")
+            self.logger.log("info", "", event_code="event")
 
     def test_log_skips_none_values_from_extractor(self):
         class Dummy:
@@ -134,19 +138,19 @@ class ConcordiaLoggerTests(TestCase):
                 self.id = None
 
         self.logger.register_extractor("thing", lambda o: {"thing_id": o.id})
-        self.logger.info("msg", event="event", thing=Dummy())
+        self.logger.info("msg", event_code="event", thing=Dummy())
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertNotIn("thing_id", kwargs)
 
     def test_log_includes_nonextractor_bound_context(self):
         bound = self.logger.bind(extra1="foo", extra2="bar")
-        bound.info("msg", event="event")
+        bound.info("msg", event_code="event")
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertEqual(kwargs["extra1"], "foo")
         self.assertEqual(kwargs["extra2"], "bar")
 
     def test_log_skips_none_values_in_context(self):
-        self.logger.info("msg", event="event", explicit=None)
+        self.logger.info("msg", event_code="event", explicit=None)
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertNotIn("explicit", kwargs)
 
@@ -154,7 +158,7 @@ class ConcordiaLoggerTests(TestCase):
         obj = SimpleNamespace(id=123)
         base = self.logger.bind(thing=obj, value="a")
         base.register_extractor("thing", lambda o: {"thing_id": o.id, "value": "b"})
-        base.info("msg", event="event", value="c")
+        base.info("msg", event_code="event", value="c")
         args, kwargs = self.mock_structlog_logger.info.call_args
         # Extracted value ("b") overridden by explicit context ("c")
         self.assertEqual(kwargs["value"], "c")
@@ -163,7 +167,7 @@ class ConcordiaLoggerTests(TestCase):
     def test_extractor_returns_none_value_skipped(self):
         obj = SimpleNamespace()
         self.logger.register_extractor("thing", lambda o: {"thing_id": None})
-        self.logger.info("msg", event="event", thing=obj)
+        self.logger.info("msg", event_code="event", thing=obj)
         args, kwargs = self.mock_structlog_logger.info.call_args
         self.assertNotIn("thing_id", kwargs)
 
@@ -181,10 +185,10 @@ class ConcordiaLoggerTests(TestCase):
     def test_log_raises_valueerror_for_empty_reason_and_code(self):
         with self.assertRaises(ValueError):
             self.logger.log(
-                "warning", "bad", event="something", reason="", reason_code="fail"
+                "warning", "bad", event_code="something", reason="", reason_code="fail"
             )
 
         with self.assertRaises(ValueError):
             self.logger.log(
-                "error", "bad", event="something", reason="fail", reason_code=None
+                "error", "bad", event_code="something", reason="fail", reason_code=None
             )
