@@ -2,7 +2,10 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Subquery, When
 
 from concordia import models as concordia_models
+from concordia.logging import ConcordiaLogger
 from concordia.utils.celery import get_registered_task
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 def find_new_transcribable_topic_assets(topic):
@@ -97,7 +100,12 @@ def find_transcribable_topic_asset(topic):
         asset_query = concordia_models.Asset.objects.filter(id=next_asset)
     else:
         # No asset in the NextTranscribableTopicAsset table for this topic,
-        # so fallback to manually finding on
+        # so fallback to manually finding one
+        structured_logger.info(
+            "No cached assets available, falling back to manual lookup",
+            event_code="transcribable_fallback_manual_lookup",
+            topic=topic,
+        )
         asset_query = find_new_transcribable_topic_assets(topic)
         spawn_task = True
     # select_for_update(of=("self",)) causes the row locking only to
@@ -112,6 +120,11 @@ def find_transcribable_topic_asset(topic):
         # We wait to do this until after getting an asset because otherwise there's a
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
+        structured_logger.info(
+            "Spawned background task to populate cache",
+            event_code="transcribable_cache_population_triggered",
+            topic=topic,
+        )
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_transcribable_for_topic"
         )
@@ -208,9 +221,14 @@ def find_next_transcribable_topic_asset(
     if asset_id:
         asset_query = concordia_models.Asset.objects.filter(id=asset_id)
     else:
-        spawn_task = True
         # Since we had no potential next assets in the caching table, we have to check
         # the asset table directly.
+        structured_logger.info(
+            "No cached assets matched, falling back to manual lookup",
+            event_code="transcribable_next_fallback_manual",
+            topic=topic,
+        )
+        spawn_task = True
         asset_query = find_new_transcribable_topic_assets(topic)
         asset_query = asset_query.annotate(
             unstarted=Case(
@@ -250,6 +268,11 @@ def find_next_transcribable_topic_asset(
         # We wait to do this until after getting an asset because otherwise there's a
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
+        structured_logger.info(
+            "Spawned background task to populate cache",
+            event_code="transcribable_next_cache_population",
+            topic=topic,
+        )
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_transcribable_for_topic"
         )
