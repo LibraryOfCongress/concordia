@@ -185,7 +185,7 @@ class ConcordiaLogger:
         use the default global extractors. If you override an extractor on a logger,
         chained calls will not reflect that override. So, if you override the "asset"
         extractor, if you pass in "transcription", that extractor will use the default
-        `asset` extractor, rather than you're newly registered one.
+        `asset` extractor, rather than your newly registered one.
     """
 
     def __init__(self, logger, context: Optional[dict[str, Any]] = None):
