@@ -57,7 +57,7 @@ invoke = "==2.2.0"
 django-extensions = "==3.2.3"
 django-debug-toolbar = "==5.2.0"
 coverage = "==7.8.0"
-pre-commit = "==4.0.1"
+pre-commit = "==4.2.0"
 tblib = "==3.0.0"
 
 [requires]
