@@ -1,8 +1,45 @@
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import structlog
 
 from concordia.utils.logging import get_logging_user_id
+
+# Registry for semantic context extractors
+KNOWN_EXTRACTORS: dict[str, Callable[[Any], dict[str, Any]]] = {}
+
+
+def register_extractor(
+    context_key: str, extractor_function: Callable[[Any], dict[str, Any]]
+):
+    KNOWN_EXTRACTORS[context_key] = extractor_function
+
+
+# Built-in extractors
+register_extractor("user", lambda user: {"user_id": get_logging_user_id(user)})
+
+register_extractor(
+    "asset",
+    lambda asset: {
+        key: value
+        for key, value in {
+            "asset_id": getattr(asset, "pk", None),
+            "campaign_slug": getattr(getattr(asset, "campaign", None), "slug", None),
+            "item_id": getattr(getattr(asset, "item", None), "item_id", None),
+        }.items()
+        if value is not None
+    },
+)
+
+register_extractor(
+    "transcription",
+    lambda transcription: {"transcription_id": getattr(transcription, "pk", None)},
+)
+
+register_extractor(
+    "campaign", lambda campaign: {"campaign_slug": getattr(campaign, "slug", None)}
+)
+
+register_extractor("item", lambda item: {"item_id": getattr(item, "item_id", None)})
 
 
 class ConcordiaLogger:
@@ -158,59 +195,41 @@ class ConcordiaLogger:
                 "Warnings and errors must include both 'reason' and 'reason_code'."
             )
 
-        ctx = {"event": event}
+        context_data = {"event": event}
         if reason:
-            ctx["reason"] = reason
+            context_data["reason"] = reason
         if reason_code:
-            ctx["reason_code"] = reason_code
+            context_data["reason_code"] = reason_code
 
-        bound = self._context
+        # Context that has been bound to the current logger instance
+        bound_context = self._context
 
-        # Extract known context objects
-        user = context.pop("user", bound.get("user"))
-        asset = context.pop("asset", bound.get("asset"))
-        transcription = context.pop("transcription", bound.get("transcription"))
-        campaign = context.pop("campaign", bound.get("campaign"))
-        item = context.pop("item", bound.get("item"))
+        # Extract data from provided context, falling back to the bound context
+        # if it exists
+        for context_key, extractor_function in KNOWN_EXTRACTORS.items():
+            context_object = context.pop(context_key, bound_context.get(context_key))
+            if context_object:
+                extracted_fields = extractor_function(context_object)
+                for key, value in extracted_fields.items():
+                    if value is not None:
+                        context_data.setdefault(key, value)
 
-        if user:
-            user_id = get_logging_user_id(user)
-            if user_id is not None:
-                ctx["user_id"] = user_id
+        # Add remaining values in bound_context
+        # (i.e., keys that weren't already extracted)
+        for key, value in bound_context.items():
+            if key not in KNOWN_EXTRACTORS and key not in context and value is not None:
+                context_data[key] = value
 
-        if asset:
-            asset_id = getattr(asset, "pk", None)
-            campaign_slug = getattr(getattr(asset, "campaign", None), "slug", None)
-            item_id = getattr(getattr(asset, "item", None), "item_id", None)
-
-            if asset_id is not None:
-                ctx["asset_id"] = asset_id
-            if campaign_slug is not None:
-                ctx["campaign_slug"] = campaign_slug
-            if item_id is not None:
-                ctx["item_id"] = item_id
-
-        if transcription:
-            transcription_id = getattr(transcription, "pk", None)
-            if transcription_id is not None:
-                ctx["transcription_id"] = transcription_id
-
-        if campaign:
-            slug = getattr(campaign, "slug", None)
-            if slug is not None:
-                ctx["campaign_slug"] = slug
-
-        if item:
-            item_id = getattr(item, "item_id", None)
-            if item_id is not None:
-                ctx["item_id"] = item_id
-
-        # Add remaining values in context (which may include user-defined fields)
+        # Override extracted and bound context with any explicit values passed in
+        # For instance, if `asset` and `asset_id` were both passed in, we would
+        # have extracted `asset`.`asset_id`, `asset`.`item`.`item_id`, etc., and
+        # now the extracted `asset_id` would be overriden by the explicit `asset_id`
+        # in the passed-in context.
         for key, value in context.items():
             if value is not None:
-                ctx[key] = value
+                context_data[key] = value
 
-        getattr(self._logger, level)(message, **ctx)
+        getattr(self._logger, level)(message, **context_data)
 
     def debug(self, message: str, *, event: str, **kwargs):
         """Emit a debug-level structured log."""
