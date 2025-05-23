@@ -17,30 +17,44 @@ def _register_default_extractor(
 # Built-in extractors
 _register_default_extractor("user", lambda user: {"user_id": get_logging_user_id(user)})
 
+# Extractors to use other extractors have to be registered in order, so
+# campaign must be registered before item, item before asset, asset before transcription
+_register_default_extractor(
+    "campaign",
+    lambda campaign: {
+        "campaign_slug": getattr(campaign, "slug", None),
+    },
+)
+
+_register_default_extractor(
+    "item",
+    lambda item: {
+        **_DEFAULT_EXTRACTORS["campaign"](getattr(item, "campaign", None)),
+        "item_id": getattr(item, "item_id", None),
+    },
+)
+
 _register_default_extractor(
     "asset",
     lambda asset: {
-        key: value
-        for key, value in {
-            "asset_id": getattr(asset, "pk", None),
-            "campaign_slug": getattr(getattr(asset, "campaign", None), "slug", None),
-            "item_id": getattr(getattr(asset, "item", None), "item_id", None),
-        }.items()
-        if value is not None
+        **_DEFAULT_EXTRACTORS["item"](getattr(asset, "item", None)),
+        "asset_id": getattr(asset, "pk", None),
     },
 )
 
 _register_default_extractor(
     "transcription",
-    lambda transcription: {"transcription_id": getattr(transcription, "pk", None)},
+    lambda transcription: {
+        **_DEFAULT_EXTRACTORS["asset"](getattr(transcription, "asset", None)),
+        "transcription_id": getattr(transcription, "pk", None),
+    },
 )
 
 _register_default_extractor(
-    "campaign", lambda campaign: {"campaign_slug": getattr(campaign, "slug", None)}
-)
-
-_register_default_extractor(
-    "item", lambda item: {"item_id": getattr(item, "item_id", None)}
+    "topic",
+    lambda topic: {
+        "topic_slug": getattr(topic, "slug", None),
+    },
 )
 
 
@@ -52,9 +66,9 @@ class ConcordiaLogger:
     Features:
         - Requires 'event' for all logs, and 'reason'/'reason_code' for warnings/errors.
         - Automatically extracts common context from objects like Asset, User
-            and Transcription.
+          and Transcription.
         - Allows semantic binding of objects (e.g., asset=self) which are expanded
-            at log time.
+          at log time.
         - Supports binding persistent fields via structlog's context mechanism.
 
     Usage:
@@ -64,7 +78,6 @@ class ConcordiaLogger:
         ```python
         structured_logger = ConcordiaLogger.get_logger(f"{__name__}")
         ```
-
 
     Log an info-level event:
         ```python
@@ -116,11 +129,12 @@ class ConcordiaLogger:
     The logger recognizes certain context object names and extracts fields from them
     automatically. These include:
 
-    - `user` → `user_id`
-    - `asset` → `asset_id`, `campaign_slug`, `item_id`
-    - `transcription` → `transcription_id`
-    - `campaign` → `campaign_slug`
-    - `item` → `item_id`
+    - `user` -> `user_id`
+    - `asset` -> `asset_id`, `campaign_slug`, `item_id`
+    - `transcription` -> `transcription_id`
+    - `campaign` -> `campaign_slug`
+    - `item` -> `item_id`
+    - `topic` -> `topic_id`
 
     If these objects are passed directly (e.g., as `user=request.user`), their relevant
     fields will be included automatically in the log entry.
