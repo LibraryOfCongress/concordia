@@ -429,7 +429,7 @@ class NextTranscribableTopicAssetTests(CreateTestUsers, TestCase):
         self.assertFalse(mock_task.delay.called)
 
 
-class LoggingsTest(CreateTestUsers, TestCase):
+class LoggingTests(CreateTestUsers, TestCase):
     def test_get_logging_user_id_authenticated_user(self):
         user = self.create_test_user()
         self.assertEqual(get_logging_user_id(user), user.id)

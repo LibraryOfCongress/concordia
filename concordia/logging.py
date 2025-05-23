@@ -1,5 +1,4 @@
 import warnings
-from copy import deepcopy
 from types import MappingProxyType
 from typing import Any, Callable, Optional
 
@@ -191,7 +190,7 @@ class ConcordiaLogger:
     def __init__(self, logger, context: Optional[dict[str, Any]] = None):
         self._logger = logger
         self._context = context or {}
-        self._extractors = deepcopy(_DEFAULT_EXTRACTORS)
+        self._extractors = _DEFAULT_EXTRACTORS.copy()
 
     @classmethod
     def get_logger(cls, name: str) -> "ConcordiaLogger":
@@ -217,14 +216,11 @@ class ConcordiaLogger:
             extractor (Callable): A function that returns a dict of fields to log.
         """
         self._extractors[key] = extractor
-        if any(
-            key in extractor.__code__.co_names
-            for extractor in _DEFAULT_EXTRACTORS.values()
-            if callable(extractor)
-        ):
+        if key in _DEFAULT_EXTRACTORS:
             warnings.warn(
-                f"Extractor for '{key}' registered but will not override chained "
-                f"extractor behavior, which uses global defaults.",
+                f"Extractor for '{key}' registered but default extractors may still "
+                f"reference the original implementation via chaining. Overriding it "
+                f"here will not affect those chained uses.",
                 UserWarning,
                 stacklevel=2,
             )
