@@ -4,20 +4,20 @@ import structlog
 
 from concordia.utils.logging import get_logging_user_id
 
-# Registry for semantic context extractors
-KNOWN_EXTRACTORS: dict[str, Callable[[Any], dict[str, Any]]] = {}
+# Default global registry for semantic context extractors
+_DEFAULT_EXTRACTORS: dict[str, Callable[[Any], dict[str, Any]]] = {}
 
 
-def register_extractor(
+def _register_default_extractor(
     context_key: str, extractor_function: Callable[[Any], dict[str, Any]]
 ):
-    KNOWN_EXTRACTORS[context_key] = extractor_function
+    _DEFAULT_EXTRACTORS[context_key] = extractor_function
 
 
 # Built-in extractors
-register_extractor("user", lambda user: {"user_id": get_logging_user_id(user)})
+_register_default_extractor("user", lambda user: {"user_id": get_logging_user_id(user)})
 
-register_extractor(
+_register_default_extractor(
     "asset",
     lambda asset: {
         key: value
@@ -30,16 +30,18 @@ register_extractor(
     },
 )
 
-register_extractor(
+_register_default_extractor(
     "transcription",
     lambda transcription: {"transcription_id": getattr(transcription, "pk", None)},
 )
 
-register_extractor(
+_register_default_extractor(
     "campaign", lambda campaign: {"campaign_slug": getattr(campaign, "slug", None)}
 )
 
-register_extractor("item", lambda item: {"item_id": getattr(item, "item_id", None)})
+_register_default_extractor(
+    "item", lambda item: {"item_id": getattr(item, "item_id", None)}
+)
 
 
 class ConcordiaLogger:
@@ -136,6 +138,7 @@ class ConcordiaLogger:
         """
         self._logger = logger
         self._context = context or {}
+        self._extractors = _DEFAULT_EXTRACTORS.copy()
 
     @classmethod
     def get_logger(cls, name: str) -> "ConcordiaLogger":
@@ -149,6 +152,27 @@ class ConcordiaLogger:
             ConcordiaLogger: A logger instance with enriched behavior.
         """
         return cls(structlog.get_logger(f"structlog.{__name__}"))
+
+    def register_extractor(
+        self, key: str, extractor: Callable[[Any], dict[str, Any]]
+    ) -> None:
+        """
+        Register a custom context extractor for this logger instance only.
+
+        Args:
+            key (str): The context key to extract (e.g., "custom_object").
+            extractor (Callable): A function that returns a dict of fields to log.
+        """
+        self._extractors[key] = extractor
+
+    def unregister_extractor(self, key: str) -> None:
+        """
+        Remove a previously registered extractor from this logger instance.
+
+        Args:
+            key (str): The context key to remove.
+        """
+        self._extractors.pop(key, None)
 
     def log(
         self,
@@ -171,17 +195,7 @@ class ConcordiaLogger:
                 warnings/errors).
             reason_code (str, optional): Short identifier for reason (required for
                 warnings/errors).
-            context (Any): Additional structured context for the log. See the
-                **Special Context Handling** section below for recognized keys.
-
-                - `user` (User): Extracts `user_id` using `get_logging_user_id()`.
-                - `asset` (Asset): Extracts `asset_id`, `campaign_slug`, and `item_id`.
-                - `transcription` (Transcription): Extracts `transcription_id`.
-                - `campaign` (Campaign): Extracts `campaign_slug`.
-                - `item` (Item): Extracts `item_id`.
-
-                Any other key-value pairs are included as-is, unless their value is
-                `None`, in which case they are omitted.
+            context (Any): Additional structured context for the log.
 
         Raises:
             ValueError: If required fields are missing for the given log level.
@@ -201,12 +215,11 @@ class ConcordiaLogger:
         if reason_code:
             context_data["reason_code"] = reason_code
 
-        # Context that has been bound to the current logger instance
         bound_context = self._context
 
         # Extract data from provided context, falling back to the bound context
         # if it exists
-        for context_key, extractor_function in KNOWN_EXTRACTORS.items():
+        for context_key, extractor_function in self._extractors.items():
             context_object = context.pop(context_key, bound_context.get(context_key))
             if context_object:
                 extracted_fields = extractor_function(context_object)
@@ -217,7 +230,7 @@ class ConcordiaLogger:
         # Add remaining values in bound_context
         # (i.e., keys that weren't already extracted)
         for key, value in bound_context.items():
-            if key not in KNOWN_EXTRACTORS and key not in context and value is not None:
+            if key not in self._extractors and key not in context and value is not None:
                 context_data[key] = value
 
         # Override extracted and bound context with any explicit values passed in
@@ -278,9 +291,8 @@ class ConcordiaLogger:
         Returns:
             ConcordiaLogger: A logger with the provided context bound.
         """
-
         # We make our own bound context rather than using structlog's
-        # .bind so we can safely access it
+        # .bind so we can safely access it ourselves
         new_context = self._context.copy()
         new_context.update(kwargs)
         return ConcordiaLogger(self._logger, context=new_context)
