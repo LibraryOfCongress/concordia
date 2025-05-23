@@ -141,15 +141,48 @@ class ConcordiaLogger:
 
     Explicit values passed (e.g., `item_id=...`) override extracted ones. Fields with
     `None` values are omitted from the final log output.
+
+    Extractor System:
+    -----------------
+
+    The logger uses a registry of extractor functions to convert common objects
+    (e.g., Asset, User, Transcription) into structured logging fields.
+
+    Each extractor is a callable that takes an object and returns a dictionary of
+    field names and values. Fields with `None` values are omitted.
+
+    Extractors can be:
+
+    - Global defaults (defined in concordia.logging and shared by all loggers)
+    - Per-logger overrides (via `register_extractor()`)
+
+    The defaul extractors may internally invoke other extractors to avoid code
+    duplication. For example, the `transcription` extractor invokes the `asset`
+    extractor, which calls the `item` extractor, which uses the `campaign` extractor.
+
+    Registering a new extractor on a logger overrides the default for that logger
+    only.
+
+    Extractors are callables that take a single object and return a dictionary.
+
+    Example:
+        ```python
+        logger = ConcordiaLogger.get_logger(__name__)
+        logger.register_extractor("session", lambda s: {"session_id": s.id})
+        ```
+
+        Now, passing `session=session_obj` to `.info()` (or any other logging method)
+        will include `session_id`.
+
+    Note:
+        Chained extractors (e.g., `transcription` -> `asset` -> `item`) are hardcoded to
+        use the default global extractors. If you override an extractor on a logger,
+        chained calls will not reflect that override. So, if you override the "asset"
+        extractor, if you pass in "transcription", that extractor will use the default
+        `asset` extractor, rather than you're newly registered one.
     """
 
     def __init__(self, logger, context: Optional[dict[str, Any]] = None):
-        """
-        Initialize the ConcordiaLogger with an underlying structlog logger.
-
-        Args:
-            logger (structlog.BoundLogger): A structlog logger instance.
-        """
         self._logger = logger
         self._context = context or {}
         self._extractors = _DEFAULT_EXTRACTORS.copy()
@@ -199,7 +232,9 @@ class ConcordiaLogger:
         **context: Any,
     ) -> None:
         """
-        Emit structured logs with standardized context.
+        Emit structured logs with standardized context. This shouldn't be called
+        directly under ordinary circumstances, with one of the level methods (
+        debug, info, warning, error) used instead.
 
         Args:
             level (str): Logging level ('debug', 'info', 'warning', 'error').
@@ -296,8 +331,9 @@ class ConcordiaLogger:
         """
         Return a new ConcordiaLogger with additional context permanently bound.
 
-        Bound context can include semantic objects like asset, user, or transcription.
-        These will be expanded into structured fields at log time.
+        Bound context can include semantic objects like asset, user or transcription,
+        in addition to primitive data types. Objects with registered extractors
+        will be expanded into structured fields at log time.
 
         Args:
             **kwargs: Context to bind.
