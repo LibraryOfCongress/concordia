@@ -69,7 +69,8 @@ class ConcordiaLogger:
     conventions across the Concordia application.
 
     Features:
-        - Requires 'event' for all logs, and 'reason'/'reason_code' for warnings/errors.
+        - Requires 'message' and 'event_code' for all logs, and 'reason'/'reason_code'
+          for warnings/errors.
         - Automatically extracts common context from objects like Asset, User
           and Transcription.
         - Allows semantic binding of objects (e.g., asset=self) which are expanded
@@ -88,7 +89,7 @@ class ConcordiaLogger:
         ```python
         structured_logger.info(
             "Started OCR processing.",
-            event="asset_ocr_started",
+            event_code="asset_ocr_started",
             asset=my_asset,
             user=request.user,
         )
@@ -98,7 +99,7 @@ class ConcordiaLogger:
         ```python
         structured_logger.warning(
             "Rollback failed.",
-            event="rollback_attempt_failed",
+            event_code="rollback_attempt_failed",
             reason="No eligible transcription found.",
             reason_code="no_valid_target",
             asset=my_asset,
@@ -110,7 +111,7 @@ class ConcordiaLogger:
         ```python
         logger = ConcordiaLogger.get_logger(f"{__name__}")
         my_logger = logger.bind(asset=asset)
-        my_logger.info("Transcription updated.", event="transcription_updated")
+        my_logger.info("Transcription updated.", event_code="transcription_updated")
         ```
 
         This is the equivalent of:
@@ -118,7 +119,7 @@ class ConcordiaLogger:
         logger = ConcordiaLogger.get_logger(f"{__name__}")
         logger.info(
             "Transcription updated.",
-            event="transcription_updated",
+            event_code="transcription_updated",
             asset=asset
         )
         ```
