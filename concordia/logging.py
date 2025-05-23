@@ -1,3 +1,6 @@
+import warnings
+from copy import deepcopy
+from types import MappingProxyType
 from typing import Any, Callable, Optional
 
 import structlog
@@ -56,6 +59,9 @@ _register_default_extractor(
         "topic_slug": getattr(topic, "slug", None),
     },
 )
+
+# Freeze default extractors to prevent mutation
+_DEFAULT_EXTRACTORS = MappingProxyType(_DEFAULT_EXTRACTORS)
 
 
 class ConcordiaLogger:
@@ -156,7 +162,7 @@ class ConcordiaLogger:
     - Global defaults (defined in concordia.logging and shared by all loggers)
     - Per-logger overrides (via `register_extractor()`)
 
-    The defaul extractors may internally invoke other extractors to avoid code
+    The default extractors may internally invoke other extractors to avoid code
     duplication. For example, the `transcription` extractor invokes the `asset`
     extractor, which calls the `item` extractor, which uses the `campaign` extractor.
 
@@ -185,7 +191,7 @@ class ConcordiaLogger:
     def __init__(self, logger, context: Optional[dict[str, Any]] = None):
         self._logger = logger
         self._context = context or {}
-        self._extractors = _DEFAULT_EXTRACTORS.copy()
+        self._extractors = deepcopy(_DEFAULT_EXTRACTORS)
 
     @classmethod
     def get_logger(cls, name: str) -> "ConcordiaLogger":
@@ -198,7 +204,7 @@ class ConcordiaLogger:
         Returns:
             ConcordiaLogger: A logger instance with enriched behavior.
         """
-        return cls(structlog.get_logger(f"structlog.{__name__}"))
+        return cls(structlog.get_logger(f"structlog.{name}"))
 
     def register_extractor(
         self, key: str, extractor: Callable[[Any], dict[str, Any]]
@@ -211,6 +217,17 @@ class ConcordiaLogger:
             extractor (Callable): A function that returns a dict of fields to log.
         """
         self._extractors[key] = extractor
+        if any(
+            key in extractor.__code__.co_names
+            for extractor in _DEFAULT_EXTRACTORS.values()
+            if callable(extractor)
+        ):
+            warnings.warn(
+                f"Extractor for '{key}' registered but will not override chained "
+                f"extractor behavior, which uses global defaults.",
+                UserWarning,
+                stacklevel=2,
+            )
 
     def unregister_extractor(self, key: str) -> None:
         """
