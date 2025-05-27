@@ -644,11 +644,26 @@ def save_transcription(
     else:
         user = request.user
 
+    structured_logger.info(
+        "Starting transcription save.",
+        event_code="transcription_save_start",
+        user=user,
+        asset=asset,
+    )
+
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
     url_match = re.search(URL_REGEX, transcription_text)
     if url_match:
+        structured_logger.warning(
+            "Transcription save rejected due to URL in text.",
+            event_code="transcription_save_rejected",
+            reason_code="url_detected",
+            user=user,
+            asset=asset,
+        )
+
         return JsonResponse(
             {
                 "error": "It looks like your text contains URLs. "
@@ -661,6 +676,13 @@ def save_transcription(
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         logger.info("Transcription superseded")
+        structured_logger.warning(
+            "Superseded transcription is invalid; aborting save.",
+            event_code="transcription_save_aborted",
+            reason_code="superseded_invalid",
+            user=user,
+            asset=asset,
+        )
         return superseded
 
     if superseded and (superseded.ocr_generated or superseded.ocr_originated):
@@ -678,6 +700,12 @@ def save_transcription(
     transcription.full_clean()
     transcription.save()
     logger.info("Transction %s saved", transcription.id)
+    structured_logger.info(
+        "Transcription saved successfully.",
+        event_code="transcription_save_success",
+        user=user,
+        transcription=transcription,
+    )
 
     return JsonResponse(
         {
