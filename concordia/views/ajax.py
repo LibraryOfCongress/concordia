@@ -793,6 +793,14 @@ def submit_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
             str(transcription.submitted),
             pk,
         )
+        structured_logger.warning(
+            "Submission rejected: transcription already submitted or superseded.",
+            event_code="transcription_submit_rejected",
+            reason_code="already_updated",
+            user=request.user,
+            transcription=transcription,
+        )
+
         return JsonResponse(
             {
                 "error": "This transcription has already been updated."
@@ -807,6 +815,12 @@ def submit_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
     transcription.save()
 
     logger.info("Transcription %s successfully submitted", transcription.id)
+    structured_logger.info(
+        "Transcription submitted successfully.",
+        event_code="transcription_submit_success",
+        user=request.user,
+        transcription=transcription,
+    )
 
     return JsonResponse(
         {
