@@ -1136,6 +1136,12 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
     """
 
     reservation_token = get_or_create_reservation_token(request)
+    structured_logger.info(
+        "Handling reservation request.",
+        event_code="asset_reserve_start",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
 
     # If the browser is letting us know of a specific reservation release,
     # let it go even if it's within the grace period.
@@ -1152,6 +1158,12 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
         # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
         logger.info("Releasing reservation with token %s", reservation_token)
+        structured_logger.info(
+            "Releasing asset reservation via client request.",
+            event_code="asset_reserve_release",
+            asset_pk=asset_pk,
+            reservation_token=reservation_token,
+        )
         reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
@@ -1194,25 +1206,56 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
                     )
 
         if am_i_tombstoned:
+            structured_logger.warning(
+                "Reservation rejected: client is tombstoned.",
+                event_code="asset_reserve_rejected",
+                reason_code="tombstoned_self",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             return HttpResponse(status=408)  # Request Timed Out
 
         if is_someone_else_active:
+            structured_logger.warning(
+                "Reservation rejected: asset is reserved by another client.",
+                event_code="asset_reserve_rejected",
+                reason_code="conflict_active_other",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             return HttpResponse(status=409)  # Conflict
 
         if is_it_already_mine:
             # This user already has the reservation and it's not tombstoned
+            structured_logger.info(
+                "Reservation updated for client.",
+                event_code="asset_reserve_updated",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             msg = update_reservation(asset_pk, reservation_token)
             logger.debug("Updating reservation %s", reservation_token)
 
         if is_someone_else_tombstoned:
             # No reservations = no activity = go ahead and do an insert
+            structured_logger.info(
+                "Reservation acquired from tombstoned client.",
+                event_code="asset_reserve_from_tombstone",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             msg = obtain_reservation(asset_pk, reservation_token)
             logger.debug(
                 "Obtaining reservation for %s from tombstoned user", reservation_token
             )
-
     else:
         # No reservations = no activity = go ahead and do an insert
+        structured_logger.info(
+            "Initial reservation acquired (no existing reservations).",
+            event_code="asset_reserve_fresh",
+            asset_pk=asset_pk,
+            reservation_token=reservation_token,
+        )
         msg = obtain_reservation(asset_pk, reservation_token)
         logger.debug("No activity, just get the reservation %s", reservation_token)
 
