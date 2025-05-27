@@ -1029,6 +1029,12 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
         ```
     """
     asset = get_object_or_404(Asset, pk=asset_pk)
+    structured_logger.info(
+        "Starting tag submission.",
+        event_code="tag_submit_start",
+        user=request.user,
+        asset=asset,
+    )
 
     user_tags, created = UserAssetTagCollection.objects.get_or_create(
         asset=asset, user=request.user
@@ -1042,6 +1048,14 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
         for i in new_tags:
             i.full_clean()
     except ValidationError as exc:
+        structured_logger.warning(
+            "Tag submission rejected: validation error on new tags.",
+            event_code="tag_submit_rejected",
+            reason_code="validation_error",
+            user=request.user,
+            asset=asset,
+            errors=str(exc.messages),
+        )
         return JsonResponse({"error": exc.messages}, status=400)
 
     Tag.objects.bulk_create(new_tags)
@@ -1067,6 +1081,14 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
     all_tags = all_tags_qs.order_by("value")
     final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)
     all_tags = all_tags.values_list("value", flat=True).distinct()
+
+    structured_logger.info(
+        "Tags submitted successfully.",
+        event_code="tag_submit_success",
+        user=request.user,
+        asset=asset,
+        user_tags=[tag.value for tag in user_tags.tags.all()],
+    )
 
     return JsonResponse(
         {"user_tags": list(final_user_tags), "all_tags": list(all_tags)}
