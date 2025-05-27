@@ -42,7 +42,7 @@ from .decorators import reserve_rate, validate_anonymous_user
 from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
-structured_logger = ConcordiaLogger.get_logger({__name__})
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -281,6 +281,14 @@ def generate_ocr_transcription(
 
     supersedes_pk = request.POST.get("supersedes")
     language = request.POST.get("language", None)
+    structured_logger.info(
+        "Starting OCR transcription generation.",
+        event_code="ocr_generation_start",
+        user=user,
+        asset=asset,
+        supersedes_pk=supersedes_pk,
+        language=language,
+    )
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
         # If superseded is an HttpResponse, that means
@@ -289,11 +297,24 @@ def generate_ocr_transcription(
         # Otherwise, we just have thr transcription the OCR
         # is gong to supersede, so we can continue
         if isinstance(superseded, HttpResponse):
+            structured_logger.warning(
+                "OCR generation aborted: superseded transcription is invalid.",
+                event_code="ocr_generation_aborted",
+                reason_code="superseded_invalid",
+                user=user,
+                asset=asset,
+            )
             return superseded
     else:
         # This means this is the first transcription on this asset.
         # To enable undoing of the OCR transcription, we create
         # an empty transcription for the OCR transcription to supersede
+        structured_logger.info(
+            "No existing transcription; creating empty one for OCR supersession.",
+            event_code="ocr_blank_supersede",
+            user=user,
+            asset=asset,
+        )
         superseded = Transcription(
             asset=asset,
             user=get_anonymous_user(),
@@ -301,6 +322,12 @@ def generate_ocr_transcription(
         )
         superseded.full_clean()
         superseded.save()
+        structured_logger.info(
+            "Blank superseded transcription created for OCR.",
+            event_code="ocr_blank_transcription_created",
+            user=user,
+            transcription=superseded,
+        )
 
     transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
@@ -313,6 +340,13 @@ def generate_ocr_transcription(
     )
     transcription.full_clean()
     transcription.save()
+
+    structured_logger.info(
+        "OCR transcription successfully created.",
+        event_code="ocr_generation_success",
+        user=user,
+        transcription=transcription,
+    )
 
     return JsonResponse(
         {
