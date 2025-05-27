@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "27e86f94e1957d675f4ddb4a22fabca7fa86f2110f51cf27d87da153cc309542"
+            "sha256": "c6de724b9f3b5f9caca048ef4a4f5199df144b2c376f6a102106190fcce87c37"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1298,12 +1298,12 @@
         },
         "kombu": {
             "hashes": [
-                "sha256:14212f5ccf022fc0a70453bb025a1dcc32782a588c49ea866884047d66e14763",
-                "sha256:eef572dd2fd9fc614b37580e3caeafdd5af46c1eff31e7fba89138cdb406f2cf"
+                "sha256:021a0e11fcfcd9b0260ef1fb64088c0e92beb976eb59c1dfca7ddd4ad4562ea2",
+                "sha256:5b0dbceb4edee50aa464f59469d34b97864be09111338cfb224a10b6a163909b"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==5.4.2"
+            "version": "==5.5.3"
         },
         "locust": {
             "hashes": [
