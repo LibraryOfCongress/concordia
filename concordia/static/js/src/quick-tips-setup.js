@@ -5,12 +5,12 @@ import {setTutorialHeight} from './modules/quick-tips.js';
 let mainContentHeight = $('#contribute-main-content').height();
 
 if (mainContentHeight < 710) {
-    $('.sidebar').height(mainContentHeight - 130);
+    $('.sidebar').height(mainContentHeight - 106);
     $('.sidebar .carousel-item.container').each(function () {
         $(this).height(mainContentHeight - 183);
     });
 } else {
-    $('.sidebar').height(580); /* 100% Full-height */
+    $('.sidebar').height(604); /* 100% Full-height */
 }
 
 $('#tutorial-popup').on('shown.bs.modal', function () {
