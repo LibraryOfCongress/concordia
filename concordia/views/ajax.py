@@ -886,8 +886,23 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         ```
     """
     action = request.POST.get("action")
+    structured_logger.info(
+        "Starting transcription review.",
+        event_code="transcription_review_start",
+        user=request.user,
+        transcription_id=pk,
+        action=action,
+    )
 
     if action not in ("accept", "reject"):
+        structured_logger.warning(
+            "Transcription review failed: invalid action.",
+            event_code="transcription_review_rejected",
+            reason_code="invalid_action",
+            user=request.user,
+            transcription_id=pk,
+            action=action,
+        )
         return JsonResponse({"error": "Invalid action"}, status=400)
 
     transcription = get_object_or_404(Transcription, pk=pk)
@@ -902,12 +917,26 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
     )
 
     if transcription.accepted or transcription.rejected:
+        structured_logger.warning(
+            "Review rejected: transcription already reviewed.",
+            event_code="transcription_review_rejected",
+            reason_code="already_reviewed",
+            user=request.user,
+            transcription=transcription,
+        )
         return JsonResponse(
             {"error": "This transcription has already been reviewed"}, status=400
         )
 
     if transcription.user.pk == request.user.pk and action == "accept":
         logger.warning("Attempted self-acceptance for transcription %s", transcription)
+        structured_logger.warning(
+            "Review rejected: user attempted to accept their own transcription.",
+            event_code="transcription_review_rejected",
+            reason_code="self_accept",
+            user=request.user,
+            transcription=transcription,
+        )
         return JsonResponse(
             {"error": "You cannot accept your own transcription"}, status=400
         )
@@ -919,6 +948,13 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         try:
             concordia_user.check_and_track_accept_limit(transcription)
         except RateLimitExceededError:
+            structured_logger.warning(
+                "Review rejected: user exceeded review rate limit.",
+                event_code="transcription_review_rejected",
+                reason_code="rate_limit_exceeded",
+                user=request.user,
+                transcription=transcription,
+            )
             return JsonResponse(
                 {
                     "error": configuration_value("review_rate_limit_banner_message"),
@@ -937,6 +973,13 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
     transcription.save()
 
     logger.info("Transcription %s successfully reviewed (%s)", transcription.id, action)
+    structured_logger.info(
+        "Transcription review successful.",
+        event_code="transcription_review_success",
+        user=request.user,
+        transcription=transcription,
+        action=action,
+    )
 
     return JsonResponse(
         {
