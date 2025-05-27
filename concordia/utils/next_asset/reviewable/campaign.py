@@ -2,7 +2,10 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Subquery, When
 
 from concordia import models as concordia_models
+from concordia.logging import ConcordiaLogger
 from concordia.utils.celery import get_registered_task
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 def find_new_reviewable_campaign_assets(campaign, user=None):
@@ -103,6 +106,12 @@ def find_reviewable_campaign_asset(campaign, user):
     else:
         # No asset in the NextReviewableCampaignAsset table for this campaign
         # and user, so fallback to manually finding one
+        structured_logger.info(
+            "No cached assets available, falling back to manual lookup",
+            event_code="reviewable_fallback_manual_lookup",
+            campaign=campaign,
+            user=user,
+        )
         spawn_task = True
         asset_query = find_new_reviewable_campaign_assets(campaign, user)
 
@@ -118,6 +127,12 @@ def find_reviewable_campaign_asset(campaign, user):
         # We wait to do this until after getting an asset because otherwise there's a
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
+        structured_logger.info(
+            "Spawned background task to populate cache",
+            event_code="reviewable_cache_population_triggered",
+            campaign=campaign,
+            user=user,
+        )
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_reviewable_for_campaign"
         )
@@ -208,6 +223,12 @@ def find_next_reviewable_campaign_asset(
     else:
         # Since we had no potential next assets in the caching table, we have to check
         # the asset table directly.
+        structured_logger.info(
+            "No cached assets matched, falling back to manual lookup",
+            event_code="reviewable_next_fallback_manual",
+            campaign=campaign,
+            user=user,
+        )
         spawn_task = True
         asset_query = find_new_reviewable_campaign_assets(campaign, user)
         asset_query = asset_query.annotate(
@@ -239,6 +260,11 @@ def find_next_reviewable_campaign_asset(
         # We wait to do this until after getting an asset because otherwise there's a
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
+        structured_logger.info(
+            "Spawned background task to populate cache",
+            event_code="reviewable_next_cache_population",
+            campaign=campaign,
+        )
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_reviewable_for_campaign"
         )

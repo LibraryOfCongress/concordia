@@ -3,7 +3,6 @@ import re
 from time import time
 from typing import Union
 
-import structlog
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.messages import get_messages
@@ -20,6 +19,7 @@ from django.views.decorators.http import require_POST
 from django_ratelimit.decorators import ratelimit
 
 from concordia.exceptions import RateLimitExceededError
+from concordia.logging import ConcordiaLogger
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
@@ -42,7 +42,7 @@ from .decorators import reserve_rate, validate_anonymous_user
 from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
-structured_logger = structlog.get_logger(f"structlog.{__name__}")
+structured_logger = ConcordiaLogger.get_logger({__name__})
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -403,24 +403,22 @@ def rollback_transcription(
     except ValueError as e:
         logger.exception("No previous transcription available for rollback", exc_info=e)
         structured_logger.warning(
-            "transcription_rollback_failed",
-            action="rollback",
-            result="error",
-            asset_id=asset.pk,
-            user_id=user.id if user.is_authenticated else "anonymous",
-            error=str(e),
+            "Rollback failed: no previous transcription to revert to.",
+            event_code="rollback_failed",
+            reason_code="no_valid_target",
+            reason=str(e),
+            asset=asset,
+            user=user,
         )
         return JsonResponse(
             {"error": "No previous transcription available"}, status=400
         )
 
     structured_logger.info(
-        "transcription_rollback_success",
-        action="rollback",
-        result="success",
-        asset_id=asset.pk,
-        user_id=user.id if user.is_authenticated else "anonymous",
-        transcription_id=transcription.pk,
+        "Rollback successfully performed.",
+        event_code="rollback_success",
+        user=user,
+        transcription=transcription,
     )
 
     return JsonResponse(
@@ -513,22 +511,20 @@ def rollforward_transcription(
     except ValueError as e:
         logger.exception("No transcription available for rollforward", exc_info=e)
         structured_logger.warning(
-            "transcription_rollforward_failed",
-            action="rollforward",
-            result="error",
-            asset_id=asset.pk,
-            user_id=user.id if user.is_authenticated else "anonymous",
-            error=str(e),
+            "Rollforward failed: no transcription available to restore.",
+            event_code="rollforward_failed",
+            reason_code="no_valid_target",
+            reason=str(e),
+            asset=asset,
+            user=user,
         )
         return JsonResponse({"error": "No transcription to restore"}, status=400)
 
     structured_logger.info(
-        "transcription_rollforward_success",
-        action="rollforward",
-        result="success",
-        asset_id=asset.pk,
-        user_id=user.id if user.is_authenticated else "anonymous",
-        transcription_id=transcription.pk,
+        "Rollforward successfully performed.",
+        event_code="rollforward_success",
+        user=user,
+        transcription=transcription,
     )
 
     return JsonResponse(
