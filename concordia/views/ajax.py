@@ -199,8 +199,20 @@ def get_transcription_superseded(
         }
         ```
     """
+    structured_logger.info(
+        "Checking for superseded transcription.",
+        event_code="transcription_supersede_check_start",
+        asset=asset,
+        supersedes_pk=supersedes_pk,
+    )
     if not supersedes_pk:
         if asset.transcription_set.filter(supersedes=None).exists():
+            structured_logger.warning(
+                "Open transcription already exists for asset.",
+                event_code="transcription_supersede_check_failed",
+                reason_code="already_exists",
+                asset=asset,
+            )
             return JsonResponse(
                 {"error": "An open transcription already exists"}, status=409
             )
@@ -209,6 +221,13 @@ def get_transcription_superseded(
     else:
         try:
             if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+                structured_logger.warning(
+                    "Transcription already superseded.",
+                    event_code="transcription_supersede_check_failed",
+                    reason_code="already_superseded",
+                    asset=asset,
+                    supersedes_pk=supersedes_pk,
+                )
                 return JsonResponse(
                     {"error": "This transcription has been superseded"}, status=409
                 )
@@ -216,9 +235,29 @@ def get_transcription_superseded(
             try:
                 superseded = asset.transcription_set.get(pk=supersedes_pk)
             except Transcription.DoesNotExist:
+                structured_logger.warning(
+                    "Supersedes transcription not found.",
+                    event_code="transcription_supersede_check_failed",
+                    reason_code="not_found",
+                    asset=asset,
+                    supersedes_pk=supersedes_pk,
+                )
                 return JsonResponse({"error": "Invalid supersedes value"}, status=400)
         except ValueError:
+            structured_logger.warning(
+                "Invalid supersedes value (non-integer).",
+                event_code="transcription_supersede_check_failed",
+                reason_code="invalid_pk_format",
+                asset=asset,
+                supersedes_pk=supersedes_pk,
+            )
             return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+        structured_logger.info(
+            "Superseded transcription found.",
+            event_code="transcription_supersede_check_success",
+            asset=asset,
+            supersedes_pk=supersedes_pk,
+        )
     return superseded
 
 
@@ -1290,6 +1329,12 @@ def update_reservation(
         }
         ```
     """
+    structured_logger.info(
+        "Attempting to update reservation timestamp.",
+        event_code="reservation_update_start",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -1303,9 +1348,21 @@ def update_reservation(
         """.strip(),
             [asset_pk, reservation_token],
         )
+    structured_logger.info(
+        "Reservation update SQL executed.",
+        event_code="reservation_update_sql_executed",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
+    structured_logger.info(
+        "Reservation update completed; signal dispatched.",
+        event_code="reservation_update_success",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     return msg
 
 
@@ -1337,6 +1394,12 @@ def obtain_reservation(
         }
         ```
     """
+    structured_logger.info(
+        "Attempting to create new reservation.",
+        event_code="reservation_obtain_start",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -1348,7 +1411,19 @@ def obtain_reservation(
         """.strip(),
             [asset_pk, reservation_token],
         )
+    structured_logger.info(
+        "Reservation INSERT executed successfully.",
+        event_code="reservation_insert_success",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
+    structured_logger.info(
+        "Reservation successfully obtained; signal dispatched.",
+        event_code="reservation_obtain_success",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     return msg
