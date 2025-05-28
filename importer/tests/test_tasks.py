@@ -184,7 +184,7 @@ class ImportItemCountFromUrlTests(TestCase):
         )
 
     def test_unhandled_exception_importing(self):
-        with mock.patch("importer.tasks.requests.get") as get_mock:
+        with mock.patch("importer.tasks.items.requests.get") as get_mock:
             get_mock.side_effect = AttributeError("Error message")
             self.assertEqual(
                 tasks.items.import_item_count_from_url("http://example.com"),
