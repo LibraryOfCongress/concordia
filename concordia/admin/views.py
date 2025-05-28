@@ -32,9 +32,9 @@ from exporter.views import do_bagit_export
 from importer.models import ImportItem, ImportItemAsset, ImportJob
 from importer.tasks import (
     fetch_all_urls,
-    import_items_into_project_from_url,
     redownload_image_task,
 )
+from importer.tasks.items import import_items_into_project_from_url
 from importer.utils import slurp_excel
 
 from ..models import Campaign, Project, SiteReport

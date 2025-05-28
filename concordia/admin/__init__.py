@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_protect
 from exporter import views as exporter_views
 from exporter.tabular_export.admin import export_to_csv_action, export_to_excel_action
 from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
-from importer.tasks import import_items_into_project_from_url
+from importer.tasks.items import import_items_into_project_from_url
 
 from ..models import (
     Asset,

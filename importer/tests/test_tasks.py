@@ -31,13 +31,17 @@ from importer.models import (
 )
 from importer.tasks import (
     fetch_all_urls,
+    redownload_image_task,
+)
+from importer.tasks.collections import (
+    import_collection_task,
+    normalize_collection_url,
+)
+from importer.tasks.decorators import update_task_status
+from importer.tasks.items import (
     get_item_id_from_item_url,
     get_item_info_from_result,
-    import_collection_task,
     import_items_into_project_from_url,
-    normalize_collection_url,
-    redownload_image_task,
-    update_task_status,
 )
 
 from .utils import (
@@ -176,14 +180,14 @@ class ImportItemCountFromUrlTests(TestCase):
     )
     def test_import_item_count_from_url(self, mock_get):
         self.assertEqual(
-            tasks.import_item_count_from_url(None), ("None - Asset Count: 0", 0)
+            tasks.items.import_item_count_from_url(None), ("None - Asset Count: 0", 0)
         )
 
     def test_unhandled_exception_importing(self):
         with mock.patch("importer.tasks.requests.get") as get_mock:
             get_mock.side_effect = AttributeError("Error message")
             self.assertEqual(
-                tasks.import_item_count_from_url("http://example.com"),
+                tasks.items.import_item_count_from_url("http://example.com"),
                 ("Unhandled exception importing http://example.com Error message", 0),
             )
 
@@ -200,7 +204,9 @@ class GetCollectionItemsTests(TestCase):
     def test_cache_miss(self, mock_get):
         mock_get.return_value = MockResponse()
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.collections.get_collection_items(
+            "https://www.loc.gov/collections/example/"
+        )
         self.assertEqual(len(items), 1)
 
     @override_settings(
@@ -211,7 +217,9 @@ class GetCollectionItemsTests(TestCase):
         }
     )
     def test_cache_hit(self):
-        items = tasks.get_collection_items("https://www.loc.gov/collections/example/")
+        items = tasks.collections.get_collection_items(
+            "https://www.loc.gov/collections/example/"
+        )
         self.assertEqual(len(items), 1)
 
     @mock.patch.object(requests.Session, "get")
@@ -226,13 +234,13 @@ class GetCollectionItemsTests(TestCase):
         mock_get.return_value = MockResponse(original_format="collection")
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
         with self.assertLogs("importer.tasks", level="INFO") as log:
-            items = tasks.get_collection_items(
+            items = tasks.collections.get_collection_items(
                 "https://www.loc.gov/collections/example/"
             )
 
             self.assertEqual(
                 log.output[0],
-                "INFO:importer.tasks:"
+                "INFO:importer.tasks.items:"
                 "Skipping result 1 because it contains an "
                 "unsupported format: {'collection'}",
             )
@@ -240,9 +248,13 @@ class GetCollectionItemsTests(TestCase):
 
     def test_multiple_items(self):
         with (
-            mock.patch("importer.tasks.cache") as cache_mock,
-            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
-            mock.patch("importer.tasks.get_item_info_from_result") as result_mock,
+            mock.patch("importer.tasks.collections.cache") as cache_mock,
+            mock.patch(
+                "importer.tasks.collections.requests_retry_session"
+            ) as requests_mock,
+            mock.patch(
+                "importer.tasks.collections.get_item_info_from_result"
+            ) as result_mock,
         ):
             cache_mock.get.return_value = None
             requests_mock.return_value.get.return_value.json.return_value = {
@@ -252,34 +264,38 @@ class GetCollectionItemsTests(TestCase):
             # is returned
             result_mock.side_effect = [4, 5, None]
 
-            items = tasks.get_collection_items("http://example.com")
+            items = tasks.collections.get_collection_items("http://example.com")
 
             self.assertEqual(items, [4, 5])
             self.assertEqual(result_mock.call_count, 3)
 
     def test_no_results(self):
         with (
-            mock.patch("importer.tasks.cache") as cache_mock,
-            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
+            mock.patch("importer.tasks.collections.cache") as cache_mock,
+            mock.patch(
+                "importer.tasks.collections.requests_retry_session"
+            ) as requests_mock,
             self.assertLogs("importer.tasks", level="ERROR") as log,
         ):
             cache_mock.get.return_value = None
             requests_mock.return_value.get.return_value.json.return_value = {}
-            items = tasks.get_collection_items("http://example.com")
+            items = tasks.collections.get_collection_items("http://example.com")
             self.assertEqual(items, [])
             self.assertEqual(
                 log.output,
                 [
-                    "ERROR:importer.tasks:"
+                    "ERROR:importer.tasks.collections:"
                     'Expected URL http://example.com to include "results"'
                 ],
             )
 
     def test_get_info_exception(self):
         with (
-            mock.patch("importer.tasks.cache") as cache_mock,
-            mock.patch("importer.tasks.requests_retry_session") as requests_mock,
-            mock.patch("importer.tasks.get_item_info_from_result") as result_mock,
+            mock.patch("importer.tasks.collections.cache") as cache_mock,
+            mock.patch(
+                "importer.tasks.collections.requests_retry_session"
+            ) as requests_mock,
+            mock.patch("importer.tasks.items.get_item_info_from_result") as result_mock,
             self.assertLogs("importer.tasks", level="WARNING") as log,
         ):
             cache_mock.get.return_value = None
@@ -288,20 +304,20 @@ class GetCollectionItemsTests(TestCase):
             }
             result_mock.side_effect = AttributeError
 
-            items = tasks.get_collection_items("http://example.com")
+            items = tasks.collections.get_collection_items("http://example.com")
 
             self.assertEqual(items, [])
             # The first log entry contains a stack trace, so we use assertIn
             # rather than assertEqual here
             self.assertIn(
-                "WARNING:importer.tasks:"
+                "WARNING:importer.tasks.collections:"
                 "Skipping result from http://example.com which did not match "
                 "expected format:",
                 log.output[0],
             )
             self.assertEqual(
                 log.output[1],
-                "WARNING:importer.tasks:"
+                "WARNING:importer.tasks.collections:"
                 "No valid items found for collection url: http://example.com",
             )
 
@@ -332,7 +348,7 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         self.login_user()
         self.project = create_project()
 
-    @mock.patch("importer.tasks.create_item_import_task.delay")
+    @mock.patch("importer.tasks.items.create_item_import_task.delay")
     def test_no_match(self, mock_task):
         with self.assertRaises(ValueError):
             import_items_into_project_from_url(
@@ -340,7 +356,7 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
             )
         self.assertFalse(mock_task.called)
 
-    @mock.patch("importer.tasks.create_item_import_task.delay")
+    @mock.patch("importer.tasks.items.create_item_import_task.delay")
     def test_item(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user, self.project, "https://www.loc.gov/item/mss859430021/"
@@ -348,7 +364,7 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         self.assertEqual(import_job.project, self.project)
         self.assertTrue(mock_task.called)
 
-    @mock.patch("importer.tasks.import_collection_task.delay")
+    @mock.patch("importer.tasks.collections.import_collection_task.delay")
     def test_other_url_type(self, mock_task):
         import_job = import_items_into_project_from_url(
             self.user,
@@ -364,8 +380,8 @@ class ImportCollectionTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.login_user()
 
-    @mock.patch("importer.tasks.get_collection_items")
-    @mock.patch("importer.tasks.normalize_collection_url")
+    @mock.patch("importer.tasks.collections.get_collection_items")
+    @mock.patch("importer.tasks.collections.normalize_collection_url")
     def test_import_collection(self, mock_get, mock_normalize):
         magic_mock = mock.MagicMock()
         magic_mock.request = mock.MagicMock()
@@ -465,7 +481,7 @@ class CollectionURLNormalizationTests(TestCase):
         )
 
 
-@mock.patch("importer.tasks.requests.get")
+@mock.patch("importer.tasks.items.requests.get")
 class CreateItemImportTaskTests(TestCase):
     def setUp(self):
         self.job = create_import_job()
@@ -487,14 +503,14 @@ class CreateItemImportTaskTests(TestCase):
         self.response_mock.raise_for_status.side_effect = requests.exceptions.HTTPError
 
         with self.assertRaises(requests.exceptions.HTTPError):
-            tasks.create_item_import_task(self.job.pk, self.item_url)
+            tasks.items.create_item_import_task(self.job.pk, self.item_url)
 
     def test_create_item_import_task_new_item(self, get_mock):
         get_mock.return_value = self.response_mock
         self.response_mock.json.return_value = self.item_data
 
-        with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
-            tasks.create_item_import_task(self.job.pk, self.item_url)
+        with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
+            tasks.items.create_item_import_task(self.job.pk, self.item_url)
             self.assertTrue(task_mock.called)
             self.assertEqual(Item.objects.count(), 1)
             self.assertTrue(Item.objects.filter(item_id=self.item_id).exists())
@@ -505,19 +521,19 @@ class CreateItemImportTaskTests(TestCase):
         self.response_mock.json.return_value = self.item_data
 
         with mock.patch(
-            "importer.tasks.get_asset_urls_from_item_resources"
+            "importer.tasks.items.get_asset_urls_from_item_resources"
         ) as asset_url_mock:
-            with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+            with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
                 with self.assertLogs("importer.tasks", level="WARNING") as log:
                     asset_url_mock.return_value = [
                         ["http://example.com/test.jpg"],
                         self.item_url,
                     ]
-                    tasks.create_item_import_task(self.job.pk, self.item_url)
+                    tasks.items.create_item_import_task(self.job.pk, self.item_url)
                     self.assertEqual(
                         log.output,
                         [
-                            f"WARNING:importer.tasks:"
+                            f"WARNING:importer.tasks.items:"
                             f"Reprocessing existing item {item} that is missing assets"
                         ],
                     )
@@ -531,20 +547,20 @@ class CreateItemImportTaskTests(TestCase):
         self.response_mock.json.return_value = self.item_data
 
         with mock.patch(
-            "importer.tasks.get_asset_urls_from_item_resources"
+            "importer.tasks.items.get_asset_urls_from_item_resources"
         ) as asset_url_mock:
-            with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+            with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
                 with self.assertLogs("importer.tasks", level="WARNING") as log:
                     asset_url_mock.return_value = [
                         ["http://example.com/test.jpg"],
                         self.item_url,
                     ]
-                    tasks.create_item_import_task(self.job.pk, self.item_url)
+                    tasks.items.create_item_import_task(self.job.pk, self.item_url)
 
                     self.assertEqual(
                         log.output,
                         [
-                            f"WARNING:importer.tasks:"
+                            f"WARNING:importer.tasks.items:"
                             f"Not reprocessing existing item with all asssets: {item}"
                         ],
                     )
@@ -563,14 +579,14 @@ class CreateItemImportTaskTests(TestCase):
         }
 
         with mock.patch(
-            "importer.tasks.get_asset_urls_from_item_resources"
+            "importer.tasks.items.get_asset_urls_from_item_resources"
         ) as asset_url_mock:
-            with mock.patch("importer.tasks.import_item_task.delay") as task_mock:
+            with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
                 asset_url_mock.return_value = [
                     ["http://example.com/test.jpg"],
                     self.item_url,
                 ]
-                tasks.create_item_import_task(
+                tasks.items.create_item_import_task(
                     self.job.pk, self.item_url, redownload=True
                 )
                 self.assertTrue(task_mock.called)
@@ -583,8 +599,8 @@ class ItemImportTests(TestCase):
         self.import_item = create_import_item(import_job=self.job, url=self.item_url)
 
     def test_import_item_task(self):
-        with mock.patch("importer.tasks.import_item") as task_mock:
-            tasks.import_item_task(self.import_item.pk)
+        with mock.patch("importer.tasks.items.import_item") as task_mock:
+            tasks.items.import_item_task(self.import_item.pk)
             self.assertTrue(task_mock.called)
             task, called_import_item = task_mock.call_args.args
             self.assertTrue(called_import_item, self.import_item)
@@ -592,10 +608,10 @@ class ItemImportTests(TestCase):
     def test_import_item(self):
         with (
             mock.patch(
-                "importer.tasks.get_asset_urls_from_item_resources"
+                "importer.tasks.items.get_asset_urls_from_item_resources"
             ) as asset_url_mock,
-            mock.patch("importer.tasks.download_asset_task.s") as download_mock,
-            mock.patch("importer.tasks.group") as group_mock,
+            mock.patch("importer.tasks.assets.download_asset_task.s") as download_mock,
+            mock.patch("importer.tasks.items.group") as group_mock,
         ):
             # It's difficult/impossible to cleanly mock a decorator due to the way
             # they're applied when the decorated object/function is evaluated on
@@ -610,7 +626,7 @@ class ItemImportTests(TestCase):
                 self.item_url,
             ]
 
-            tasks.import_item(task_mock, self.import_item)
+            tasks.items.import_item(task_mock, self.import_item)
             self.assertFalse(download_mock.called)
             self.assertTrue(group_mock.called)
 
@@ -618,7 +634,7 @@ class ItemImportTests(TestCase):
             self.import_item.completed = None
             self.import_item.save()
             with self.assertRaises(ValidationError):
-                tasks.import_item(task_mock, self.import_item)
+                tasks.items.import_item(task_mock, self.import_item)
 
             asset_url_mock.return_value = [
                 [],
@@ -627,11 +643,11 @@ class ItemImportTests(TestCase):
 
             self.import_item.completed = None
             self.import_item.save()
-            tasks.import_item(task_mock, self.import_item)
+            tasks.items.import_item(task_mock, self.import_item)
             self.assertFalse(download_mock.called)
             self.assertTrue(group_mock.called)
 
-    def test_populate_item_from_url(self):
+    def test_populate_item_from_data(self):
         item = Item(item_url="http://example.com")
         item_info = {
             "title": "Test Title",
@@ -639,7 +655,7 @@ class ItemImportTests(TestCase):
             "image_url": ["image.gif", "image.jpg", "image2.jpg"],
         }
 
-        tasks.populate_item_from_url(item, item_info)
+        tasks.items.populate_item_from_data(item, item_info)
 
         self.assertEqual(item.item_url, "http://example.com")
         self.assertEqual(item.title, "Test Title")
@@ -680,16 +696,16 @@ class AssetImportTests(TestCase):
             cache.clear()
 
     def test_get_asset_urls_from_item_resources_empty(self):
-        self.assertEqual(tasks.get_asset_urls_from_item_resources([]), ([], ""))
+        self.assertEqual(tasks.items.get_asset_urls_from_item_resources([]), ([], ""))
 
     def test_get_asset_urls_from_item_resources_url_only(self):
-        results = tasks.get_asset_urls_from_item_resources(
+        results = tasks.items.get_asset_urls_from_item_resources(
             [{"url": "http://example.com"}]
         )
         self.assertEqual(results, ([], "http://example.com"))
 
     def test_get_asset_urls_from_item_resources_valid(self):
-        results = tasks.get_asset_urls_from_item_resources(
+        results = tasks.items.get_asset_urls_from_item_resources(
             [
                 {
                     "url": "http://example.com",
@@ -722,7 +738,7 @@ class AssetImportTests(TestCase):
         self.assertEqual(results, (["http://example.com/3.jpg"], "http://example.com"))
 
     def test_get_asset_urls_from_item_resource_no_valid(self):
-        results = tasks.get_asset_urls_from_item_resources(
+        results = tasks.items.get_asset_urls_from_item_resources(
             [
                 {
                     "url": "http://example.com",
@@ -755,7 +771,7 @@ class AssetImportTests(TestCase):
         self.assertEqual(results, ([], "http://example.com"))
 
     def test_get_asset_urls_from_item_resource_no_jpgs(self):
-        results = tasks.get_asset_urls_from_item_resources(
+        results = tasks.items.get_asset_urls_from_item_resources(
             [
                 {
                     "url": "http://example.com",
@@ -788,8 +804,8 @@ class AssetImportTests(TestCase):
         self.assertEqual(results, (["http://example.com/4.gif"], "http://example.com"))
 
     def test_download_asset_task(self):
-        with mock.patch("importer.tasks.download_asset") as task_mock:
-            tasks.download_asset_task(self.import_asset.pk)
+        with mock.patch("importer.tasks.assets.download_asset") as task_mock:
+            tasks.assets.download_asset_task(self.import_asset.pk)
             self.assertTrue(task_mock.called)
             task, called_import_asset = task_mock.call_args.args
             self.assertTrue(called_import_asset, self.import_asset)
@@ -798,7 +814,7 @@ class AssetImportTests(TestCase):
             task_mock.reset_mock()
             max_pk = ImportItemAsset.objects.aggregate(Max("pk"))["pk__max"]
             with self.assertRaises(ImportItemAsset.DoesNotExist):
-                tasks.download_asset_task(max_pk + 1)
+                tasks.assets.download_asset_task(max_pk + 1)
             self.assertFalse(task_mock.called)
 
     @override_settings(
@@ -810,16 +826,16 @@ class AssetImportTests(TestCase):
     )
     def test_download_asset_valid(self):
         with (
-            mock.patch("importer.tasks.requests.get") as get_mock,
-            mock.patch("importer.tasks.boto3.client") as boto_mock,
-            mock.patch("importer.tasks.flag_enabled") as flag_mock,
+            mock.patch("importer.tasks.assets.requests.get") as get_mock,
+            mock.patch("importer.tasks.assets.boto3.client") as boto_mock,
+            mock.patch("importer.tasks.assets.flag_enabled") as flag_mock,
         ):
             get_mock.return_value.iter_content.return_value = self.get_return_value
             boto_mock.return_value = self.s3_client_mock
             flag_mock.return_value = True
             self.head_object_mock.return_value = {"ETag": f'"{self.valid_hash}"'}
 
-            tasks.download_asset(self.task_mock, self.import_asset)
+            tasks.assets.download_asset(self.task_mock, self.import_asset)
 
             self.assertEqual(get_mock.call_args[0], ("http://example.com",))
             self.assertTrue(get_mock.call_args[1]["stream"])
@@ -833,9 +849,9 @@ class AssetImportTests(TestCase):
     )
     def test_download_asset_valid_checksum_fail(self):
         with (
-            mock.patch("importer.tasks.requests.get") as get_mock,
-            mock.patch("importer.tasks.boto3.client") as boto_mock,
-            mock.patch("importer.tasks.flag_enabled") as flag_mock,
+            mock.patch("importer.tasks.assets.requests.get") as get_mock,
+            mock.patch("importer.tasks.assets.boto3.client") as boto_mock,
+            mock.patch("importer.tasks.assets.flag_enabled") as flag_mock,
         ):
             get_mock.return_value.iter_content.return_value = self.get_return_value
             boto_mock.return_value = self.s3_client_mock
@@ -843,7 +859,7 @@ class AssetImportTests(TestCase):
             self.head_object_mock.return_value = {"ETag": f'"{self.invalid_hash}"'}
 
             with self.assertRaises(Exception) as assertion:
-                tasks.download_asset(self.task_mock, self.import_asset)
+                tasks.assets.download_asset(self.task_mock, self.import_asset)
 
             self.assertEqual(
                 str(assertion.exception),
@@ -860,18 +876,18 @@ class AssetImportTests(TestCase):
     )
     def test_download_asset_valid_checksum_fail_without_flag(self):
         with (
-            mock.patch("importer.tasks.requests.get") as get_mock,
-            mock.patch("importer.tasks.boto3.client") as boto_mock,
+            mock.patch("importer.tasks.assets.requests.get") as get_mock,
+            mock.patch("importer.tasks.assets.boto3.client") as boto_mock,
             self.assertLogs("importer.tasks", level="WARN") as log,
         ):
             get_mock.return_value.iter_content.return_value = self.get_return_value
             boto_mock.return_value = self.s3_client_mock
             self.head_object_mock.return_value = {"ETag": f'"{self.invalid_hash}"'}
 
-            tasks.download_asset(self.task_mock, self.import_asset)
+            tasks.assets.download_asset(self.task_mock, self.import_asset)
             self.assertEqual(
                 log.output[0],
-                f"WARNING:importer.tasks:ETag ({self.invalid_hash}) for "
+                f"WARNING:importer.tasks.assets:ETag ({self.invalid_hash}) for "
                 f"{self.filename} did not match calculated md5 hash "
                 f"({self.valid_hash}) but the IMPORT_IMAGE_CHECKSUM flag is disabled",
             )
@@ -885,16 +901,16 @@ class AssetImportTests(TestCase):
     )
     def test_download_asset_invalid(self):
         with (
-            mock.patch("importer.tasks.requests.get") as get_mock,
+            mock.patch("importer.tasks.assets.requests.get") as get_mock,
             self.assertLogs("importer.tasks", level="ERROR") as log,
         ):
             get_mock.return_value.raise_for_status.side_effect = AttributeError
             with self.assertRaises(ImageImportFailure):
-                tasks.download_asset(self.task_mock, self.import_asset)
+                tasks.assets.download_asset(self.task_mock, self.import_asset)
             # Since the logging includes a stacktrace, we just check the
             # beginning of the log entry with assertIn
             self.assertIn(
-                "ERROR:importer.tasks:"
+                "ERROR:importer.tasks.assets:"
                 "Unable to download http://example.com to "
                 "test-campaign/test-project/testitem.0123456789/1.jpg",
                 log.output[0],
@@ -917,7 +933,9 @@ class AssetImportTests(TestCase):
         import_asset.failure_history = []
         import_asset.save()
 
-        with mock.patch("importer.models.tasks.download_asset_task") as task_mock:
+        with mock.patch(
+            "importer.models.tasks.assets.download_asset_task"
+        ) as task_mock:
             response = import_asset.retry_if_possible()
 
             self.assertNotEqual(response, False)
@@ -956,7 +974,9 @@ class AssetImportTests(TestCase):
         import_asset.failure_history = []
         import_asset.save()
 
-        with mock.patch("importer.models.tasks.download_asset_task") as task_mock:
+        with mock.patch(
+            "importer.models.tasks.assets.download_asset_task"
+        ) as task_mock:
             response = import_asset.retry_if_possible()
 
             self.assertFalse(response)
@@ -990,7 +1010,9 @@ class AssetImportTests(TestCase):
         import_asset.failure_history = []
         import_asset.save()
 
-        with mock.patch("importer.models.tasks.download_asset_task") as task_mock:
+        with mock.patch(
+            "importer.models.tasks.assets.download_asset_task"
+        ) as task_mock:
             response = import_asset.retry_if_possible()
 
             self.assertFalse(response)
@@ -1020,7 +1042,9 @@ class AssetImportTests(TestCase):
         import_asset.failure_history = []
         import_asset.save()
 
-        with mock.patch("importer.models.tasks.download_asset_task") as task_mock:
+        with mock.patch(
+            "importer.models.tasks.assets.download_asset_task"
+        ) as task_mock:
             response = import_asset.retry_if_possible()
 
             self.assertFalse(response)
@@ -1052,10 +1076,10 @@ class AssetImportTests(TestCase):
         import_asset.save()
 
         with mock.patch(
-            "importer.models.tasks.download_and_store_asset_image"
+            "importer.models.tasks.assets.download_and_store_asset_image"
         ) as download_mock:
             download_mock.return_value = "image.jpg"
-            tasks.download_asset_task.delay(import_asset.pk)
+            tasks.assets.download_asset_task.delay(import_asset.pk)
             import_asset.refresh_from_db()
             self.assertTrue(download_mock.called)
             self.assertEqual(import_asset.status, "Completed")
@@ -1064,8 +1088,8 @@ class AssetImportTests(TestCase):
             self.assertEqual(import_asset.retry_count, 0)
             self.assertEqual(import_asset.failure_reason, "")
 
-    @mock.patch("importer.tasks.download_and_store_asset_image")
-    @mock.patch("importer.tasks.logger.info")
+    @mock.patch("importer.tasks.assets.download_and_store_asset_image")
+    @mock.patch("importer.tasks.assets.logger.info")
     def test_download_url_from_asset(self, mock_logger, mock_download):
         self.asset.download_url = "https://example.com/image.png"
         self.asset.save()
@@ -1073,7 +1097,7 @@ class AssetImportTests(TestCase):
 
         mock_download.return_value = "stored_image.png"
 
-        tasks.download_asset(self.task_mock, self.job)
+        tasks.assets.download_asset(self.task_mock, self.job)
 
         mock_download.assert_called_once_with(self.asset.download_url, mock.ANY)
         self.asset.refresh_from_db()
@@ -1086,8 +1110,8 @@ class AssetImportTests(TestCase):
             self.asset.id,
         )
 
-    @mock.patch("importer.tasks.download_and_store_asset_image")
-    @mock.patch("importer.tasks.logger.info")
+    @mock.patch("importer.tasks.assets.download_and_store_asset_image")
+    @mock.patch("importer.tasks.assets.logger.info")
     def test_valid_file_extension(self, mock_logger, mock_download):
         self.asset.download_url = "https://example.com/image.png"
         self.asset.save()
