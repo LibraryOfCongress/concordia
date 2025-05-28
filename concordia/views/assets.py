@@ -372,6 +372,8 @@ def redirect_to_next_reviewable_asset(request):
             structured_logger.error(
                 "Failed to retrieve next reviewable campaign by ID.",
                 event_code="redirect_reviewable_campaign_missing",
+                reason="Reviewable campaign with specified ID not found",
+                reason_code="reviewable_campaign_not_found",
                 user=user,
                 campaign_id=campaign_id,
             )
@@ -466,6 +468,8 @@ def redirect_to_next_transcribable_asset(request):
             structured_logger.error(
                 "Next transcribable campaign ID not found.",
                 event_code="redirect_transcribable_campaign_missing",
+                reason="Transcribable campaign with specified ID not found",
+                reason_code="transcribable_campaign_not_found",
                 user=request.user,
                 campaign_id=campaign_id,
             )
