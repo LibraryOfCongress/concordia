@@ -29,9 +29,8 @@ from requests.packages.urllib3.util.retry import Retry
 from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
 from importer import models
-
-from .celery import app
-from .exceptions import ImageImportFailure
+from importer.celery import app
+from importer.exceptions import ImageImportFailure
 
 logger = getLogger(__name__)
 
