@@ -29,15 +29,13 @@ from importer.models import (
     TaskStatusModel,
     VerifyAssetImageJob,
 )
-from importer.tasks import (
-    fetch_all_urls,
-    redownload_image_task,
-)
+from importer.tasks import fetch_all_urls
 from importer.tasks.collections import (
     import_collection_task,
     normalize_collection_url,
 )
 from importer.tasks.decorators import update_task_status
+from importer.tasks.images import redownload_image_task
 from importer.tasks.items import (
     get_item_id_from_item_url,
     get_item_info_from_result,
@@ -393,7 +391,7 @@ class ImportCollectionTests(CreateTestUsers, TestCase):
 
 
 class RedownloadImageTaskTests(TestCase):
-    @mock.patch("importer.tasks.download_asset")
+    @mock.patch("importer.tasks.images.download_asset")
     def test_redownload_image_task(self, mock_download):
         redownload_image_task(create_asset().pk)
         self.assertTrue(mock_download.called)
@@ -1118,7 +1116,7 @@ class AssetImportTests(TestCase):
         self.job.refresh_from_db()
 
         mock_download.return_value = "stored_image.png"
-        tasks.download_asset(self.task_mock, self.job)
+        tasks.assets.download_asset(self.task_mock, self.job)
 
         asset_image_filename = self.asset.get_asset_image_filename("png")
         mock_download.assert_called_once_with(
@@ -1141,32 +1139,32 @@ class BatchVerifyAssetImagesTaskCallbackTests(TestCase):
         self.batch_id = uuid.uuid4()
         self.concurrency = 5
 
-    @mock.patch("importer.tasks.batch_verify_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_verify_asset_images_task.delay")
     def test_no_failures_detected_no_failures_in_results(self, mock_task):
         results = [True, True, True]
-        tasks.batch_verify_asset_images_task_callback(
+        tasks.images.batch_verify_asset_images_task_callback(
             results, self.batch_id, self.concurrency, False
         )
         mock_task.assert_called_once_with(self.batch_id, self.concurrency, False)
 
-    @mock.patch("importer.tasks.batch_verify_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_verify_asset_images_task.delay")
     def test_no_failures_detected_some_failures_in_results(self, mock_task):
         results = [True, False, True]
         with self.assertLogs("importer.tasks", level="INFO") as log:
-            tasks.batch_verify_asset_images_task_callback(
+            tasks.images.batch_verify_asset_images_task_callback(
                 results, self.batch_id, self.concurrency, False
             )
             self.assertIn(
-                "INFO:importer.tasks:At least one verification "
+                "INFO:importer.tasks.images:At least one verification "
                 f"failure detected for batch {self.batch_id}",
                 log.output,
             )
         mock_task.assert_called_once_with(self.batch_id, self.concurrency, True)
 
-    @mock.patch("importer.tasks.batch_verify_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_verify_asset_images_task.delay")
     def test_failures_already_detected(self, mock_task):
         results = [True, False, True]
-        tasks.batch_verify_asset_images_task_callback(
+        tasks.images.batch_verify_asset_images_task_callback(
             results, self.batch_id, self.concurrency, True
         )
         mock_task.assert_called_once_with(self.batch_id, self.concurrency, True)
@@ -1181,11 +1179,13 @@ class BatchVerifyAssetImagesTaskTests(TestCase):
         self.job1 = create_verify_asset_image_job(batch=self.batch_id, asset=asset1)
         self.job2 = create_verify_asset_image_job(batch=self.batch_id, asset=asset2)
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.batch_download_asset_images_task")
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.batch_download_asset_images_task")
     def test_no_jobs_remaining_with_failures(self, mock_batch_download, mock_logger):
         VerifyAssetImageJob.objects.all().delete()
-        tasks.batch_verify_asset_images_task(self.batch_id, self.concurrency, True)
+        tasks.images.batch_verify_asset_images_task(
+            self.batch_id, self.concurrency, True
+        )
         mock_logger.assert_any_call(
             "Failures in VerifyAssetImageJobs in batch %s detected, so starting "
             "DownloadAssetImageJob batch",
@@ -1193,18 +1193,22 @@ class BatchVerifyAssetImagesTaskTests(TestCase):
         )
         mock_batch_download.assert_called_once_with(self.batch_id, self.concurrency)
 
-    @mock.patch("importer.tasks.logger.info")
+    @mock.patch("importer.tasks.images.logger.info")
     def test_no_jobs_remaining_no_failures(self, mock_logger):
         VerifyAssetImageJob.objects.all().delete()
-        tasks.batch_verify_asset_images_task(self.batch_id, self.concurrency, False)
+        tasks.images.batch_verify_asset_images_task(
+            self.batch_id, self.concurrency, False
+        )
         mock_logger.assert_any_call(
             "No failures in VerifyAssetImageJob batch %s. Ending task.", self.batch_id
         )
 
-    @mock.patch("importer.tasks.chord")
-    @mock.patch("importer.tasks.verify_asset_image_task.s")
+    @mock.patch("importer.tasks.images.chord")
+    @mock.patch("importer.tasks.images.verify_asset_image_task.s")
     def test_jobs_remaining(self, mock_task_s, mock_chord):
-        tasks.batch_verify_asset_images_task(self.batch_id, self.concurrency, False)
+        tasks.images.batch_verify_asset_images_task(
+            self.batch_id, self.concurrency, False
+        )
         self.assertEqual(mock_task_s.call_count, 2)
         mock_chord.assert_called()
 
@@ -1214,44 +1218,44 @@ class VerifyAssetImageTaskTests(TestCase):
         self.asset = create_asset()
         self.batch_id = uuid.uuid4()
 
-    @mock.patch("importer.tasks.logger.exception")
+    @mock.patch("importer.tasks.images.logger.exception")
     def test_asset_not_found(self, mock_logger):
         with self.assertRaises(Asset.DoesNotExist):
-            tasks.verify_asset_image_task(999)
+            tasks.images.verify_asset_image_task(999)
         mock_logger.assert_called()
 
-    @mock.patch("importer.tasks.logger.exception")
+    @mock.patch("importer.tasks.images.logger.exception")
     def test_verify_job_not_found(self, mock_logger):
         with self.assertRaises(VerifyAssetImageJob.DoesNotExist):
-            tasks.verify_asset_image_task(
+            tasks.images.verify_asset_image_task(
                 self.asset.pk, self.batch_id, create_job=False
             )
         mock_logger.assert_called()
 
-    @mock.patch("importer.tasks.verify_asset_image")
+    @mock.patch("importer.tasks.images.verify_asset_image")
     def test_verify_asset_image_task_success(self, mock_verify):
         job = create_verify_asset_image_job(asset=self.asset, batch=self.batch_id)
         mock_verify.return_value = True
 
-        result = tasks.verify_asset_image_task(self.asset.pk, self.batch_id)
+        result = tasks.images.verify_asset_image_task(self.asset.pk, self.batch_id)
         self.assertTrue(result)
         job.refresh_from_db()
         self.assertEqual(job.status, "Storage image verified")
 
-    @mock.patch("importer.tasks.verify_asset_image")
+    @mock.patch("importer.tasks.images.verify_asset_image")
     def test_verify_asset_image_task_failure(self, mock_verify):
         job = create_verify_asset_image_job(asset=self.asset, batch=self.batch_id)
         mock_verify.return_value = False
 
-        result = tasks.verify_asset_image_task(self.asset.pk, self.batch_id)
+        result = tasks.images.verify_asset_image_task(self.asset.pk, self.batch_id)
         self.assertFalse(result)
         job.refresh_from_db()
         self.assertNotEqual(job.status, "Storage image verified")
 
-    @mock.patch("importer.tasks.verify_asset_image")
+    @mock.patch("importer.tasks.images.verify_asset_image")
     def test_create_verify_asset_image_job(self, mock_verify):
         mock_verify.return_value = True
-        result = tasks.verify_asset_image_task(
+        result = tasks.images.verify_asset_image_task(
             self.asset.pk, self.batch_id, create_job=True
         )
         self.assertTrue(result)
@@ -1261,12 +1265,12 @@ class VerifyAssetImageTaskTests(TestCase):
             ).exists()
         )
 
-    @mock.patch("importer.tasks.verify_asset_image")
+    @mock.patch("importer.tasks.images.verify_asset_image")
     def test_http_error_retries(self, mock_verify):
         create_verify_asset_image_job(asset=self.asset, batch=self.batch_id)
         mock_verify.side_effect = requests.exceptions.HTTPError("HTTP Error Occurred")
         with self.assertRaises(requests.exceptions.HTTPError):
-            tasks.verify_asset_image_task(self.asset.pk, self.batch_id)
+            tasks.images.verify_asset_image_task(self.asset.pk, self.batch_id)
 
 
 class CreateDownloadAssetImageJobTests(TestCase):
@@ -1275,7 +1279,7 @@ class CreateDownloadAssetImageJobTests(TestCase):
         self.batch_id = uuid.uuid4()
 
     def test_create_new_job(self):
-        tasks.create_download_asset_image_job(self.asset, self.batch_id)
+        tasks.images.create_download_asset_image_job(self.asset, self.batch_id)
         self.assertTrue(
             DownloadAssetImageJob.objects.filter(
                 asset=self.asset, batch=self.batch_id
@@ -1284,7 +1288,7 @@ class CreateDownloadAssetImageJobTests(TestCase):
 
     def test_existing_uncompleted_job_not_duplicated(self):
         create_download_asset_image_job(asset=self.asset, batch=self.batch_id)
-        tasks.create_download_asset_image_job(self.asset, self.batch_id)
+        tasks.images.create_download_asset_image_job(self.asset, self.batch_id)
         job_count = DownloadAssetImageJob.objects.filter(
             asset=self.asset, batch=self.batch_id
         ).count()
@@ -1299,7 +1303,7 @@ class CreateDownloadAssetImageJobTests(TestCase):
 
         new_batch = uuid.uuid4()
 
-        tasks.create_download_asset_image_job(self.asset, new_batch)
+        tasks.images.create_download_asset_image_job(self.asset, new_batch)
         job_count = DownloadAssetImageJob.objects.filter(asset=self.asset).count()
         self.assertEqual(job_count, 2)
 
@@ -1311,8 +1315,8 @@ class VerifyAssetImageTests(TestCase):
         self.mock_task = mock.MagicMock()
         self.mock_task.request.id = uuid.uuid4()
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.create_download_asset_image_job")
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.create_download_asset_image_job")
     def test_no_storage_image(self, mock_create_job, mock_logger):
         # Use update in order to avoid the validation of storage_image, since this is
         # an invalid value, but we have to account for it
@@ -1320,36 +1324,36 @@ class VerifyAssetImageTests(TestCase):
         # We need to update the job from the database to get rid of the cached asset
         self.job.refresh_from_db()
 
-        result = tasks.verify_asset_image(self.mock_task, self.job)
+        result = tasks.images.verify_asset_image(self.mock_task, self.job)
         self.assertFalse(result)
         mock_create_job.assert_called_once_with(self.asset, self.job.batch)
         mock_logger.assert_any_call(
             f"No storage image set on {self.asset} ({self.asset.id})"
         )
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.create_download_asset_image_job")
-    @mock.patch("importer.tasks.ASSET_STORAGE.exists", return_value=False)
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.create_download_asset_image_job")
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.exists", return_value=False)
     def test_storage_image_missing(self, mock_exists, mock_create_job, mock_logger):
-        result = tasks.verify_asset_image(self.mock_task, self.job)
+        result = tasks.images.verify_asset_image(self.mock_task, self.job)
         self.assertFalse(result)
         mock_create_job.assert_called_once_with(self.asset, self.job.batch)
         mock_logger.assert_any_call(
             f"Storage image for {self.asset} ({self.asset.id}) missing from storage"
         )
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.create_download_asset_image_job")
-    @mock.patch("importer.tasks.ASSET_STORAGE.exists", return_value=True)
-    @mock.patch("importer.tasks.ASSET_STORAGE.open")
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.create_download_asset_image_job")
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.exists", return_value=True)
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.open")
     @mock.patch(
-        "importer.tasks.Image.open",
+        "importer.tasks.images.Image.open",
         side_effect=UnidentifiedImageError("Invalid image format"),
     )
     def test_storage_image_invalid(
         self, mock_image_open, mock_open, mock_exists, mock_create_job, mock_logger
     ):
-        result = tasks.verify_asset_image(self.mock_task, self.job)
+        result = tasks.images.verify_asset_image(self.mock_task, self.job)
         self.assertFalse(result)
         mock_create_job.assert_called_once_with(self.asset, self.job.batch)
         mock_logger.assert_any_call(
@@ -1358,11 +1362,11 @@ class VerifyAssetImageTests(TestCase):
             "raised was Type: UnidentifiedImageError, Message: Invalid image format"
         )
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.create_download_asset_image_job")
-    @mock.patch("importer.tasks.ASSET_STORAGE.exists", return_value=True)
-    @mock.patch("importer.tasks.ASSET_STORAGE.open")
-    @mock.patch("importer.tasks.Image.open")
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.create_download_asset_image_job")
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.exists", return_value=True)
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.open")
+    @mock.patch("importer.tasks.images.Image.open")
     def test_storage_image_verify_fail(
         self, mock_image_open, mock_open, mock_exists, mock_create_job, mock_logger
     ):
@@ -1370,7 +1374,7 @@ class VerifyAssetImageTests(TestCase):
         mock_image.verify.side_effect = UnidentifiedImageError("Invalid image format")
         mock_image_open.return_value.__enter__.return_value = mock_image
 
-        result = tasks.verify_asset_image(self.mock_task, self.job)
+        result = tasks.images.verify_asset_image(self.mock_task, self.job)
         self.assertFalse(result)
         mock_create_job.assert_called_once_with(self.asset, self.job.batch)
         mock_logger.assert_any_call(
@@ -1379,10 +1383,10 @@ class VerifyAssetImageTests(TestCase):
             "raised was Type: UnidentifiedImageError, Message: Invalid image format"
         )
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.ASSET_STORAGE.exists", return_value=True)
-    @mock.patch("importer.tasks.ASSET_STORAGE.open")
-    @mock.patch("importer.tasks.Image.open")
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.exists", return_value=True)
+    @mock.patch("importer.tasks.images.ASSET_STORAGE.open")
+    @mock.patch("importer.tasks.images.Image.open")
     def test_storage_image_verification_success(
         self, mock_image_open, mock_open, mock_exists, mock_logger
     ):
@@ -1390,7 +1394,7 @@ class VerifyAssetImageTests(TestCase):
         mock_image.verify.return_value = None
         mock_image_open.return_value.__enter__.return_value = mock_image
 
-        result = tasks.verify_asset_image(self.mock_task, self.job)
+        result = tasks.images.verify_asset_image(self.mock_task, self.job)
         self.assertTrue(result)
         mock_logger.assert_any_call(
             "Storage image for %s (%s), %s, verified successfully",
@@ -1405,31 +1409,31 @@ class BatchDownloadAssetImagesTaskCallbackTests(TestCase):
         self.batch_id = uuid.uuid4()
         self.concurrency = 5
 
-    @mock.patch("importer.tasks.batch_download_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_download_asset_images_task.delay")
     def test_callback_triggers_next_batch(self, mock_task):
         results = [True, False, True]
 
-        tasks.batch_download_asset_images_task_callback(
+        tasks.images.batch_download_asset_images_task_callback(
             results, self.batch_id, self.concurrency
         )
 
         mock_task.assert_called_once_with(self.batch_id, self.concurrency)
 
-    @mock.patch("importer.tasks.batch_download_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_download_asset_images_task.delay")
     def test_callback_with_no_results(self, mock_task):
         results = []
 
-        tasks.batch_download_asset_images_task_callback(
+        tasks.images.batch_download_asset_images_task_callback(
             results, self.batch_id, self.concurrency
         )
 
         mock_task.assert_called_once_with(self.batch_id, self.concurrency)
 
-    @mock.patch("importer.tasks.batch_download_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_download_asset_images_task.delay")
     def test_callback_with_all_successful_results(self, mock_task):
         results = [True, True, True]
 
-        tasks.batch_download_asset_images_task_callback(
+        tasks.images.batch_download_asset_images_task_callback(
             results, self.batch_id, self.concurrency
         )
 
@@ -1447,11 +1451,11 @@ class BatchDownloadAssetImagesTaskTests(TestCase):
         self.job2 = create_download_asset_image_job(batch=self.batch_id, asset=asset2)
         self.job3 = create_download_asset_image_job(batch=self.batch_id, asset=asset3)
 
-    @mock.patch("importer.tasks.logger.info")
-    @mock.patch("importer.tasks.chord")
-    @mock.patch("importer.tasks.download_asset_image_task.s")
+    @mock.patch("importer.tasks.images.logger.info")
+    @mock.patch("importer.tasks.images.chord")
+    @mock.patch("importer.tasks.images.download_asset_image_task.s")
     def test_jobs_remaining(self, mock_task_s, mock_chord, mock_logger):
-        tasks.batch_download_asset_images_task(self.batch_id, self.concurrency)
+        tasks.images.batch_download_asset_images_task(self.batch_id, self.concurrency)
         self.assertEqual(mock_task_s.call_count, 3)
         mock_chord.assert_called()
         mock_logger.assert_any_call(
@@ -1460,10 +1464,10 @@ class BatchDownloadAssetImagesTaskTests(TestCase):
             self.batch_id,
         )
 
-    @mock.patch("importer.tasks.logger.info")
+    @mock.patch("importer.tasks.images.logger.info")
     def test_no_jobs_remaining(self, mock_logger):
         DownloadAssetImageJob.objects.all().delete()
-        tasks.batch_download_asset_images_task(self.batch_id, self.concurrency)
+        tasks.images.batch_download_asset_images_task(self.batch_id, self.concurrency)
         mock_logger.assert_any_call(
             "No DownloadAssetImageJobs found for batch %s", self.batch_id
         )
@@ -1474,32 +1478,32 @@ class DownloadAssetImageTaskTests(TestCase):
         self.asset = create_asset()
         self.batch_id = uuid.uuid4()
 
-    @mock.patch("importer.tasks.logger.exception")
+    @mock.patch("importer.tasks.images.logger.exception")
     def test_asset_not_found(self, mock_logger):
         with self.assertRaises(Asset.DoesNotExist):
-            tasks.download_asset_image_task(999)
+            tasks.images.download_asset_image_task(999)
         mock_logger.assert_called()
 
-    @mock.patch("importer.tasks.logger.exception")
+    @mock.patch("importer.tasks.images.logger.exception")
     def test_download_job_not_found(self, mock_logger):
         with self.assertRaises(DownloadAssetImageJob.DoesNotExist):
-            tasks.download_asset_image_task(
+            tasks.images.download_asset_image_task(
                 self.asset.pk, self.batch_id, create_job=False
             )
         mock_logger.assert_called()
 
-    @mock.patch("importer.tasks.download_asset")
+    @mock.patch("importer.tasks.images.download_asset")
     def test_download_asset_image_task_success(self, mock_download):
         create_download_asset_image_job(asset=self.asset, batch=self.batch_id)
         mock_download.return_value = "Download successful"
 
-        result = tasks.download_asset_image_task(self.asset.pk, self.batch_id)
+        result = tasks.images.download_asset_image_task(self.asset.pk, self.batch_id)
         self.assertEqual(result, "Download successful")
 
-    @mock.patch("importer.tasks.download_asset")
+    @mock.patch("importer.tasks.images.download_asset")
     def test_create_download_asset_image_job(self, mock_download):
         mock_download.return_value = "Download successful"
-        result = tasks.download_asset_image_task(
+        result = tasks.images.download_asset_image_task(
             self.asset.pk, self.batch_id, create_job=True
         )
         self.assertEqual(result, "Download successful")
@@ -1509,10 +1513,10 @@ class DownloadAssetImageTaskTests(TestCase):
             ).exists()
         )
 
-    @mock.patch("importer.tasks.download_asset")
+    @mock.patch("importer.tasks.images.download_asset")
     def test_http_error_retries(self, mock_download):
         mock_download.side_effect = requests.exceptions.HTTPError("HTTP Error Occurred")
         with self.assertRaises(requests.exceptions.HTTPError):
-            tasks.download_asset_image_task(
+            tasks.images.download_asset_image_task(
                 self.asset.pk, self.batch_id, create_job=True
             )
