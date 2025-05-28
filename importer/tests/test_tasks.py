@@ -138,7 +138,7 @@ class TaskDecoratorTests(TestCase):
                 self.assertEqual(
                     log.output,
                     [
-                        "WARNING:importer.tasks:Task Mock Job was "
+                        "WARNING:importer.tasks.decorators:Task Mock Job was "
                         "already completed and will not be repeated"
                     ],
                 )
