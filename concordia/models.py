@@ -720,6 +720,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             structured_logger.warning(
                 "OCR language not allowed; falling back to default.",
                 event_code="ocr_language_not_allowed",
+                reason="The requested OCR language is not in the allowed list.",
+                reason_code="ocr_language_not_permitted",
                 language=language,
                 allowed_languages=settings.PYTESSERACT_ALLOWED_LANGUAGES,
             )

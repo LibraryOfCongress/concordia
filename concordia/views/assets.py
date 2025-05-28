@@ -306,6 +306,8 @@ def redirect_to_next_asset(asset, mode, request, user):
         structured_logger.warning(
             "No available asset to redirect to.",
             event_code="redirect_next_asset_empty",
+            reason="There were no eligible assets found to assign to the user.",
+            reason_code="no_asset_available",
             asset=asset,
             user=user,
             mode=mode,
