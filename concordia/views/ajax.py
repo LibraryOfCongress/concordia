@@ -210,6 +210,7 @@ def get_transcription_superseded(
             structured_logger.warning(
                 "Open transcription already exists for asset.",
                 event_code="transcription_supersede_check_failed",
+                reason="An open transcription already exists",
                 reason_code="already_exists",
                 asset=asset,
             )
@@ -224,6 +225,7 @@ def get_transcription_superseded(
                 structured_logger.warning(
                     "Transcription already superseded.",
                     event_code="transcription_supersede_check_failed",
+                    reason="This transcription has been superseded",
                     reason_code="already_superseded",
                     asset=asset,
                     supersedes_pk=supersedes_pk,
@@ -238,6 +240,7 @@ def get_transcription_superseded(
                 structured_logger.warning(
                     "Supersedes transcription not found.",
                     event_code="transcription_supersede_check_failed",
+                    reason="Invalid supersedes value",
                     reason_code="not_found",
                     asset=asset,
                     supersedes_pk=supersedes_pk,
@@ -247,6 +250,7 @@ def get_transcription_superseded(
             structured_logger.warning(
                 "Invalid supersedes value (non-integer).",
                 event_code="transcription_supersede_check_failed",
+                reason="Supersedes value must be an integer",
                 reason_code="invalid_pk_format",
                 asset=asset,
                 supersedes_pk=supersedes_pk,
@@ -339,6 +343,7 @@ def generate_ocr_transcription(
             structured_logger.warning(
                 "OCR generation aborted: superseded transcription is invalid.",
                 event_code="ocr_generation_aborted",
+                reason="Superseded transcription is invalid",
                 reason_code="superseded_invalid",
                 user=user,
                 asset=asset,
@@ -698,11 +703,11 @@ def save_transcription(
         structured_logger.warning(
             "Transcription save rejected due to URL in text.",
             event_code="transcription_save_rejected",
+            reason="Transcription text contains URLs",
             reason_code="url_detected",
             user=user,
             asset=asset,
         )
-
         return JsonResponse(
             {
                 "error": "It looks like your text contains URLs. "
@@ -718,6 +723,7 @@ def save_transcription(
         structured_logger.warning(
             "Superseded transcription is invalid; aborting save.",
             event_code="transcription_save_aborted",
+            reason="Superseded transcription is invalid",
             reason_code="superseded_invalid",
             user=user,
             asset=asset,
@@ -835,6 +841,7 @@ def submit_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         structured_logger.warning(
             "Submission rejected: transcription already submitted or superseded.",
             event_code="transcription_submit_rejected",
+            reason="Transcription already submitted or superseded",
             reason_code="already_updated",
             user=request.user,
             transcription=transcription,
@@ -937,6 +944,7 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         structured_logger.warning(
             "Transcription review failed: invalid action.",
             event_code="transcription_review_rejected",
+            reason="Invalid review action",
             reason_code="invalid_action",
             user=request.user,
             transcription_id=pk,
@@ -959,6 +967,7 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         structured_logger.warning(
             "Review rejected: transcription already reviewed.",
             event_code="transcription_review_rejected",
+            reason="Transcription has already been reviewed",
             reason_code="already_reviewed",
             user=request.user,
             transcription=transcription,
@@ -972,6 +981,7 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         structured_logger.warning(
             "Review rejected: user attempted to accept their own transcription.",
             event_code="transcription_review_rejected",
+            reason="User attempted to accept their own transcription",
             reason_code="self_accept",
             user=request.user,
             transcription=transcription,
@@ -990,6 +1000,7 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
             structured_logger.warning(
                 "Review rejected: user exceeded review rate limit.",
                 event_code="transcription_review_rejected",
+                reason="User exceeded review rate limit",
                 reason_code="rate_limit_exceeded",
                 user=request.user,
                 transcription=transcription,
@@ -1248,6 +1259,7 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
             structured_logger.warning(
                 "Reservation rejected: client is tombstoned.",
                 event_code="asset_reserve_rejected",
+                reason="Client reservation token is tombstoned",
                 reason_code="tombstoned_self",
                 asset_pk=asset_pk,
                 reservation_token=reservation_token,
@@ -1258,6 +1270,7 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
             structured_logger.warning(
                 "Reservation rejected: asset is reserved by another client.",
                 event_code="asset_reserve_rejected",
+                reason="Asset is actively reserved by another session",
                 reason_code="conflict_active_other",
                 asset_pk=asset_pk,
                 reservation_token=reservation_token,
