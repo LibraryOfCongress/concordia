@@ -717,7 +717,21 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 language,
                 settings.PYTESSERACT_ALLOWED_LANGUAGES,
             )
+            structured_logger.warning(
+                "OCR language not allowed; falling back to default.",
+                event_code="ocr_language_not_allowed",
+                reason="The requested OCR language is not in the allowed list.",
+                reason_code="ocr_language_not_permitted",
+                language=language,
+                allowed_languages=settings.PYTESSERACT_ALLOWED_LANGUAGES,
+            )
             language = None
+        structured_logger.info(
+            "Running OCR on asset image.",
+            event_code="ocr_run_started",
+            asset=self,
+            language=language,
+        )
         return pytesseract.image_to_string(
             Image.open(self.storage_image), lang=language
         )

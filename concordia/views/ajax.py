@@ -42,7 +42,7 @@ from .decorators import reserve_rate, validate_anonymous_user
 from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
-structured_logger = ConcordiaLogger.get_logger({__name__})
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -199,8 +199,21 @@ def get_transcription_superseded(
         }
         ```
     """
+    structured_logger.info(
+        "Checking for superseded transcription.",
+        event_code="transcription_supersede_check_start",
+        asset=asset,
+        supersedes_pk=supersedes_pk,
+    )
     if not supersedes_pk:
         if asset.transcription_set.filter(supersedes=None).exists():
+            structured_logger.warning(
+                "Open transcription already exists for asset.",
+                event_code="transcription_supersede_check_failed",
+                reason="An open transcription already exists",
+                reason_code="already_exists",
+                asset=asset,
+            )
             return JsonResponse(
                 {"error": "An open transcription already exists"}, status=409
             )
@@ -209,6 +222,14 @@ def get_transcription_superseded(
     else:
         try:
             if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+                structured_logger.warning(
+                    "Transcription already superseded.",
+                    event_code="transcription_supersede_check_failed",
+                    reason="This transcription has been superseded",
+                    reason_code="already_superseded",
+                    asset=asset,
+                    supersedes_pk=supersedes_pk,
+                )
                 return JsonResponse(
                     {"error": "This transcription has been superseded"}, status=409
                 )
@@ -216,9 +237,31 @@ def get_transcription_superseded(
             try:
                 superseded = asset.transcription_set.get(pk=supersedes_pk)
             except Transcription.DoesNotExist:
+                structured_logger.warning(
+                    "Supersedes transcription not found.",
+                    event_code="transcription_supersede_check_failed",
+                    reason="Invalid supersedes value",
+                    reason_code="not_found",
+                    asset=asset,
+                    supersedes_pk=supersedes_pk,
+                )
                 return JsonResponse({"error": "Invalid supersedes value"}, status=400)
         except ValueError:
+            structured_logger.warning(
+                "Invalid supersedes value (non-integer).",
+                event_code="transcription_supersede_check_failed",
+                reason="Supersedes value must be an integer",
+                reason_code="invalid_pk_format",
+                asset=asset,
+                supersedes_pk=supersedes_pk,
+            )
             return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+        structured_logger.info(
+            "Superseded transcription found.",
+            event_code="transcription_supersede_check_success",
+            asset=asset,
+            supersedes_pk=supersedes_pk,
+        )
     return superseded
 
 
@@ -281,6 +324,14 @@ def generate_ocr_transcription(
 
     supersedes_pk = request.POST.get("supersedes")
     language = request.POST.get("language", None)
+    structured_logger.info(
+        "Starting OCR transcription generation.",
+        event_code="ocr_generation_start",
+        user=user,
+        asset=asset,
+        supersedes_pk=supersedes_pk,
+        language=language,
+    )
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded:
         # If superseded is an HttpResponse, that means
@@ -289,11 +340,25 @@ def generate_ocr_transcription(
         # Otherwise, we just have thr transcription the OCR
         # is gong to supersede, so we can continue
         if isinstance(superseded, HttpResponse):
+            structured_logger.warning(
+                "OCR generation aborted: superseded transcription is invalid.",
+                event_code="ocr_generation_aborted",
+                reason="Superseded transcription is invalid",
+                reason_code="superseded_invalid",
+                user=user,
+                asset=asset,
+            )
             return superseded
     else:
         # This means this is the first transcription on this asset.
         # To enable undoing of the OCR transcription, we create
         # an empty transcription for the OCR transcription to supersede
+        structured_logger.info(
+            "No existing transcription; creating empty one for OCR supersession.",
+            event_code="ocr_blank_supersede",
+            user=user,
+            asset=asset,
+        )
         superseded = Transcription(
             asset=asset,
             user=get_anonymous_user(),
@@ -301,6 +366,12 @@ def generate_ocr_transcription(
         )
         superseded.full_clean()
         superseded.save()
+        structured_logger.info(
+            "Blank superseded transcription created for OCR.",
+            event_code="ocr_blank_transcription_created",
+            user=user,
+            transcription=superseded,
+        )
 
     transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
@@ -313,6 +384,13 @@ def generate_ocr_transcription(
     )
     transcription.full_clean()
     transcription.save()
+
+    structured_logger.info(
+        "OCR transcription successfully created.",
+        event_code="ocr_generation_success",
+        user=user,
+        transcription=transcription,
+    )
 
     return JsonResponse(
         {
@@ -610,11 +688,26 @@ def save_transcription(
     else:
         user = request.user
 
+    structured_logger.info(
+        "Starting transcription save.",
+        event_code="transcription_save_start",
+        user=user,
+        asset=asset,
+    )
+
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
     url_match = re.search(URL_REGEX, transcription_text)
     if url_match:
+        structured_logger.warning(
+            "Transcription save rejected due to URL in text.",
+            event_code="transcription_save_rejected",
+            reason="Transcription text contains URLs",
+            reason_code="url_detected",
+            user=user,
+            asset=asset,
+        )
         return JsonResponse(
             {
                 "error": "It looks like your text contains URLs. "
@@ -627,6 +720,14 @@ def save_transcription(
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         logger.info("Transcription superseded")
+        structured_logger.warning(
+            "Superseded transcription is invalid; aborting save.",
+            event_code="transcription_save_aborted",
+            reason="Superseded transcription is invalid",
+            reason_code="superseded_invalid",
+            user=user,
+            asset=asset,
+        )
         return superseded
 
     if superseded and (superseded.ocr_generated or superseded.ocr_originated):
@@ -644,6 +745,12 @@ def save_transcription(
     transcription.full_clean()
     transcription.save()
     logger.info("Transction %s saved", transcription.id)
+    structured_logger.info(
+        "Transcription saved successfully.",
+        event_code="transcription_save_success",
+        user=user,
+        transcription=transcription,
+    )
 
     return JsonResponse(
         {
@@ -731,6 +838,15 @@ def submit_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
             str(transcription.submitted),
             pk,
         )
+        structured_logger.warning(
+            "Submission rejected: transcription already submitted or superseded.",
+            event_code="transcription_submit_rejected",
+            reason="Transcription already submitted or superseded",
+            reason_code="already_updated",
+            user=request.user,
+            transcription=transcription,
+        )
+
         return JsonResponse(
             {
                 "error": "This transcription has already been updated."
@@ -745,6 +861,12 @@ def submit_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
     transcription.save()
 
     logger.info("Transcription %s successfully submitted", transcription.id)
+    structured_logger.info(
+        "Transcription submitted successfully.",
+        event_code="transcription_submit_success",
+        user=request.user,
+        transcription=transcription,
+    )
 
     return JsonResponse(
         {
@@ -810,8 +932,24 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         ```
     """
     action = request.POST.get("action")
+    structured_logger.info(
+        "Starting transcription review.",
+        event_code="transcription_review_start",
+        user=request.user,
+        transcription_id=pk,
+        action=action,
+    )
 
     if action not in ("accept", "reject"):
+        structured_logger.warning(
+            "Transcription review failed: invalid action.",
+            event_code="transcription_review_rejected",
+            reason="Invalid review action",
+            reason_code="invalid_action",
+            user=request.user,
+            transcription_id=pk,
+            action=action,
+        )
         return JsonResponse({"error": "Invalid action"}, status=400)
 
     transcription = get_object_or_404(Transcription, pk=pk)
@@ -826,12 +964,28 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
     )
 
     if transcription.accepted or transcription.rejected:
+        structured_logger.warning(
+            "Review rejected: transcription already reviewed.",
+            event_code="transcription_review_rejected",
+            reason="Transcription has already been reviewed",
+            reason_code="already_reviewed",
+            user=request.user,
+            transcription=transcription,
+        )
         return JsonResponse(
             {"error": "This transcription has already been reviewed"}, status=400
         )
 
     if transcription.user.pk == request.user.pk and action == "accept":
         logger.warning("Attempted self-acceptance for transcription %s", transcription)
+        structured_logger.warning(
+            "Review rejected: user attempted to accept their own transcription.",
+            event_code="transcription_review_rejected",
+            reason="User attempted to accept their own transcription",
+            reason_code="self_accept",
+            user=request.user,
+            transcription=transcription,
+        )
         return JsonResponse(
             {"error": "You cannot accept your own transcription"}, status=400
         )
@@ -843,6 +997,14 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
         try:
             concordia_user.check_and_track_accept_limit(transcription)
         except RateLimitExceededError:
+            structured_logger.warning(
+                "Review rejected: user exceeded review rate limit.",
+                event_code="transcription_review_rejected",
+                reason="User exceeded review rate limit",
+                reason_code="rate_limit_exceeded",
+                user=request.user,
+                transcription=transcription,
+            )
             return JsonResponse(
                 {
                     "error": configuration_value("review_rate_limit_banner_message"),
@@ -861,6 +1023,13 @@ def review_transcription(request: HttpRequest, *, pk: Union[int, str]) -> JsonRe
     transcription.save()
 
     logger.info("Transcription %s successfully reviewed (%s)", transcription.id, action)
+    structured_logger.info(
+        "Transcription review successful.",
+        event_code="transcription_review_success",
+        user=request.user,
+        transcription=transcription,
+        action=action,
+    )
 
     return JsonResponse(
         {
@@ -910,6 +1079,12 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
         ```
     """
     asset = get_object_or_404(Asset, pk=asset_pk)
+    structured_logger.info(
+        "Starting tag submission.",
+        event_code="tag_submit_start",
+        user=request.user,
+        asset=asset,
+    )
 
     user_tags, created = UserAssetTagCollection.objects.get_or_create(
         asset=asset, user=request.user
@@ -923,6 +1098,15 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
         for i in new_tags:
             i.full_clean()
     except ValidationError as exc:
+        structured_logger.warning(
+            "Tag submission rejected: validation error on new tags.",
+            event_code="tag_submit_rejected",
+            reason="Tag failed validation",
+            reason_code="validation_error",
+            user=request.user,
+            asset=asset,
+            errors=str(exc.messages),
+        )
         return JsonResponse({"error": exc.messages}, status=400)
 
     Tag.objects.bulk_create(new_tags)
@@ -948,6 +1132,14 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
     all_tags = all_tags_qs.order_by("value")
     final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)
     all_tags = all_tags.values_list("value", flat=True).distinct()
+
+    structured_logger.info(
+        "Tags submitted successfully.",
+        event_code="tag_submit_success",
+        user=request.user,
+        asset=asset,
+        user_tags=[tag.value for tag in user_tags.tags.all()],
+    )
 
     return JsonResponse(
         {"user_tags": list(final_user_tags), "all_tags": list(all_tags)}
@@ -995,6 +1187,12 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
     """
 
     reservation_token = get_or_create_reservation_token(request)
+    structured_logger.info(
+        "Handling reservation request.",
+        event_code="asset_reserve_start",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
 
     # If the browser is letting us know of a specific reservation release,
     # let it go even if it's within the grace period.
@@ -1011,6 +1209,12 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
         # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
         logger.info("Releasing reservation with token %s", reservation_token)
+        structured_logger.info(
+            "Releasing asset reservation via client request.",
+            event_code="asset_reserve_release",
+            asset_pk=asset_pk,
+            reservation_token=reservation_token,
+        )
         reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
@@ -1053,25 +1257,58 @@ def reserve_asset(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRes
                     )
 
         if am_i_tombstoned:
+            structured_logger.warning(
+                "Reservation rejected: client is tombstoned.",
+                event_code="asset_reserve_rejected",
+                reason="Client reservation token is tombstoned",
+                reason_code="tombstoned_self",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             return HttpResponse(status=408)  # Request Timed Out
 
         if is_someone_else_active:
+            structured_logger.warning(
+                "Reservation rejected: asset is reserved by another client.",
+                event_code="asset_reserve_rejected",
+                reason="Asset is actively reserved by another session",
+                reason_code="conflict_active_other",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             return HttpResponse(status=409)  # Conflict
 
         if is_it_already_mine:
             # This user already has the reservation and it's not tombstoned
+            structured_logger.info(
+                "Reservation updated for client.",
+                event_code="asset_reserve_updated",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             msg = update_reservation(asset_pk, reservation_token)
             logger.debug("Updating reservation %s", reservation_token)
 
         if is_someone_else_tombstoned:
             # No reservations = no activity = go ahead and do an insert
+            structured_logger.info(
+                "Reservation acquired from tombstoned client.",
+                event_code="asset_reserve_from_tombstone",
+                asset_pk=asset_pk,
+                reservation_token=reservation_token,
+            )
             msg = obtain_reservation(asset_pk, reservation_token)
             logger.debug(
                 "Obtaining reservation for %s from tombstoned user", reservation_token
             )
-
     else:
         # No reservations = no activity = go ahead and do an insert
+        structured_logger.info(
+            "Initial reservation acquired (no existing reservations).",
+            event_code="asset_reserve_fresh",
+            asset_pk=asset_pk,
+            reservation_token=reservation_token,
+        )
         msg = obtain_reservation(asset_pk, reservation_token)
         logger.debug("No activity, just get the reservation %s", reservation_token)
 
@@ -1106,6 +1343,12 @@ def update_reservation(
         }
         ```
     """
+    structured_logger.info(
+        "Attempting to update reservation timestamp.",
+        event_code="reservation_update_start",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -1119,9 +1362,21 @@ def update_reservation(
         """.strip(),
             [asset_pk, reservation_token],
         )
+    structured_logger.info(
+        "Reservation update SQL executed.",
+        event_code="reservation_update_sql_executed",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
+    structured_logger.info(
+        "Reservation update completed; signal dispatched.",
+        event_code="reservation_update_success",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     return msg
 
 
@@ -1153,6 +1408,12 @@ def obtain_reservation(
         }
         ```
     """
+    structured_logger.info(
+        "Attempting to create new reservation.",
+        event_code="reservation_obtain_start",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -1164,7 +1425,19 @@ def obtain_reservation(
         """.strip(),
             [asset_pk, reservation_token],
         )
+    structured_logger.info(
+        "Reservation INSERT executed successfully.",
+        event_code="reservation_insert_success",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
+    structured_logger.info(
+        "Reservation successfully obtained; signal dispatched.",
+        event_code="reservation_obtain_success",
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+    )
     return msg
