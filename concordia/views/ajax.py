@@ -1101,6 +1101,7 @@ def submit_tags(request: HttpRequest, *, asset_pk: Union[int, str]) -> JsonRespo
         structured_logger.warning(
             "Tag submission rejected: validation error on new tags.",
             event_code="tag_submit_rejected",
+            reason="Tag failed validation",
             reason_code="validation_error",
             user=request.user,
             asset=asset,
