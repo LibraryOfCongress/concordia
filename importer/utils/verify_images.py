@@ -1,7 +1,7 @@
 from itertools import islice
 
 from importer.models import VerifyAssetImageJob
-from importer.tasks import batch_verify_asset_images_task
+from importer.tasks.images import batch_verify_asset_images_task
 
 BATCH_SIZE = 100
 
