@@ -14,6 +14,7 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_protect
 
 from exporter import views as exporter_views
@@ -95,6 +96,7 @@ from .filters import (
 )
 from .forms import (
     AdminItemImportForm,
+    AssetStatusActionForm,
     CampaignAdminForm,
     CardAdminForm,
     GuideAdminForm,
@@ -708,6 +710,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         export_to_excel_action,
         verify_assets_action,
     )
+    status_action_names = (
+        "change_status_to_completed",
+        "change_status_to_needs_review",
+        "change_status_to_in_progress",
+    )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
     change_list_template = "admin/concordia/asset/change_list.html"
@@ -722,6 +729,26 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         else:
             return super().lookup_allowed(key, value)
 
+    def response_action(self, request, queryset):
+        # Let Django run the chosen action(s) normally
+        response = super().response_action(request, queryset)
+
+        # If a "next" came from our form, redirect there,
+        # after confirming it's either a relative path
+        # that starts with "/" or is an absolute URL
+        # pointing to our hostname
+        next_url = request.POST.get("next")
+        if next_url:
+            if url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return HttpResponseRedirect(next_url)
+
+        # Otherwise, return whatever Django gave us
+        return response
+
     def item_id(self, obj):
         return obj.item.item_id
 
@@ -735,16 +762,38 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ("item",)
+            return self.readonly_fields + ("item", "campaign")
         return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
         extra_context = extra_context or {}
+        asset = None
+        if object_id:
+            asset = self.get_object(request, object_id)
+            current_status = asset.transcription_status
+            # Dealing with this one special case let's use simplify the
+            # desired_actions filtering code here significantly
+            if current_status == "submitted":
+                current_status = "needs_review"
+            # We need the name of the action (e.g., 'change_status_to_in_progress')
+            # and the description to show in the form
+            # (e.g., "Change status to In Progress")
+            # We filter out any action matching the current status,
+            # since that's unneeded and potentially confusing
+            desired_actions = [
+                (name, data[2])
+                for name, data in self.get_actions(request).items()
+                if name in self.status_action_names and current_status not in name
+            ]
+            status_form = AssetStatusActionForm(available_actions=desired_actions)
+            extra_context["status_action_form"] = status_form
+
         extra_context["transcriptions"] = (
             Transcription.objects.filter(asset__pk=object_id)
             .select_related("user", "reviewed_by")
             .order_by("-pk")
         )
+
         return super().change_view(
             request, object_id, extra_context=extra_context, **kwargs
         )

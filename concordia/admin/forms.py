@@ -174,3 +174,34 @@ def get_cache_name_choices():
 
 class ClearCacheForm(forms.Form):
     cache_name = forms.ChoiceField(choices=get_cache_name_choices)
+
+
+class AssetStatusActionForm(forms.Form):
+    """
+    Displays a select‐box of actions, plus a hidden _selected_action,
+    to be submitted to the changelist, just like admin actions usually are.
+    You must pass in `available_actions` when creating the form.
+
+    This form is used to avoid manually constructing this in the template
+    It won't actually be used to process the data, which is handled by
+    the changelist view, just like actions on the changelist itself
+    """
+
+    action = forms.ChoiceField(
+        choices=(),
+        label="Change status",
+        widget=forms.Select(attrs={"class": "vSelectField"}),
+    )
+
+    def __init__(self, *args, available_actions, **kwargs):
+        """
+        available_actions: list [action_name, action_label]
+        """
+        super().__init__(*args, **kwargs)
+
+        choices = [("", "---------")]
+
+        for action_name, action_label in available_actions:
+            choices.append((action_name, action_label))
+
+        self.fields["action"].choices = choices
