@@ -78,6 +78,8 @@ NPM_FILE_PATTERNS = {
         "svgs/*",
         "webfonts/*",
     ],
+    "chart.js": ["auto/*", "dist/*"],
+    "@kurkle/color": ["dist/*"],
 }
 
 TEMPLATE_DEBUG = False
