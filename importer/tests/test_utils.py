@@ -18,7 +18,7 @@ class CreateVerifyAssetImageJobBatchTests(TestCase):
         ]
         self.asset_pks = [asset.pk for asset in self.assets]
 
-    @mock.patch("importer.tasks.batch_verify_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_verify_asset_images_task.delay")
     def test_create_jobs_single_batch(self, mock_task):
         job_count, batch_url = create_verify_asset_image_job_batch(
             self.asset_pks, self.batch_id
@@ -33,7 +33,7 @@ class CreateVerifyAssetImageJobBatchTests(TestCase):
             batch_url, VerifyAssetImageJob.get_batch_admin_url(self.batch_id)
         )
 
-    @mock.patch("importer.tasks.batch_verify_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_verify_asset_images_task.delay")
     def test_create_jobs_multiple_batches(self, mock_task):
         asset_pks = self.asset_pks + [
             asset.pk
@@ -50,7 +50,7 @@ class CreateVerifyAssetImageJobBatchTests(TestCase):
         )
         mock_task.assert_called_once_with(batch=self.batch_id)
 
-    @mock.patch("importer.tasks.batch_verify_asset_images_task.delay")
+    @mock.patch("importer.tasks.images.batch_verify_asset_images_task.delay")
     def test_no_assets_provided(self, mock_task):
         job_count, batch_url = create_verify_asset_image_job_batch([], self.batch_id)
 

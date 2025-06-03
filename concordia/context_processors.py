@@ -32,3 +32,7 @@ def site_navigation(request):
 def maintenance_mode_frontend_available(request):
     value = cache.get("maintenance_mode_frontend_available", False)
     return {"maintenance_mode_frontend_available": value}
+
+
+def request_id_context(request):
+    return {"request_id": getattr(request, "request_id", None)}

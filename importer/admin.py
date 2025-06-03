@@ -9,6 +9,7 @@ from concordia.admin.filters import (
     NullableTimestampFilter,
 )
 from concordia.models import Campaign
+from importer.tasks.assets import download_asset_task
 
 from .models import (
     DownloadAssetImageJob,
@@ -17,7 +18,6 @@ from .models import (
     ImportJob,
     VerifyAssetImageJob,
 )
-from .tasks import download_asset_task
 
 
 @admin.action(description="Retry import")

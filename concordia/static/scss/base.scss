@@ -1682,7 +1682,6 @@ button.btn-outline-primary:hover {
 }
 
 .sidebar {
-    height: 580px; /* 100% Full-height */
     width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
@@ -1712,6 +1711,13 @@ button.btn-outline-primary:hover {
 .guide-body {
     max-height: 462.2px;
     overflow: scroll;
+}
+
+.guide-header {
+    justify-content: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.25rem;
+    padding-top: 0.25rem;
 }
 
 .guide-body h3 {

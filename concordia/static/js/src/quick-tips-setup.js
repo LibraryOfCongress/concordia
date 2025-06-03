@@ -5,7 +5,25 @@ import {setTutorialHeight} from './modules/quick-tips.js';
 let mainContentHeight = $('#contribute-main-content').height();
 
 if (mainContentHeight < 710) {
-    $('.sidebar').height(mainContentHeight - 130);
+    let maxHeight = Math.max.apply(
+        undefined,
+        $('.guide-header')
+            .map(function () {
+                $(this).parent()[0].classList.add('active');
+                const height = $(this).height();
+                $(this).parent()[0].classList.remove('active');
+                return height;
+            })
+            .get(),
+    );
+    let heightDelta = 170 - maxHeight;
+
+    $('.sidebar').height(mainContentHeight - heightDelta);
+    $('.sidebar .carousel-item.container').each(function () {
+        $(this).height(mainContentHeight - 183);
+    });
+} else {
+    $('.sidebar').height(604); /* 100% Full-height */
 }
 
 $('#tutorial-popup').on('shown.bs.modal', function () {

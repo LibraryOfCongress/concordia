@@ -1,4 +1,7 @@
+import logging
 import os
+
+import structlog
 
 from .settings_template import *  # NOQA ignore=F405
 from .settings_template import DATABASES
@@ -27,6 +30,13 @@ CACHES = {
         "LOCATION": "configuration-location",
     },
 }
+
+structlog.configure(
+    processors=[],
+    wrapper_class=structlog.make_filtering_bound_logger(logging.CRITICAL),
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+)
 
 # These cause Celery to run tasks locally, synchronously and immediately
 CELERY_TASK_ALWAYS_EAGER = True

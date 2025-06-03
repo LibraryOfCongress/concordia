@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
@@ -11,6 +12,7 @@ from concordia.models import (
     TranscriptionStatus,
 )
 from concordia.utils import get_anonymous_user
+from concordia.utils.logging import get_logging_user_id
 from concordia.utils.next_asset import (
     find_new_reviewable_campaign_assets,
     find_new_reviewable_topic_assets,
@@ -426,3 +428,24 @@ class NextTranscribableTopicAssetTests(CreateTestUsers, TestCase):
         self.assertEqual(asset, self.asset2)
         self.assertFalse(mock_get_task.called)
         self.assertFalse(mock_task.delay.called)
+
+
+class LoggingTests(CreateTestUsers, TestCase):
+    def test_get_logging_user_id_authenticated_user(self):
+        user = self.create_test_user()
+        self.assertEqual(get_logging_user_id(user), str(user.id))
+
+    def test_get_logging_user_id_anonymous_user(self):
+        anon = get_anonymous_user()
+        self.assertEqual(get_logging_user_id(anon), "anonymous")
+
+    def test_get_logging_user_id_missing_auth_attribute(self):
+        # Simulate a user-like object with no is_authenticated attribute
+        mock_user = object()
+        # Should fallback to "anonymous" since getattr will not find .is_authenticated
+        self.assertEqual(get_logging_user_id(mock_user), "anonymous")
+
+    def test_get_logging_user_id_authenticated_no_id(self):
+        user = SimpleNamespace(is_authenticated=True, username="someuser")
+        # Intentionally omit 'id' to trigger the final check
+        self.assertEqual(get_logging_user_id(user), "anonymous")
