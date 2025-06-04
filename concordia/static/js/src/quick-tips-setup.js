@@ -4,26 +4,13 @@ import {setTutorialHeight} from './modules/quick-tips.js';
 
 let mainContentHeight = $('#contribute-main-content').height();
 
-if (mainContentHeight < 710) {
-    let maxHeight = Math.max.apply(
-        undefined,
-        $('.guide-header')
-            .map(function () {
-                $(this).parent()[0].classList.add('active');
-                const height = $(this).height();
-                $(this).parent()[0].classList.remove('active');
-                return height;
-            })
-            .get(),
-    );
-    let heightDelta = 170 - maxHeight;
+if (mainContentHeight < 785.2) {
+    let newHeight = mainContentHeight - 323;
 
-    $('.sidebar').height(mainContentHeight - heightDelta);
-    $('.sidebar .carousel-item.container').each(function () {
-        $(this).height(mainContentHeight - 183);
-    });
+    $('.sidebar').height(mainContentHeight - 181);
+    $('.guide-body').css('max-height', newHeight.toString() + 'px');
 } else {
-    $('.sidebar').height(604); /* 100% Full-height */
+    $('.guide-body').css('max-height', '462.2px');
 }
 
 $('#tutorial-popup').on('shown.bs.modal', function () {
