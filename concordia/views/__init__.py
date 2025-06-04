@@ -31,6 +31,7 @@ from . import (
     rate_limit,  # noqa: F401
     simple_pages,  # noqa: F401
     topics,  # noqa: F401
+    visualizations,  # noqa: F401
 )
 from .decorators import default_cache_control
 

@@ -1,0 +1,30 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ name }}</title>
+
+    {% include "fragments/import-map.html" %}
+
+  </head>
+  <body>
+    <h1>{{ visualization_name }}</h1>
+
+    <div style="max-width: 1000px; margin: 2rem auto;">
+      <canvas id="daily-transcription-activity-by-campaign"></canvas>
+    </div>
+
+    <section style="max-width: 1000px; margin: 2rem auto;">
+      <canvas id="asset-status-by-campaign"></canvas>
+    </section>
+
+    <section style="max-width: 500px; margin: 2rem auto;">
+      <canvas id="asset-status-overview"></canvas>
+    </section>
+
+    {% with path='js/visualizations/'|add:name|add:'.js' %}
+      <script type="module" src="{% static path %}"></script>
+    {% endwith %}
+  </body>
+</html>
