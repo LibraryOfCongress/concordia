@@ -44,7 +44,7 @@
         </form>
     {% endif %}
 
-    <h4>Current status: {{ original.transcription_status }}</h4>
+    <h4>Current status: {{ original.get_transcription_status_display }}</h4>
 
     {{ block.super }}
 
