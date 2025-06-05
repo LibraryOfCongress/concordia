@@ -104,14 +104,14 @@ jobs:
                   npx gulp build
                   pipenv run ./manage.py collectstatic --no-input
 
-            # - name: Install Chrome for Testing
-            #   run: |
-            #       chromepath=$(npx @puppeteer/browsers install chrome@136)
-            #       chromepath=${chromepath#* }
-            #       chromepath=${chromepath%/chrome}
-            #       PATH=$PATH:$chromepath
-            #       echo "Chrome installed at: $chromepath"
-            #       chrome --version
+            - name: Install Chrome for Testing
+              run: |
+                  chromepath=$(npx @puppeteer/browsers install chrome@136)
+                  chromepath=${chromepath#* }
+                  chromepath=${chromepath%/chrome}
+                  PATH=$chromepath:$PATH
+                  echo "Chrome installed at: $chromepath"
+                  chrome --version
 
             - name: Run Tests with Coverage
               run: |
