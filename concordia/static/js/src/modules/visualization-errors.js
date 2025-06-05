@@ -6,10 +6,10 @@ import Chart from 'chart.js/auto';
  *
  * @param {CanvasRenderingContext2D} context
  * @param {Object} options
- * @param {string} options.title       — the chart’s title text
- * @param {string} options.xLabel      — x-axis title
- * @param {string} options.yLabel      — y-axis title
- * @param {string} [options.chartType] — Chart.js type (default: 'bar')
+ * @param {string} options.title - the chart’s title text
+ * @param {string} options.xLabel - x-axis title
+ * @param {string} options.yLabel - y-axis title
+ * @param {string} [options.chartType] - Chart.js type (default: 'bar')
  */
 export function renderEmptyChart(
     context,
@@ -69,9 +69,9 @@ export function renderEmptyChart(
  * @param {CanvasRenderingContext2D} context
  * @param {string} message
  * @param {Object} [options]
- * @param {string} [options.backgroundColor] — CSS color for overlay (default: "rgba(255,255,255,0.6)")
- * @param {string} [options.textColor]       — CSS color for text (default: "#a00")
- * @param {string} [options.font]            — CSS font for text (default: "bold 16px sans-serif")
+ * @param {string} [options.backgroundColor] - CSS color for overlay (default: "rgba(255,255,255,0.6)")
+ * @param {string} [options.textColor] - CSS color for text (default: "#a00")
+ * @param {string} [options.font] - CSS font for text (default: "bold 16px sans-serif")
  */
 export function renderErrorOverlay(
     context,

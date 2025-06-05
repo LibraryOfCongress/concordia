@@ -217,6 +217,11 @@ export class ConcordiaVisualization {
         for (const source of sources) {
             if (source && typeof source === 'object') {
                 for (const [key, value] of Object.entries(source)) {
+                    // Skip any attempt to assign "__proto__" or "constructor"
+                    if (key === '__proto__' || key === 'constructor') {
+                        continue;
+                    }
+
                     if (
                         value &&
                         typeof value === 'object' &&
