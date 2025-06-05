@@ -180,3 +180,11 @@ Utility functions, constants and mixins used throughout the views module
 ### Classes
 
 -   **AnonymousUserValidationCheckMixin** - Requires anonymous users to pass Turnstile validation
+
+## visualization.py
+
+Views for displaying visualizations
+
+### Classes
+
+-   **VisualizationDataView** - Returns JSON representing the visualization `name`

@@ -325,6 +325,11 @@ urlpatterns = [
         views.maintenance_mode.maintenance_mode_frontend_unavailable,
         name="maintenance_mode_frontend_unavailable",
     ),
+    path(
+        "api/visualization/<slug:name>/",
+        views.visualizations.VisualizationDataView.as_view(),
+        name="visualization",
+    ),
 ]
 
 if settings.DEBUG:
