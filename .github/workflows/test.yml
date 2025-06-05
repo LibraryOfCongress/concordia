@@ -106,7 +106,7 @@ jobs:
 
             - name: Install Chrome for Testing
               run: |
-                  chromepath=$(npx @puppeteer/browsers install chrome@stable)
+                  chromepath=$(npx @puppeteer/browsers install chrome@136)
                   chromepath=${chromepath#* }
                   chromepath=${chromepath%/chrome}
                   PATH=$PATH:$chromepath
