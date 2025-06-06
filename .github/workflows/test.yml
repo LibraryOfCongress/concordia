@@ -54,8 +54,8 @@ jobs:
                     - 5432:5432
 
         steps:
-            - name: Remove Firefox and Chrome
-              run: sudo apt-get purge firefox google-chrome-stable chromium-browser
+            - name: Remove Browsers and chromedriver
+              run: sudo apt-get purge firefox google-chrome-stable chromium-browser chromedriver
 
             - name: Install system packages
               run: |
@@ -91,8 +91,10 @@ jobs:
                   pipenv install --dev --deploy
                   pipenv install tblib # For parallel test debugging
 
-            - name: Install Node Dependencies
-              run: npm install
+            - name: Install Node Dependencies and Add .bin to Path
+              run: |
+                  npm install
+                  echo "PATH=$PWD/node_modules/.bin:$PATH" >> $GITHUB_ENV
 
             - name: Configure Logs
               run: |
@@ -104,7 +106,7 @@ jobs:
                   npx gulp build
                   pipenv run ./manage.py collectstatic --no-input
 
-            - name: Install Chrome for Testing and Display Version and Path
+            - name: Install Chrome for Testing and Set Path
               run: |
                   chromepath=$(npx @puppeteer/browsers install chrome@136)
                   chromepath=${chromepath#* }
