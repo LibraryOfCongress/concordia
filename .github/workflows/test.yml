@@ -110,7 +110,7 @@ jobs:
                   chromepath=${chromepath#* }
                   chromepath=${chromepath%/chrome}
                   echo "Chrome installed at: $chromepath"
-                  chrome --version
+                  $chromepath --version
                   # Persist both CHROME_BIN and update PATH for subsequent steps
                   echo "PATH=$chromepath:$PATH" >> $GITHUB_ENV
 
