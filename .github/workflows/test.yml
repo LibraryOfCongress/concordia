@@ -108,10 +108,10 @@ jobs:
               run: |
                   chromepath=$(npx @puppeteer/browsers install chrome@136)
                   chromepath=${chromepath#* }
-                  chromepath=${chromepath%/chrome}
                   echo "Chrome installed at: $chromepath"
                   $chromepath --version
-                  # Persist both CHROME_BIN and update PATH for subsequent steps
+                  chromepath=${chromepath%/chrome} # Remove the binary so we can add it to the PATH
+                  # Update PATH for subsequent steps
                   echo "PATH=$chromepath:$PATH" >> $GITHUB_ENV
 
             - name: Run Tests with Coverage
