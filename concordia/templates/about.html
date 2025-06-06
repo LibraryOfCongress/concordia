@@ -1,0 +1,126 @@
+{% extends "static-page.html" %}
+
+{% load humanize %}
+
+{% block main_content %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1 class="my-3">{{ title }}</h1>
+
+                <div class="simple-page">
+                    <div class="d-flex flex-row">
+                        <div>The <i>By the People</i> crowdsourced transcription program invites volunteers to transcribe and review digital collections from the <a href="https://www.loc.gov/">Library of Congress</a>. Everyone is welcome to participate! Volunteer-created transcriptions are returned to loc.gov, the Library’s main website, where they improve search, readability, and access to historical documents.<br><br><h3>Get Started</h3><br>Watch our introductory video below and <a href="https://updates.loc.gov/accounts/USLOC/subscriber/new?topic_id=USLOC_175">sign up for our newsletter</a> to stay in touch. Then <a href="/get-started/">learn how to get started</a> and join in!</div>
+                        <div>
+                            <div style="display: flex; justify-content: center;">
+                                <iframe width="558" height="314" src="https://www.youtube.com/embed/JOK4LYjjjk0" title="Transcribe Library of Congress Digital Collections with By the People" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Volunteer Accomplishments</h3>
+                        <div class="d-flex">
+                            <div class="contribution-highlight">
+                                <div class="value">{{ assets_published|intcomma }}</div>
+                                <p class="label">Pages released for transcription across {{ campaigns_published }} campaigns</p>
+                            </div>
+                            <div class="contribution-highlight">
+                                <div class="value">{{ assets_completed|intcomma }}</div>
+                                <p class="label">Completed Transcriptions</p>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <div class="contribution-highlight">
+                                <div class="value">{{ users_activated|intcomma }}</div>
+                                <p class="label">Registered Volunteers</p>
+                            </div>
+                            <div class="contribution-highlight">
+                                <div class="value">{{ assets_waiting_review|intcomma }}</div>
+                                <p class="label">Pages awaiting review</p>
+                            </div>
+                            <div class="contribution-highlight">
+                                <div class="value">545,000</div>
+                                <p class="label">Completed transcriptions returned to digital collections</p>
+                            </div>
+                            <div class="contribution-highlight">
+                                <div class="value">24</div>
+                                <p class="label">Full-text datasets of completed campaigns</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        {% include "fragments/featured_blog_posts.html" %}
+                    </div>
+                    <div class="row">
+                        <h3>Publications</h3>
+                        <div class="collapse" id="collapsePublications">
+                            _International Journal of Digital Humanities_,
+                            October 23, 2024,
+                            **[Giving back, learning, relaxing, and having fun: personal motivations and impacts of a virtual volunteer transcription program.](https://rdcu.be/dXXRs)**
+
+                            _Journal of Open Humanities Data_,
+                            February 4, 2022,
+                            **[<i>By the People</i> Crowdsourcing Datasets from the Library of Congress.](http://doi.org/10.5334/johd.67)**
+
+                            _Code4Lib Journal_,
+                            November 5, 2019,
+                            **['With One Heart': Agile approaches for developing Concordia and crowdsourcing at the Library of Congress.](https://journal.code4lib.org/articles/14901)**
+
+                            _Archival Outlook_,
+                            September 2019,
+                            **["And the Crowd Goes Wild!” Crowdsourcing Baseball History at the Library of Congress.](https://mydigitalpublication.com/publication/?i=623810#{%22issue_id%22:623810,%22page%22:6})**
+                        </div>
+                    </div>
+                    <div class="row" id="collapsePressCoverage">
+                        <h3>Press coverage</h3>
+                        ---
+                        **Want to get in touch?** Please review our <a href="https://ask.loc.gov/crowd/search/?t=0&g%5B%5D=11779&q=">frequently asked questions (FAQs)</a> and visit our <a href="https://ask.loc.gov/crowd/search/?t=0&g%5B%5D=11779&q=">getting started guide</a>. Additional questions can be sent to us via <a href="https://ask.loc.gov/crowd">Ask A Librarian</a>.
+
+                        **Press inquiries?** Connect with the Library of Congress Office of Communications via <a href="mailto:news@loc.gov">news@loc.gov</a> and include “By the People transcription” in the subject line.
+
+                        Check out some of our press coverage to read what others are saying:
+
+                        <ul>
+                            <li>The Mankato Free Press, March 22, 2024, <a href="https://www.mankatofreepress.com/news/lifestyles/chalk-one-up-for-those-of-us-who-can-write-in-and-read-cursive/article_a1e46a24-e858-11ee-a6e5-530081e09619.html">Chalk one up for those of us who can write in - and read - cursive</a>
+                            </li>
+                            <li>NBC News, March 9, 2024, <a href="https://www.youtube.com/watch?v=s66RzMmSlNo">Transcribing our oldest documents for Library of Congress</a>
+                            </li>
+                            <li>The Post and Courier, April 4, 2023, <a href="https://www.postandcourier.com/news/library-of-congress-crowd-sourcing-info-about-1865-sc-petition-for-voting-rights/article_baf96590-d252-11ed-a9ca-ff75792a9b2e.html">Library of Congress crowd-sourcing info about 1865 SC petition for voting rights</a>
+                            </li>
+                            <li>Mental Floss, May 14, 2021, <a href="https://www.mentalfloss.com/article/646487/transcribe-clara-barton-papers-library-of-congress?fbclid=IwAR1-gJdgdUkLgxdz14EaSBF3Ov9xKLEiZED5O4zkiMh_rH7SpGxxf6UwI84">The Library of Congress Needs Your Help Transcribing Clara Barton's Diaries, Correspondences, and Other Rarely Seen Papers</a>
+                            </li>
+                            <li>Mental Floss, March 8, 2021, <a href="https://www.mentalfloss.com/article/643536/library-congress-needs-help-transcribing-james-garfields-diaries">The Library of Congress Needs Your Help Transcribing James Garfield’s Diaries</a>
+                            </li>
+                            <li>Smithsonian Magazine, December 4, 2020, <a href="https://www.smithsonianmag.com/smart-news/library-congress-asks-volunteers-transcribe-letters-theodore-roosevelt-180976458/">Library of Congress Seeks Volunteers to Transcribe Letters to Theodore Roosevelt</a>
+                            </li>
+                            <li>Mental Floss, December 1, 2020, <a href="https://www.mentalfloss.com/article/637883/help-transcribe-theodore-roosevelts-correspondence">The Library of Congress Needs Help Transcribing More Than 20,000 Letters Written to Teddy Roosevelt</a>
+                            </li>
+                            <li> Federal News Network, August 25, 2020, <a href="https://federalnewsnetwork.com/congress/2020/08/library-of-congress-enlisting-volunteers-to-help-transcribe-documents">Library of Congress enlisting volunteers to help transcribe documents</a>
+                            </li>
+                            <li>The Washington Post, August 10, 2020, <a href="https://www.washingtonpost.com/history/2020/08/10/letters-abraham-lincoln-library-of-congress">Lincoln’s mail included advice, warnings and a call to shoot deserters</a>
+                            </li>
+                            <li>Fox 10 Phoenix, February 6, 2020, <a href="https://www.fox10phoenix.com/news/by-the-people-crowdsourcing-project-aims-to-transcribe-legendary-civil-rights-leader-rosa-parks-papers">‘By the People’ crowdsourcing project aims to transcribe legendary civil rights leader Rosa Parks’ papers</a>
+                            </li>
+                            <li>Mental Floss, July 31, 2019, <a href="http://mentalfloss.com/article/593040/library-congress-needs-help-transcribing-suffragist-documents">The Library of Congress Needs Help Transcribing 16,000 Pages of Suffragist Diaries, Letters, and Documents</a>
+                            </li>
+                            <li>Smithsonian Magazine, July 30, 2019, <a href="https://www.smithsonianmag.com/smart-news/library-congress-needs-your-help-transcribing-suffragist-papers-1-180972677">The Library of Congress Needs Your Help Transcribing Suffragist Papers</a>
+                            </li>
+                            <li>Washington Post Magazine, June 17, 2019, <a href="https://www.washingtonpost.com/lifestyle/magazine/the-national-archives-has-billions-of-handwritten-documents-with-cursive-skills-declining-how-will-we-read-them/2019/06/14/cbc44028-5c92-11e9-9625-01d48d50ef75_story.html">The National Archives has billions of handwritten documents. With cursive skills declining, how will we read them?</a>
+                            </li>
+                            <li> Wired, April 14, 2019, <a href="https://www.wired.com/story/why-we-love-tech-better-humans/">Tech that connects us -- And makes us better humans</a>
+                            </li>
+                        </ul>
+
+                        ## Program history
+                        ---
+                        The <i>By the People</i> crowdsourced transcription program was launched as a pilot by the <a href="https://labs.loc.gov/work/experiments/crowd/">LC Labs team</a> on October 24, 2018. Our transcription platform, <a href="https://github.com/LibraryOfCongress/concordia">Concordia</a>, is open source and is proudly developed in-house by the Library of Congress.
+
+                        Our name comes from the closing line of President Abraham Lincoln’s <a href="https://guides.loc.gov/gettysburg-address">Gettysburg Address</a>, which states “...government of the people, by the people, for the people, shall not perish from the earth." It reflects the spirit of democracy of this transcription program, which asks you to join us in enhancing Library of Congress digital collections.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
