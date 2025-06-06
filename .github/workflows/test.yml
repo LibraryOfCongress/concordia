@@ -55,7 +55,7 @@ jobs:
 
         steps:
             - name: Remove Firefox
-              run: sudo apt-get purge firefox
+              run: sudo apt-get purge firefox chrome
 
             - name: Install system packages
               run: |
@@ -104,13 +104,14 @@ jobs:
                   npx gulp build
                   pipenv run ./manage.py collectstatic --no-input
 
-            - name: Install Chrome for Testing
+            - name: Install Chrome for Testing and Display Version and Path
               run: |
                   chromepath=$(npx @puppeteer/browsers install chrome@136)
                   chromepath=${chromepath#* }
                   chromepath=${chromepath%/chrome}
                   PATH=$chromepath:$PATH
                   echo "Chrome installed at: $chromepath"
+                  echo "PATH $PATH"
                   chrome --version
 
             - name: Run Tests with Coverage
