@@ -9,12 +9,15 @@ from django.utils.timezone import now
 from django.views.generic import RedirectView
 
 from concordia.models import Guide, SimplePage, SiteReport
+from concordia.parser import fetch_blog_posts
 
 from .decorators import default_cache_control
 
 
 @default_cache_control
-def simple_page(request, path=None, slug=None, body_ctx=None):
+def simple_page(
+    request, path=None, slug=None, body_ctx=None, template="static-page.html"
+):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -61,8 +64,9 @@ def simple_page(request, path=None, slug=None, body_ctx=None):
         ctx["guides"] = Guide.objects.order_by("order")
     body = Template(md.convert(html))
     ctx["body"] = body.render(Context(body_ctx))
+    ctx.update(body_ctx)
 
-    resp = render(request, "static-page.html", ctx)
+    resp = render(request, template, ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
     return resp
 
@@ -107,10 +111,11 @@ def about_simple_page(request, path=None, slug=None):
             "assets_waiting_review": active_campaigns.assets_waiting_review
             + retired_campaigns.assets_waiting_review,
             "users_activated": active_campaigns.users_activated,
+            "blog_posts": fetch_blog_posts(),
         }
         cache.set(context_cache_key, about_context, 60 * 60)
 
-    return simple_page(request, path, slug, about_context)
+    return simple_page(request, path, slug, about_context, template="about.html")
 
 
 # These views are to make sure various links to help-center URLs don't break

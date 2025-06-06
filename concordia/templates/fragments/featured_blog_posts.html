@@ -1,0 +1,39 @@
+{% load group_list %}
+<h3>Featured blog posts</h3>
+<div class="carousel">
+    <div class="carouse-inner">
+        {% for chunk in blog_posts|slice:":3"|batch:3 %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="row">
+                    {% for post in chunk %}
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a href="{{ post.link }}">
+                                            {{ post.title }}
+                                        </a>
+                                    </h5>
+                                    <p class="card-text">
+                                        {{ post.description|safe }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="" data-bs-slide="prev">
+        <span class="" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="" data-bs-slide="next">
+        <span class="" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+<a href="https://blogs.loc.gov/thesignal/category/by-the-people-transcription-program/">
+    <button>Visit the Library's Signal blog to read more from the By the People team</button>
+</a>
