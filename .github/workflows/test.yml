@@ -54,8 +54,8 @@ jobs:
                     - 5432:5432
 
         steps:
-            - name: Remove Firefox
-              run: sudo apt-get purge firefox chrome
+            - name: Remove Firefox and Chrome
+              run: sudo apt-get purge firefox google-chrome-stable chromium-browser
 
             - name: Install system packages
               run: |
