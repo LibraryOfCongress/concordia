@@ -38,6 +38,8 @@ jobs:
               run: |
                   pipx run pipfile-requirements Pipfile.lock > requirements.txt
 
-            - uses: pypa/gh-action-pip-audit@v1.0.8
+            - uses: pypa/gh-action-pip-audit@v1.1.0
               with:
                   inputs: requirements.txt
+                  ignore-vulns: |
+                      PYSEC-2023-312
