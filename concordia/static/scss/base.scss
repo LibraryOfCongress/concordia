@@ -2092,3 +2092,30 @@ figure.error-figure {
         font-size: 12px;
     }
 }
+
+/*
+ * About page
+ */
+.about-accordion {
+    background-color: $gray-100;
+    padding-top: 12px;
+    padding-left: 28px;
+    padding-bottom: 8px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.accordion-icon {
+    position: absolute;
+    left: 0;
+    color: $blue;
+    font-style: normal;
+}
+
+.icon-plus-square::before {
+    content: '\f0fe';
+}
+
+.icon-minus-square::before {
+    content: '\f146';
+}
