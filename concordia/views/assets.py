@@ -1,11 +1,14 @@
 import logging
 import random
+from typing import Any
 from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import User
+from django.db.models import QuerySet
 from django.db.transaction import atomic
-from django.http import Http404
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -49,12 +52,26 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 @method_decorator(never_cache, name="dispatch")
 class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
     """
-    Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
+    Display details for a single asset and handle missing assets.
+
+    Handles GET and POST requests by retrieving the published Asset matching
+    the campaign, project and item.
+
+    Uses AnonymousUserValidationCheckMixin for anonymous-user validation and
+    APIDetailView for API-driven detail behavior. Overrides dispatch to log
+    and redirect to the parent campaign page if the asset is not found.
+
+    Attributes:
+        template_name (str): Template used to render the asset detail page.
+
+    Returns:
+        HttpResponse: Renders the asset detail template with context, or issues
+            a redirect response to the campaign page when the asset is missing.
     """
 
     template_name = "transcriptions/asset_detail.html"
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
             return super().dispatch(request, *args, **kwargs)
         except Http404:
@@ -72,7 +89,7 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
             )
             return redirect(campaign)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Asset]:
         asset_qs = Asset.objects.published().filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
             item__project__slug=self.kwargs["project_slug"],
@@ -83,12 +100,41 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
 
         return asset_qs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
-        Handle the GET request
-        :param kwargs:
-        :return: dictionary of items used in the template
+        Build the context for the asset detail template.
+
+        Constructs a dictionary with the following entries:
+
+        Context Format:
+            - `asset` (Asset): The Asset instance being viewed.
+            - `item` (Item): Parent Item of the asset.
+            - `project` (Project): Parent Project of the item.
+            - `campaign` (Campaign): Campaign containing the project.
+            - `transcription` (Transcription | None): Latest transcription or None.
+            - `next_open_asset_url` (str): URL to the next transcribable asset.
+            - `next_review_asset_url` (str): URL to the next reviewable asset.
+            - `transcription_status` (str): One of the keys from TranscriptionStatus.
+            - `activity_mode` (str): `"transcribe"` or `"review"`, based on status.
+            - `disable_ocr` (bool): Whether OCR should be disabled for this asset.
+            - `previous_asset_url` (str | None): URL to the previous asset, if any.
+            - `next_asset_url` (str | None): URL to the next asset, if any.
+            - `asset_navigation` (list[tuple[int, str]]): Sequence/slug pairs for nav.
+            - `thumbnail_url` (str): URL of the asset's thumbnail image.
+            - `current_asset_url` (str): Absolute URL of this asset detail view.
+            - `tags` (list[str]): Sorted list of tag values applied to the asset.
+            - `registered_contributors` (int): Number of users who contributed.
+            - `cards` (list[Card]): Tutorial cards for the campaign or default set.
+            - `guides` (QuerySet[dict[str, Any]] | None): Tutorial guide entries.
+            - `languages` (list[tuple[str, str]]): Supported language code/name pairs.
+            - `undo_available` (bool): Whether a rollback is possible.
+            - `redo_available` (bool): Whether a rollforward is possible.
+            - `turnstile_form` (TurnstileForm): Form for the Turnstile widget.
+
+        Returns:
+            dict[str, Any]: Context data for rendering the asset detail page.
         """
+
         ctx = super().get_context_data(**kwargs)
         asset = ctx["asset"]
         # Bind a new logger so asset and user are always included
@@ -245,7 +291,9 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
         return ctx
 
 
-def redirect_to_next_asset(asset, mode, request, user):
+def redirect_to_next_asset(
+    asset: Asset | None, mode: str, request: HttpRequest, user: User
+) -> HttpResponseRedirect:
     """
     Redirects the user to the appropriate asset view or the homepage if no asset is
     available.
@@ -319,7 +367,7 @@ def redirect_to_next_asset(asset, mode, request, user):
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_asset(request):
+def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedirect:
     """
     Attempts to redirect the user to a reviewable asset from any active reviewable
     campaign.
@@ -420,7 +468,7 @@ def redirect_to_next_reviewable_asset(request):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request):
+def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRedirect:
     """
     Attempts to redirect the user to a transcribable asset from any active transcription
     campaign.
@@ -525,7 +573,9 @@ def redirect_to_next_transcribable_asset(request):
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
+def redirect_to_next_reviewable_campaign_asset(
+    request: HttpRequest, *, campaign_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next reviewable asset within a specified campaign.
 
@@ -586,7 +636,9 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
+def redirect_to_next_transcribable_campaign_asset(
+    request: HttpRequest, *, campaign_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next transcribable asset within a specified campaign.
 
@@ -643,7 +695,9 @@ def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
+def redirect_to_next_reviewable_topic_asset(
+    request: HttpRequest, *, topic_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next reviewable asset within a specified topic.
 
@@ -705,7 +759,9 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
+def redirect_to_next_transcribable_topic_asset(
+    request: HttpRequest, *, topic_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next transcribable asset within a specified topic.
 
