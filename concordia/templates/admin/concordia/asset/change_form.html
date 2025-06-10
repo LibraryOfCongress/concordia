@@ -29,6 +29,23 @@
 {% endblock object-tools-items %}
 
 {% block content %}
+    {% if original %}
+        <form action="{% url 'admin:concordia_asset_changelist' %}" method="post" style="display:inline;">
+            {% csrf_token %}
+
+            {# Manually create the hidden PK field #}
+            <input type="hidden" name="_selected_action" value="{{ original.pk }}"></input>
+
+            {# We use this to send the user back to this page instead of leaving them on the changelist #}
+            <input type="hidden" name="next" value="{% url 'admin:concordia_asset_change' original.pk %}"></input>
+
+            {{ status_action_form.action }}
+            <button type="submit" class="button">Change status</button>
+        </form>
+    {% endif %}
+
+    <h4>Current status: {{ original.get_transcription_status_display }}</h4>
+
     {{ block.super }}
 
     <h4>Current status: {{ original.transcription_status }}</h4>

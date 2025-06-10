@@ -29,6 +29,10 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "configuration-location",
     },
+    "visualization_cache": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "visualization-location",
+    },
 }
 
 structlog.configure(

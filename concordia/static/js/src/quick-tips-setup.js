@@ -4,8 +4,13 @@ import {setTutorialHeight} from './modules/quick-tips.js';
 
 let mainContentHeight = $('#contribute-main-content').height();
 
-if (mainContentHeight < 710) {
-    $('.sidebar').height(mainContentHeight - 130);
+if (mainContentHeight < 785.2) {
+    let newHeight = mainContentHeight - 323;
+
+    $('.sidebar').height(mainContentHeight - 181);
+    $('.guide-body').css('max-height', newHeight.toString() + 'px');
+} else {
+    $('.guide-body').css('max-height', '462.2px');
 }
 
 $('#tutorial-popup').on('shown.bs.modal', function () {

@@ -78,6 +78,8 @@ NPM_FILE_PATTERNS = {
         "svgs/*",
         "webfonts/*",
     ],
+    "chart.js": ["auto/*", "dist/*"],
+    "@kurkle/color": ["dist/*"],
 }
 
 TEMPLATE_DEBUG = False
@@ -219,6 +221,13 @@ if REDIS_ADDRESS and REDIS_PORT:
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
         },
+        "visualization_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/4",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
     }
 else:
     CACHES = {
@@ -226,6 +235,12 @@ else:
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         },
         "view_cache": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+        "configuration_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache"
+        },
+        "visualization_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache"
+        },
     }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"

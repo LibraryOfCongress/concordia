@@ -279,14 +279,18 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
                 {"import_url": "https://example.com"},
             )
 
-        with mock.patch("importer.tasks.create_item_import_task.delay") as task_mock:
+        with mock.patch(
+            "importer.tasks.items.create_item_import_task.delay"
+        ) as task_mock:
             response = self.client.post(
                 reverse(self.url_lookup, args=[self.project.id]),
                 {"import_url": "https://www.loc.gov/item/example"},
             )
             self.assertTrue(task_mock.called)
 
-        with mock.patch("importer.tasks.import_collection_task.delay") as task_mock:
+        with mock.patch(
+            "importer.tasks.collections.import_collection_task.delay"
+        ) as task_mock:
             response = self.client.post(
                 reverse(self.url_lookup, args=[self.project.id]),
                 {"import_url": "https://www.loc.gov/collections/example/"},
