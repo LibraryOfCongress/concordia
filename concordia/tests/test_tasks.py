@@ -2,8 +2,8 @@ from datetime import timedelta
 from unittest import mock
 
 from django.core import mail
-from django.core.cache import cache
-from django.test import TestCase
+from django.core.cache import cache, caches
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from concordia.models import (
@@ -24,6 +24,8 @@ from concordia.tasks import (
     clean_next_reviewable_for_topic,
     clean_next_transcribable_for_campaign,
     clean_next_transcribable_for_topic,
+    populate_asset_status_visualization_cache,
+    populate_daily_activity_visualization_cache,
     populate_next_reviewable_for_campaign,
     populate_next_reviewable_for_topic,
     populate_next_transcribable_for_campaign,
@@ -686,3 +688,139 @@ class CleanNextAssetTasksTests(TestCase):
             ):
                 clean_next_reviewable_for_topic(self.topic.id)
         mock_logger.exception.assert_called_once()
+
+
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+        "visualization_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+    }
+)
+class VisualizationCacheTasksTests(TestCase):
+    def setUp(self):
+        self.cache = caches["visualization_cache"]
+        self.cache.clear()
+
+    def test_populate_asset_status_visualization_cache(self):
+        c1 = create_campaign(status=Campaign.Status.ACTIVE, title="Alpha")
+        c2 = create_campaign(status=Campaign.Status.ACTIVE, title="Beta")
+        p1 = create_project(campaign=c1)
+        i1 = create_item(project=p1)
+        p2 = create_project(campaign=c2)
+        i2 = create_item(project=p2)
+        create_asset(item=i1, transcription_status=TranscriptionStatus.NOT_STARTED)
+        create_asset(
+            item=i2,
+            slug="test-asset-2",
+            transcription_status=TranscriptionStatus.IN_PROGRESS,
+        )
+        create_asset(
+            item=i2,
+            slug="test-asset-3",
+            transcription_status=TranscriptionStatus.SUBMITTED,
+        )
+        create_asset(
+            item=i2,
+            slug="test-asset-4",
+            transcription_status=TranscriptionStatus.COMPLETED,
+        )
+
+        populate_asset_status_visualization_cache.run()
+
+        overview = self.cache.get("asset-status-overview")
+        expected_labels = [
+            TranscriptionStatus.CHOICE_MAP[key]
+            for key, _ in TranscriptionStatus.CHOICES
+        ]
+        self.assertEqual(overview["status_labels"], expected_labels)
+        # Totals: 1 not_started, 1 in_progress, 1 submitted, 1 completed
+        self.assertEqual(overview["total_counts"], [1, 1, 1, 1])
+
+        by_cam = self.cache.get("asset-status-by-campaign")
+        self.assertEqual(by_cam["status_labels"], expected_labels)
+        self.assertEqual(by_cam["campaign_names"], ["Alpha", "Beta"])
+        counts = by_cam["per_campaign_counts"]
+        self.assertEqual(counts["not_started"], [1, 0])
+        self.assertEqual(counts["in_progress"], [0, 1])
+        self.assertEqual(counts["submitted"], [0, 1])
+        self.assertEqual(counts["completed"], [0, 1])
+
+    def test_populate_daily_activity_visualization_cache(self):
+        # Create two active campaigns
+        c1 = create_campaign(status=Campaign.Status.ACTIVE, title="Alpha")
+        c2 = create_campaign(status=Campaign.Status.ACTIVE, title="Beta")
+
+        # Create site reports spanning two dates
+        date1 = timezone.now() - timedelta(days=1)
+        date2 = timezone.now()
+        sr1 = SiteReport.objects.create(
+            campaign=c1,
+            transcriptions_saved=5,
+            daily_review_actions=1,
+        )
+        sr2 = SiteReport.objects.create(
+            campaign=c1,
+            transcriptions_saved=10,
+            daily_review_actions=2,
+        )
+
+        sr3 = SiteReport.objects.create(
+            campaign=c2,
+            transcriptions_saved=3,
+            daily_review_actions=0,
+        )
+        # created is set by auto_now_add, so we have to update it in the database
+        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
+        SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
+        SiteReport.objects.filter(pk=sr3.pk).update(created_on=date2)
+
+        populate_daily_activity_visualization_cache.run()
+
+        result = self.cache.get("daily-transcription-activity-by-campaign")
+        # Labels should be the two dates in YYYY-MM-DD
+        labels = [d.strftime("%Y-%m-%d") for d in sorted([date1.date(), date2.date()])]
+        self.assertEqual(result["labels"], labels)
+
+        datasets = result["transcription_datasets"]
+        # Campaign 1: day1 = 5+1 = 6; day2 = (10 - 5) + 2 = 7
+        self.assertEqual(datasets[0]["label"], "Alpha")
+        self.assertEqual(datasets[0]["data"], [6, 7])
+        # Campaign 2: day1 = 0; day2 = 3 - 0 + 0 = 3
+        self.assertEqual(datasets[1]["label"], "Beta")
+        self.assertEqual(datasets[1]["data"], [0, 3])
+
+    def test_negative_daily_saved_clamps_to_zero(self):
+        # Active campaign with a decrease in cumulative saved
+        # This shouldn't happen, but we account for it in the task,
+        # so we need to test to make sure that works correctly
+        c = create_campaign(status=Campaign.Status.ACTIVE, title="Gamma")
+        date1 = timezone.now() - timedelta(days=1)
+        date2 = timezone.now()
+        # First report: 10 saved, no reviews
+        sr1 = SiteReport.objects.create(
+            campaign=c,
+            created_on=date1,
+            transcriptions_saved=10,
+            daily_review_actions=0,
+        )
+        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
+        # Second report: 5 saved, no reviews -> negative delta
+        sr2 = SiteReport.objects.create(
+            campaign=c,
+            created_on=date2,
+            transcriptions_saved=5,
+            daily_review_actions=0,
+        )
+        SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
+
+        populate_daily_activity_visualization_cache.run()
+
+        result = self.cache.get("daily-transcription-activity-by-campaign")
+        datasets = result["transcription_datasets"]
+        # day1 = 10; day2 = 5 - 10 = -5, clamped to 0
+        self.assertEqual(datasets[0]["label"], "Gamma")
+        self.assertEqual(datasets[0]["data"], [10, 0])
