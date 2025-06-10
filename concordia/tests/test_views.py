@@ -1,3 +1,4 @@
+import json
 import sys
 from datetime import date, timedelta
 from unittest.mock import patch
@@ -41,6 +42,7 @@ from concordia.views.decorators import reserve_rate, user_cache_control
 from concordia.views.items import FilteredItemDetailView
 from concordia.views.projects import FilteredProjectDetailView
 from concordia.views.rate_limit import ratelimit_view
+from concordia.views.visualizations import VisualizationDataView
 from configuration.models import Configuration
 
 from .utils import (
@@ -2626,3 +2628,43 @@ class TranscriptionViewTests(CreateTestUsers, TestCase):
 
     def tearDown(self):
         post_save.connect(on_transcription_save, sender=Transcription)
+
+
+@override_settings(
+    CACHES={
+        "visualization_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+)
+class VisualizationDataViewTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.cache = caches["visualization_cache"]
+        VisualizationDataView.cache = self.cache
+        self.cache.clear()
+        self.view = VisualizationDataView.as_view()
+
+    def test_get_missing_data_returns_404(self):
+        # If no entry exists in the cache under the given name,
+        # the view should return a 404 with a JSON error message.
+        request = self.factory.get("/visualizations/data/missing-key/")
+        response = self.view(request, name="missing-key")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response["Content-Type"], "application/json")
+        data = json.loads(response.content)
+        self.assertEqual(
+            data, {"error": "No visualization data found for 'missing-key'"}
+        )
+
+    def test_get_existing_data_returns_200_and_json(self):
+        # When the cache contains data for the given name,
+        # the view should return it as JSON with status 200.
+        sample_data = {"foo": "bar", "numbers": [1, 2, 3]}
+        self.cache.set("sample-key", sample_data)
+        request = self.factory.get("/visualizations/data/sample-key/")
+        response = self.view(request, name="sample-key")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/json")
+        data = json.loads(response.content)
+        self.assertEqual(data, sample_data)
