@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
         name: 'asset-status-by-campaign',
         canvasId: 'asset-status-by-campaign',
         chartType: 'bar',
-        title: 'Asset Status by Campaign (Active Campaigns)',
+        title: 'Page Status by Campaign (Active Campaigns)',
         xLabel: 'Campaign',
-        yLabel: 'Asset Count',
+        yLabel: 'Page Count',
         buildDataset: (payload) => {
             const fullNames = payload.campaign_names;
             const shortLabels = fullNames.map((name) =>
