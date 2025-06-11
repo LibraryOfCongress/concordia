@@ -18,7 +18,7 @@ OPENSEARCH_DSL = {
         "hosts": [
             {"scheme": "https", "host": os.getenv("OPENSEARCH_ENDPOINT"), "port": 9201}
         ],
-        "http_auth": ("admin", "admin"),
+        "http_auth": ("admin", os.environ.get("OPENSEARCH_INITIAL_ADMIN_PASSWORD", "")),
         "timeout": 120,
     },
 }
