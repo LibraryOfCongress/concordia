@@ -2096,6 +2096,10 @@ figure.error-figure {
 /*
  * About page
  */
+.blog-chunk {
+    width: 684px;
+}
+
 .about-accordion {
     background-color: $gray-100;
     padding-top: 12px;
@@ -2106,8 +2110,6 @@ figure.error-figure {
 }
 
 .accordion-icon {
-    position: absolute;
-    left: 0;
     color: $blue;
     font-style: normal;
 }
@@ -2118,4 +2120,9 @@ figure.error-figure {
 
 .icon-minus-square::before {
     content: '\f146';
+}
+
+.press-content,
+.publications-content {
+    display: none;
 }
