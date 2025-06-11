@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         name: 'asset-status-overview',
         canvasId: 'asset-status-overview',
         chartType: 'pie',
-        title: 'Asset Status (All Active Campaigns)',
+        title: 'Page Status (Active Campaigns)',
         xLabel: '',
         yLabel: '',
         buildDataset: (payload) => {

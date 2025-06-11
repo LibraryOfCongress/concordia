@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: payload.labels,
                     datasets: payload.transcription_datasets,
                 },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                    },
+                },
             };
         },
     });
