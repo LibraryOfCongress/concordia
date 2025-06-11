@@ -10,7 +10,7 @@ from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.management import call_command
 from django.db import transaction
@@ -39,6 +39,7 @@ from concordia.models import (
     Tag,
     Topic,
     Transcription,
+    TranscriptionStatus,
     UserAssetTagCollection,
     UserProfileActivity,
     _update_useractivity_cache,
@@ -1597,3 +1598,160 @@ def renew_next_asset_cache(self):
         clean_next_transcribable_for_topic.delay(topic_id=topic.id)
         logger.info("Spawning clean_next_reviewable_for_topic for %s", topic)
         clean_next_reviewable_for_topic.delay(topic_id=topic.id)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_asset_status_visualization_cache(self):
+    """
+    Queries live Asset objects for all ACTIVE campaigns and builds two datasets:
+        0. Both include:
+            - `status_labels`: [
+                    "Not Started",
+                    "In Progress",
+                    "Needs Review",
+                    "Completed"
+                ]
+
+        1. "asset-status-overview" - the overview data, containing:
+            - `total_counts`:  [
+                    count_not_started,
+                    count_in_progress,
+                    count_submitted,
+                    count_completed
+                ]
+
+        2. "asset-status-by-campaign" - the per-campaign data, containing:
+            - `campaign_names`:       [ "Campaign A", "Campaign B", … ]
+            - `per_campaign_counts`:  {
+                "not_started": [count_for_A, count_for_B, …],
+                "in_progress": [ … ],
+                "submitted":   [ … ],
+                "completed":   [ … ],
+            }
+
+    Both go into the "visualization_cache".
+    """
+    visualization_cache = caches["visualization_cache"]
+
+    campaigns = Campaign.objects.active().order_by("ordering", "title")
+
+    campaign_ids = [campaign.id for campaign in campaigns]
+    campaign_titles = [campaign.title for campaign in campaigns]
+
+    status_keys = [key for key, label in TranscriptionStatus.CHOICES]
+    status_labels = [TranscriptionStatus.CHOICE_MAP[key] for key in status_keys]
+
+    percampaign_qs = (
+        Asset.objects.filter(campaign__in=campaign_ids)
+        .values("campaign_id", "transcription_status")
+        .annotate(cnt=Count("id"))
+    )
+
+    per_lookup = {idx: {} for idx in campaign_ids}
+    for entry in percampaign_qs:
+        campaign_id = entry["campaign_id"]
+        status = entry["transcription_status"]
+        per_lookup[campaign_id][status] = entry["cnt"]
+
+    total_counts = []
+    for status in status_keys:
+        total = sum(
+            per_lookup[campaign_id].get(status, 0) for campaign_id in campaign_ids
+        )
+        total_counts.append(total)
+
+    per_campaign_counts = {key: [] for key in status_keys}
+    for campaign_id in campaign_ids:
+        for status in status_keys:
+            per_campaign_counts[status].append(per_lookup[campaign_id].get(status, 0))
+
+    overview_payload = {
+        "status_labels": status_labels,
+        "total_counts": total_counts,
+    }
+    visualization_cache.set("asset-status-overview", overview_payload, None)
+
+    by_campaign_payload = {
+        "status_labels": status_labels,
+        "campaign_names": campaign_titles,
+        "per_campaign_counts": per_campaign_counts,
+    }
+    visualization_cache.set("asset-status-by-campaign", by_campaign_payload, None)
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def populate_daily_activity_visualization_cache(self):
+    data = {}
+    # Fetch the seven distinct report‐dates for active campaigns,
+    # starting seven days back to make sure we have full data
+    last_seven_dates = SiteReport.objects.filter(
+        campaign__status=Campaign.Status.ACTIVE
+    ).dates("created_on", "day", order="DESC")[:7]
+    last_seven_dates = sorted(last_seven_dates)
+
+    # Convert to "YYYY-MM-DD" strings for the x-axis
+    date_strings = [d.strftime("%Y-%m-%d") for d in last_seven_dates]
+
+    active_campaigns = list(Campaign.objects.active())
+
+    reports = SiteReport.objects.filter(
+        campaign__in=active_campaigns, created_on__date__in=last_seven_dates
+    ).select_related("campaign")
+
+    # Create a lookup dict to make retrieving the data we need easier
+    report_lookup = {
+        (report.campaign_id, report.created_on.date()): report for report in reports
+    }
+
+    transcription_datasets = []
+    for campaign in active_campaigns:
+        # 1) Find the most recent SiteReport BEFORE our first date, if any
+        first_date = last_seven_dates[0]
+        prev_sitereport = (
+            SiteReport.objects.filter(
+                campaign=campaign, created_on__date__lt=first_date
+            )
+            .order_by("-created_on")
+            .first()
+        )
+        prev_cumulative = prev_sitereport.transcriptions_saved if prev_sitereport else 0
+
+        campaign_row = []
+        running_prev = prev_cumulative
+
+        for report_date in last_seven_dates:
+            sitereport = report_lookup.get((campaign.id, report_date))
+            if sitereport:
+                cumulative = sitereport.transcriptions_saved or 0
+                # daily_transcriptions_saved = difference between today and yesterday
+                daily_saved = cumulative - running_prev
+                # clamp at 0 if something odd happened
+                if daily_saved < 0:
+                    daily_saved = 0
+                running_prev = cumulative
+                # We don't need to do anything special with these
+                # since review actions are already daily
+                daily_review = sitereport.daily_review_actions or 0
+                campaign_row.append(daily_saved + daily_review)
+            else:
+                # no report for that date
+                campaign_row.append(0)
+
+        transcription_datasets.append(
+            {
+                "label": campaign.title,
+                "data": campaign_row,
+            }
+        )
+
+    data.update(
+        {
+            "labels": date_strings,
+            "transcription_datasets": transcription_datasets,
+        }
+    )
+    caches["visualization_cache"].set(
+        "daily-transcription-activity-by-campaign", data, None
+    )

@@ -1,11 +1,14 @@
 import logging
 import random
+from typing import Any
 from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import User
+from django.db.models import QuerySet
 from django.db.transaction import atomic
-from django.http import Http404
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -13,6 +16,7 @@ from django.views.decorators.cache import never_cache
 
 from concordia.api_views import APIDetailView
 from concordia.forms import TurnstileForm
+from concordia.logging import ConcordiaLogger
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
@@ -42,26 +46,50 @@ from concordia.utils.next_asset import (
 from .utils import AnonymousUserValidationCheckMixin
 
 logger = logging.getLogger(__name__)
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 @method_decorator(never_cache, name="dispatch")
 class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
     """
-    Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
+    Display details for a single asset and handle missing assets.
+
+    Handles GET and POST requests by retrieving the published Asset matching
+    the campaign, project and item.
+
+    Uses AnonymousUserValidationCheckMixin for anonymous-user validation and
+    APIDetailView for API-driven detail behavior. Overrides dispatch to log
+    and redirect to the parent campaign page if the asset is not found.
+
+    Attributes:
+        template_name (str): Template used to render the asset detail page.
+
+    Returns:
+        HttpResponse: Renders the asset detail template with context, or issues
+            a redirect response to the campaign page when the asset is missing.
     """
 
     template_name = "transcriptions/asset_detail.html"
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
             return super().dispatch(request, *args, **kwargs)
         except Http404:
+            structured_logger.info(
+                "AssetDetailView: asset not found, redirecting to campaign page.",
+                event_code="asset_detail_not_found_redirect",
+                user=request.user,
+                campaign_slug=self.kwargs.get("campaign_slug"),
+                project_slug=self.kwargs.get("project_slug"),
+                item_id=self.kwargs.get("item_id"),
+                asset_slug=self.kwargs.get("slug"),
+            )
             campaign = get_object_or_404(
                 Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
             )
             return redirect(campaign)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Asset]:
         asset_qs = Asset.objects.published().filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
             item__project__slug=self.kwargs["project_slug"],
@@ -72,20 +100,59 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
 
         return asset_qs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
-        Handle the GET request
-        :param kws:
-        :return: dictionary of items used in the template
+        Build the context for the asset detail template.
+
+        Constructs a dictionary with the following entries:
+
+        Context Format:
+            - `asset` (Asset): The Asset instance being viewed.
+            - `item` (Item): Parent Item of the asset.
+            - `project` (Project): Parent Project of the item.
+            - `campaign` (Campaign): Campaign containing the project.
+            - `transcription` (Transcription | None): Latest transcription or None.
+            - `next_open_asset_url` (str): URL to the next transcribable asset.
+            - `next_review_asset_url` (str): URL to the next reviewable asset.
+            - `transcription_status` (str): One of the keys from TranscriptionStatus.
+            - `activity_mode` (str): `"transcribe"` or `"review"`, based on status.
+            - `disable_ocr` (bool): Whether OCR should be disabled for this asset.
+            - `previous_asset_url` (str | None): URL to the previous asset, if any.
+            - `next_asset_url` (str | None): URL to the next asset, if any.
+            - `asset_navigation` (list[tuple[int, str]]): Sequence/slug pairs for nav.
+            - `thumbnail_url` (str): URL of the asset's thumbnail image.
+            - `current_asset_url` (str): Absolute URL of this asset detail view.
+            - `tags` (list[str]): Sorted list of tag values applied to the asset.
+            - `registered_contributors` (int): Number of users who contributed.
+            - `cards` (list[Card]): Tutorial cards for the campaign or default set.
+            - `guides` (QuerySet[dict[str, Any]] | None): Tutorial guide entries.
+            - `languages` (list[tuple[str, str]]): Supported language code/name pairs.
+            - `undo_available` (bool): Whether a rollback is possible.
+            - `redo_available` (bool): Whether a rollforward is possible.
+            - `turnstile_form` (TurnstileForm): Form for the Turnstile widget.
+
+        Returns:
+            dict[str, Any]: Context data for rendering the asset detail page.
         """
 
         ctx = super().get_context_data(**kwargs)
         asset = ctx["asset"]
+        # Bind a new logger so asset and user are always included
+        context_logger = structured_logger.bind(user=self.request.user, asset=asset)
+        context_logger.info(
+            "AssetDetailView: building context.",
+            event_code="asset_detail_context_start",
+        )
         ctx["item"] = item = asset.item
         ctx["project"] = project = item.project
         ctx["campaign"] = project.campaign
 
         transcription = asset.transcription_set.order_by("-pk").first()
+        context_logger.debug(
+            "AssetDetailView: latest transcription selected.",
+            event_code="asset_detail_latest_transcription",
+            transcription=transcription,
+        )
         ctx["transcription"] = transcription
 
         ctx["next_open_asset_url"] = "%s?%s" % (
@@ -119,6 +186,13 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
             transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
 
+        context_logger.debug(
+            "AssetDetailView: computed transcription status.",
+            event_code="asset_detail_transcription_status",
+            computed_status=transcription_status,
+            asset_status=asset.transcription_status,
+        )
+
         if (
             transcription_status == TranscriptionStatus.NOT_STARTED
             or transcription_status == TranscriptionStatus.IN_PROGRESS
@@ -142,6 +216,12 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
             .order_by("sequence")
             .first()
         )
+        context_logger.debug(
+            "AssetDetailView: asset navigation resolved.",
+            event_code="asset_detail_navigation",
+            previous_asset_id=getattr(previous_asset, "pk", None),
+            next_asset_id=getattr(next_asset, "pk", None),
+        )
         if previous_asset:
             ctx["previous_asset_url"] = previous_asset.get_absolute_url()
         if next_asset:
@@ -161,6 +241,11 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
             thumbnail_url = thumbnail_url.replace("/pct:100/", "/!512,512/")
         else:
             thumbnail_url = image_url
+        context_logger.debug(
+            "AssetDetailView: thumbnail URL determined.",
+            event_code="asset_detail_thumbnail",
+            thumbnail_url=thumbnail_url,
+        )
         ctx["thumbnail_url"] = thumbnail_url
 
         ctx["current_asset_url"] = self.request.build_absolute_uri()
@@ -197,10 +282,18 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
 
         ctx["turnstile_form"] = TurnstileForm(auto_id=False)
 
+        context_logger.info(
+            "AssetDetailView: context ready.",
+            event_code="asset_detail_context_ready",
+            transcription=transcription,
+            transcription_status=transcription_status,
+        )
         return ctx
 
 
-def redirect_to_next_asset(asset, mode, request, user):
+def redirect_to_next_asset(
+    asset: Asset | None, mode: str, request: HttpRequest, user: User
+) -> HttpResponseRedirect:
     """
     Redirects the user to the appropriate asset view or the homepage if no asset is
     available.
@@ -220,7 +313,13 @@ def redirect_to_next_asset(asset, mode, request, user):
     Returns:
         HttpResponseRedirect: Redirect to the asset or homepage.
     """
-
+    structured_logger.info(
+        "Starting redirect to next asset.",
+        event_code="redirect_next_asset_start",
+        user=user,
+        mode=mode,
+        asset=asset,
+    )
     reservation_token = get_or_create_reservation_token(request)
     if asset:
         # We previously created reservations for transcriptions
@@ -236,6 +335,12 @@ def redirect_to_next_asset(asset, mode, request, user):
         )
         res.full_clean()
         res.save()
+        structured_logger.info(
+            "Asset reserved and redirecting to asset detail view.",
+            event_code="redirect_next_asset_success",
+            asset=asset,
+            user=user,
+        )
         remove_next_asset_objects(asset.id)
         return redirect(
             "transcriptions:asset-detail",
@@ -246,7 +351,15 @@ def redirect_to_next_asset(asset, mode, request, user):
         )
     else:
         no_pages_message = f"There are no remaining pages to {mode}."
-
+        structured_logger.warning(
+            "No available asset to redirect to.",
+            event_code="redirect_next_asset_empty",
+            reason="There were no eligible assets found to assign to the user.",
+            reason_code="no_asset_available",
+            asset=asset,
+            user=user,
+            mode=mode,
+        )
         messages.info(request, no_pages_message)
 
         return redirect("homepage")
@@ -254,7 +367,7 @@ def redirect_to_next_asset(asset, mode, request, user):
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_asset(request):
+def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedirect:
     """
     Attempts to redirect the user to a reviewable asset from any active reviewable
     campaign.
@@ -265,7 +378,11 @@ def redirect_to_next_reviewable_asset(request):
     Returns:
         HttpResponseRedirect: Redirect to the selected asset or homepage.
     """
-
+    structured_logger.info(
+        "Entered redirect_to_next_reviewable_asset view.",
+        event_code="redirect_reviewable_entry",
+        user=request.user,
+    )
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
@@ -278,24 +395,48 @@ def redirect_to_next_reviewable_asset(request):
         .get_next_review_campaigns()
         .values_list("id", flat=True)
     )
-
+    structured_logger.debug(
+        "Fetched candidate campaign IDs for reviewable assets.",
+        event_code="redirect_reviewable_campaign_ids",
+        user=user,
+        campaign_ids=campaign_ids,
+    )
     asset = None
     if campaign_ids:
         random.shuffle(campaign_ids)  # nosec
     else:
         logger.info("No configured reviewable campaigns")
+        structured_logger.info(
+            "No configured reviewable campaigns.",
+            event_code="redirect_reviewable_no_campaigns",
+            user=user,
+        )
 
     for campaign_id in campaign_ids:
         try:
             campaign = Campaign.objects.get(id=campaign_id)
         except IndexError:
             logger.error("Next reviewable campaign %s not found", campaign_id)
+            structured_logger.error(
+                "Failed to retrieve next reviewable campaign by ID.",
+                event_code="redirect_reviewable_campaign_missing",
+                reason="Reviewable campaign with specified ID not found",
+                reason_code="reviewable_campaign_not_found",
+                user=user,
+                campaign_id=campaign_id,
+            )
             continue
         asset = find_reviewable_campaign_asset(campaign, user)
         if asset:
             break
         else:
             logger.info("No reviewable assets found in %s", campaign)
+            structured_logger.info(
+                "No reviewable assets found in campaign.",
+                event_code="redirect_reviewable_campaign_empty_primary",
+                user=user,
+                campaign=campaign,
+            )
 
     if not asset:
         for campaign in (
@@ -310,12 +451,24 @@ def redirect_to_next_reviewable_asset(request):
                 break
             else:
                 logger.info("No reviewable assets found in %s", campaign)
+                structured_logger.info(
+                    "No reviewable assets found in campaign.",
+                    event_code="redirect_reviewable_campaign_empty_fallback",
+                    user=user,
+                    campaign=campaign,
+                )
+    structured_logger.info(
+        "Redirecting to next reviewable asset.",
+        event_code="redirect_reviewable_success",
+        user=user,
+        asset=asset,
+    )
     return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request):
+def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRedirect:
     """
     Attempts to redirect the user to a transcribable asset from any active transcription
     campaign.
@@ -326,7 +479,11 @@ def redirect_to_next_transcribable_asset(request):
     Returns:
         HttpResponseRedirect: Redirect to the selected asset or homepage.
     """
-
+    structured_logger.info(
+        "Entered redirect_to_next_transcribable_asset view.",
+        event_code="redirect_transcribable_entry",
+        user=request.user,
+    )
     campaign_ids = list(
         Campaign.objects.active()
         .listed()
@@ -334,24 +491,48 @@ def redirect_to_next_transcribable_asset(request):
         .get_next_transcription_campaigns()
         .values_list("id", flat=True)
     )
-
+    structured_logger.debug(
+        "Fetched candidate campaign IDs for transcribable assets.",
+        event_code="redirect_transcribable_campaign_ids",
+        user=request.user,
+        campaign_ids=campaign_ids,
+    )
     asset = None
     if campaign_ids:
         random.shuffle(campaign_ids)  # nosec
     else:
         logger.info("No configured transcribable campaigns")
+        structured_logger.info(
+            "No configured transcribable campaigns.",
+            event_code="redirect_transcribable_no_campaigns",
+            user=request.user,
+        )
 
     for campaign_id in campaign_ids:
         try:
             campaign = Campaign.objects.get(id=campaign_id)
         except IndexError:
             logger.error("Next transcribable campaign %s not found", campaign_id)
+            structured_logger.error(
+                "Next transcribable campaign ID not found.",
+                event_code="redirect_transcribable_campaign_missing",
+                reason="Transcribable campaign with specified ID not found",
+                reason_code="transcribable_campaign_not_found",
+                user=request.user,
+                campaign_id=campaign_id,
+            )
             continue
         asset = find_transcribable_campaign_asset(campaign)
         if asset:
             break
         else:
             logger.info("No transcribable assets found in %s", campaign)
+            structured_logger.info(
+                "No transcribable assets found in campaign.",
+                event_code="redirect_transcribable_campaign_empty_primary",
+                user=request.user,
+                campaign=campaign,
+            )
 
     if not asset:
         for campaign in (
@@ -366,16 +547,35 @@ def redirect_to_next_transcribable_asset(request):
                 break
             else:
                 logger.info("No transcribable assets found in %s", campaign)
+                structured_logger.info(
+                    "No transcribable assets found in campaign (fallback loop).",
+                    event_code="redirect_transcribable_campaign_empty_fallback",
+                    user=request.user,
+                    campaign=campaign,
+                )
 
     if not asset:
         logger.info("No transcribable assets found in any campaign")
+        structured_logger.info(
+            "No transcribable assets found in any campaign.",
+            event_code="redirect_transcribable_no_assets_anywhere",
+            user=request.user,
+        )
 
+    structured_logger.info(
+        "Redirecting to next transcribable asset.",
+        event_code="redirect_transcribable_success",
+        user=request.user,
+        asset=asset,
+    )
     return redirect_to_next_asset(asset, "transcribe", request, request.user)
 
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
+def redirect_to_next_reviewable_campaign_asset(
+    request: HttpRequest, *, campaign_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next reviewable asset within a specified campaign.
 
@@ -391,12 +591,26 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
     Returns:
         HttpResponseRedirect: Redirect to the selected asset or homepage.
     """
-
+    structured_logger.info(
+        "Entered redirect_to_next_reviewable_campaign_asset view.",
+        event_code="redirect_reviewable_campaign_entry",
+        user=request.user,
+        campaign_slug=campaign_slug,
+    )
     # Campaign is specified: may be listed or unlisted
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_pk = request.GET.get("asset", 0)
+    structured_logger.debug(
+        "Parsed query parameters for reviewable asset redirection.",
+        event_code="redirect_reviewable_campaign_query_params",
+        user=request.user,
+        campaign=campaign,
+        project_slug=project_slug,
+        item_id=item_id,
+        asset_pk=asset_pk,
+    )
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -409,13 +623,22 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
     asset = find_next_reviewable_campaign_asset(
         campaign, request.user, project_slug, item_id, asset_pk
     )
-
+    structured_logger.info(
+        "Redirecting to next reviewable asset in campaign.",
+        event_code="redirect_reviewable_campaign_success",
+        user=user,
+        request_user=request.user,
+        asset=asset,
+        campaign=campaign,  # We log campaign because asset might be None
+    )
     return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
+def redirect_to_next_transcribable_campaign_asset(
+    request: HttpRequest, *, campaign_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next transcribable asset within a specified campaign.
 
@@ -431,12 +654,26 @@ def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
     Returns:
         HttpResponseRedirect: Redirect to the selected asset or homepage.
     """
-
+    structured_logger.info(
+        "Entered redirect_to_next_transcribable_campaign_asset view.",
+        event_code="redirect_transcribable_campaign_entry",
+        user=request.user,
+        campaign_slug=campaign_slug,
+    )
     # Campaign is specified: may be listed or unlisted
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_pk = request.GET.get("asset", 0)
+    structured_logger.debug(
+        "Parsed query parameters for transcribable asset redirection.",
+        event_code="redirect_transcribable_campaign_query_params",
+        user=request.user,
+        campaign=campaign,
+        project_slug=project_slug,
+        item_id=item_id,
+        asset_pk=asset_pk,
+    )
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -446,13 +683,21 @@ def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
     asset = find_next_transcribable_campaign_asset(
         campaign, project_slug, item_id, asset_pk
     )
-
+    structured_logger.info(
+        "Redirecting to next transcribable asset in campaign.",
+        event_code="redirect_transcribable_campaign_success",
+        user=user,
+        asset=asset,
+        campaign=campaign,  # We log campaign because asset may be None
+    )
     return redirect_to_next_asset(asset, "transcribe", request, user)
 
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
+def redirect_to_next_reviewable_topic_asset(
+    request: HttpRequest, *, topic_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next reviewable asset within a specified topic.
 
@@ -468,11 +713,26 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
     Returns:
         HttpResponseRedirect: Redirect to the selected asset or homepage.
     """
+    structured_logger.info(
+        "Entered redirect_to_next_reviewable_topic_asset view.",
+        event_code="redirect_reviewable_topic_entry",
+        user=request.user,
+        topic_slug=topic_slug,
+    )
     # Topic is specified: may be listed or unlisted
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_pk = request.GET.get("asset", 0)
+    structured_logger.debug(
+        "Parsed query parameters for reviewable topic redirection.",
+        event_code="redirect_reviewable_topic_query_params",
+        user=request.user,
+        topic=topic,
+        project_slug=project_slug,
+        item_id=item_id,
+        asset_pk=asset_pk,
+    )
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -485,13 +745,23 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
     asset = find_next_reviewable_topic_asset(
         topic, request.user, project_slug, item_id, asset_pk
     )
+    structured_logger.info(
+        "Redirecting to next reviewable asset in topic.",
+        event_code="redirect_reviewable_topic_success",
+        user=user,
+        request_user=request.user,
+        asset=asset,
+        topic=topic,
+    )
 
     return redirect_to_next_asset(asset, "review", request, user)
 
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
+def redirect_to_next_transcribable_topic_asset(
+    request: HttpRequest, *, topic_slug: str
+) -> HttpResponseRedirect:
     """
     Redirects the user to the next transcribable asset within a specified topic.
 
@@ -507,12 +777,26 @@ def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
     Returns:
         HttpResponseRedirect: Redirect to the selected asset or homepage.
     """
-
+    structured_logger.info(
+        "Entered redirect_to_next_transcribable_topic_asset view.",
+        event_code="redirect_transcribable_topic_entry",
+        user=request.user,
+        topic_slug=topic_slug,
+    )
     # Topic is specified: may be listed or unlisted
     topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_pk = request.GET.get("asset", 0)
+    structured_logger.debug(
+        "Parsed query parameters for transcribable topic redirection.",
+        event_code="redirect_transcribable_topic_query_params",
+        user=request.user,
+        topic=topic,
+        project_slug=project_slug,
+        item_id=item_id,
+        asset_pk=asset_pk,
+    )
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -520,5 +804,11 @@ def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
         user = request.user
 
     asset = find_next_transcribable_topic_asset(topic, project_slug, item_id, asset_pk)
-
+    structured_logger.info(
+        "Redirecting to next transcribable asset in topic.",
+        event_code="redirect_transcribable_topic_success",
+        user=user,
+        asset=asset,
+        topic=topic,
+    )
     return redirect_to_next_asset(asset, "transcribe", request, user)
