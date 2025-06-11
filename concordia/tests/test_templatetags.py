@@ -1,6 +1,8 @@
 from django.http import QueryDict
 from django.template import Context, Template
-from django.test import TestCase
+from django.templatetags.static import static
+from django.test import TestCase, override_settings
+from django.utils.html import escape
 
 from concordia.models import TranscriptionStatus
 from concordia.templatetags.concordia_filtering_tags import transcription_status_filters
@@ -9,6 +11,7 @@ from concordia.templatetags.truncation import (
     WordBreakTruncator,
     truncatechars_on_word_break,
 )
+from concordia.templatetags.visualization import concordia_visualization
 
 
 class TestTemplateTags(TestCase):
@@ -90,3 +93,47 @@ class TestTemplateTags(TestCase):
             base_template + "{% qs_alter data add_if_missing:bar='newvalue' %}"
         ).render(Context({"data": data}))
         self.assertEqual(out, "bar=baz&amp;bar=foo&amp;baz=taz")
+
+
+@override_settings(
+    STATICFILES_STORAGE="django.contrib.staticfiles.storage.StaticFilesStorage"
+)
+class VisualizationTagsTests(TestCase):
+    def test_without_attrs_renders_section_and_script(self):
+        # No attributes: should render a plain <section> and matching <script>
+        result = concordia_visualization("daily-activity")
+        expected_section = '<section><canvas id="daily-activity"></canvas></section>'
+        expected_script = '<script type="module" src="{}"></script>'.format(
+            static("js/visualizations/daily-activity.js")
+        )
+        self.assertHTMLEqual(result, expected_section + expected_script)
+
+    def test_with_attrs_and_escaping(self):
+        # Attributes that include characters needing HTML escaping
+        attrs = {"style": "width:100%;", "data-info": "<alert>"}
+        result = concordia_visualization("chart1", **attrs)
+
+        escaped_value = escape("<alert>")
+        expected_section = (
+            f'<section style="width:100%;" data-info="{escaped_value}">'  # attrs
+            f'<canvas id="chart1"></canvas>'
+            f"</section>"
+        )
+        expected_script = '<script type="module" src="{}"></script>'.format(
+            static("js/visualizations/chart1.js")
+        )
+        self.assertHTMLEqual(result, expected_section + expected_script)
+
+    def test_name_escaping_in_id_and_script_src(self):
+        # Name contains characters needing HTML escaping
+        name = 'x"><script>alert(1)</script>'
+        result = concordia_visualization(name)
+
+        # The id attribute must have the name escaped
+        escaped_id = escape(name)
+        self.assertIn(f'id="{escaped_id}"', result)
+
+        # The script src must also be escaped
+        raw_src = static(f"js/visualizations/{name}.js")
+        escaped_src = escape(raw_src)
+        self.assertIn(f'src="{escaped_src}"', result)
