@@ -48,7 +48,7 @@ OPENSEARCH_DSL = {
     "default": {"hosts": "localhost:9200"},
     "secure": {
         "hosts": [{"scheme": "https", "host": "192.30.255.112", "port": 9201}],
-        "http_auth": ("admin", "admin"),
+        "http_auth": ("admin", os.environ.get("OPENSEARCH_INITIAL_ADMIN_PASSWORD", "")),
         "timeout": 120,
     },
 }
