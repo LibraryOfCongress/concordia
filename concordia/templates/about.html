@@ -1,6 +1,12 @@
 {% extends "static-page.html" %}
 
 {% load humanize %}
+{% load staticfiles %}
+
+{% block head_content %}
+    {{ block.super }}
+    <script type="module" src="{% static 'js/about-accordions.js' %}"></script>
+{% endblock head_content %}
 
 {% block main_content %}
     <div class="container">
@@ -53,11 +59,11 @@
                     <div class="row">
                         {% include "fragments/featured_blog_posts.html" %}
                     </div>
-                    <div class="row about-accordion">
+                    <div class="row about-accordion toggle-publications">
                         <h3>
-                            <a href="#">Publications <i class="icon accordion-icon fa-plus-square"></i></a>
+                            <a><i class="icon accordion-icon fa fa-plus-square"></i> Publications</a>
                         </h3>
-                        <div class="collapse expand-more" id="collapsePublications">
+                        <div class="publications-content" id="collapsePublications">
                             _International Journal of Digital Humanities_,
                             October 23, 2024,
                             **[Giving back, learning, relaxing, and having fun: personal motivations and impacts of a virtual volunteer transcription program.](https://rdcu.be/dXXRs)**
@@ -75,53 +81,50 @@
                             **["And the Crowd Goes Wild!” Crowdsourcing Baseball History at the Library of Congress.](https://mydigitalpublication.com/publication/?i=623810#{%22issue_id%22:623810,%22page%22:6})**
                         </div>
                     </div>
-                    <div class="row about-accordion" id="collapsePressCoverage">
+                    <div class="row about-accordion toggle-press" id="collapsePressCoverage">
                         <h3>
-                            <a href="#">Press coverage <i class="icon accordion-icon fa-plus-square"></i></a>
+                            <a><i class="icon accordion-icon fa fa-plus-square"></i> Press coverage</a>
                         </h3>
-                        ---
-                        **Want to get in touch?** Please review our <a href="https://ask.loc.gov/crowd/search/?t=0&g%5B%5D=11779&q=">frequently asked questions (FAQs)</a> and visit our <a href="https://ask.loc.gov/crowd/search/?t=0&g%5B%5D=11779&q=">getting started guide</a>. Additional questions can be sent to us via <a href="https://ask.loc.gov/crowd">Ask A Librarian</a>.
-
-                        **Press inquiries?** Connect with the Library of Congress Office of Communications via <a href="mailto:news@loc.gov">news@loc.gov</a> and include “By the People transcription” in the subject line.
-
-                        Check out some of our press coverage to read what others are saying:
-
-                        <ul>
-                            <li>The Mankato Free Press, March 22, 2024, <a href="https://www.mankatofreepress.com/news/lifestyles/chalk-one-up-for-those-of-us-who-can-write-in-and-read-cursive/article_a1e46a24-e858-11ee-a6e5-530081e09619.html">Chalk one up for those of us who can write in - and read - cursive</a>
-                            </li>
-                            <li>NBC News, March 9, 2024, <a href="https://www.youtube.com/watch?v=s66RzMmSlNo">Transcribing our oldest documents for Library of Congress</a>
-                            </li>
-                            <li>The Post and Courier, April 4, 2023, <a href="https://www.postandcourier.com/news/library-of-congress-crowd-sourcing-info-about-1865-sc-petition-for-voting-rights/article_baf96590-d252-11ed-a9ca-ff75792a9b2e.html">Library of Congress crowd-sourcing info about 1865 SC petition for voting rights</a>
-                            </li>
-                            <li>Mental Floss, May 14, 2021, <a href="https://www.mentalfloss.com/article/646487/transcribe-clara-barton-papers-library-of-congress?fbclid=IwAR1-gJdgdUkLgxdz14EaSBF3Ov9xKLEiZED5O4zkiMh_rH7SpGxxf6UwI84">The Library of Congress Needs Your Help Transcribing Clara Barton's Diaries, Correspondences, and Other Rarely Seen Papers</a>
-                            </li>
-                            <li>Mental Floss, March 8, 2021, <a href="https://www.mentalfloss.com/article/643536/library-congress-needs-help-transcribing-james-garfields-diaries">The Library of Congress Needs Your Help Transcribing James Garfield’s Diaries</a>
-                            </li>
-                            <li>Smithsonian Magazine, December 4, 2020, <a href="https://www.smithsonianmag.com/smart-news/library-congress-asks-volunteers-transcribe-letters-theodore-roosevelt-180976458/">Library of Congress Seeks Volunteers to Transcribe Letters to Theodore Roosevelt</a>
-                            </li>
-                            <li>Mental Floss, December 1, 2020, <a href="https://www.mentalfloss.com/article/637883/help-transcribe-theodore-roosevelts-correspondence">The Library of Congress Needs Help Transcribing More Than 20,000 Letters Written to Teddy Roosevelt</a>
-                            </li>
-                            <li> Federal News Network, August 25, 2020, <a href="https://federalnewsnetwork.com/congress/2020/08/library-of-congress-enlisting-volunteers-to-help-transcribe-documents">Library of Congress enlisting volunteers to help transcribe documents</a>
-                            </li>
-                            <li>The Washington Post, August 10, 2020, <a href="https://www.washingtonpost.com/history/2020/08/10/letters-abraham-lincoln-library-of-congress">Lincoln’s mail included advice, warnings and a call to shoot deserters</a>
-                            </li>
-                            <li>Fox 10 Phoenix, February 6, 2020, <a href="https://www.fox10phoenix.com/news/by-the-people-crowdsourcing-project-aims-to-transcribe-legendary-civil-rights-leader-rosa-parks-papers">‘By the People’ crowdsourcing project aims to transcribe legendary civil rights leader Rosa Parks’ papers</a>
-                            </li>
-                            <li>Mental Floss, July 31, 2019, <a href="http://mentalfloss.com/article/593040/library-congress-needs-help-transcribing-suffragist-documents">The Library of Congress Needs Help Transcribing 16,000 Pages of Suffragist Diaries, Letters, and Documents</a>
-                            </li>
-                            <li>Smithsonian Magazine, July 30, 2019, <a href="https://www.smithsonianmag.com/smart-news/library-congress-needs-your-help-transcribing-suffragist-papers-1-180972677">The Library of Congress Needs Your Help Transcribing Suffragist Papers</a>
-                            </li>
-                            <li>Washington Post Magazine, June 17, 2019, <a href="https://www.washingtonpost.com/lifestyle/magazine/the-national-archives-has-billions-of-handwritten-documents-with-cursive-skills-declining-how-will-we-read-them/2019/06/14/cbc44028-5c92-11e9-9625-01d48d50ef75_story.html">The National Archives has billions of handwritten documents. With cursive skills declining, how will we read them?</a>
-                            </li>
-                            <li> Wired, April 14, 2019, <a href="https://www.wired.com/story/why-we-love-tech-better-humans/">Tech that connects us -- And makes us better humans</a>
-                            </li>
-                        </ul>
-
-                        ## Program history
-                        ---
-                        The <i>By the People</i> crowdsourced transcription program was launched as a pilot by the <a href="https://labs.loc.gov/work/experiments/crowd/">LC Labs team</a> on October 24, 2018. Our transcription platform, <a href="https://github.com/LibraryOfCongress/concordia">Concordia</a>, is open source and is proudly developed in-house by the Library of Congress.
-
-                        Our name comes from the closing line of President Abraham Lincoln’s <a href="https://guides.loc.gov/gettysburg-address">Gettysburg Address</a>, which states “...government of the people, by the people, for the people, shall not perish from the earth." It reflects the spirit of democracy of this transcription program, which asks you to join us in enhancing Library of Congress digital collections.
+                        <div class="press-content">
+                            <p>Want to get in touch?** Please review our <a href="https://ask.loc.gov/crowd/search/?t=0&g%5B%5D=11779&q=">frequently asked questions (FAQs)</a> and visit our <a href="https://ask.loc.gov/crowd/search/?t=0&g%5B%5D=11779&q=">getting started guide</a>. Additional questions can be sent to us via <a href="https://ask.loc.gov/crowd">Ask A Librarian</a>.</p>
+                            <p>Press inquiries?** Connect with the Library of Congress Office of Communications via <a href="mailto:news@loc.gov">news@loc.gov</a> and include “By the People transcription” in the subject line.</p>
+                            <p>Check out some of our press coverage to read what others are saying:</p>
+                            <ul>
+                                <li>The Mankato Free Press, March 22, 2024, <a href="https://www.mankatofreepress.com/news/lifestyles/chalk-one-up-for-those-of-us-who-can-write-in-and-read-cursive/article_a1e46a24-e858-11ee-a6e5-530081e09619.html">Chalk one up for those of us who can write in - and read - cursive</a>
+                                </li>
+                                <li>NBC News, March 9, 2024, <a href="https://www.youtube.com/watch?v=s66RzMmSlNo">Transcribing our oldest documents for Library of Congress</a>
+                                </li>
+                                <li>The Post and Courier, April 4, 2023, <a href="https://www.postandcourier.com/news/library-of-congress-crowd-sourcing-info-about-1865-sc-petition-for-voting-rights/article_baf96590-d252-11ed-a9ca-ff75792a9b2e.html">Library of Congress crowd-sourcing info about 1865 SC petition for voting rights</a>
+                                </li>
+                                <li>Mental Floss, May 14, 2021, <a href="https://www.mentalfloss.com/article/646487/transcribe-clara-barton-papers-library-of-congress?fbclid=IwAR1-gJdgdUkLgxdz14EaSBF3Ov9xKLEiZED5O4zkiMh_rH7SpGxxf6UwI84">The Library of Congress Needs Your Help Transcribing Clara Barton's Diaries, Correspondences, and Other Rarely Seen Papers</a>
+                                </li>
+                                <li>Mental Floss, March 8, 2021, <a href="https://www.mentalfloss.com/article/643536/library-congress-needs-help-transcribing-james-garfields-diaries">The Library of Congress Needs Your Help Transcribing James Garfield’s Diaries</a>
+                                </li>
+                                <li>Smithsonian Magazine, December 4, 2020, <a href="https://www.smithsonianmag.com/smart-news/library-congress-asks-volunteers-transcribe-letters-theodore-roosevelt-180976458/">Library of Congress Seeks Volunteers to Transcribe Letters to Theodore Roosevelt</a>
+                                </li>
+                                <li>Mental Floss, December 1, 2020, <a href="https://www.mentalfloss.com/article/637883/help-transcribe-theodore-roosevelts-correspondence">The Library of Congress Needs Help Transcribing More Than 20,000 Letters Written to Teddy Roosevelt</a>
+                                </li>
+                                <li> Federal News Network, August 25, 2020, <a href="https://federalnewsnetwork.com/congress/2020/08/library-of-congress-enlisting-volunteers-to-help-transcribe-documents">Library of Congress enlisting volunteers to help transcribe documents</a>
+                                </li>
+                                <li>The Washington Post, August 10, 2020, <a href="https://www.washingtonpost.com/history/2020/08/10/letters-abraham-lincoln-library-of-congress">Lincoln’s mail included advice, warnings and a call to shoot deserters</a>
+                                </li>
+                                <li>Fox 10 Phoenix, February 6, 2020, <a href="https://www.fox10phoenix.com/news/by-the-people-crowdsourcing-project-aims-to-transcribe-legendary-civil-rights-leader-rosa-parks-papers">‘By the People’ crowdsourcing project aims to transcribe legendary civil rights leader Rosa Parks’ papers</a>
+                                </li>
+                                <li>Mental Floss, July 31, 2019, <a href="http://mentalfloss.com/article/593040/library-congress-needs-help-transcribing-suffragist-documents">The Library of Congress Needs Help Transcribing 16,000 Pages of Suffragist Diaries, Letters, and Documents</a>
+                                </li>
+                                <li>Smithsonian Magazine, July 30, 2019, <a href="https://www.smithsonianmag.com/smart-news/library-congress-needs-your-help-transcribing-suffragist-papers-1-180972677">The Library of Congress Needs Your Help Transcribing Suffragist Papers</a>
+                                </li>
+                                <li>Washington Post Magazine, June 17, 2019, <a href="https://www.washingtonpost.com/lifestyle/magazine/the-national-archives-has-billions-of-handwritten-documents-with-cursive-skills-declining-how-will-we-read-them/2019/06/14/cbc44028-5c92-11e9-9625-01d48d50ef75_story.html">The National Archives has billions of handwritten documents. With cursive skills declining, how will we read them?</a>
+                                </li>
+                                <li> Wired, April 14, 2019, <a href="https://www.wired.com/story/why-we-love-tech-better-humans/">Tech that connects us -- And makes us better humans</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Program history</h3>
+                        <p>The <i>By the People</i> crowdsourced transcription program was launched as a pilot by the <a href="https://labs.loc.gov/work/experiments/crowd/">LC Labs team</a> on October 24, 2018. Our transcription platform, <a href="https://github.com/LibraryOfCongress/concordia">Concordia</a>, is open source and is proudly developed in-house by the Library of Congress.</p>
+                        <p>Our name comes from the closing line of President Abraham Lincoln’s <a href="https://guides.loc.gov/gettysburg-address">Gettysburg Address</a>, which states “...government of the people, by the people, for the people, shall not perish from the earth." It reflects the spirit of democracy of this transcription program, which asks you to join us in enhancing Library of Congress digital collections.</p>
                     </div>
                 </div>
             </div>

@@ -1,19 +1,20 @@
 {% load group_list %}
 <h3>Featured blog posts</h3>
-<div class="carousel">
+<div id="blog-carousel" class="carousel">
     <div class="carouse-inner">
         {% for chunk in blog_posts|slice:":3"|batch:3 %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <div class="row">
+                <div class="row mx-auto blog-chunk">
                     {% for post in chunk %}
                         <div class="col-md-4">
-                            <div class="card h-100">
+                            <div class="h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title">
-                                        <a href="{{ post.link }}">
+                                    <a href="{{ post.link }}">
+                                        <img alt="" width="197" height="132" style="opacity: 1;" src="">
+                                        <h5>
                                             {{ post.title }}
-                                        </a>
-                                    </h5>
+                                        </h5>
+                                    </a>
                                     <p class="card-text">
                                         {{ post.description|safe }}
                                     </p>
@@ -29,11 +30,17 @@
         <span class="" aria-hidden="true"></span>
         <span class="visually-hidden">Previous</span>
     </button>
+    <div class="carousel-indicators">
+        {% for _ in blog_posts %}
+            <button type="button" data-bs-target="blog-carousel" {% if forloop.first %}active{% endif %}>
+            </button>
+        {% endfor %}
+    </div>
     <button class="carousel-control-next" type="button" data-bs-target="" data-bs-slide="next">
         <span class="" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
     </button>
 </div>
-<a href="https://blogs.loc.gov/thesignal/category/by-the-people-transcription-program/">
-    <button>Visit the Library's Signal blog to read more from the By the People team</button>
-</a>
+<div class="text-center">
+    <a class="btn btn-primary text-decoration-none" href="https://blogs.loc.gov/thesignal/category/by-the-people-transcription-program/" target="_blank">Read more</a>
+</div>
