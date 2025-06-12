@@ -68,4 +68,4 @@ class ParserTestCase(TestCase):
         self.assertEqual(feed_items[0]["title"], TITLE)
         self.assertEqual(feed_items[0]["link"], LINK)
         self.assertEqual(feed_items[0]["description"], DESCRIPTION)
-        self.assertEqual(feed_items[0]["og:image"], IMAGE)
+        self.assertEqual(feed_items[0]["og_image"], IMAGE)

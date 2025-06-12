@@ -40,7 +40,7 @@ def fetch_blog_posts():
 
     items = root.find("channel").findall("item")
     feed_items = []
-    for item in items[:18]:
+    for item in items[:6]:
         feed_item = {
             "title": item.find("title").text,
             "description": item.find("description").text,
@@ -48,9 +48,9 @@ def fetch_blog_posts():
         link = item.find("link")
         if link is not None:
             feed_item["link"] = link.text
-            og_image = extract_og_image(link)
+            og_image = extract_og_image(link.text)
             if og_image is not None:
-                feed_item["og:image"] = og_image
+                feed_item["og_image"] = og_image
         feed_items.append(feed_item)
 
     return feed_items
