@@ -1,6 +1,6 @@
 import {ConcordiaVisualization} from 'concordia-visualization';
 
-const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
+const colors = ['#FFFFFF', '#002347', '#E0F6FF', '#257DB1'];
 
 document.addEventListener('DOMContentLoaded', () => {
     const assetStatusByCampaignChart = new ConcordiaVisualization({
@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 label: statusLabels[index],
                 data: payload.per_campaign_counts[key],
                 backgroundColor: colors[index],
+                borderColor: 'black',
+                borderWidth: 2,
             }));
 
             return {
