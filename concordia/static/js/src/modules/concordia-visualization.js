@@ -68,6 +68,10 @@ export class ConcordiaVisualization {
             );
             return;
         }
+        // Set accessibility attributes
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', this.title);
+
         const context = canvas.getContext('2d');
 
         let resp;

@@ -1,6 +1,6 @@
 import {ConcordiaVisualization} from 'concordia-visualization';
 
-const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
+const colors = ['#FFFFFF', '#002347', '#E0F6FF', '#257DB1'];
 
 document.addEventListener('DOMContentLoaded', () => {
     const assetStatusOverviewChart = new ConcordiaVisualization({
@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         {
                             data: payload.total_counts,
                             backgroundColor: colors,
+                            borderColor: 'black',
+                            borderWidth: 2,
                         },
                     ],
                 },
