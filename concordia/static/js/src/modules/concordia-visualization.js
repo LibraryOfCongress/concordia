@@ -69,6 +69,7 @@ export class ConcordiaVisualization {
             return;
         }
         // Set accessibility attributes
+        canvas.tabIndex = 0;
         canvas.setAttribute('role', 'img');
         canvas.setAttribute('aria-label', this.title);
 
@@ -146,10 +147,79 @@ export class ConcordiaVisualization {
         );
 
         // Create the Chart.js chart
-        new Chart(context, {
+        let chart = new Chart(context, {
             type: this.chartType,
             data: data,
             options: finalOptions,
+        });
+
+        // Create a hidden live region for announcing the current slice/bar
+        const live = document.createElement('div');
+        live.id = `${this.canvasId}-live`;
+        live.setAttribute('aria-live', 'polite');
+        Object.assign(live.style, {
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            margin: '-1px',
+            padding: 0,
+            border: 0,
+            clip: 'rect(0 0 0 0)',
+        });
+        canvas.parentNode.insertBefore(live, canvas.nextSibling);
+
+        // Wire up keyboard navigation
+        const meta = chart.getDatasetMeta(0).data; // first dataset's elements
+        let elementIndex = 0;
+
+        // helper to update tooltip and live text
+        function highlight(index) {
+            // build an array of every datasetIndex at this index
+            const elements = chart.data.datasets
+                .map((_unusedValue, datasetIndex) => ({datasetIndex, index}))
+                .filter(({datasetIndex}) => {
+                    // skip if that dataset doesn’t actually have a bar at this index
+                    return !!chart.getDatasetMeta(datasetIndex).data[index];
+                });
+
+            // get a tooltip‐friendly position from one of the elements
+            const {x, y} = chart
+                .getDatasetMeta(elements[0].datasetIndex)
+                .data[index].tooltipPosition();
+
+            // activate them all
+            chart.setActiveElements(elements);
+            chart.tooltip.setActiveElements(elements, {x, y});
+            chart.update();
+
+            // update the live region:
+            live.textContent =
+                `${chart.data.labels[index]} - ` +
+                elements
+                    .map(({datasetIndex}) => {
+                        const ds = chart.data.datasets[datasetIndex];
+                        return `${ds.label}: ${ds.data[index]}`;
+                    })
+                    .join(', ');
+        }
+
+        // initialize on focus
+        canvas.addEventListener('focus', () => {
+            elementIndex = 0;
+            highlight(elementIndex);
+        });
+
+        // arrow‐key handling
+        canvas.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                elementIndex = (elementIndex + 1) % meta.length;
+            } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                elementIndex = (elementIndex - 1 + meta.length) % meta.length;
+            } else {
+                return; // ignore other keys
+            }
+            event.preventDefault();
+            highlight(elementIndex);
         });
     }
 
