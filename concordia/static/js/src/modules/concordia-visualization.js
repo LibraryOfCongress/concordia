@@ -14,9 +14,9 @@ export class ConcordiaVisualization {
      * @param {string} config.title
      *   The title to show on top of the chart (used both for real data and error case).
      * @param {string} [config.xLabel]
-     *   The x-axis title (optional—if omitted, no x-axis label is shown).
+     *   The x-axis title (optional-if omitted, no x-axis label is shown).
      * @param {string} [config.yLabel]
-     *   The y-axis title (optional—if omitted, no y-axis label is shown).
+     *   The y-axis title (optional-if omitted, no y-axis label is shown).
      * @param {Function} config.buildDataset
      *   A callback `(payload) => { data, [options] }` which receives the raw JSON payload
      *   and must return an object containing:
@@ -198,6 +198,9 @@ export class ConcordiaVisualization {
             options: finalOptions,
         });
 
+        // build a hidden HTML table of the same data for screen‐readers
+        this._renderDataTable(data);
+
         // Create a hidden live region for announcing the current slice/bar
         const live = document.createElement('div');
         live.id = `${this.canvasId}-live`;
@@ -269,6 +272,75 @@ export class ConcordiaVisualization {
     }
 
     /**
+     * Build a DOM <table> from the Chart.js `data` object,
+     * give it a visually‐hidden class, and insert it after the canvas.
+     */
+    _renderDataTable(data) {
+        const canvas = document.getElementById(this.canvasId);
+        const container = canvas.parentNode;
+
+        const table = document.createElement('table');
+        table.setAttribute('aria-label', `${this.title} data table`);
+        table.classList.add('visually-hidden');
+
+        // caption: include both axis labels
+        const cap = document.createElement('caption');
+        const xLabel = this.xLabel || 'Category';
+        const yLabel = this.yLabel || (data.datasets[0]?.label ?? 'Value');
+        cap.textContent = `${this.title} - "${yLabel}" by ${xLabel}`;
+        table.append(cap);
+
+        // header row: first cell = xLabel, then one <th> per dataset
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const cornerTh = document.createElement('th');
+        cornerTh.scope = 'col';
+        cornerTh.textContent = xLabel;
+        headerRow.append(cornerTh);
+
+        for (const ds of data.datasets) {
+            const th = document.createElement('th');
+            th.scope = 'col';
+            // if the dataset has a .label, use it; otherwise use the y-axis label
+            th.textContent = ds.label || yLabel;
+            headerRow.append(th);
+        }
+
+        thead.append(headerRow);
+        table.append(thead);
+
+        // body rows: one per label
+        const tbody = document.createElement('tbody');
+        for (const [index, label] of data.labels.entries()) {
+            const tr = document.createElement('tr');
+
+            // row header = the label
+            const rowHeader = document.createElement('th');
+            rowHeader.scope = 'row';
+            rowHeader.textContent = label;
+            tr.append(rowHeader);
+
+            // then one <td> per dataset
+            for (const ds of data.datasets) {
+                const td = document.createElement('td');
+                const value = ds.data[index];
+                if (Array.isArray(value)) {
+                    td.textContent = value.join(', ');
+                } else {
+                    td.textContent = String(value);
+                }
+                tr.append(td);
+            }
+
+            tbody.append(tr);
+        }
+
+        table.append(tbody);
+
+        container.insertBefore(table, canvas.nextSibling);
+    }
+
+    /**
      * Instance‐private helper: destroy any existing chart on this canvas,
      * draw a blank chart with title + axes, and overlay an error message.
      */
@@ -280,6 +352,16 @@ export class ConcordiaVisualization {
             chartType: this.chartType,
         });
         renderErrorOverlay(context, message);
+
+        // insert a visible error message under the canvas, for UAs (such as screenreaders)
+        // that can't handle the canvas
+        const canvas = context.canvas;
+        const container = canvas.parentNode;
+        const alert = document.createElement('div');
+        alert.setAttribute('role', 'alert');
+        alert.classList.add('visually-hidden');
+        alert.textContent = message;
+        container.insertBefore(alert, canvas.nextSibling);
     }
 
     /**
