@@ -13,6 +13,7 @@
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.6",
         "chart.js": "^4.4.9",
+        "chroma-js": "^3.1.2",
         "codemirror": "^5.65.19",
         "gulp": "^5.0.1",
         "gulp-rename": "^2.0.0",
@@ -42,5 +43,8 @@
     "bugs": {
         "url": "https://github.com/LibraryOfCongress/concordia/issues"
     },
-    "homepage": "https://github.com/LibraryOfCongress/concordia"
+    "homepage": "https://github.com/LibraryOfCongress/concordia",
+    "scripts": {
+        "postinstall": "cp node_modules/chroma-js/dist/chroma.min.cjs node_modules/chroma-js/dist/chroma.min.js"
+    }
 }

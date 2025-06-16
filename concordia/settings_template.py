@@ -80,6 +80,7 @@ NPM_FILE_PATTERNS = {
     ],
     "chart.js": ["auto/*", "dist/*"],
     "@kurkle/color": ["dist/*"],
+    "chroma-js": ["dist/*"],
 }
 
 TEMPLATE_DEBUG = False

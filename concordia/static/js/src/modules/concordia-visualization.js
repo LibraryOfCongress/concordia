@@ -1,5 +1,6 @@
 import Chart from 'chart.js/auto';
 import {renderEmptyChart, renderErrorOverlay} from 'visualization-errors';
+import {generateAccessibleColors} from './accessible-colors.js';
 
 export class ConcordiaVisualization {
     /**
@@ -34,6 +35,8 @@ export class ConcordiaVisualization {
         yLabel = '',
         buildDataset,
         chartOptions = {},
+        pageBackgroundColor = '#fff',
+        minContrast = 4.5,
     }) {
         if (
             !name ||
@@ -54,6 +57,8 @@ export class ConcordiaVisualization {
         this.yLabel = yLabel;
         this.buildDataset = buildDataset;
         this.chartOptions = chartOptions;
+        this.pageBackgroundColor = pageBackgroundColor;
+        this.minContrast = minContrast;
     }
 
     /**
@@ -134,6 +139,46 @@ export class ConcordiaVisualization {
             return;
         }
 
+        // Auto-generate accessible colors only if none provided
+        const originalDatasets = data.datasets || [];
+        if (originalDatasets.length > 0) {
+            const hasExplicit = originalDatasets.some(
+                (ds) =>
+                    ds.backgroundColor !== undefined ||
+                    ds.borderColor !== undefined,
+            );
+            if (!hasExplicit) {
+                if (originalDatasets.length > 1) {
+                    const colors = generateAccessibleColors(
+                        originalDatasets.length,
+                        this.pageBackgroundColor,
+                        this.minContrast,
+                    );
+                    data.datasets = originalDatasets.map((ds, index) => ({
+                        ...ds,
+                        backgroundColor: colors[index],
+                        borderColor: colors[index],
+                        borderWidth: ds.borderWidth ?? 1,
+                    }));
+                } else {
+                    const count = data.labels?.length || 0;
+                    const colors = generateAccessibleColors(
+                        count,
+                        this.pageBackgroundColor,
+                        this.minContrast,
+                    );
+                    data.datasets = [
+                        {
+                            ...originalDatasets[0],
+                            backgroundColor: colors,
+                            borderColor: colors,
+                            borderWidth: originalDatasets[0].borderWidth ?? 1,
+                        },
+                    ];
+                }
+            }
+        }
+
         // Merge options: default -> userOptions -> this.chartOptions
         const finalOptions = ConcordiaVisualization._deepMerge(
             {},
@@ -178,7 +223,7 @@ export class ConcordiaVisualization {
             const elements = chart.data.datasets
                 .map((_unusedValue, datasetIndex) => ({datasetIndex, index}))
                 .filter(({datasetIndex}) => {
-                    // skip if that dataset doesn’t actually have a bar at this index
+                    // skip if that dataset doesn't actually have a bar at this index
                     return !!chart.getDatasetMeta(datasetIndex).data[index];
                 });
 
