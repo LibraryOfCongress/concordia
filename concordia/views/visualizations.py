@@ -1,8 +1,11 @@
 from django.core.cache import caches
 from django.http import JsonResponse
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.cache import never_cache
 
 
+@method_decorator(never_cache, name="dispatch")
 class VisualizationDataView(View):
     """
     Serve cached visualization data as JSON, returning a 404 JSON error if missing.
