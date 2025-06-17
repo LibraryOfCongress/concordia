@@ -2,6 +2,14 @@ import Chart from 'chart.js/auto';
 import {renderEmptyChart, renderErrorOverlay} from 'visualization-errors';
 import {generateAccessibleColors} from './accessible-colors.js';
 
+const defaultAspectRatios = {
+    pie: '1 / 1',
+    doughnut: '1 / 1',
+    radar: '1 / 1',
+    bar: '2 / 1',
+    line: '2 / 1',
+};
+
 export class ConcordiaVisualization {
     /**
      * @param {Object} config
@@ -24,10 +32,12 @@ export class ConcordiaVisualization {
      *     - (optionally) `options`: partial Chart.js `options` you want to merge on top of the default.
      * @param {Object} [config.chartOptions]
      *   Any additional Chart.js options to merge into the final `options` object
-     *   (will be deep‐merged after `buildDataset(...).options`).
+     *   (will be deep-merged after `buildDataset(...).options`).
      * @param {string} [config.pageBackgroundColor="#fff"]
      *   The color of the page's background. Used to create contrasting colors
      * @param {number} [config.minContrast] - Minimum contrast between colors on the chart
+     * @param {string} [config.aspectRatio]
+     *   CSS aspect ratio. Default is based on chartType, as defined in defaultAspectRatios
      */
     constructor({
         name,
@@ -40,6 +50,7 @@ export class ConcordiaVisualization {
         chartOptions = {},
         pageBackgroundColor = '#fff',
         minContrast = 4.5,
+        aspectRatio,
     }) {
         if (
             !name ||
@@ -62,6 +73,14 @@ export class ConcordiaVisualization {
         this.chartOptions = chartOptions;
         this.pageBackgroundColor = pageBackgroundColor;
         this.minContrast = minContrast;
+
+        if (aspectRatio) {
+            this._cssAspectRatio = aspectRatio;
+        } else {
+            // Use the default if none provided, or failback to 2-to-1
+            this._cssAspectRatio =
+                defaultAspectRatios[this.chartType] ?? '2 / 1';
+        }
     }
 
     /**
@@ -80,6 +99,12 @@ export class ConcordiaVisualization {
         canvas.tabIndex = 0;
         canvas.setAttribute('role', 'img');
         canvas.setAttribute('aria-label', this.title);
+
+        // Set aspectRatio on wrapper and make sure canvas fills it
+        const wrapper = canvas.parentNode;
+        wrapper.style.aspectRatio = this._cssAspectRatio;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
 
         const context = canvas.getContext('2d');
 
@@ -121,7 +146,7 @@ export class ConcordiaVisualization {
         let data,
             userOptions = {};
         try {
-            // Let user‐supplied buildDataset transform payload into { data, [options] }
+            // Let user-supplied buildDataset transform payload into { data, [options] }
             const result = this.buildDataset(payload);
             data = result.data;
             userOptions = result.options || {};
@@ -201,7 +226,7 @@ export class ConcordiaVisualization {
             options: finalOptions,
         });
 
-        // build a hidden HTML table of the same data for screen‐readers
+        // build a hidden HTML table of the same data for screen-readers
         this._renderDataTable(data);
 
         // Create a hidden live region for announcing the current slice/bar
@@ -233,7 +258,7 @@ export class ConcordiaVisualization {
                     return !!chart.getDatasetMeta(datasetIndex).data[index];
                 });
 
-            // get a tooltip‐friendly position from one of the elements
+            // get a tooltip-friendly position from one of the elements
             const {x, y} = chart
                 .getDatasetMeta(elements[0].datasetIndex)
                 .data[index].tooltipPosition();
@@ -260,7 +285,7 @@ export class ConcordiaVisualization {
             highlight(elementIndex);
         });
 
-        // arrow‐key handling
+        // arrow-key handling
         canvas.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
                 elementIndex = (elementIndex + 1) % meta.length;
@@ -276,7 +301,7 @@ export class ConcordiaVisualization {
 
     /**
      * Build a DOM <table> from the Chart.js `data` object,
-     * give it a visually‐hidden class, and insert it after the canvas.
+     * give it a visually-hidden class, and insert it after the canvas.
      */
     _renderDataTable(data) {
         const canvas = document.getElementById(this.canvasId);
@@ -344,7 +369,7 @@ export class ConcordiaVisualization {
     }
 
     /**
-     * Instance‐private helper: destroy any existing chart on this canvas,
+     * Instance-private helper: destroy any existing chart on this canvas,
      * draw a blank chart with title + axes, and overlay an error message.
      */
     _handleError(context, message) {
