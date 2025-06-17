@@ -8,7 +8,6 @@ gunicorn = "==23.0.0"
 celery = { extras = ["redis"], version = "==5.4.0" }
 requests = "==2.32.4"
 bagit = "==1.8.1"
-django-registration = "==3.4"
 django-tinymce = "==4.1.0"
 django-debug-toolbar = "==5.2.0"
 whitenoise = "==6.9.0"
@@ -51,6 +50,7 @@ django-opensearch-dsl = "==0.7.0"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
 locust = "==2.37.4"
 django = "==4.2.22"
+django-registration = "==5.2.1"
 
 [dev-packages]
 invoke = "==2.2.0"
