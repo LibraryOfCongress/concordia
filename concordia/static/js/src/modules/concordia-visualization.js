@@ -25,6 +25,9 @@ export class ConcordiaVisualization {
      * @param {Object} [config.chartOptions]
      *   Any additional Chart.js options to merge into the final `options` object
      *   (will be deep‐merged after `buildDataset(...).options`).
+     * @param {string} [config.pageBackgroundColor="#fff"]
+     *   The color of the page's background. Used to create contrasting colors
+     * @param {number} [config.minContrast] - Minimum contrast between colors on the chart
      */
     constructor({
         name,
@@ -371,6 +374,7 @@ export class ConcordiaVisualization {
     static _defaultOptions(title, xLabel, yLabel) {
         return {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 title: {
                     display: true,
