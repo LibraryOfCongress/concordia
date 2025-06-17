@@ -1473,7 +1473,7 @@ class Banner(models.Model):
 
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
     text = models.CharField(max_length=255)
-    link = models.CharField(max_length=255)
+    link = models.CharField(max_length=255, blank=True, null=True)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)
     active = models.BooleanField(default=False, blank=True)
     DANGER = "DANGER"
