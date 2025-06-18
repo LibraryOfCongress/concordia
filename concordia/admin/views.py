@@ -181,7 +181,9 @@ def project_level_export(request):
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
         ) as export_base_dir:
-            return do_bagit_export(assets, export_base_dir, export_filename_base)
+            return do_bagit_export(
+                assets, export_base_dir, export_filename_base, request
+            )
 
     if idx is not None:
         context["campaigns"] = []

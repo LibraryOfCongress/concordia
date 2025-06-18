@@ -1,9 +1,10 @@
 import io
 import tempfile
 import zipfile
+from pathlib import Path
 from unittest.mock import patch
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -258,3 +259,132 @@ class ViewTests(TestCase):
                 [],
                 f"Unexpected transcription files: {transcription_files}",
             )
+
+    @override_settings(EXPORT_S3_BUCKET_NAME=None)
+    @patch("exporter.views.render")  # <- patch render itself
+    @patch("exporter.views.shutil.rmtree")
+    def test_do_bagit_export_validation_errors_render(self, mock_rmtree, mock_render):
+        bad_asset = create_asset(
+            item=self.item,
+            sequence=42,
+            title="BadAsset",
+            download_url=DOWNLOAD_URL,
+            resource_url=RESOURCE_URL,
+        )
+        Transcription.objects.create(
+            asset=bad_asset,
+            user=self.user,
+            text="Bad\u200bText",  # invalid char
+            submitted=timezone.now(),
+        )
+        assets = get_latest_transcription_data(
+            Asset.objects.filter(pk__in=[self.asset.pk, bad_asset.pk])
+        )
+
+        request = self.client.get("/dummy").wsgi_request
+        request.user = self.user
+        request.user.is_staff = True
+
+        # make render return a simple HttpResponse we can ignore
+        mock_render.return_value = HttpResponse("dummy")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            response = do_bagit_export(
+                assets,
+                tmpdir,
+                "bad-bagit",
+                request=request,
+            )
+
+            mock_render.assert_called_once()
+            args, kwargs = mock_render.call_args
+            template_name = args[1]  # args[0] is the request
+            context = args[2]  # third positional arg
+            self.assertEqual(
+                template_name,
+                "admin/exporter/unacceptable_character_report.html",
+            )
+            self.assertIn("errors", context)
+            self.assertEqual(len(context["errors"]), 1)
+            self.assertEqual(context["errors"][0]["asset"], bad_asset)
+
+            mock_rmtree.assert_called_once_with(Path(tmpdir), ignore_errors=True)
+
+            self.assertEqual(response.content, b"dummy")
+
+    @override_settings(EXPORT_S3_BUCKET_NAME=None)
+    @patch("exporter.views.shutil.rmtree")
+    def test_do_bagit_export_validation_errors_no_request(self, mock_rmtree):
+        """
+        When called without a request, do_bagit_export should return the raw
+        error list.
+        """
+        bad_asset = create_asset(
+            item=self.item,
+            sequence=99,
+            title="BadAssetNoRequest",
+            download_url=DOWNLOAD_URL,
+            resource_url=RESOURCE_URL,
+        )
+        Transcription.objects.create(
+            asset=bad_asset,
+            user=self.user,
+            text="Invisible\u200eText",  # LEFT-TO-RIGHT MARK -> invalid
+            submitted=timezone.now(),
+        )
+
+        assets = get_latest_transcription_data(
+            Asset.objects.filter(pk__in=[self.asset.pk, bad_asset.pk])
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            errors = do_bagit_export(assets, tmpdir, "bad-bagit-no-request")
+
+            # helper should return a list, not an HttpResponse
+            self.assertIsInstance(errors, list)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0]["asset"], bad_asset)
+
+            # directory should have been removed
+            mock_rmtree.assert_called_once_with(Path(tmpdir), ignore_errors=True)
+
+    @override_settings(EXPORT_S3_BUCKET_NAME=None)
+    @patch("exporter.views.shutil.rmtree")
+    @patch(
+        "pathlib.Path.exists", return_value=False
+    )  # force the exists() check to fail
+    def test_do_bagit_export_validation_errors_no_export_dir(
+        self,
+        mock_exists,
+        mock_rmtree,
+    ):
+        """
+        If validation fails and the export directory no longer exists,
+        do_bagit_export should NOT attempt to call shutil.rmtree.
+        """
+        bad_asset = create_asset(
+            item=self.item,
+            sequence=77,
+            title="BadAssetNoDir",
+            download_url=DOWNLOAD_URL,
+            resource_url=RESOURCE_URL,
+        )
+        Transcription.objects.create(
+            asset=bad_asset,
+            user=self.user,
+            text="Oops\u200b",  # zero-width space -> invalid
+            submitted=timezone.now(),
+        )
+
+        assets = get_latest_transcription_data(
+            Asset.objects.filter(pk__in=[self.asset.pk, bad_asset.pk])
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # invoke without request -> should return raw errors list
+            errors = do_bagit_export(assets, tmpdir, "bad-bagit-no-dir")
+
+            # exists() forced to False -> rmtree must not be called
+            mock_rmtree.assert_not_called()
+            self.assertIsInstance(errors, list)
+            self.assertEqual(len(errors), 1)
