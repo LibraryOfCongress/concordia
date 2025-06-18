@@ -4,7 +4,7 @@ from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path
 from django.urls.converters import register_converter
 from django.views.defaults import page_not_found, permission_denied, server_error
-from django.views.generic import RedirectView, TemplateView
+from django.views.generic import RedirectView
 
 from exporter import views as exporter_views
 from prometheus_metrics.views import MetricsView
@@ -280,18 +280,7 @@ urlpatterns = [
         views.accounts.ConcordiaPasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
     ),
-    path(
-        "account/",
-        include(
-            ("django_registration.backends.activation.urls", "django_registration"),
-            namespace="django_registration",
-        ),
-    ),
-    path(
-        "account/register/complete/",
-        TemplateView.as_view(template_name="registration/registration_complete.html"),
-        name="django_registration_complete",
-    ),
+    path("accounts/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
     path(
         "account/email_confirmation/<str:confirmation_key>/",
