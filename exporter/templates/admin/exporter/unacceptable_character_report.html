@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+
+{% load concordia_text_tags %}
+
+{% comment %}
+Displays per-asset lists of unacceptable characters detected during export.
+Each error entry provides a link to the asset's admin change page.
+{% endcomment %}
+
+{% block messages %}
+    {# Messages are rendered elsewhere in the admin; suppress duplicate view #}
+{% endblock messages %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .char-error-table th {
+            text-align: left;
+        }
+
+        .char-error-table td,
+        .char-error-table th {
+            padding: 0.25rem 0.75rem;
+        }
+
+        .char-error-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .char-error-table code {
+            font-weight: bold;
+            color: #dc3545; /* bootstrap danger */
+            background: transparent;
+        }
+    </style>
+{% endblock extrahead %}
+
+{% block content %}
+    <div id="content-main">
+        <h2>Unacceptable Characters Report</h2>
+
+        {% if errors %}
+            <table class="char-error-table">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Violations&nbsp;(line, column, char)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in errors %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'admin:concordia_asset_change' entry.asset.pk %}">
+                                    {{ entry.asset }}
+                                </a>
+                            </td>
+                            <td>
+                                <ul>
+                                    {% for v in entry.violations %}
+                                        <li>
+                                            Line&nbsp;{{ v.0 }},&nbsp;Col&nbsp;{{ v.1 }}:
+                                            <code>{{ v.2|reprchar }}</code>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No unacceptable characters were found.</p>
+        {% endif %}
+    </div>
+{% endblock content %}

@@ -2,7 +2,10 @@ import os
 import re
 import shutil
 import tempfile
+from collections.abc import Iterable
 from logging import getLogger
+from pathlib import Path
+from typing import Any, List
 
 import bagit
 import boto3
@@ -10,7 +13,12 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
 from django.db.models import OuterRef, Subquery
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+)
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
@@ -22,8 +30,9 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
-
-from .tabular_export.core import export_to_csv_response, flatten_queryset
+from exporter.exceptions import UnacceptableCharacterError
+from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
+from exporter.utils import validate_text_for_export
 
 logger = getLogger(__name__)
 
@@ -117,37 +126,100 @@ def write_distinct_asset_resource_file(assets, export_base_dir):
                 raise AssertionError
 
 
-def do_bagit_export(assets, export_base_dir, export_filename_base):
+def do_bagit_export(
+    assets: Iterable[Asset],
+    export_base_dir: str | Path,
+    export_filename_base: str,
+    request: HttpRequest | None = None,
+) -> HttpResponse | HttpResponseRedirect | List[dict[str, Any]]:
     """
-    Executes bagit.py to turn temp directory into LC-specific bagit strucutre.
-    Builds and exports bagit structure as zip.
-    Uploads zip to S3 if configured.
-    """
+    Build and deliver a BagIt package for `assets` or report invalid characters.
 
-    # These assets should already be in the correct order - by item, seequence
+    The function validates every asset's `latest_transcription`. For each
+    unacceptable character it records:
+
+    * the asset ID
+    * the 1-based line number
+    * the 1-based column number
+    * the offending character
+
+    Behaviour:
+
+    1. **Validation pass** - files are written only after a transcription passes
+       validation.
+    2. **Failure(s)** - any files already written are removed. If `request` is
+       supplied, a template is rendered; otherwise the raw error list is
+       returned.
+    3. **All clear** - a BagIt structure is created, zipped and either returned
+       as a download or uploaded to S3.
+
+    Args:
+        assets (Iterable[Asset]): Iterable yielding the assets to export. Each
+            element must have a `download_url` attribute and a
+            `latest_transcription` string.
+        export_base_dir (str | Path): Temporary directory into which the BagIt
+            hierarchy is built.
+        export_filename_base (str): Base name (without ".zip") for the final
+            archive.
+        request (HttpRequest | None, optional): Current request, used to render
+            an error-report template when invalid characters are found. If
+            omitted, the function returns the error data instead.
+
+    Returns:
+        HttpResponse | HttpResponseRedirect | list[dict[str, Any]]:
+        * A **download response** when packaging locally,
+        * an **HTTP redirect** to the uploaded archive when S3 is configured, or
+        * a **list of validation errors** when `request` is `None` and
+          unacceptable characters were found.
+    """
+    export_base_dir = Path(export_base_dir)
+    errors: List[dict[str, Any]] = []
+
+    # Validate every transcription before writing anything to disk
     for asset in assets:
         asset_id = get_original_asset_id(asset.download_url)
-        logger.debug("Exporting asset %s into %s", asset_id, export_base_dir)
+        asset_id = asset_id.replace(":", "/")  # BagIt-safe path fragment
 
-        asset_id = asset_id.replace(":", "/")
+        transcription = asset.latest_transcription or ""
+        try:
+            validate_text_for_export(transcription)
+        except UnacceptableCharacterError as err:
+            errors.append(
+                {
+                    "asset": asset,
+                    "violations": err.violations,
+                }
+            )
+            # Skip writing this file but keep validating the rest
+            continue
+
+        # Passed validation -> write the transcription file
         asset_path, asset_filename = os.path.split(asset_id)
+        asset_dest_path = export_base_dir / asset_path
+        asset_dest_path.mkdir(parents=True, exist_ok=True)
 
-        asset_dest_path = os.path.join(export_base_dir, asset_path)
-        os.makedirs(asset_dest_path, exist_ok=True)
+        if transcription:
+            with open(asset_dest_path / f"{asset_filename}.txt", "w") as fp:
+                fp.write(transcription)
 
-        # Build a transcription output text file for each asset
-        asset_text_output_path = os.path.join(
-            asset_dest_path, "%s.txt" % asset_filename
-        )
+    # If any errors -> cleanup and report
+    if errors:
+        # Remove everything we may have written
+        if export_base_dir.exists():
+            shutil.rmtree(export_base_dir, ignore_errors=True)
 
-        if asset.latest_transcription:
-            # Write the asset level transcription file
-            with open(asset_text_output_path, "w") as f:
-                f.write(asset.latest_transcription)
+        if request is not None:
+            return render(
+                request,
+                "admin/exporter/unacceptable_character_report.html",
+                {"errors": errors},
+            )
+        # Called without a request -> let the caller decide
+        return errors
 
+    # All assets valid -> create BagIt, zip, upload / return
     write_distinct_asset_resource_file(assets, export_base_dir)
 
-    # Turn Structure into bagit format
     bagit.make_bag(
         export_base_dir,
         {
@@ -156,37 +228,32 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
             "Content-Process": "crowdsourced",
             "Content-Type": "textual",
             "LC-Bag-Id": export_filename_base,
-            "LC-Items": "%d transcriptions" % len(assets),
+            "LC-Items": f"{len(assets)} transcriptions",
             "LC-Project": "gdccrowd",
             "License-Information": "Public domain",
         },
     )
 
-    # Build .zip file of bagit formatted Campaign Folder
-    archive_name = export_base_dir
-    shutil.make_archive(archive_name, "zip", export_base_dir)
+    archive_name = shutil.make_archive(
+        str(export_base_dir), "zip", root_dir=export_base_dir
+    )
+    export_filename = f"{export_filename_base}.zip"
 
-    export_filename = "%s.zip" % export_filename_base
-
-    # Upload zip to S3 bucket
     s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
-
     if s3_bucket:
         logger.debug("Uploading exported bag to S3 bucket %s", s3_bucket)
         s3 = boto3.resource("s3")
-        s3.Bucket(s3_bucket).upload_file(
-            "%s.zip" % export_base_dir, "%s" % export_filename
-        )
+        s3.Bucket(s3_bucket).upload_file(archive_name, export_filename)
 
         return HttpResponseRedirect(
-            "https://%s.s3.amazonaws.com/%s" % (s3_bucket, export_filename)
+            f"https://{s3_bucket}.s3.amazonaws.com/{export_filename}"
         )
-    else:
-        # Download zip from local storage
-        with open("%s.zip" % export_base_dir, "rb") as zip_file:
-            response = HttpResponse(zip_file, content_type="application/zip")
-        response["Content-Disposition"] = "attachment; filename=%s" % export_filename
-        return response
+
+    # Local download
+    with open(archive_name, "rb") as zip_file:
+        response = HttpResponse(zip_file, content_type="application/zip")
+    response["Content-Disposition"] = f"attachment; filename={export_filename}"
+    return response
 
 
 class ExportCampaignToCSV(TemplateView):
@@ -268,7 +335,9 @@ class ExportItemToBagIt(TemplateView):
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
         ) as export_base_dir:
-            return do_bagit_export(assets, export_base_dir, export_filename_base)
+            return do_bagit_export(
+                assets, export_base_dir, export_filename_base, request
+            )
 
 
 class ExportProjectToBagIt(TemplateView):
@@ -293,7 +362,9 @@ class ExportProjectToBagIt(TemplateView):
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
         ) as export_base_dir:
-            return do_bagit_export(assets, export_base_dir, export_filename_base)
+            return do_bagit_export(
+                assets, export_base_dir, export_filename_base, request
+            )
 
 
 class ExportCampaignToBagIt(TemplateView):
@@ -312,7 +383,9 @@ class ExportCampaignToBagIt(TemplateView):
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
         ) as export_base_dir:
-            return do_bagit_export(assets, export_base_dir, export_filename_base)
+            return do_bagit_export(
+                assets, export_base_dir, export_filename_base, request
+            )
 
 
 class ExportProjectToCSV(TemplateView):
