@@ -1,7 +1,5 @@
-/* global $ screenfull Sentry */
+/* global $ Cookies screenfull Sentry */
 /* exported displayMessage displayHtmlMessage buildErrorMessage trackUIInteraction */
-
-import Cookies from 'js-cookie';
 
 (function () {
     /*
