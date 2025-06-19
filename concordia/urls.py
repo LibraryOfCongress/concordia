@@ -280,7 +280,7 @@ urlpatterns = [
         views.accounts.ConcordiaPasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
     ),
-    path("accounts/", include("django_registration.backends.activation.urls")),
+    path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
     path(
         "account/email_confirmation/<str:confirmation_key>/",
