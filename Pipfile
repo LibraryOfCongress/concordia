@@ -22,7 +22,7 @@ django-celery-beat = "==2.7.0"
 kombu = "==5.4.2"
 django-flags = "==5.0.14"
 sentry-sdk = "==2.22.0"
-channels = { extras = ["daphne"], version = "==4.1.0" }
+channels = { extras = ["daphne"], version = "==4.2.2" }
 channels-redis = "==4.2.0"
 more-itertools = "==10.7.0"
 nh3 = "==0.2.21"
