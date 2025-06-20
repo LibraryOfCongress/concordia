@@ -2,6 +2,7 @@ from secrets import token_hex
 
 from django.contrib.auth.models import User
 
+from concordia.logging import ConcordiaLogger
 from concordia.templatetags.concordia_media_tags import asset_media_url
 
 __all__ = [
@@ -10,6 +11,8 @@ __all__ = [
     "get_or_create_reservation_token",
     "get_image_urls_from_asset",
 ]
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 def get_anonymous_user():
@@ -32,11 +35,11 @@ def request_accepts_json(request):
 
 
 def get_or_create_reservation_token(request):
-    # Reservation tokens are 44 characters (22 bytes
-    # converted into 44 hex digits) plus the user's
-    # database id padded with leading zeroes until it's
-    # at least 6 characters long
-    if "reservation_token" not in request.session:
+    first_time = "reservation_token" not in request.session
+    if first_time:
+        # Reservation tokens are 44 characters (22 bytes converted into 44 hex
+        # digits) plus the user's database id padded with leading zeroes until it's
+        # at least 6 characters long
         request.session["reservation_token"] = token_hex(22)
         user = getattr(request, "user", None)
         if user is not None:
@@ -44,7 +47,31 @@ def get_or_create_reservation_token(request):
             if uid is None:
                 uid = get_anonymous_user().id
             request.session["reservation_token"] += str(uid).zfill(6)
-    return request.session["reservation_token"]
+
+    token = request.session["reservation_token"]
+
+    structured_logger = ConcordiaLogger.get_logger(__name__)
+
+    log_kwargs = {
+        "reservation_token": token,
+        "session_key": request.session.session_key,
+        "user": request.user,
+    }
+
+    if first_time:
+        structured_logger.info(
+            "Reservation token created.",
+            event_code="reservation_token_created",
+            **log_kwargs,
+        )
+    else:
+        structured_logger.info(
+            "Reservation token reused.",
+            event_code="reservation_token_reused",
+            **log_kwargs,
+        )
+
+    return token
 
 
 def get_image_urls_from_asset(asset):
