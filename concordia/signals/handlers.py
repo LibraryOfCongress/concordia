@@ -17,6 +17,7 @@ from django_registration.signals import user_activated, user_registered
 from django_structlog import signals
 from flags.state import flag_enabled
 
+from concordia.logging import ConcordiaLogger
 from concordia.models import (
     Asset,
     Transcription,
@@ -31,6 +32,7 @@ from .signals import reservation_obtained, reservation_released
 ASSET_CHANNEL_LAYER = get_channel_layer()
 
 logger = logging.getLogger(__name__)
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 @receiver(user_logged_in)
@@ -40,8 +42,19 @@ def clear_reservation_token(sender, user, request, **kwargs):
         del request.session["reservation_token"]
         request.session.save()
         logger.info("Clearing reservation token %s for %s on login", token, user)
+        structured_logger.info(
+            "Reservation token cleared on login.",
+            event_code="reservation_token_cleared",
+            reservation_token=token,
+            user=request.user,
+        )
     except KeyError:
-        pass
+        structured_logger.debug(
+            "No reservation token found to clear on login.",
+            event_code="reservation_token_absent_on_login",
+            user=request.user,
+        )
+
     logger.info("Successful user login with username %s", user)
 
 
@@ -188,6 +201,15 @@ def send_asset_reservation_obtained(sender, **kwargs):
         kwargs["asset_pk"],
         kwargs["reservation_token"],
     )
+
+    structured_logger.info(
+        "Asset reservation obtained.",
+        event_code="asset_reservation_obtained",
+        asset_pk=kwargs["asset_pk"],
+        reservation_token=kwargs["reservation_token"],
+        sender=sender,
+    )
+
     send_asset_reservation_message(
         sender=sender,
         message_type="asset_reservation_obtained",
@@ -204,6 +226,13 @@ def send_asset_reservation_released(sender, **kwargs):
         kwargs["asset_pk"],
         kwargs["reservation_token"],
     )
+    structured_logger.info(
+        "Asset reservation released.",
+        event_code="asset_reservation_released",
+        asset_pk=kwargs["asset_pk"],
+        reservation_token=kwargs["reservation_token"],
+        sender=sender,
+    )
     send_asset_reservation_message(
         sender=sender,
         message_type="asset_reservation_released",
@@ -215,6 +244,14 @@ def send_asset_reservation_released(sender, **kwargs):
 def send_asset_reservation_message(
     *, sender, message_type, asset_pk, reservation_token
 ):
+    structured_logger.debug(
+        "Dispatching reservation message to channel layer.",
+        event_code="asset_reservation_channel_dispatch",
+        message_type=message_type,
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+        sender=sender,
+    )
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
         {
