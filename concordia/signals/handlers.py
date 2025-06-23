@@ -46,13 +46,13 @@ def clear_reservation_token(sender, user, request, **kwargs):
             "Reservation token cleared on login.",
             event_code="reservation_token_cleared",
             reservation_token=token,
-            user=request.user,
+            user=user,
         )
     except KeyError:
         structured_logger.debug(
             "No reservation token found to clear on login.",
             event_code="reservation_token_absent_on_login",
-            user=request.user,
+            user=user,
         )
 
     logger.info("Successful user login with username %s", user)

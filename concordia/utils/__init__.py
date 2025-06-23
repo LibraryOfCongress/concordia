@@ -35,11 +35,11 @@ def request_accepts_json(request):
 
 
 def get_or_create_reservation_token(request):
-    first_time = "reservation_token" not in request.session
-    if first_time:
-        # Reservation tokens are 44 characters (22 bytes converted into 44 hex
-        # digits) plus the user's database id padded with leading zeroes until it's
-        # at least 6 characters long
+    # Reservation tokens are 44 characters (22 bytes
+    # converted into 44 hex digits) plus the user's
+    # database id padded with leading zeroes until it's
+    # at least 6 characters long
+    if "reservation_token" not in request.session:
         request.session["reservation_token"] = token_hex(22)
         user = getattr(request, "user", None)
         if user is not None:
@@ -47,31 +47,19 @@ def get_or_create_reservation_token(request):
             if uid is None:
                 uid = get_anonymous_user().id
             request.session["reservation_token"] += str(uid).zfill(6)
-
-    token = request.session["reservation_token"]
-
-    structured_logger = ConcordiaLogger.get_logger(__name__)
-
-    log_kwargs = {
-        "reservation_token": token,
-        "session_key": request.session.session_key,
-        "user": request.user,
-    }
-
-    if first_time:
-        structured_logger.info(
-            "Reservation token created.",
-            event_code="reservation_token_created",
-            **log_kwargs,
-        )
+            structured_logger.info(
+                "Reservation token created.",
+                event_code="reservation_token_created",
+                reservation_token=request.session["reservation_token"],
+                user=user,
+            )
     else:
         structured_logger.info(
             "Reservation token reused.",
             event_code="reservation_token_reused",
-            **log_kwargs,
+            reservation_token=request.session["reservation_token"],
         )
-
-    return token
+    return request.session["reservation_token"]
 
 
 def get_image_urls_from_asset(asset):
