@@ -2,6 +2,7 @@ from secrets import token_hex
 
 from django.contrib.auth.models import User
 
+from concordia.logging import ConcordiaLogger
 from concordia.templatetags.concordia_media_tags import asset_media_url
 
 __all__ = [
@@ -10,6 +11,8 @@ __all__ = [
     "get_or_create_reservation_token",
     "get_image_urls_from_asset",
 ]
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 def get_anonymous_user():
@@ -44,6 +47,18 @@ def get_or_create_reservation_token(request):
             if uid is None:
                 uid = get_anonymous_user().id
             request.session["reservation_token"] += str(uid).zfill(6)
+            structured_logger.info(
+                "Reservation token created.",
+                event_code="reservation_token_created",
+                reservation_token=request.session["reservation_token"],
+                user=user,
+            )
+    else:
+        structured_logger.info(
+            "Reservation token reused.",
+            event_code="reservation_token_reused",
+            reservation_token=request.session["reservation_token"],
+        )
     return request.session["reservation_token"]
 
 

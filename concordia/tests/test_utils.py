@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from django.utils.timezone import now
 
+from concordia.logging import get_logging_user_id
 from concordia.models import (
     NextReviewableCampaignAsset,
     NextReviewableTopicAsset,
@@ -12,7 +13,6 @@ from concordia.models import (
     TranscriptionStatus,
 )
 from concordia.utils import get_anonymous_user
-from concordia.utils.logging import get_logging_user_id
 from concordia.utils.next_asset import (
     find_new_reviewable_campaign_assets,
     find_new_reviewable_topic_assets,
