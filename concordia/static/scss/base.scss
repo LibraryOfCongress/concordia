@@ -2096,8 +2096,41 @@ figure.error-figure {
 /*
  * About page
  */
+
+#blog-carousel .carousel-control-prev,
+#blog-carousel .carousel-control-next {
+    opacity: 1;
+}
+
+#blog-carousel .carousel-control-prev-icon {
+    background-color: $blue;
+    -webkit-mask-image: url('/static/img/slick-left-arrow.svg');
+    mask-image: url('/static/img/slick-left-arrow.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+#blog-carousel .carousel-control-next-icon {
+    background-color: $blue;
+    -webkit-mask-image: url('/static/img/slick-right-arrow.svg');
+    mask-image: url('/static/img/slick-right-arrow.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
 .blog-chunk {
     width: 684px;
+}
+
+.blog-chunk a {
+    text-decoration: none;
+}
+
+.blog-chunk .card-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 103px;
+    width: 190px;
 }
 
 .about-accordion {

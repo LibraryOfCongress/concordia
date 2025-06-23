@@ -64,8 +64,10 @@ class ParserTestCase(TestCase):
 
         feed_items = fetch_blog_posts()
 
-        self.assertEqual(len(feed_items), 2)
-        self.assertEqual(feed_items[0]["title"], TITLE)
-        self.assertEqual(feed_items[0]["link"], LINK)
-        self.assertEqual(feed_items[0]["description"], DESCRIPTION)
-        self.assertEqual(feed_items[0]["og_image"], IMAGE)
+        self.assertEqual(len(feed_items), 1)
+        self.assertEqual(len(feed_items[0]), 2)
+        feed_item = feed_items[0][0]
+        self.assertEqual(feed_item["title"], TITLE)
+        self.assertEqual(feed_item["link"], LINK)
+        self.assertEqual(feed_item["description"], DESCRIPTION)
+        self.assertEqual(feed_item["og_image"], IMAGE)

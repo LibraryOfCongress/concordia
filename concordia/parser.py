@@ -52,5 +52,8 @@ def fetch_blog_posts():
             if og_image is not None:
                 feed_item["og_image"] = og_image
         feed_items.append(feed_item)
+    segmented_items = [feed_items[:3]]
+    if len(feed_items) > 3:
+        segmented_items.append(feed_items[3:6])
 
-    return feed_items
+    return segmented_items
