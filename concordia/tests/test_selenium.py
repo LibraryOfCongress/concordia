@@ -43,6 +43,7 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
         return f"{self.live_server_url}{reverse(name)}"
 
     def test_login(self):
+        self.py.viewport(1280, 800)
         self.py.visit(self.reverse("registration_login"))
         violations = self.axe.violations()
         self.assertEqual(len(violations), 0, self.axe.report(violations))
