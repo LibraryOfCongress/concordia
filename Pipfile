@@ -51,6 +51,7 @@ django-structlog = {extras = ["celery"], version = "==9.1.1"}
 locust = "==2.37.4"
 django = "==4.2.22"
 django-registration = "==5.2.1"
+defusedxml = "==0.7.1"
 
 [dev-packages]
 invoke = "==2.2.0"
