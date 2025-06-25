@@ -2132,3 +2132,30 @@ figure.error-figure {
     height: 103px;
     width: 190px;
 }
+
+.about-accordion {
+    background-color: $gray-100;
+    padding-top: 12px;
+    padding-left: 28px;
+    padding-bottom: 8px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.accordion-icon {
+    color: $blue;
+    font-style: normal;
+}
+
+.icon-plus-square::before {
+    content: '\f0fe';
+}
+
+.icon-minus-square::before {
+    content: '\f146';
+}
+
+.press-content,
+.publications-content {
+    display: none;
+}
