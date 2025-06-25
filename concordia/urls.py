@@ -337,6 +337,8 @@ if settings.DEBUG:
     from django.conf.urls.static import static
     from django.views.generic import TemplateView
 
+    from concordia.api import api as concordia_api
+
     urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
 
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
@@ -347,4 +349,5 @@ if settings.DEBUG:
             TemplateView.as_view(template_name="transcriptions/transcription.html"),
             name="transcription",
         ),
+        path("api/", concordia_api.urls),
     )
