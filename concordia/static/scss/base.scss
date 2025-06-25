@@ -1709,19 +1709,6 @@ button.btn-outline-primary:hover {
     text-decoration: underline;
 }
 
-/*
-@include media-breakpoint-up(lg) {
-    .guide-body {
-        max-height: 462.2px;
-    }
-}
-
-@include media-breakpoint-up(md) {
-    .guide-body {
-        max-height: 396.2px;
-    }
-} */
-
 .guide-body {
     max-height: calc(100vh - 249px);
     overflow-x: hidden;
