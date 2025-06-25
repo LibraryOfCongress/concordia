@@ -1682,6 +1682,7 @@ button.btn-outline-primary:hover {
 }
 
 .sidebar {
+    max-height: calc(100vh - 107px);
     width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
@@ -1722,6 +1723,7 @@ button.btn-outline-primary:hover {
 } */
 
 .guide-body {
+    max-height: calc(100vh - 249px);
     overflow-x: hidden;
 }
 
