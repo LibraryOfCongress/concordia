@@ -42,7 +42,7 @@ django-maintenance-mode = "==0.21.1"
 faker = "==23.3.0"
 pillow = "==11.2.1"
 prometheus-client = "==0.21.0"
-xlsxwriter = "==3.2.3"
+xlsxwriter = "==3.2.5"
 blinker = "==1.7.0"
 psycopg2 = "==2.9.10"
 django-storages = { extras = ["s3"], version = "==1.14.6" }

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1cc69bc267156df486aa535bcc19999815e4edb5d19e2a885c6c2b248cfebdd7"
+            "sha256": "5ec0379051000cf8b1b4f0400d09822210723343a801f5ab7effef5ef31cb920"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -2182,11 +2182,11 @@
         },
         "selenium": {
             "hashes": [
-                "sha256:af9ea757813918bddfe05cc677bf63c8a0cd277ebf8474b3dd79caa5727fca85",
-                "sha256:d90974db95d2cdeb34d2fb1b13f03dc904f53e6c5d228745b0635ada10cd625d"
+                "sha256:b9509bef4056f4083772abb1ae19ff57247d617a29255384b26be6956615b206",
+                "sha256:c4d9613f8a45693d61530c9660560fadb52db7d730237bc788ddedf442391f97"
             ],
             "markers": "python_version >= '3.9'",
-            "version": "==4.33.0"
+            "version": "==4.32.0"
         },
         "sentry-sdk": {
             "hashes": [
@@ -2349,11 +2349,11 @@
         },
         "typing-extensions": {
             "hashes": [
-                "sha256:a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c",
-                "sha256:e6c81219bd689f51865d9e372991c540bda33a0379d5573cddb9a3a23f7caaef"
+                "sha256:8676b788e32f02ab42d9e7c61324048ae4c6d844a399eebace3d4979d75ceef4",
+                "sha256:a1514509136dd0b477638fc68d6a91497af5076466ad0fa6c338e44e359944af"
             ],
-            "markers": "python_version >= '3.8'",
-            "version": "==4.13.2"
+            "markers": "python_version >= '3.9'",
+            "version": "==4.14.0"
         },
         "typing-inspection": {
             "hashes": [
@@ -2376,11 +2376,12 @@
                 "socks"
             ],
             "hashes": [
-                "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466",
-                "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813"
+                "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760",
+                "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc"
             ],
+            "index": "pypi",
             "markers": "python_version >= '3.9'",
-            "version": "==2.4.0"
+            "version": "==2.5.0"
         },
         "vine": {
             "hashes": [
@@ -2448,12 +2449,12 @@
         },
         "xlsxwriter": {
             "hashes": [
-                "sha256:593f8296e8a91790c6d0378ab08b064f34a642b3feb787cf6738236bd0a4860d",
-                "sha256:ad6fd41bdcf1b885876b1f6b7087560aecc9ae5a9cc2ba97dcac7ab2e210d3d5"
+                "sha256:4f4824234e1eaf9d95df9a8fe974585ff91d0f5e3d3f12ace5b71e443c1c6abd",
+                "sha256:7e88469d607cdc920151c0ab3ce9cf1a83992d4b7bc730c5ffdd1a12115a7dbe"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.6'",
-            "version": "==3.2.3"
+            "markers": "python_version >= '3.8'",
+            "version": "==3.2.5"
         },
         "zope-interface": {
             "hashes": [
