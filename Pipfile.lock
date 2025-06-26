@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5ec0379051000cf8b1b4f0400d09822210723343a801f5ab7effef5ef31cb920"
+            "sha256": "f5010a40d7f0fc457f7cf100fc15abe4543a775c49d6e1b1db1bb41e6c842e30"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -88,11 +88,10 @@
         },
         "bagit": {
             "hashes": [
-                "sha256:37df1330d2e8640c8dee8ab6d0073ac701f0614d25f5252f9e05263409cee60c",
-                "sha256:d14dd7e373dd24d41f6748c42f123f7db77098dfa4a0125dbacb4c8bdf767c09"
+                "sha256:9455006c2d1df88be95ec1fccabc5ea623389589ea4c85b3d85bd256f29d7656"
             ],
             "index": "pypi",
-            "version": "==1.8.1"
+            "version": "==1.9.0"
         },
         "bidict": {
             "hashes": [
