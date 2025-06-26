@@ -14,7 +14,9 @@ from .decorators import default_cache_control
 
 
 @default_cache_control
-def simple_page(request, path=None, slug=None, body_ctx=None):
+def simple_page(
+    request, path=None, slug=None, body_ctx=None, template="static-page.html"
+):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -61,8 +63,9 @@ def simple_page(request, path=None, slug=None, body_ctx=None):
         ctx["guides"] = Guide.objects.order_by("order")
     body = Template(md.convert(html))
     ctx["body"] = body.render(Context(body_ctx))
+    ctx.update(body_ctx)
 
-    resp = render(request, "static-page.html", ctx)
+    resp = render(request, template, ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
     return resp
 
