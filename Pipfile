@@ -7,7 +7,6 @@ name = "pypi"
 gunicorn = "==23.0.0"
 celery = { extras = ["redis"], version = "==5.4.0" }
 requests = "==2.32.4"
-bagit = "==1.8.1"
 django-tinymce = "==4.1.0"
 django-debug-toolbar = "==5.2.0"
 whitenoise = "==6.9.0"
@@ -54,6 +53,7 @@ django-registration = "==5.2.1"
 defusedxml = "==0.7.1"
 django-ninja = "==1.4.3"
 urllib3 = "==2.5.0"
+bagit = "==1.9.0"
 
 [dev-packages]
 invoke = "==2.2.0"
