@@ -1,12 +1,6 @@
 {% extends "static-page.html" %}
 
 {% load humanize %}
-{% load staticfiles %}
-
-{% block head_content %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/about-accordions.js' %}"></script>
-{% endblock head_content %}
 
 {% block main_content %}
     <div class="container">

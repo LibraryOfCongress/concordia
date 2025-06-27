@@ -1,4 +1,4 @@
-% load group_list %}
+{% load group_list %}
 <h3>Featured blog posts</h3>
 <div id="blog-carousel" class="carousel slide">
     <div class="carouse-inner" blog-post-count="{{ blog_posts|length }}" slice-count="{{ blog_posts|slice:':3'|length }}" batch-count="{{ blog_posts|slice:':3'|batch:3|length }}">
@@ -15,9 +15,6 @@
                                             {{ post.title }}
                                         </h5>
                                     </a>
-                                    <p class="card-text">
-                                        {{ post.description|safe }}
-                                    </p>
                                 </div>
                             </div>
                         </div>

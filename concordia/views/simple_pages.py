@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from django.views.generic import RedirectView
 
 from concordia.models import Guide, SimplePage, SiteReport
+from concordia.parser import fetch_blog_posts
 
 from .decorators import default_cache_control
 
@@ -110,6 +111,7 @@ def about_simple_page(request, path=None, slug=None):
             "assets_waiting_review": active_campaigns.assets_waiting_review
             + retired_campaigns.assets_waiting_review,
             "users_activated": active_campaigns.users_activated,
+            "blog_posts": fetch_blog_posts,
         }
         cache.set(context_cache_key, about_context, 60 * 60)
 

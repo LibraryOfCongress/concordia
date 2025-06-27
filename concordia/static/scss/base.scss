@@ -2115,11 +2115,8 @@ figure.error-figure {
     text-decoration: none;
 }
 
-.blog-chunk .card-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    height: 103px;
-    width: 190px;
+.blog-chunk h5 {
+    min-height: 115.2px;
 }
 
 .about-accordion {

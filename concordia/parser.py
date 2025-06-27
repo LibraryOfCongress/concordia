@@ -50,7 +50,6 @@ def fetch_blog_posts():
     for item in items[:6]:
         feed_item = {
             "title": item.find("title").text,
-            "description": item.find("description").text,
         }
         link = item.find("link")
         if link is not None:
