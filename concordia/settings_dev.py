@@ -14,6 +14,11 @@ LOGGING["loggers"] = {
     "concordia": {"handlers": ["file", "stream"], "level": "DEBUG"},
     "django.utils.autoreload": {"level": "INFO"},
     "django.template": {"level": "INFO"},
+    "aws_xray_sdk": {
+        "handlers": ["file", "stream"],
+        "level": "DEBUG",
+        "propagate": True,
+    },
     "structlog": {
         "handlers": ["structlog_file", "structlog_console"],
         "level": "INFO",
@@ -64,3 +69,17 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
+
+# X-Ray configuration for local development
+if is_web_process():  # noqa: F405
+    # Extend the XRAY_RECORDER from settings_template.py
+    XRAY_RECORDER = {
+        **XRAY_RECORDER,  # noqa: F405
+        "IGNORE_MODULE_PATTERNS": XRAY_RECORDER["IGNORE_MODULE_PATTERNS"]  # noqa: F405
+        + [  # noqa: F405
+            r"^debug_toolbar\.",
+        ],
+        "SAMPLING": False,  # Capture all requests during development
+        "PLUGINS": (),
+        "DYNAMIC_NAMING": "*",  # Capture all host names
+    }
