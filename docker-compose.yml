@@ -1,4 +1,3 @@
-version: '3.6'
 services:
     opensearch-node:
         image: public.ecr.aws/opensearchproject/opensearch:1
@@ -81,7 +80,7 @@ services:
             - images_volume:/concordia_images
         networks:
             - default
-        ports: # if running locally use 80:80, if running in local container use 8000:80
+        ports:
             - 80:80
 
     importer:
