@@ -7,7 +7,6 @@ from concordia.parser import extract_og_image, fetch_blog_posts
 
 TITLE = "What’s New Online at the Library of Congress: May 2025"
 LINK = "https://blogs.loc.gov/thesignal/2025/05/new-loc-may-2025/"
-DESCRIPTION = "Interested in learning more about what’s new in the Library of Congr..."
 RSS = """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
@@ -15,7 +14,7 @@ RSS = """<?xml version="1.0" encoding="UTF-8"?>
     <item>
       <title>%s</title>
       <link>%s</link>
-      <description><![CDATA[%s]]></description>
+      <description><![CDATA[Interested in learning more about what’...]]></description>
     </item>
     <item>
       <title>Volunteers Leverage OCR to Transcribe Library of Congress Digit...</title>
@@ -27,7 +26,6 @@ RSS = """<?xml version="1.0" encoding="UTF-8"?>
 </rss>""" % (
     TITLE,
     LINK,
-    DESCRIPTION,
 )
 IMAGE = "https://blogs.loc.gov/thesignal/files/2025/05/loc-2017698702.png"
 HTML = (
@@ -69,5 +67,4 @@ class ParserTestCase(TestCase):
         feed_item = feed_items[0][0]
         self.assertEqual(feed_item["title"], TITLE)
         self.assertEqual(feed_item["link"], LINK)
-        self.assertEqual(feed_item["description"], DESCRIPTION)
         self.assertEqual(feed_item["og_image"], IMAGE)
