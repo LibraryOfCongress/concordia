@@ -40,22 +40,35 @@ def concordia_visualization(name, **attrs):
             the <script> tag.
     """
 
+    # Ensure 'visualization-container' is always present in class attribute
+    user_classes = attrs.pop("class", "")
+    combined_classes = "visualization-container"
+    if user_classes:
+        combined_classes += f" {user_classes}"
+    attrs["class"] = combined_classes
+
     # Build an attribute string like: key1="value1" key2="value2"
     # Using format_html_join ensures that each key and value is properly escaped.
     if attrs:
         attr_items = ((escape(key), escape(value)) for key, value in attrs.items())
         # format_html_join(' ', '{}="{}"', attr_items) -> 'key1="value1" key2="value2"'
         attrs_str = format_html_join(" ", '{}="{}"', attr_items)
-        # Prepend a space so that when we do '<section {attrs_str}>'
-        # we get "<section key=…>"
+        # Prepend a space so that when we do '<div {attrs_str}>
+        # we get "<div key=...>"
         attrs_str = format_html(" {}", attrs_str)
     else:
         attrs_str = format_html("")  # empty
 
-    # Build the <section> + <canvas> line
+    # Build the <div> + <section> + <canvas> line
+    # We use the section in order to be able to grow the
+    # canvas's container to fit the entire thing. We need
+    # the outer div to be able to add elements to our display
+    # (e.g., a csv) without resizing the section
     # Use format_html so that {name} is escaped if necessary.
-    section_html = format_html(
-        '<section{}><canvas id="{}"></canvas></section>', attrs_str, name
+    canvas_html = format_html(
+        "<div{}>" '<section><canvas id="{}"></canvas></section>' "</div>",
+        attrs_str,
+        name,
     )
 
     # Build the <script> tag, pointing at /static/js/visualizations/{name}.js
@@ -63,4 +76,4 @@ def concordia_visualization(name, **attrs):
     script_html = format_html('<script type="module" src="{}"></script>', script_src)
 
     # Because we used format_html, this is already safe.
-    return section_html + script_html
+    return canvas_html + script_html

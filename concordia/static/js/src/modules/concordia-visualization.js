@@ -95,6 +95,7 @@ export class ConcordiaVisualization {
             );
             return;
         }
+
         // Set accessibility attributes
         canvas.tabIndex = 0;
         canvas.setAttribute('role', 'img');
@@ -226,8 +227,19 @@ export class ConcordiaVisualization {
             options: finalOptions,
         });
 
-        // build a hidden HTML table of the same data for screen-readers
-        this._renderDataTable(data);
+        // If CSV URL exists in payload, create a link below the canvas
+        if (payload.csv_url) {
+            // wrapper is the <section>, container is the <div>
+            // Insert link after the wrapper, but within the outer container
+            const container = wrapper.parentNode;
+            const link = document.createElement('a');
+            link.href = payload.csv_url;
+            link.textContent = 'Download data as CSV';
+            link.classList.add('visualization-data-link');
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+            container.append(link);
+        }
 
         // Create a hidden live region for announcing the current slice/bar
         const live = document.createElement('div');
@@ -297,75 +309,6 @@ export class ConcordiaVisualization {
             event.preventDefault();
             highlight(elementIndex);
         });
-    }
-
-    /**
-     * Build a DOM <table> from the Chart.js `data` object,
-     * give it a visually-hidden class, and insert it after the canvas.
-     */
-    _renderDataTable(data) {
-        const canvas = document.getElementById(this.canvasId);
-        const container = canvas.parentNode;
-
-        const table = document.createElement('table');
-        table.setAttribute('aria-label', `${this.title} data table`);
-        table.classList.add('visually-hidden');
-
-        // caption: include both axis labels
-        const cap = document.createElement('caption');
-        const xLabel = this.xLabel || 'Category';
-        const yLabel = this.yLabel || (data.datasets[0]?.label ?? 'Value');
-        cap.textContent = `${this.title} - "${yLabel}" by ${xLabel}`;
-        table.append(cap);
-
-        // header row: first cell = xLabel, then one <th> per dataset
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        const cornerTh = document.createElement('th');
-        cornerTh.scope = 'col';
-        cornerTh.textContent = xLabel;
-        headerRow.append(cornerTh);
-
-        for (const ds of data.datasets) {
-            const th = document.createElement('th');
-            th.scope = 'col';
-            // if the dataset has a .label, use it; otherwise use the y-axis label
-            th.textContent = ds.label || yLabel;
-            headerRow.append(th);
-        }
-
-        thead.append(headerRow);
-        table.append(thead);
-
-        // body rows: one per label
-        const tbody = document.createElement('tbody');
-        for (const [index, label] of data.labels.entries()) {
-            const tr = document.createElement('tr');
-
-            // row header = the label
-            const rowHeader = document.createElement('th');
-            rowHeader.scope = 'row';
-            rowHeader.textContent = label;
-            tr.append(rowHeader);
-
-            // then one <td> per dataset
-            for (const ds of data.datasets) {
-                const td = document.createElement('td');
-                const value = ds.data[index];
-                if (Array.isArray(value)) {
-                    td.textContent = value.join(', ');
-                } else {
-                    td.textContent = String(value);
-                }
-                tr.append(td);
-            }
-
-            tbody.append(tr);
-        }
-
-        table.append(tbody);
-
-        container.insertBefore(table, canvas.nextSibling);
     }
 
     /**
