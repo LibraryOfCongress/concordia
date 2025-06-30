@@ -1,5 +1,7 @@
+import csv
 import datetime
 import os.path
+from io import StringIO
 from itertools import chain
 from logging import getLogger
 from tempfile import NamedTemporaryFile
@@ -11,6 +13,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
+from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.management import call_command
 from django.db import transaction
@@ -46,7 +49,7 @@ from concordia.models import (
     update_userprofileactivity_table,
 )
 from concordia.signals.signals import reservation_released
-from concordia.storage import ASSET_STORAGE
+from concordia.storage import ASSET_STORAGE, VISUALIZATION_STORAGE
 from concordia.utils import get_anonymous_user
 from concordia.utils.next_asset import (
     find_invalid_next_reviewable_campaign_assets,
@@ -1605,7 +1608,7 @@ def renew_next_asset_cache(self):
 def populate_asset_status_visualization_cache(self):
     """
     Queries live Asset objects for all ACTIVE campaigns and builds two datasets:
-        0. Both include:
+        Both include:
             - `status_labels`: [
                     "Not Started",
                     "In Progress",
@@ -1613,7 +1616,7 @@ def populate_asset_status_visualization_cache(self):
                     "Completed"
                 ]
 
-        1. "asset-status-overview" - the overview data, containing:
+        "asset-status-overview" - the overview data, containing:
             - `total_counts`:  [
                     count_not_started,
                     count_in_progress,
@@ -1621,7 +1624,7 @@ def populate_asset_status_visualization_cache(self):
                     count_completed
                 ]
 
-        2. "asset-status-by-campaign" - the per-campaign data, containing:
+        "asset-status-by-campaign" - the per-campaign data, containing:
             - `campaign_names`:       [ "Campaign A", "Campaign B", … ]
             - `per_campaign_counts`:  {
                 "not_started": [count_for_A, count_for_B, …],
@@ -1666,9 +1669,42 @@ def populate_asset_status_visualization_cache(self):
         for status in status_keys:
             per_campaign_counts[status].append(per_lookup[campaign_id].get(status, 0))
 
+    # Generate CSV for asset-status-overview
+    overview_csv = StringIO()
+    overview_writer = csv.writer(overview_csv)
+
+    overview_writer.writerow(["Status", "Count"])
+    for label, count in zip(status_labels, total_counts, strict=True):
+        overview_writer.writerow([label, count])
+
+    overview_csv_content = overview_csv.getvalue()
+    overview_csv_path = "visualization_exports/asset-status-overview.csv"
+    VISUALIZATION_STORAGE.save(overview_csv_path, ContentFile(overview_csv_content))
+    overview_csv_url = VISUALIZATION_STORAGE.url(overview_csv_path)
+
+    # Generate CSV for asset-status-by-campaign
+    by_campaign_csv = StringIO()
+    by_campaign_writer = csv.writer(by_campaign_csv)
+
+    by_campaign_writer.writerow(["Campaign"] + status_labels)
+    for campaign_name, counts_per_campaign in zip(
+        campaign_titles,
+        zip(*[per_campaign_counts[key] for key in status_keys], strict=True),
+        strict=True,
+    ):
+        by_campaign_writer.writerow([campaign_name] + list(counts_per_campaign))
+
+    by_campaign_csv_content = by_campaign_csv.getvalue()
+    by_campaign_csv_path = "visualization_exports/asset-status-by-campaign.csv"
+    VISUALIZATION_STORAGE.save(
+        by_campaign_csv_path, ContentFile(by_campaign_csv_content)
+    )
+    by_campaign_csv_url = VISUALIZATION_STORAGE.url(by_campaign_csv_path)
+
     overview_payload = {
         "status_labels": status_labels,
         "total_counts": total_counts,
+        "csv_url": overview_csv_url,
     }
     visualization_cache.set("asset-status-overview", overview_payload, None)
 
@@ -1676,6 +1712,7 @@ def populate_asset_status_visualization_cache(self):
         "status_labels": status_labels,
         "campaign_names": campaign_titles,
         "per_campaign_counts": per_campaign_counts,
+        "csv_url": by_campaign_csv_url,
     }
     visualization_cache.set("asset-status-by-campaign", by_campaign_payload, None)
 
@@ -1683,6 +1720,24 @@ def populate_asset_status_visualization_cache(self):
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
 def populate_daily_activity_visualization_cache(self):
+    """
+    Queries SiteReport objects for all ACTIVE campaigns and builds a dataset:
+
+        The dataset contains:
+            - `labels`: [ "YYYY-MM-DD", "YYYY-MM-DD", … ] (up to seven dates)
+
+            - `transcription_datasets`: [
+                {
+                    "label": "Campaign A",
+                    "data": [ daily_count_for_date1, daily_count_for_date2, … ],
+                },
+                {
+                    "label": "Campaign B",
+                    "data": [ … ],
+                },
+                …
+            ]
+    """
     data = {}
     # Fetch the seven distinct report‐dates for active campaigns,
     # starting seven days back to make sure we have full data
@@ -1752,6 +1807,21 @@ def populate_daily_activity_visualization_cache(self):
             "transcription_datasets": transcription_datasets,
         }
     )
+
+    # Prepare CSV data
+    csv_output = StringIO()
+    writer = csv.writer(csv_output)
+
+    writer.writerow(["Campaign"] + date_strings)
+    for ds in transcription_datasets:
+        writer.writerow([ds["label"]] + ds["data"])
+
+    csv_content = csv_output.getvalue()
+    csv_path = "visualization_exports/daily-transcription-activity-by-campaign.csv"
+    VISUALIZATION_STORAGE.save(csv_path, ContentFile(csv_content))
+    csv_url = VISUALIZATION_STORAGE.url(csv_path)
+
+    data["csv_url"] = csv_url
     caches["visualization_cache"].set(
         "daily-transcription-activity-by-campaign", data, None
     )
