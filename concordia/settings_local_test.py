@@ -1,4 +1,7 @@
+import logging
 import os
+
+import structlog
 
 from .settings_template import *  # NOQA ignore=F405
 from .settings_template import DATABASES
@@ -6,6 +9,42 @@ from .settings_template import DATABASES
 DEBUG = False
 
 DATABASES["default"]["PORT"] = "54323"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "default-location",
+    },
+    "view_cache": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "view-location",
+    },
+    "configuration_cache": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "configuration-location",
+    },
+    "visualization_cache": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "visualization-location",
+    },
+}
+
+structlog.configure(
+    processors=[],
+    wrapper_class=structlog.make_filtering_bound_logger(logging.CRITICAL),
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+)
+
+# These cause Celery to run tasks locally, synchronously and immediately
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
 
 DEFAULT_TO_EMAIL = "rsar@loc.gov"
 CONCORDIA_DEVS = [
@@ -19,13 +58,6 @@ EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 RATELIMIT_ENABLE = False
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("localhost", 63791)]},
-    }
-}
 
 # Turnstile settings
 TURNSTILE_JS_API_URL = os.environ.get(

@@ -32,16 +32,7 @@
             data-contact-url="https://ask.loc.gov/crowd"
     ></script>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "asset-reservation": "{% static 'js/asset-reservation.js' %}",
-                "ocr": "{% static 'js/ocr.js' %}",
-                "viewer": "{% static 'js/viewer.js' %}",
-                "turnstile" : "{% static 'js/modules/turnstile.js' %}"
-            }
-        }
-    </script>
+    {% include "fragments/import-map.html" %}
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
     {% if anonymous_user_validation_required %}

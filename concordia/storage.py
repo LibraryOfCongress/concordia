@@ -1,5 +1,15 @@
-from django.core.files.storage import default_storage
+from django.core.files.storage import storages
+from django.utils.functional import LazyObject
 
-# This is intentionally aliasing the default storage so we only need to change
-# this value in the future if we split storage across multiple buckets:
-ASSET_STORAGE = default_storage
+
+class LazyAssetStorage(LazyObject):
+    def _setup(self):
+        self._wrapped = storages["assets"]
+
+
+# This is an intentional alias so we can change this value in the future
+# if we need to split storage across multiple buckets
+# We use a LazyObject so the value isn't evaluated when the code is loaded,
+# which is needed to override the setting during tests
+
+ASSET_STORAGE = LazyAssetStorage()

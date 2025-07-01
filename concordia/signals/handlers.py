@@ -1,33 +1,38 @@
 import logging
 from time import time
 
+import structlog
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import F, Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template import loader
 from django_registration.signals import user_activated, user_registered
+from django_structlog import signals
 from flags.state import flag_enabled
 
-from ..models import (
+from concordia.logging import ConcordiaLogger
+from concordia.models import (
     Asset,
     Transcription,
     TranscriptionStatus,
     UserProfile,
-    UserProfileActivity,
 )
-from ..tasks import calculate_difficulty_values
+from concordia.tasks import calculate_difficulty_values
+from concordia.utils.next_asset import remove_next_asset_objects
+
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
 
 logger = logging.getLogger(__name__)
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 @receiver(user_logged_in)
@@ -37,8 +42,19 @@ def clear_reservation_token(sender, user, request, **kwargs):
         del request.session["reservation_token"]
         request.session.save()
         logger.info("Clearing reservation token %s for %s on login", token, user)
+        structured_logger.info(
+            "Reservation token cleared on login.",
+            event_code="reservation_token_cleared",
+            reservation_token=token,
+            user=user,
+        )
     except KeyError:
-        pass
+        structured_logger.debug(
+            "No reservation token found to clear on login.",
+            event_code="reservation_token_absent_on_login",
+            user=user,
+        )
+
     logger.info("Successful user login with username %s", user)
 
 
@@ -98,6 +114,9 @@ def add_user_to_newsletter(sender, user, request, **kwargs):
 @receiver(post_save, sender=Transcription)
 def update_asset_status(sender, *, instance, **kwargs):
     logger.info("update_asset_status for %s", instance.id)
+
+    asset = instance.asset
+
     new_status = TranscriptionStatus.IN_PROGRESS
 
     if instance.rejected:
@@ -107,7 +126,30 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    asset = instance.asset
+    # Before we do anything, we need to make sure this
+    # is the latest transcription for the asset.
+    current_latest_transcription = asset.latest_transcription()
+    if instance != current_latest_transcription:
+        # A transcription lower down in the asset's history has been updated.
+        # This shouldn't happen outside of extraordinary circumstances.
+        # We'll log this occurrence then skip the rest of the signal because
+        # we don't want to change the asset's status since changing an older
+        # transcription doesn't logically affect the status or anything else
+        logger.warning(
+            "An older transcription (%s) was updated for asset %s (%s). This "
+            "would have updated the status to %s, but this was prevented and "
+            "the status remained %s. The current latest_transcription is %s. "
+            "The sender was %s.",
+            instance.id,
+            asset,
+            asset.id,
+            new_status,
+            asset.transcription_status,
+            current_latest_transcription,
+            sender,
+        )
+        return
+
     logger.info(
         "Updating asset status for %s (%s) from %s to %s",
         asset,
@@ -121,6 +163,8 @@ def update_asset_status(sender, *, instance, **kwargs):
     asset.save()
 
     logger.info("Status for %s (%s) updated", asset, asset.id)
+
+    remove_next_asset_objects(asset.id)
 
     calculate_difficulty_values(Asset.objects.filter(pk=asset.pk))
 
@@ -157,6 +201,15 @@ def send_asset_reservation_obtained(sender, **kwargs):
         kwargs["asset_pk"],
         kwargs["reservation_token"],
     )
+
+    structured_logger.info(
+        "Asset reservation obtained.",
+        event_code="asset_reservation_obtained",
+        asset_pk=kwargs["asset_pk"],
+        reservation_token=kwargs["reservation_token"],
+        sender=sender,
+    )
+
     send_asset_reservation_message(
         sender=sender,
         message_type="asset_reservation_obtained",
@@ -173,6 +226,13 @@ def send_asset_reservation_released(sender, **kwargs):
         kwargs["asset_pk"],
         kwargs["reservation_token"],
     )
+    structured_logger.info(
+        "Asset reservation released.",
+        event_code="asset_reservation_released",
+        asset_pk=kwargs["asset_pk"],
+        reservation_token=kwargs["reservation_token"],
+        sender=sender,
+    )
     send_asset_reservation_message(
         sender=sender,
         message_type="asset_reservation_released",
@@ -184,6 +244,14 @@ def send_asset_reservation_released(sender, **kwargs):
 def send_asset_reservation_message(
     *, sender, message_type, asset_pk, reservation_token
 ):
+    structured_logger.debug(
+        "Dispatching reservation message to channel layer.",
+        event_code="asset_reservation_channel_dispatch",
+        message_type=message_type,
+        asset_pk=asset_pk,
+        reservation_token=reservation_token,
+        sender=sender,
+    )
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
         {
@@ -212,7 +280,7 @@ def on_transcription_save(sender, instance, **kwargs):
     :param instance:
         the transcription being saved
     """
-    if kwargs["created"]:
+    if kwargs.get("created", False):
         user = instance.user
         attr_name = "transcribe_count"
     elif instance.reviewed_by:
@@ -222,24 +290,34 @@ def on_transcription_save(sender, instance, **kwargs):
         user = None
         attr_name = None
 
-    if user is not None and attr_name is not None:
-        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-            user=user,
-            campaign=instance.asset.item.project.campaign,
-        )
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        if created:
-            setattr(user_profile_activity, attr_name, 1)
-            setattr(profile, attr_name, 1)
+    if user is not None and attr_name is not None and user.username != "anonymous":
+        key = f"userprofileactivity_{instance.asset.item.project.campaign.id}"
+        updates = cache.get(key, {})
+        transcribe_count, review_count = updates.get(user.id, (0, 0))
+        if attr_name == "transcribe_count":
+            transcribe_count += 1
         else:
-            setattr(user_profile_activity, attr_name, F(attr_name) + 1)
-            setattr(profile, attr_name, F(attr_name) + 1)
-        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        user_profile_activity.asset_count = (
-            Asset.objects.filter(q)
-            .filter(item__project__campaign=instance.asset.item.project.campaign)
-            .distinct()
-            .count()
-        )
-        user_profile_activity.save()
-        profile.save()
+            review_count += 1
+        updates[user.id] = (transcribe_count, review_count)
+        cache.set(key, updates)
+
+
+@receiver(signals.update_failure_response)
+@receiver(signals.bind_extra_request_finished_metadata)
+def add_request_id_to_response(response, logger, **kwargs):
+    cache_control = response.get("Cache-Control", "").lower()
+
+    is_public = "public" in cache_control or "max-age" in cache_control
+    is_private = (
+        "private" in cache_control
+        or "no-store" in cache_control
+        or "no-cache" in cache_control
+    )
+
+    if is_public and not is_private:
+        # Don't add header to potentially cacheable responses
+        # to avoid the cache storing a bad request_id
+        return
+
+    context = structlog.contextvars.get_merged_contextvars(logger)
+    response["X-Request-ID"] = context["request_id"]

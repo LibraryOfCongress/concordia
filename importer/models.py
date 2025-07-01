@@ -225,7 +225,7 @@ class ImportItemAsset(TaskStatusModel):
             retry_delay = configuration_value("asset_image_import_max_retry_delay")
             if self.retry_count < max_retries and retry_delay > 0:
                 if self.reset_for_retry():
-                    return tasks.download_asset_task.apply_async(
+                    return tasks.assets.download_asset_task.apply_async(
                         (self.pk,), countdown=retry_delay * 60  # Convert to seconds
                     )
                 else:
@@ -246,7 +246,7 @@ class ImportItemAsset(TaskStatusModel):
                 new_status = (
                     "Maximum number of retries reached while retrying "
                     "image download for asset. The failure reason before retrying "
-                    "was {self.failure_reason} and the status was {self.status}"
+                    f"was {self.failure_reason} and the status was {self.status}"
                 )
                 self.update_status(new_status, do_save=False)
                 self.failure_reason = TaskStatusModel.FailureReason.RETRIES

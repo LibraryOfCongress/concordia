@@ -95,6 +95,11 @@ def unpublish_action(modeladmin, request, queryset):
 def change_status_to_completed(modeladmin, request, queryset):
     assets = queryset.exclude(transcription_status=TranscriptionStatus.COMPLETED)
     count = assets.count()
+    if count == 1:
+        changed_asset = assets.first()
+    else:
+        changed_asset = False
+
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
         if latest_transcription is None:
@@ -110,9 +115,16 @@ def change_status_to_completed(modeladmin, request, queryset):
         latest_transcription.validate_unique()
         latest_transcription.save()
 
-    messages.info(
-        request, f"Changed status of {count} assets to Complete", fail_silently=True
-    )
+    if changed_asset:
+        messages.info(
+            request,
+            f"Changed status of {changed_asset.title} to Complete",
+            fail_silently=True,
+        )
+    else:
+        messages.info(
+            request, f"Changed status of {count} assets to Complete", fail_silently=True
+        )
 
 
 def _change_status(request, assets, submit=True):
@@ -155,22 +167,42 @@ def _change_status(request, assets, submit=True):
 
 @admin.action(permissions=["reopen"], description="Change status to Needs Review")
 def change_status_to_needs_review(modeladmin, request, queryset):
-    queryset = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
-    count = _change_status(request, queryset)
+    eligible = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
+    count = _change_status(request, eligible)
 
-    messages.info(
-        request, f"Changed status of {count} assets to Needs Review", fail_silently=True
-    )
+    if count == 1:
+        asset = queryset.first()
+        messages.info(
+            request,
+            f"Changed status of {asset.title} to Needs Review",
+            fail_silently=True,
+        )
+    else:
+        messages.info(
+            request,
+            f"Changed status of {count} assets to Needs Review",
+            fail_silently=True,
+        )
 
 
 @admin.action(permissions=["reopen"], description="Change status to In Progress")
 def change_status_to_in_progress(modeladmin, request, queryset):
-    queryset = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
-    count = _change_status(request, queryset, submit=False)
+    eligible = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
+    count = _change_status(request, eligible, submit=False)
 
-    messages.info(
-        request, f"Changed status of {count} assets to In Progress", fail_silently=True
-    )
+    if count == 1:
+        asset = queryset.first()
+        messages.info(
+            request,
+            f"Changed status of {asset.title} to In Progress",
+            fail_silently=True,
+        )
+    else:
+        messages.info(
+            request,
+            f"Changed status of {count} assets to In Progress",
+            fail_silently=True,
+        )
 
 
 @admin.action(

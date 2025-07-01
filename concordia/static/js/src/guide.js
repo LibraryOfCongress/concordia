@@ -1,9 +1,5 @@
 /* global $ trackUIInteraction */
 
-var height =
-    document.getElementById('transcription-status-message').offsetHeight + 97;
-document.getElementById('guide-sidebar').style.top = height.toString() + 'px';
-
 function openOffcanvas() {
     let guide = document.getElementById('guide-sidebar');
     if (guide.classList.contains('offscreen')) {
@@ -27,7 +23,10 @@ function closeOffcanvas() {
     guide.classList.add('offscreen');
     guide.style.border = 'none';
 
-    document.getElementById('open-guide').style.background = '#0076AD';
+    let openGuide = document.getElementById('open-guide');
+    if (openGuide) {
+        openGuide.style.background = '#0076AD';
+    }
 }
 
 $('#open-guide').on('click', openOffcanvas);

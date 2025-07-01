@@ -7,16 +7,22 @@ DEBUG = os.getenv("DEBUG", "").lower() == "true"
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
-ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ELASTICSEARCH_DSL_AUTOSYNC", False)
+INSTALLED_APPS += ["django_opensearch_dsl"]
 
-INSTALLED_APPS += ["django_elasticsearch_dsl"]
+# Globally disable auto-syncing
+OPENSEARCH_DSL_AUTOSYNC = os.getenv("OPENSEARCH_DSL_AUTOSYNC", False)
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
-)
-ELASTICSEARCH_DSL = {
-    "default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}
+OPENSEARCH_DSL = {
+    "default": {"hosts": os.getenv("OPENSEARCH_ENDPOINT", "9200:9200")},
+    "secure": {
+        "hosts": [
+            {"scheme": "https", "host": os.getenv("OPENSEARCH_ENDPOINT"), "port": 9201}
+        ],
+        "http_auth": ("admin", os.environ.get("OPENSEARCH_INITIAL_ADMIN_PASSWORD", "")),
+        "timeout": 120,
+    },
 }
+
 
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.

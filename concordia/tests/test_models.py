@@ -14,6 +14,10 @@ from concordia.models import (
     Campaign,
     CardFamily,
     MediaType,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
+    NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
     Resource,
     Transcription,
     TranscriptionStatus,
@@ -41,6 +45,7 @@ from .utils import (
     create_simple_page,
     create_tag,
     create_tag_collection,
+    create_topic,
     create_transcription,
     create_user_profile_activity,
 )
@@ -50,7 +55,6 @@ class AssetTestCase(CreateTestUsers, TestCase):
     def setUp(self):
         self.asset = create_asset()
         self.anon = get_anonymous_user()
-        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         create_transcription(asset=self.asset, user=self.anon)
         create_transcription(
             asset=self.asset,
@@ -89,7 +93,7 @@ class AssetTestCase(CreateTestUsers, TestCase):
 
     def test_get_storage_path(self):
         self.assertEqual(
-            self.asset.get_storage_path(filename=self.asset.storage_image),
+            self.asset.get_storage_path(filename=self.asset.storage_image.name),
             "test-campaign/test-project/testitem.0123456789/1.jpg",
         )
 
@@ -100,7 +104,6 @@ class AssetTestCase(CreateTestUsers, TestCase):
                 title="No campaign",
                 slug="no-campaign",
                 media_type=MediaType.IMAGE,
-                media_url="1.jpg",
                 storage_image="unittest1.jpg",
             )
         except (ValidationError, ObjectDoesNotExist):
@@ -152,7 +155,6 @@ class AssetTestCase(CreateTestUsers, TestCase):
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
     def setUp(self):
-        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         self.transcription1 = create_transcription(
             user=self.create_user(username="tester1"),
             rejected=timezone.now() - timedelta(days=2),
@@ -302,7 +304,6 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         self.user = self.create_user("test-user-1")
         self.user2 = self.create_user("test-user-2")
         self.asset = create_asset()
-        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         self.transcription1 = create_transcription(
             user=self.user,
             asset=self.asset,
@@ -450,7 +451,7 @@ class UserProfileTestCase(CreateTestUsers, TestCase):
 
         transcription = create_transcription(user=user)
         update_userprofileactivity_table(
-            user, transcription.asset.item.project.campaign.id, "transcribe"
+            user, transcription.asset.item.project.campaign.id, "transcribe_count"
         )
 
         self.assertTrue(hasattr(user, "profile"))
@@ -624,3 +625,170 @@ class ValidatedGetOrCreateTestCase(TestCase):
         campaign, created = validated_get_or_create(Campaign, **kwargs)
         self.assertFalse(created)
         self.assertEqual(campaign.title, kwargs["title"])
+
+
+class NextAssetModelTests(TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.topic = create_topic(project=self.asset.item.project)
+        self.campaign = self.asset.campaign
+        self.project = self.asset.item.project
+
+    def test_create_next_transcribable_campaign_asset(self):
+        obj = NextTranscribableCampaignAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            campaign=self.campaign,
+        )
+        self.assertEqual(str(obj), self.asset.title)
+        self.assertEqual(obj.transcription_status, "not_started")
+
+    def test_create_next_reviewable_campaign_asset(self):
+        obj = NextReviewableCampaignAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            campaign=self.campaign,
+        )
+        self.assertEqual(str(obj), self.asset.title)
+        self.assertEqual(obj.transcriber_ids, [])
+
+    def test_create_next_transcribable_topic_asset(self):
+        obj = NextTranscribableTopicAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            topic=self.topic,
+        )
+        self.assertEqual(obj.transcription_status, "not_started")
+
+    def test_create_next_reviewable_topic_asset(self):
+        obj = NextReviewableTopicAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            topic=self.topic,
+        )
+        self.assertEqual(obj.transcriber_ids, [])
+
+    def test_needed_for_campaign_respects_target_count(self):
+        manager = NextTranscribableCampaignAsset.objects
+        current_needed = manager.needed_for_campaign(self.campaign.id)
+        self.assertEqual(current_needed, settings.NEXT_TRANSCRIBABE_ASSET_COUNT)
+
+        # Add one and check count again
+        manager.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            campaign=self.campaign,
+        )
+        new_needed = manager.needed_for_campaign(self.campaign.id)
+        self.assertEqual(new_needed, settings.NEXT_TRANSCRIBABE_ASSET_COUNT - 1)
+
+    def test_needed_for_topic_respects_target_count(self):
+        manager = NextReviewableTopicAsset.objects
+        current_needed = manager.needed_for_topic(self.topic.id)
+        self.assertEqual(current_needed, settings.NEXT_REVIEWABLE_ASSET_COUNT)
+
+        manager.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            topic=self.topic,
+        )
+        new_needed = manager.needed_for_topic(self.topic.id)
+        self.assertEqual(new_needed, settings.NEXT_REVIEWABLE_ASSET_COUNT - 1)
+
+    def test_needed_for_campaign_raises_without_target(self):
+        from django.db import models
+
+        from concordia.models import NextCampaignAssetManager
+
+        class DummyManager(NextCampaignAssetManager):
+            target_count = None
+
+        class DummyModel(models.Model):
+            campaign = models.ForeignKey("concordia.Campaign", on_delete=models.CASCADE)
+            objects = DummyManager()
+
+            class Meta:
+                app_label = "concordia"
+
+        with self.assertRaises(NotImplementedError):
+            DummyModel.objects.needed_for_campaign(self.campaign.id)
+
+    def test_needed_for_topic_raises_without_target(self):
+        from django.db import models
+
+        from concordia.models import NextTopicAssetManager
+
+        class DummyManager(NextTopicAssetManager):
+            target_count = None
+
+        class DummyModel(models.Model):
+            topic = models.ForeignKey("concordia.Topic", on_delete=models.CASCADE)
+            objects = DummyManager()
+
+            class Meta:
+                app_label = "concordia"
+
+        with self.assertRaises(NotImplementedError):
+            DummyModel.objects.needed_for_topic(self.topic.id)
+
+    def test_needed_for_campaign_with_explicit_target_count(self):
+        manager = NextTranscribableCampaignAsset.objects
+        # Should return full count when no assets exist yet
+        needed = manager.needed_for_campaign(self.campaign.id, target_count=10)
+        self.assertEqual(needed, 10)
+
+        # Add one asset
+        manager.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            campaign=self.campaign,
+        )
+
+        needed = manager.needed_for_campaign(self.campaign.id, target_count=10)
+        self.assertEqual(needed, 9)
+
+    def test_needed_for_topic_with_explicit_target_count(self):
+        manager = NextReviewableTopicAsset.objects
+        needed = manager.needed_for_topic(self.topic.id, target_count=5)
+        self.assertEqual(needed, 5)
+
+        manager.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.project,
+            project_slug=self.project.slug,
+            sequence=self.asset.sequence,
+            topic=self.topic,
+        )
+
+        needed = manager.needed_for_topic(self.topic.id, target_count=5)
+        self.assertEqual(needed, 4)

@@ -30,11 +30,9 @@ from concordia.models import (
 from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
 from exporter.views import do_bagit_export
 from importer.models import ImportItem, ImportItemAsset, ImportJob
-from importer.tasks import (
-    fetch_all_urls,
-    import_items_into_project_from_url,
-    redownload_image_task,
-)
+from importer.tasks import fetch_all_urls
+from importer.tasks.images import redownload_image_task
+from importer.tasks.items import import_items_into_project_from_url
 from importer.utils import slurp_excel
 
 from ..models import Campaign, Project, SiteReport
@@ -183,7 +181,9 @@ def project_level_export(request):
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
         ) as export_base_dir:
-            return do_bagit_export(assets, export_base_dir, export_filename_base)
+            return do_bagit_export(
+                assets, export_base_dir, export_filename_base, request
+            )
 
     if idx is not None:
         context["campaigns"] = []

@@ -2,17 +2,35 @@ from datetime import timedelta
 from unittest import mock
 
 from django.core import mail
-from django.core.cache import cache
-from django.db.models import signals
-from django.test import TestCase
+from django.core.cache import cache, caches
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from concordia.models import Campaign, SiteReport, Transcription
-from concordia.signals.handlers import on_transcription_save
+from concordia.models import (
+    Campaign,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
+    NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
+    SiteReport,
+    Transcription,
+    TranscriptionStatus,
+)
 from concordia.tasks import (
     CacheLockedError,
     _daily_active_users,
     campaign_report,
+    clean_next_reviewable_for_campaign,
+    clean_next_reviewable_for_topic,
+    clean_next_transcribable_for_campaign,
+    clean_next_transcribable_for_topic,
+    populate_asset_status_visualization_cache,
+    populate_daily_activity_visualization_cache,
+    populate_next_reviewable_for_campaign,
+    populate_next_reviewable_for_topic,
+    populate_next_transcribable_for_campaign,
+    populate_next_transcribable_for_topic,
+    renew_next_asset_cache,
     site_report,
     unusual_activity,
     update_useractivity_cache,
@@ -46,7 +64,6 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         cls.item1 = cls.asset1.item
         cls.project1 = cls.item1.project
         cls.campaign1 = cls.project1.campaign
-        signals.post_save.disconnect(on_transcription_save, sender=Transcription)
         cls.asset1_transcription1 = create_transcription(
             asset=cls.asset1, user=cls.user1, accepted=timezone.now()
         )
@@ -253,7 +270,15 @@ class TaskTestCase(CreateTestUsers, TestCase):
         mock_add.return_value = True
         update_useractivity_cache(user.id, campaign.id, "transcribe")
         self.assertEqual(mock_update.call_count, 1)
+        mock_update.assert_called_with(user.id, campaign.id, "transcribe")
         self.assertEqual(mock_delete.call_count, 1)
+        mock_delete.assert_called_with("userprofileactivity_cache_lock")
+
+        update_useractivity_cache(user.id, campaign.id, "review")
+        self.assertEqual(mock_update.call_count, 2)
+        mock_update.assert_called_with(user.id, campaign.id, "review")
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_called_with("userprofileactivity_cache_lock")
 
     @mock.patch("concordia.tasks.update_userprofileactivity_table")
     def test_update_userprofileactivity_from_cache(self, mock_update_table):
@@ -264,4 +289,538 @@ class TaskTestCase(CreateTestUsers, TestCase):
         cache.set(key, {user.pk: (1, 0)})
         update_userprofileactivity_from_cache()
         self.assertEqual(mock_update_table.call_count, 2)
+        mock_update_table.assert_has_calls(
+            [
+                mock.call(user, campaign.id, "transcribe_count", 1),
+                mock.call(user, campaign.id, "review_count", 0),
+            ]
+        )
         self.assertIsNone(cache.get(key))
+
+
+class PopulateNextAssetTasksTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.anon = get_anonymous_user()
+        self.user = self.create_test_user()
+        self.asset1 = create_asset(slug="test-asset-1", title="Test Asset 1")
+        self.asset2 = create_asset(
+            item=self.asset1.item, slug="test-asset-2", title="Test Asset 2"
+        )
+        self.topic = create_topic(project=self.asset1.item.project)
+        self.campaign = self.asset1.campaign
+
+    def test_populate_next_transcribable_for_campaign(self):
+        populate_next_transcribable_for_campaign(campaign_id=self.campaign.id)
+        self.assertEqual(
+            NextTranscribableCampaignAsset.objects.filter(
+                campaign=self.campaign
+            ).count(),
+            2,
+        )
+
+    def test_populate_next_transcribable_for_topic(self):
+        populate_next_transcribable_for_topic(topic_id=self.topic.id)
+        self.assertEqual(
+            NextTranscribableTopicAsset.objects.filter(topic=self.topic).count(), 2
+        )
+
+    def test_populate_next_reviewable_for_campaign(self):
+        create_transcription(
+            asset=self.asset1, user=self.anon, submitted=timezone.now()
+        )
+        create_transcription(
+            asset=self.asset2, user=self.user, submitted=timezone.now()
+        )
+        populate_next_reviewable_for_campaign(campaign_id=self.campaign.id)
+        self.assertEqual(
+            NextReviewableCampaignAsset.objects.filter(campaign=self.campaign).count(),
+            2,
+        )
+
+    def test_populate_next_reviewable_for_topic(self):
+        create_transcription(
+            asset=self.asset1, user=self.anon, submitted=timezone.now()
+        )
+        create_transcription(
+            asset=self.asset2, user=self.user, submitted=timezone.now()
+        )
+        populate_next_reviewable_for_topic(topic_id=self.topic.id)
+        self.assertEqual(
+            NextReviewableTopicAsset.objects.filter(topic=self.topic).count(), 2
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_transcribable_for_campaign_missing(self, mock_logger):
+        populate_next_transcribable_for_campaign(campaign_id=9999)
+        mock_logger.error.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_transcribable_for_topic_missing(self, mock_logger):
+        populate_next_transcribable_for_topic(topic_id=9999)
+        mock_logger.error.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_reviewable_for_campaign_missing(self, mock_logger):
+        populate_next_reviewable_for_campaign(campaign_id=9999)
+        mock_logger.error.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_reviewable_for_topic_missing(self, mock_logger):
+        populate_next_reviewable_for_topic(topic_id=9999)
+        mock_logger.error.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_transcribable_for_campaign_none_needed(self, mock_logger):
+        for i in range(3, 103):
+            asset = create_asset(item=self.asset1.item, slug=f"dummy-{i}")
+            NextTranscribableCampaignAsset.objects.create(
+                asset=asset,
+                item=asset.item,
+                item_item_id=asset.item.item_id,
+                project=asset.item.project,
+                project_slug=asset.item.project.slug,
+                campaign=self.campaign,
+                sequence=asset.sequence,
+                transcription_status=asset.transcription_status,
+            )
+        populate_next_transcribable_for_campaign(campaign_id=self.campaign.id)
+        mock_logger.info.assert_any_call(
+            "Campaign %s already has %s next transcribable assets", self.campaign, 100
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_transcribable_for_topic_none_needed(self, mock_logger):
+        for i in range(3, 103):
+            asset = create_asset(item=self.asset1.item, slug=f"dummy-{i}")
+            NextTranscribableTopicAsset.objects.create(
+                asset=asset,
+                item=asset.item,
+                item_item_id=asset.item.item_id,
+                project=asset.item.project,
+                project_slug=asset.item.project.slug,
+                topic=self.topic,
+                sequence=asset.sequence,
+                transcription_status=asset.transcription_status,
+            )
+        populate_next_transcribable_for_topic(topic_id=self.topic.id)
+        mock_logger.info.assert_any_call(
+            "Topic %s already has %s next transcribable assets", self.topic, 100
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_reviewable_for_campaign_none_needed(self, mock_logger):
+        create_transcription(
+            asset=self.asset1, user=self.user, submitted=timezone.now()
+        )
+        for i in range(3, 103):
+            asset = create_asset(item=self.asset1.item, slug=f"r-{i}")
+            create_transcription(asset=asset, user=self.user, submitted=timezone.now())
+            NextReviewableCampaignAsset.objects.create(
+                asset=asset,
+                item=asset.item,
+                item_item_id=asset.item.item_id,
+                project=asset.item.project,
+                project_slug=asset.item.project.slug,
+                campaign=self.campaign,
+                sequence=asset.sequence,
+                transcriber_ids=[self.user.id],
+            )
+
+        populate_next_reviewable_for_campaign(campaign_id=self.campaign.id)
+        mock_logger.info.assert_any_call(
+            "Campaign %s already has %s next reviewable assets", self.campaign, 100
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_reviewable_for_topic_none_needed(self, mock_logger):
+        create_transcription(
+            asset=self.asset1, user=self.user, submitted=timezone.now()
+        )
+        for i in range(3, 103):
+            asset = create_asset(item=self.asset1.item, slug=f"t-{i}")
+            create_transcription(asset=asset, user=self.user, submitted=timezone.now())
+            NextReviewableTopicAsset.objects.create(
+                asset=asset,
+                item=asset.item,
+                item_item_id=asset.item.item_id,
+                project=asset.item.project,
+                project_slug=asset.item.project.slug,
+                topic=self.topic,
+                sequence=asset.sequence,
+                transcriber_ids=[self.user.id],
+            )
+
+        populate_next_reviewable_for_topic(topic_id=self.topic.id)
+        mock_logger.info.assert_any_call(
+            "Topic %s already has %s next reviewable assets", self.topic, 100
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_reviewable_for_campaign_none_found(self, mock_logger):
+        create_transcription(
+            asset=self.asset1, user=self.user, submitted=timezone.now()
+        )
+
+        NextReviewableCampaignAsset.objects.create(
+            asset=self.asset1,
+            item=self.asset1.item,
+            item_item_id=self.asset1.item.item_id,
+            project=self.asset1.item.project,
+            project_slug=self.asset1.item.project.slug,
+            campaign=self.campaign,
+            sequence=self.asset1.sequence,
+            transcriber_ids=[self.user.id],
+        )
+
+        populate_next_reviewable_for_campaign(campaign_id=self.campaign.id)
+        mock_logger.info.assert_any_call(
+            "No reviewable assets found in campaign %s", self.campaign
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_reviewable_for_topic_none_found(self, mock_logger):
+        create_transcription(
+            asset=self.asset1, user=self.user, submitted=timezone.now()
+        )
+
+        NextReviewableTopicAsset.objects.create(
+            asset=self.asset1,
+            item=self.asset1.item,
+            item_item_id=self.asset1.item.item_id,
+            project=self.asset1.item.project,
+            project_slug=self.asset1.item.project.slug,
+            topic=self.topic,
+            sequence=self.asset1.sequence,
+            transcriber_ids=[self.user.id],
+        )
+
+        populate_next_reviewable_for_topic(topic_id=self.topic.id)
+        mock_logger.info.assert_any_call(
+            "No reviewable assets found in topic %s", self.topic
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_transcribable_for_campaign_none_found(self, mock_logger):
+        for asset in (self.asset1, self.asset2):
+            NextTranscribableCampaignAsset.objects.create(
+                asset=asset,
+                item=asset.item,
+                item_item_id=asset.item.item_id,
+                project=asset.item.project,
+                project_slug=asset.item.project.slug,
+                campaign=self.campaign,
+                sequence=asset.sequence,
+                transcription_status=asset.transcription_status,
+            )
+
+        populate_next_transcribable_for_campaign(campaign_id=self.campaign.id)
+        mock_logger.info.assert_any_call(
+            "No transcribable assets found in campaign %s", self.campaign
+        )
+
+    @mock.patch("concordia.tasks.logger")
+    def test_populate_next_transcribable_for_topic_none_found(self, mock_logger):
+        for asset in (self.asset1, self.asset2):
+            NextTranscribableTopicAsset.objects.create(
+                asset=asset,
+                item=asset.item,
+                item_item_id=asset.item.item_id,
+                project=asset.item.project,
+                project_slug=asset.item.project.slug,
+                topic=self.topic,
+                sequence=asset.sequence,
+                transcription_status=asset.transcription_status,
+            )
+
+        populate_next_transcribable_for_topic(topic_id=self.topic.id)
+        mock_logger.info.assert_any_call(
+            "No transcribable assets found in topic %s", self.topic
+        )
+
+
+class CleanNextAssetTasksTests(TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.campaign = self.asset.campaign
+        self.topic = create_topic(project=self.asset.item.project)
+        self.campaign_transcribable = NextTranscribableCampaignAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            campaign=self.campaign,
+            sequence=self.asset.sequence,
+            transcription_status=TranscriptionStatus.NOT_STARTED,
+        )
+        self.topic_transcribable = NextTranscribableTopicAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            topic=self.topic,
+            sequence=self.asset.sequence,
+            transcription_status=TranscriptionStatus.IN_PROGRESS,
+        )
+        self.campaign_reviewable = NextReviewableCampaignAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            campaign=self.campaign,
+            sequence=self.asset.sequence,
+        )
+        self.topic_reviewable = NextReviewableTopicAsset.objects.create(
+            asset=self.asset,
+            item=self.asset.item,
+            item_item_id=self.asset.item.item_id,
+            project=self.asset.item.project,
+            project_slug=self.asset.item.project.slug,
+            topic=self.topic,
+            sequence=self.asset.sequence,
+        )
+
+    @mock.patch("concordia.tasks.populate_next_transcribable_for_campaign.delay")
+    def test_clean_next_transcribable_for_campaign(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.COMPLETED
+        self.asset.save()
+        clean_next_transcribable_for_campaign(self.campaign.id)
+        self.assertFalse(
+            NextTranscribableCampaignAsset.objects.filter(
+                campaign=self.campaign
+            ).exists()
+        )
+        mock_delay.assert_called_once_with(self.campaign.id)
+
+    @mock.patch("concordia.tasks.populate_next_transcribable_for_topic.delay")
+    def test_clean_next_transcribable_for_topic(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.COMPLETED
+        self.asset.save()
+        clean_next_transcribable_for_topic(self.topic.id)
+        self.assertFalse(
+            NextTranscribableTopicAsset.objects.filter(topic=self.topic).exists()
+        )
+        mock_delay.assert_called_once_with(self.topic.id)
+
+    @mock.patch("concordia.tasks.populate_next_reviewable_for_campaign.delay")
+    def test_clean_next_reviewable_for_campaign(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.IN_PROGRESS
+        self.asset.save()
+        clean_next_reviewable_for_campaign(self.campaign.id)
+        self.assertFalse(
+            NextReviewableCampaignAsset.objects.filter(campaign=self.campaign).exists()
+        )
+        mock_delay.assert_called_once_with(self.campaign.id)
+
+    @mock.patch("concordia.tasks.populate_next_reviewable_for_topic.delay")
+    def test_clean_next_reviewable_for_topic(self, mock_delay):
+        self.asset.transcription_status = TranscriptionStatus.NOT_STARTED
+        self.asset.save()
+        clean_next_reviewable_for_topic(self.topic.id)
+        self.assertFalse(
+            NextReviewableTopicAsset.objects.filter(topic=self.topic).exists()
+        )
+        mock_delay.assert_called_once_with(self.topic.id)
+
+    @mock.patch("concordia.tasks.clean_next_reviewable_for_campaign.delay")
+    @mock.patch("concordia.tasks.clean_next_transcribable_for_campaign.delay")
+    @mock.patch("concordia.tasks.clean_next_reviewable_for_topic.delay")
+    @mock.patch("concordia.tasks.clean_next_transcribable_for_topic.delay")
+    def test_renew_next_asset_cache(
+        self,
+        mock_clean_trans_topic,
+        mock_clean_rev_topic,
+        mock_clean_trans_campaign,
+        mock_clean_rev_campaign,
+    ):
+        renew_next_asset_cache()
+        mock_clean_trans_campaign.assert_called_once_with(campaign_id=self.campaign.id)
+        mock_clean_rev_campaign.assert_called_once_with(campaign_id=self.campaign.id)
+        mock_clean_trans_topic.assert_called_once_with(topic_id=self.topic.id)
+        mock_clean_rev_topic.assert_called_once_with(topic_id=self.topic.id)
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_transcribable_for_campaign_exception(self, mock_logger):
+        with mock.patch.object(
+            self.campaign_transcribable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_transcribable_campaign_assets",
+                return_value=[self.campaign_transcribable],
+            ):
+                clean_next_transcribable_for_campaign(self.campaign.id)
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_transcribable_for_topic_exception(self, mock_logger):
+        with mock.patch.object(
+            self.topic_transcribable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_transcribable_topic_assets",
+                return_value=[self.topic_transcribable],
+            ):
+                clean_next_transcribable_for_topic(self.topic.id)
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_reviewable_for_campaign_exception(self, mock_logger):
+        with mock.patch.object(
+            self.campaign_reviewable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_reviewable_campaign_assets",
+                return_value=[self.campaign_reviewable],
+            ):
+                clean_next_reviewable_for_campaign(self.campaign.id)
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch("concordia.tasks.logger")
+    def test_clean_next_reviewable_for_topic_exception(self, mock_logger):
+        with mock.patch.object(
+            self.topic_reviewable, "delete", side_effect=Exception("fail")
+        ):
+            with mock.patch(
+                "concordia.tasks.find_invalid_next_reviewable_topic_assets",
+                return_value=[self.topic_reviewable],
+            ):
+                clean_next_reviewable_for_topic(self.topic.id)
+        mock_logger.exception.assert_called_once()
+
+
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+        "visualization_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+    }
+)
+class VisualizationCacheTasksTests(TestCase):
+    def setUp(self):
+        self.cache = caches["visualization_cache"]
+        self.cache.clear()
+
+    def test_populate_asset_status_visualization_cache(self):
+        c1 = create_campaign(status=Campaign.Status.ACTIVE, title="Alpha")
+        c2 = create_campaign(status=Campaign.Status.ACTIVE, title="Beta")
+        p1 = create_project(campaign=c1)
+        i1 = create_item(project=p1)
+        p2 = create_project(campaign=c2)
+        i2 = create_item(project=p2)
+        create_asset(item=i1, transcription_status=TranscriptionStatus.NOT_STARTED)
+        create_asset(
+            item=i2,
+            slug="test-asset-2",
+            transcription_status=TranscriptionStatus.IN_PROGRESS,
+        )
+        create_asset(
+            item=i2,
+            slug="test-asset-3",
+            transcription_status=TranscriptionStatus.SUBMITTED,
+        )
+        create_asset(
+            item=i2,
+            slug="test-asset-4",
+            transcription_status=TranscriptionStatus.COMPLETED,
+        )
+
+        populate_asset_status_visualization_cache.run()
+
+        overview = self.cache.get("asset-status-overview")
+        expected_labels = [
+            TranscriptionStatus.CHOICE_MAP[key]
+            for key, _ in TranscriptionStatus.CHOICES
+        ]
+        self.assertEqual(overview["status_labels"], expected_labels)
+        # Totals: 1 not_started, 1 in_progress, 1 submitted, 1 completed
+        self.assertEqual(overview["total_counts"], [1, 1, 1, 1])
+
+        by_cam = self.cache.get("asset-status-by-campaign")
+        self.assertEqual(by_cam["status_labels"], expected_labels)
+        self.assertEqual(by_cam["campaign_names"], ["Alpha", "Beta"])
+        counts = by_cam["per_campaign_counts"]
+        self.assertEqual(counts["not_started"], [1, 0])
+        self.assertEqual(counts["in_progress"], [0, 1])
+        self.assertEqual(counts["submitted"], [0, 1])
+        self.assertEqual(counts["completed"], [0, 1])
+
+    def test_populate_daily_activity_visualization_cache(self):
+        # Create two active campaigns
+        c1 = create_campaign(status=Campaign.Status.ACTIVE, title="Alpha")
+        c2 = create_campaign(status=Campaign.Status.ACTIVE, title="Beta")
+
+        # Create site reports spanning two dates
+        date1 = timezone.now() - timedelta(days=1)
+        date2 = timezone.now()
+        sr1 = SiteReport.objects.create(
+            campaign=c1,
+            transcriptions_saved=5,
+            daily_review_actions=1,
+        )
+        sr2 = SiteReport.objects.create(
+            campaign=c1,
+            transcriptions_saved=10,
+            daily_review_actions=2,
+        )
+
+        sr3 = SiteReport.objects.create(
+            campaign=c2,
+            transcriptions_saved=3,
+            daily_review_actions=0,
+        )
+        # created is set by auto_now_add, so we have to update it in the database
+        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
+        SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
+        SiteReport.objects.filter(pk=sr3.pk).update(created_on=date2)
+
+        populate_daily_activity_visualization_cache.run()
+
+        result = self.cache.get("daily-transcription-activity-by-campaign")
+        # Labels should be the two dates in YYYY-MM-DD
+        labels = [d.strftime("%Y-%m-%d") for d in sorted([date1.date(), date2.date()])]
+        self.assertEqual(result["labels"], labels)
+
+        datasets = result["transcription_datasets"]
+        # Campaign 1: day1 = 5+1 = 6; day2 = (10 - 5) + 2 = 7
+        self.assertEqual(datasets[0]["label"], "Alpha")
+        self.assertEqual(datasets[0]["data"], [6, 7])
+        # Campaign 2: day1 = 0; day2 = 3 - 0 + 0 = 3
+        self.assertEqual(datasets[1]["label"], "Beta")
+        self.assertEqual(datasets[1]["data"], [0, 3])
+
+    def test_negative_daily_saved_clamps_to_zero(self):
+        # Active campaign with a decrease in cumulative saved
+        # This shouldn't happen, but we account for it in the task,
+        # so we need to test to make sure that works correctly
+        c = create_campaign(status=Campaign.Status.ACTIVE, title="Gamma")
+        date1 = timezone.now() - timedelta(days=1)
+        date2 = timezone.now()
+        # First report: 10 saved, no reviews
+        sr1 = SiteReport.objects.create(
+            campaign=c,
+            created_on=date1,
+            transcriptions_saved=10,
+            daily_review_actions=0,
+        )
+        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
+        # Second report: 5 saved, no reviews -> negative delta
+        sr2 = SiteReport.objects.create(
+            campaign=c,
+            created_on=date2,
+            transcriptions_saved=5,
+            daily_review_actions=0,
+        )
+        SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
+
+        populate_daily_activity_visualization_cache.run()
+
+        result = self.cache.get("daily-transcription-activity-by-campaign")
+        datasets = result["transcription_datasets"]
+        # day1 = 10; day2 = 5 - 10 = -5, clamped to 0
+        self.assertEqual(datasets[0]["label"], "Gamma")
+        self.assertEqual(datasets[0]["data"], [10, 0])

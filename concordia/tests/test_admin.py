@@ -279,14 +279,18 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
                 {"import_url": "https://example.com"},
             )
 
-        with mock.patch("importer.tasks.create_item_import_task.delay") as task_mock:
+        with mock.patch(
+            "importer.tasks.items.create_item_import_task.delay"
+        ) as task_mock:
             response = self.client.post(
                 reverse(self.url_lookup, args=[self.project.id]),
                 {"import_url": "https://www.loc.gov/item/example"},
             )
             self.assertTrue(task_mock.called)
 
-        with mock.patch("importer.tasks.import_collection_task.delay") as task_mock:
+        with mock.patch(
+            "importer.tasks.collections.import_collection_task.delay"
+        ) as task_mock:
             response = self.client.post(
                 reverse(self.url_lookup, args=[self.project.id]),
                 {"import_url": "https://www.loc.gov/collections/example/"},
@@ -378,14 +382,16 @@ class AssetAdminTest(TestCase, CreateTestUsers):
     def test_item_id(self):
         self.assertEqual(self.asset.item.item_id, self.admin.item_id(self.asset))
 
-    def test_truncated_media_url(self):
-        truncated_url = self.admin.truncated_media_url(self.asset)
-        self.assertEqual(truncated_url.count(self.asset.media_url), 2)
+    def test_truncated_storage_image(self):
+        truncated_url = self.admin.truncated_storage_image(self.asset)
+        filename = self.asset.get_existing_storage_image_filename()
+        self.assertEqual(truncated_url.count(filename), 2)
 
-        self.asset.media_url = "".join([str(i) for i in range(200)])
-        truncated_url = self.admin.truncated_media_url(self.asset)
-        self.assertEqual(truncated_url.count(self.asset.media_url), 1)
-        self.assertEqual(truncated_url.count(self.asset.media_url[:99]), 2)
+        self.asset.storage_image.name = "".join([str(i) for i in range(200)])
+        truncated_url = self.admin.truncated_storage_image(self.asset)
+        filename = self.asset.get_existing_storage_image_filename()
+        self.assertEqual(truncated_url.count(filename), 1)
+        self.assertEqual(truncated_url.count(filename[:99]), 2)
 
     def test_get_readonly_fields(self):
         request = self.request_factory.get("/")

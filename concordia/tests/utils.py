@@ -176,7 +176,6 @@ def create_asset(
     title="Test Asset",
     slug="test-asset",
     media_type=MediaType.IMAGE,
-    media_url="1.jpg",
     published=True,
     storage_image="unittest1.jpg",
     do_save=True,
@@ -191,7 +190,6 @@ def create_asset(
         slug=slug,
         media_type=media_type,
         published=published,
-        media_url=media_url,
         storage_image=storage_image,
         **kwargs,
     )

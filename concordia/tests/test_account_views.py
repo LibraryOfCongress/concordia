@@ -356,7 +356,7 @@ class ConcordiaAccountViewTests(
             updated_user = User.objects.get(id=self.user.id)
             self.assertEqual(updated_user.email, email_data["email"])
 
-    def test_AccountLetterView(self):
+    def test_account_letter(self):
         self.login_user()
 
         response = self.client.get(reverse("user-letter"))

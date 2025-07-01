@@ -1,0 +1,79 @@
+FROM python:3.12-slim-bookworm
+
+# Define build-time arguments for UID and GID
+ARG USERNAME
+ARG UID
+ARG GID
+
+ENV DEBIAN_FRONTEND="noninteractive"
+
+# Create the group and user with specified UID/GID
+RUN groupadd -g $GID $USERNAME && \
+    useradd -m -u $UID -g $GID -s /bin/bash $USERNAME
+
+RUN apt-get update -qy && apt-get install -qy curl
+
+# Ensure that the Library's certificate authority is trusted so the tampering
+# proxy will not break TLS validation. See
+# https://staff.loc.gov/wikis/display/SE/Configuring+HTTPS+clients+for+the+HTTPS+tampering+proxy.
+
+RUN curl -fso /etc/ssl/certs/LOC-ROOT-CA-1.crt http://crl.loc.gov/LOC-ROOT-CA-1.crt && openssl x509 -inform der -in /etc/ssl/certs/LOC-ROOT-CA-1.crt -outform pem -out /etc/ssl/certs/LOC-ROOT-CA-1.pem && c_rehash
+
+RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
+    git \
+    libmemcached-dev \
+    # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
+    libz-dev libfreetype6-dev \
+    libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
+    # Postgres client library to build psycopg
+    libpq-dev \
+    locales \
+    # Weasyprint requirements
+    libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
+    # Tesseract
+    tesseract-ocr tesseract-ocr-all \
+    # Selenium/Chrome/chromedriver requirements
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxdamage1 libxkbcommon0 libasound2 libatspi2.0-0 \
+    # Additional tools for development
+    nano bash-completion \
+    nodejs node-gyp npm && apt-get -qy autoremove && apt-get -qy autoclean
+
+RUN locale-gen en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
+
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH /workspace
+
+ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-concordia.settings_docker}
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir pre-commit
+RUN pip install --no-cache-dir pipenv
+
+RUN npm install --silent --global npm@9
+
+# Set the working directory and permissions
+WORKDIR /workspace
+COPY . /workspace
+RUN chown -R $USERNAME:$USERNAME /workspace
+
+# Switch to the new user
+USER $USERNAME
+
+# Set user's path to include local bin, which is where Python libraries will be installed
+ENV PATH "/home/${USERNAME}/.local/bin:$PATH"
+
+RUN mkdir -p /workspace/logs
+RUN touch /workspace/logs/concordia.log
+
+RUN /usr/local/bin/npm install --silent && npx gulp build
+
+RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
+
+RUN pre-commit install-hooks
+
+EXPOSE 80
+
+CMD ["bash"]

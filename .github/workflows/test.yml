@@ -53,20 +53,6 @@ jobs:
                     # Maps tcp port 5432 on service container to the host
                     - 5432:5432
 
-            # Label used to access the service container
-            redis:
-                # Docker Hub image
-                image: redis
-                # Set health checks to wait until redis has started
-                options: >-
-                    --health-cmd "redis-cli ping"
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                ports:
-                    # Opens tcp port 6379 on the host and service container
-                    - 6379:6379
-
         steps:
             - name: Remove Firefox
               run: sudo apt-get purge firefox
@@ -86,10 +72,10 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: Set up Python 3.10
+            - name: Set up Python 3.12
               uses: actions/setup-python@v5
               with:
-                  python-version: '3.10'
+                  python-version: '3.12'
                   architecture: 'x64'
                   cache: 'pipenv'
 
@@ -105,8 +91,10 @@ jobs:
                   pipenv install --dev --deploy
                   pipenv install tblib # For parallel test debugging
 
-            - name: Install Node Dependencies
-              run: npm install
+            - name: Install Node Dependencies and Add .bin to Path
+              run: |
+                  npm install
+                  echo "PATH=$PWD/node_modules/.bin:$PATH" >> $GITHUB_ENV
 
             - name: Configure Logs
               run: |
@@ -118,12 +106,15 @@ jobs:
                   npx gulp build
                   pipenv run ./manage.py collectstatic --no-input
 
-            - name: Install Chrome for Testing
-              run: |
-                  chromepath=$(npx @puppeteer/browsers install chrome@stable)
-                  chromepath=${chromepath#* }
-                  chromepath=${chromepath%/chrome}
-                  PATH=$PATH:$chromepath
+            # - name: Install Chrome for Testing and Set Path
+            #   run: |
+            #       chromepath=$(npx @puppeteer/browsers install chrome@latest)
+            #       chromepath=${chromepath#* }
+            #       echo "Chrome installed at: $chromepath"
+            #       $chromepath --version
+            #       chromepath=${chromepath%/chrome} # Remove the binary so we can add it to the PATH
+            #       # Update PATH for subsequent steps
+            #       echo "PATH=$chromepath:$PATH" >> $GITHUB_ENV
 
             - name: Run Tests with Coverage
               run: |
@@ -142,10 +133,6 @@ jobs:
                   POSTGRES_HOST: localhost
                   # The default PostgreSQL port
                   POSTGRES_PORT: 5432
-                  # The hostname used to communicate with the Redis service container
-                  REDIS_HOST: localhost
-                  # The default Redis port
-                  REDIS_PORT: 6379
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
             # Store coverage results if running on the release branch

@@ -6,12 +6,22 @@ from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
 LOGGING["handlers"]["celery"]["level"] = "DEBUG"
+LOGGING["handlers"]["structlog"]["level"] = "DEBUG"
+LOGGING["handlers"]["django_structlog"]["level"] = "DEBUG"
 LOGGING["loggers"] = {
     "django": {"handlers": ["file", "stream"], "level": "DEBUG"},
     "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
     "concordia": {"handlers": ["file", "stream"], "level": "DEBUG"},
     "django.utils.autoreload": {"level": "INFO"},
     "django.template": {"level": "INFO"},
+    "structlog": {
+        "handlers": ["structlog_file", "structlog_console"],
+        "level": "INFO",
+    },
+    "django_structlog": {
+        "handlers": ["structlog_file", "structlog_console"],
+        "level": "INFO",
+    },
 }
 
 DEBUG = True
@@ -28,14 +38,20 @@ CONCORDIA_DEVS = [
     "rsar@loc.gov",
 ]
 
-ELASTICSEARCH_DSL_AUTOSYNC = False
+INSTALLED_APPS += ["django_opensearch_dsl"]
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
-)
-ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
+# Globally disable auto-syncing. Automatically update the index when a model is
+# created / saved / deleted.
+OPENSEARCH_DSL_AUTOSYNC = False
 
-INSTALLED_APPS += ["django_elasticsearch_dsl"]
+OPENSEARCH_DSL = {
+    "default": {"hosts": "localhost:9200"},
+    "secure": {
+        "hosts": [{"scheme": "https", "host": "192.30.255.112", "port": 9201}],
+        "http_auth": ("admin", os.environ.get("OPENSEARCH_INITIAL_ADMIN_PASSWORD", "")),
+        "timeout": 120,
+    },
+}
 
 REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 

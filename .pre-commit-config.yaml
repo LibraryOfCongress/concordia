@@ -1,6 +1,6 @@
 exclude: '.*/vendor/.*'
 default_language_version:
-    python: python3.10
+    python: python3.12
 repos:
     - repo: https://github.com/adamchainz/django-upgrade
       rev: 1.15.0
@@ -20,7 +20,7 @@ repos:
       rev: 24.4.2
       hooks:
           - id: black
-            language_version: python3.10
+            language_version: python3.12
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.5.0
       hooks:
@@ -84,3 +84,10 @@ repos:
       rev: 1.7.5
       hooks:
           - id: bandit
+    - repo: local
+      hooks:
+        - id: readme-symbol-check
+          name: Ensure top-level symbols are documented in README
+          entry: tools/readme_symbol_check.py
+          language: system
+          types: [python]

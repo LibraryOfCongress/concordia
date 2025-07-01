@@ -718,6 +718,10 @@ $card-img-height: 14.8rem;
 $card-btn-height: 31px;
 $card-progress-height: 12px;
 
+.card-header {
+    min-height: 65px;
+}
+
 .card-body {
     padding: 1rem 0.5rem;
 }
@@ -911,6 +915,7 @@ li.breadcrumb-item.active {
 .concordia-object-card .card-img-container {
     display: block;
     height: 100%;
+    overflow: hidden;
     width: 100%;
 }
 
@@ -1057,6 +1062,19 @@ body .disabled > .page-link {
 /*
  * Homepage customizations
  */
+
+.play-pause-button {
+    position: absolute;
+    top: 5px;
+    right: 20px;
+    height: 40px;
+    width: 40px;
+    z-index: 2;
+
+    i {
+        color: $white;
+    }
+}
 
 .carousel-item {
     img {
@@ -1664,7 +1682,7 @@ button.btn-outline-primary:hover {
 }
 
 .sidebar {
-    height: 580px; /* 100% Full-height */
+    max-height: calc(100vh - 107px);
     width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
@@ -1692,8 +1710,15 @@ button.btn-outline-primary:hover {
 }
 
 .guide-body {
-    max-height: 462.2px;
-    overflow: scroll;
+    max-height: calc(100vh - 249px);
+    overflow-x: hidden;
+}
+
+.guide-header {
+    justify-content: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.25rem;
+    padding-top: 0.25rem;
 }
 
 .guide-body h3 {
@@ -2055,4 +2080,68 @@ figure.error-figure {
         padding-top: 5px;
         font-size: 12px;
     }
+}
+
+/*
+ * About page
+ */
+
+#blog-carousel .carousel-control-prev,
+#blog-carousel .carousel-control-next {
+    opacity: 1;
+}
+
+#blog-carousel .carousel-control-prev-icon {
+    background-color: $blue;
+    -webkit-mask-image: url('/static/img/slick-left-arrow.svg');
+    mask-image: url('/static/img/slick-left-arrow.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+#blog-carousel .carousel-control-next-icon {
+    background-color: $blue;
+    -webkit-mask-image: url('/static/img/slick-right-arrow.svg');
+    mask-image: url('/static/img/slick-right-arrow.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+.blog-chunk {
+    width: 684px;
+}
+
+.blog-chunk a {
+    text-decoration: none;
+}
+
+.blog-chunk h5 {
+    min-height: 115.2px;
+}
+
+.about-accordion {
+    background-color: $gray-100;
+    padding-top: 12px;
+    padding-left: 28px;
+    padding-bottom: 8px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.accordion-icon {
+    color: $blue;
+    font-style: normal;
+}
+
+.icon-plus-square::before {
+    content: '\f0fe';
+}
+
+.icon-minus-square::before {
+    content: '\f146';
+}
+
+.press-content,
+.publications-content {
+    display: none;
 }

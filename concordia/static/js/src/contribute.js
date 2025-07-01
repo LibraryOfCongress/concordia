@@ -1,5 +1,6 @@
-/* global $ displayMessage buildErrorMessage bootstrap */
+/* global $ displayMessage buildErrorMessage */
 
+import {Modal} from 'bootstrap';
 import {selectLanguage} from 'ocr';
 import {reserveAssetForEditing} from 'asset-reservation';
 import {resetTurnstile} from 'turnstile';
@@ -180,18 +181,16 @@ function setupPage() {
     // We try to get Modal.getInstance in case the modal is already initialized
     var errorModalElement = document.getElementById('error-modal');
     var errorModal =
-        bootstrap.Modal.getInstance(errorModalElement) ||
-        new bootstrap.Modal(errorModalElement);
+        Modal.getInstance(errorModalElement) || new Modal(errorModalElement);
     var submissionModalElement = document.getElementById(
         'successful-submission-modal',
     );
     var submissionModal =
-        bootstrap.Modal.getInstance(submissionModalElement) ||
-        new bootstrap.Modal(submissionModalElement);
+        Modal.getInstance(submissionModalElement) ||
+        new Modal(submissionModalElement);
     var reviewModalElement = document.getElementById('review-accepted-modal');
     var reviewModal =
-        bootstrap.Modal.getInstance(reviewModalElement) ||
-        new bootstrap.Modal(reviewModalElement);
+        Modal.getInstance(reviewModalElement) || new Modal(reviewModalElement);
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor

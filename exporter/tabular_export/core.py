@@ -25,7 +25,6 @@ https://github.com/LibraryOfCongress/django-tabular-export/blob/master/tabular_e
 
 import csv
 import datetime
-import sys
 from functools import wraps
 from itertools import chain
 from urllib.parse import quote
@@ -34,7 +33,6 @@ import xlsxwriter
 from django.conf import settings
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.encoding import force_str
-from django.views.decorators.cache import never_cache
 
 
 def get_field_names_from_queryset(qs):
@@ -45,10 +43,7 @@ def get_field_names_from_queryset(qs):
 
     # We'll set the queryset to include all fields including calculated
     # aggregates using the same names which a values() queryset would return:
-    if hasattr(qs, "values"):
-        v_qs = qs.values()
-    else:
-        v_qs = qs
+    v_qs = qs.values()
 
     field_names = []
     field_names.extend(i.target.name for i in v_qs.query.select)
@@ -131,7 +126,7 @@ def return_debug_reponse(f):
         if not getattr(settings, "TABULAR_RESPONSE_DEBUG", False):
             return f(filename, *args, **kwargs)
         else:
-            resp = never_cache(export_to_debug_html_response)(filename, *args, **kwargs)
+            resp = export_to_debug_html_response(filename, *args, **kwargs)
             del resp["Content-Disposition"]  # Don't trigger a download
             return resp
 
@@ -238,11 +233,6 @@ def export_to_csv_response(filename, headers, rows):
 
         for row in rows:
             yield map(convert_value_to_unicode, row)
-
-    if sys.version_info < (3, 0):
-        # On Python 2, csv.writer unconfigurably encodes unicode instances as ASCII
-        # so we need to convert them to UTF-8:
-        row_generator = force_utf8_encoding(row_generator)
 
     # This works because csv.writer.writerow calls the underlying
     # file-like .write method *and* returns the result. We cannot

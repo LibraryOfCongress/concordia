@@ -1,6 +1,7 @@
 import os
 
 import sentry_sdk
+import structlog
 from django.contrib import messages
 from django.core.management.utils import get_random_secret_key
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -65,8 +66,8 @@ NPM_FILE_PATTERNS = {
     "prettier": ["*.js"],
     "remarkable": ["dist/*"],
     "jquery": ["dist/*"],
-    "js-cookie": ["src/*"],
-    "popper.js": ["dist/*"],
+    "js-cookie": ["dist/*"],
+    "@popperjs/core": ["dist/*"],
     "bootstrap": ["dist/*"],
     "screenfull": ["dist/*"],
     "@duetds/date-picker/": ["dist/*"],
@@ -77,6 +78,9 @@ NPM_FILE_PATTERNS = {
         "svgs/*",
         "webfonts/*",
     ],
+    "chart.js": ["auto/*", "dist/*"],
+    "@kurkle/color": ["dist/*"],
+    "chroma-js": ["dist/*"],
 }
 
 TEMPLATE_DEBUG = False
@@ -109,6 +113,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
+    "django_structlog",
     "django_bootstrap5",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
@@ -135,6 +140,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
@@ -161,6 +167,7 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
                 "concordia.context_processors.maintenance_mode_frontend_available",
+                "concordia.context_processors.request_id_context",
                 "concordia.turnstile.context_processors.turnstile_default_settings",
             ],
             "libraries": {
@@ -215,6 +222,13 @@ if REDIS_ADDRESS and REDIS_PORT:
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
         },
+        "visualization_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/4",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
     }
 else:
     CACHES = {
@@ -222,6 +236,12 @@ else:
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         },
         "view_cache": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+        "configuration_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache"
+        },
+        "visualization_cache": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache"
+        },
     }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
@@ -258,6 +278,14 @@ LOGGING = {
             "datefmt": "%Y-%m-%dT%H:%M:%S",
             "style": "{",
         },
+        "structlog_json": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.JSONRenderer(),
+        },
+        "structlog_console": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer(),
+        },
     },
     "handlers": {
         "stream": {
@@ -282,13 +310,54 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
+        "structlog_file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "level": "INFO",
+            "formatter": "structlog_json",
+            "filename": f"{SITE_ROOT_DIR}/logs/concordia-json.log",
+            "when": "H",
+            "interval": 3,
+            "backupCount": 16,
+        },
+        "structlog_console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "structlog_console",
+        },
     },
     "loggers": {
         "django": {"handlers": ["file"], "level": "INFO"},
         "celery": {"handlers": ["celery"], "level": "INFO"},
         "concordia": {"handlers": ["file"], "level": "INFO"},
+        "structlog": {
+            "handlers": ["structlog_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django_structlog": {
+            "handlers": ["structlog_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
+
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
 
 
 ################################################################################
@@ -351,6 +420,9 @@ STORAGES = {
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+    "assets": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
 }
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
@@ -563,3 +635,7 @@ DEFAULT_AXE_SCRIPT = os.path.join(
 TRANSCRIPTION_ACCEPTED_TRACKING_KEY = "TRANSCRIPTION_ACCEPTED_{user_id}"
 
 CONFIGURATION_CACHE_TIMEOUT = 3600  # One hour
+
+# The number of assets to store for next_transcribabe/next_reviewable, per campaign
+NEXT_TRANSCRIBABE_ASSET_COUNT = 100
+NEXT_REVIEWABLE_ASSET_COUNT = NEXT_TRANSCRIBABE_ASSET_COUNT

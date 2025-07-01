@@ -1,7 +1,5 @@
 import logging
-from urllib.parse import urljoin
 
-from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.admin.options import get_content_type_for_model
@@ -16,12 +14,13 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_protect
 
 from exporter import views as exporter_views
 from exporter.tabular_export.admin import export_to_csv_action, export_to_excel_action
 from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
-from importer.tasks import import_items_into_project_from_url
+from importer.tasks.items import import_items_into_project_from_url
 
 from ..models import (
     Asset,
@@ -34,7 +33,12 @@ from ..models import (
     CarouselSlide,
     Guide,
     Item,
+    NextReviewableCampaignAsset,
+    NextReviewableTopicAsset,
+    NextTranscribableCampaignAsset,
+    NextTranscribableTopicAsset,
     Project,
+    ProjectTopic,
     Resource,
     ResourceFile,
     SimplePage,
@@ -47,7 +51,7 @@ from ..models import (
     UserProfileActivity,
 )
 from ..tasks import retire_campaign
-from ..views import ReportCampaignView
+from ..views.campaigns import ReportCampaignView
 from .actions import (
     anonymize_action,
     change_status_to_completed,
@@ -68,6 +72,7 @@ from .filters import (
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter,
+    NextAssetCampaignListFilter,
     OcrGeneratedFilter,
     OcrOriginatedFilter,
     ProjectCampaignListFilter,
@@ -91,11 +96,13 @@ from .filters import (
 )
 from .forms import (
     AdminItemImportForm,
+    AssetStatusActionForm,
     CampaignAdminForm,
     CardAdminForm,
     GuideAdminForm,
     ItemAdminForm,
     ProjectAdminForm,
+    ProjectTopicInlineForm,
     TopicAdminForm,
 )
 
@@ -429,9 +436,20 @@ class ResourceFileAdmin(admin.ModelAdmin):
         return ("name", "resource")
 
 
+class TopicProjectInline(admin.TabularInline):
+    model = ProjectTopic
+    form = ProjectTopicInlineForm
+    extra = 1
+    autocomplete_fields = ["project"]
+    fields = ["project", "url_filter"]
+    fk_name = "topic"
+
+
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
     form = TopicAdminForm
+
+    inlines = [TopicProjectInline]
 
     list_display = (
         "id",
@@ -445,13 +463,25 @@ class TopicAdmin(admin.ModelAdmin):
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = [
+        "title",
+    ]
+
+
+class ProjectTopicInline(admin.TabularInline):
+    model = ProjectTopic
+    form = ProjectTopicInlineForm
+    extra = 1
+    autocomplete_fields = ["topic"]
+    fields = ["topic", "url_filter"]
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     form = ProjectAdminForm
 
-    # todo: add foreignKey link for campaign
+    inlines = [ProjectTopicInline]
+
     list_display = ("id", "title", "slug", "campaign", "published", "ordering")
     list_editable = ("ordering",)
     list_display_links = ("id", "title", "slug")
@@ -485,7 +515,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 name=f"{app_label}_{model_name}_item-import",
             ),
             path(
-                "exportCSV/<path:project_slug>",
+                "exportCSV/<path:campaign_slug>/<path:project_slug>/",
                 exporter_views.ExportProjectToCSV.as_view(),
                 name=f"{app_label}_{model_name}_export-csv",
             ),
@@ -648,7 +678,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "year",
         "sequence",
         "difficulty",
-        "truncated_media_url",
+        "truncated_storage_image",
         "media_type",
         "truncated_metadata",
     )
@@ -656,7 +686,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     prepopulated_fields = {"slug": ("title",)}
     search_fields = [
         "title",
-        "media_url",
+        "storage_image",
         "item__project__campaign__title",
         "item__project__title",
         "item__item_id",
@@ -680,6 +710,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         export_to_excel_action,
         verify_assets_action,
     )
+    status_action_names = (
+        "change_status_to_completed",
+        "change_status_to_needs_review",
+        "change_status_to_in_progress",
+    )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
     change_list_template = "admin/concordia/asset/change_list.html"
@@ -694,29 +729,71 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         else:
             return super().lookup_allowed(key, value)
 
+    def response_action(self, request, queryset):
+        # Let Django run the chosen action(s) normally
+        response = super().response_action(request, queryset)
+
+        # If a "next" came from our form, redirect there,
+        # after confirming it's either a relative path
+        # that starts with "/" or is an absolute URL
+        # pointing to our hostname
+        next_url = request.POST.get("next")
+        if next_url:
+            if url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return HttpResponseRedirect(next_url)
+
+        # Otherwise, return whatever Django gave us
+        return response
+
     def item_id(self, obj):
         return obj.item.item_id
 
     @admin.display(description="Media URL")
-    def truncated_media_url(self, obj):
+    def truncated_storage_image(self, obj):
         return format_html(
             '<a target="_blank" href="{}">{}</a>',
-            urljoin(settings.MEDIA_URL, obj.media_url),
-            truncatechars(obj.media_url, 100),
+            obj.storage_image.url,
+            truncatechars(obj.get_existing_storage_image_filename(), 100),
         )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ("item",)
+            return self.readonly_fields + ("item", "campaign")
         return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
         extra_context = extra_context or {}
+        asset = None
+        if object_id:
+            asset = self.get_object(request, object_id)
+            current_status = asset.transcription_status
+            # Dealing with this one special case let's use simplify the
+            # desired_actions filtering code here significantly
+            if current_status == "submitted":
+                current_status = "needs_review"
+            # We need the name of the action (e.g., 'change_status_to_in_progress')
+            # and the description to show in the form
+            # (e.g., "Change status to In Progress")
+            # We filter out any action matching the current status,
+            # since that's unneeded and potentially confusing
+            desired_actions = [
+                (name, data[2])
+                for name, data in self.get_actions(request).items()
+                if name in self.status_action_names and current_status not in name
+            ]
+            status_form = AssetStatusActionForm(available_actions=desired_actions)
+            extra_context["status_action_form"] = status_form
+
         extra_context["transcriptions"] = (
             Transcription.objects.filter(asset__pk=object_id)
             .select_related("user", "reviewed_by")
             .order_by("-pk")
         )
+
         return super().change_view(
             request, object_id, extra_context=extra_context, **kwargs
         )
@@ -1065,3 +1142,117 @@ class CardFamilyAdmin(admin.ModelAdmin):
 @admin.register(Guide)
 class GuideAdmin(admin.ModelAdmin):
     form = GuideAdminForm
+
+
+@admin.register(NextTranscribableCampaignAsset)
+class NextTranscribableCampaignAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "transcription_status",
+        "campaign",
+        "created_on",
+    )
+    list_filter = (
+        NextAssetCampaignListFilter,
+        "transcription_status",
+    )
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "campaign__title",
+    )
+    readonly_fields = (
+        "asset",
+        "sequence",
+        "item",
+        "item_item_id",
+        "project",
+        "project_slug",
+        "campaign",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextReviewableCampaignAsset)
+class NextReviewableCampaignAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "campaign",
+        "created_on",
+    )
+    list_filter = (NextAssetCampaignListFilter,)
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "campaign__title",
+        "transcriber_ids",
+    )
+    readonly_fields = (
+        "asset",
+        "item",
+        "project",
+        "campaign",
+        "transcriber_ids",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextTranscribableTopicAsset)
+class NextTranscribableTopicAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "transcription_status",
+        "topic",
+        "created_on",
+    )
+    list_filter = (
+        TopicListFilter,
+        "transcription_status",
+    )
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "topic__title",
+    )
+    readonly_fields = (
+        "asset",
+        "sequence",
+        "item",
+        "item_item_id",
+        "project",
+        "project_slug",
+        "topic",
+        "created_on",
+    )
+    ordering = ("-created_on",)
+
+
+@admin.register(NextReviewableTopicAsset)
+class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset",
+        "topic",
+        "created_on",
+    )
+    list_filter = (TopicListFilter,)
+    search_fields = (
+        "asset__title",
+        "item__title",
+        "project__title",
+        "topic__title",
+        "transcriber_ids",
+    )
+    readonly_fields = (
+        "asset",
+        "item",
+        "project",
+        "topic",
+        "transcriber_ids",
+        "created_on",
+    )
+    ordering = ("-created_on",)

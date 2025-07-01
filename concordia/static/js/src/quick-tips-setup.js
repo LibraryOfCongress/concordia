@@ -2,12 +2,6 @@
 
 import {setTutorialHeight} from './modules/quick-tips.js';
 
-let mainContentHeight = $('#contribute-main-content').height();
-
-if (mainContentHeight < 710) {
-    $('.sidebar').height(mainContentHeight - 130);
-}
-
 $('#tutorial-popup').on('shown.bs.modal', function () {
     setTutorialHeight();
 });

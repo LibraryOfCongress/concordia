@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from concordia.consumers import AssetConsumer
 from concordia.utils import get_or_create_reservation_token
-from concordia.views import obtain_reservation
+from concordia.views.ajax import obtain_reservation
 
 from .utils import CreateTestUsers, create_asset, create_item, create_transcription
 
