@@ -424,6 +424,9 @@ STORAGES = {
     "assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
+    "visualizations": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 

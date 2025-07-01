@@ -2145,3 +2145,18 @@ figure.error-figure {
 .publications-content {
     display: none;
 }
+
+.visualization-container {
+    display: flex-basis;
+    width: 100%;
+}
+
+.visualization-container section {
+    width: 100%;
+}
+
+.visualization-data-link {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.5rem;
+}
