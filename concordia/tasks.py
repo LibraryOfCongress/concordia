@@ -24,8 +24,8 @@ from more_itertools.more import chunked
 
 from concordia.decorators import locked_task
 from concordia.exceptions import CacheLockedError
+from concordia.logging import ConcordiaLogger
 from concordia.models import (
-    ONE_DAY,
     ONE_DAY_AGO,
     Asset,
     AssetTranscriptionReservation,
@@ -65,6 +65,7 @@ from concordia.utils.next_asset import (
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
 
@@ -131,13 +132,19 @@ def delete_old_tombstoned_reservations():
 
 
 def _recent_transcriptions():
-    return Transcription.objects.filter(
+    qs = Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
         | Q(rejected__gte=ONE_DAY_AGO)
         | Q(submitted__gte=ONE_DAY_AGO)
         | Q(updated_on__gte=ONE_DAY_AGO)
     )
+    structured_logger.info(
+        "Fetched recent transcriptions for DAU calculation.",
+        event_code="recent_transcriptions_fetched",
+        transcription_count=qs.count(),
+    )
+    return qs
 
 
 def _daily_active_users():
@@ -148,11 +155,26 @@ def _daily_active_users():
         .values_list("reviewed_by", flat=True)
         .distinct()
     )
-    return len(set(list(reviewer_ids) + list(transcriber_ids)))
+    transcriber_count = transcriber_ids.count()
+    reviewer_count = reviewer_ids.count()
+    daily_active_users = len(set(list(reviewer_ids) + list(transcriber_ids)))
+
+    structured_logger.info(
+        "Calculated daily active users from recent transcriptions.",
+        event_code="daily_active_users_calculated",
+        transcriber_count=transcriber_count,
+        reviewer_count=reviewer_count,
+        daily_active_users=daily_active_users,
+    )
+    return daily_active_users
 
 
 @celery_app.task
 def site_report():
+    structured_logger.info(
+        "Starting site report generation task.",
+        event_code="site_report_task_start",
+    )
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -218,18 +240,82 @@ def site_report():
     site_report.users_registered = users_registered
     site_report.users_activated = users_activated
     site_report.daily_active_users = _daily_active_users()
+
+    structured_logger.info(
+        "Site-wide counts calculated for report generation.",
+        event_code="site_report_counts_calculated",
+        assets_total=assets_total,
+        assets_published=assets_published,
+        assets_unpublished=assets_unpublished,
+        items_published=items_published,
+        items_unpublished=items_unpublished,
+        projects_published=projects_published,
+        projects_unpublished=projects_unpublished,
+        campaigns_published=campaigns_published,
+        campaigns_unpublished=campaigns_unpublished,
+        users_registered=users_registered,
+        users_activated=users_activated,
+        anonymous_transcriptions=anonymous_transcriptions,
+        transcriptions_saved=transcriptions_saved,
+        daily_review_actions=daily_review_actions,
+        distinct_tags=distinct_tag_count,
+        tag_uses=tag_count,
+        daily_active_users=site_report.daily_active_users,
+    )
+
     site_report.save()
 
-    for campaign in Campaign.objects.exclude(status=Campaign.Status.RETIRED):
-        campaign_report(campaign)
+    structured_logger.info(
+        "Site-wide report saved successfully.",
+        event_code="site_report_saved",
+        site_report_id=site_report.id,
+        created_on=site_report.created_on.isoformat(),
+    )
 
-    for topic in Topic.objects.all():
+    campaigns = Campaign.objects.exclude(status=Campaign.Status.RETIRED)
+    structured_logger.info(
+        "Generating campaign reports.",
+        event_code="campaign_reports_generation_start",
+        campaign_count=campaigns.count(),
+    )
+    for campaign in campaigns:
+        campaign_report(campaign)
+    structured_logger.info(
+        "Campaign reports generation completed.",
+        event_code="campaign_reports_generation_complete",
+    )
+
+    topics = Topic.objects.all()
+    structured_logger.info(
+        "Generating topic reports.",
+        event_code="topic_reports_generation_start",
+        topic_count=topics.count(),
+    )
+    for topic in topics:
         topic_report(topic)
+    structured_logger.info(
+        "Topic reports generation completed.",
+        event_code="topic_reports_generation_complete",
+    )
 
     retired_total_report()
+    structured_logger.info(
+        "Retired total report generation completed.",
+        event_code="retired_total_report_complete",
+    )
+
+    structured_logger.info(
+        "Site report generation task completed successfully.",
+        event_code="site_report_task_complete",
+    )
 
 
 def topic_report(topic):
+    structured_logger.info(
+        "Starting topic report generation.",
+        event_code="topic_report_generation_start",
+        topic_slug=topic,
+    )
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -248,6 +334,14 @@ def topic_report(topic):
         report[f"assets_{status}"] = count
 
     assets_total = Asset.objects.filter(item__project__topics=topic).count()
+    if assets_total == 0:
+        structured_logger.warning(
+            "Topic report generated with zero total assets.",
+            event_code="topic_report_zero_assets",
+            reason="Topic has no associated assets",
+            reason_code="no_assets",
+            topic=topic,
+        )
     assets_published = (
         Asset.objects.published().filter(item__project__topics=topic).count()
     )
@@ -288,6 +382,23 @@ def topic_report(topic):
 
     distinct_tag_count = len(distinct_tag_list)
 
+    structured_logger.info(
+        "Topic counts calculated for report generation.",
+        event_code="topic_report_counts_calculated",
+        topic=topic,
+        assets_total=assets_total,
+        assets_published=assets_published,
+        assets_unpublished=assets_unpublished,
+        items_published=items_published,
+        items_unpublished=items_unpublished,
+        projects_published=projects_published,
+        projects_unpublished=projects_unpublished,
+        anonymous_transcriptions=anonymous_transcriptions,
+        transcriptions_saved=transcriptions_saved,
+        daily_review_actions=daily_review_actions,
+        distinct_tags=distinct_tag_count,
+        tag_uses=tag_count,
+    )
     site_report = SiteReport()
     site_report.topic = topic
     site_report.assets_total = assets_total
@@ -307,9 +418,21 @@ def topic_report(topic):
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
+    structured_logger.info(
+        "Topic report saved successfully.",
+        event_code="topic_report_saved",
+        topic=topic,
+        site_report_id=site_report.id,
+        created_on=site_report.created_on.isoformat(),
+    )
 
 
 def campaign_report(campaign):
+    structured_logger.info(
+        "Starting campaign report generation.",
+        event_code="campaign_report_generation_start",
+        campaign=campaign,
+    )
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -328,6 +451,14 @@ def campaign_report(campaign):
         report[f"assets_{status}"] = count
 
     assets_total = Asset.objects.filter(item__project__campaign=campaign).count()
+    if assets_total == 0:
+        structured_logger.warning(
+            "Campaign report generated with zero total assets.",
+            event_code="campaign_report_zero_assets",
+            reason="Campaign has no associated assets",
+            reason_code="no_assets",
+            campaign=campaign,
+        )
     assets_published = (
         Asset.objects.published().filter(item__project__campaign=campaign).count()
     )
@@ -391,6 +522,24 @@ def campaign_report(campaign):
     }
     registered_contributor_count = len(user_ids)
 
+    structured_logger.info(
+        "Campaign counts calculated for report generation.",
+        event_code="campaign_report_counts_calculated",
+        campaign=campaign,
+        assets_total=assets_total,
+        assets_published=assets_published,
+        assets_unpublished=assets_unpublished,
+        items_published=items_published,
+        items_unpublished=items_unpublished,
+        projects_published=projects_published,
+        projects_unpublished=projects_unpublished,
+        anonymous_transcriptions=anonymous_transcriptions,
+        transcriptions_saved=transcriptions_saved,
+        daily_review_actions=daily_review_actions,
+        distinct_tags=distinct_tag_count,
+        tag_uses=tag_count,
+        registered_contributors=registered_contributor_count,
+    )
     site_report = SiteReport()
     site_report.campaign = campaign
     site_report.assets_total = assets_total
@@ -411,13 +560,30 @@ def campaign_report(campaign):
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
     site_report.save()
+    structured_logger.info(
+        "Campaign report saved successfully.",
+        event_code="campaign_report_saved",
+        campaign=campaign,
+        site_report_id=site_report.id,
+        created_on=site_report.created_on.isoformat(),
+    )
 
 
 def retired_total_report():
+    structured_logger.info(
+        "Starting retired total report generation.",
+        event_code="retired_total_report_generation_start",
+    )
     site_reports = (
         SiteReport.objects.filter(campaign__status=Campaign.Status.RETIRED)
         .order_by("campaign_id", "-created_on")
         .distinct("campaign_id")
+    )
+    site_report_count = site_reports.count()
+    structured_logger.info(
+        "Fetched site reports for retired campaigns aggregation.",
+        event_code="retired_total_reports_fetched",
+        report_count=site_report_count,
     )
 
     FIELDS = [
@@ -455,147 +621,12 @@ def retired_total_report():
             ),
         )
     total_site_report.save()
-
-
-def site_reports_for_date(date):
-    start = date - ONE_DAY
-    return SiteReport.objects.filter(created_on__gte=start, created_on__lte=date)
-
-
-def assets_for_date(date):
-    start = date - ONE_DAY
-    q_accepted = Q(
-        transcription__accepted__gte=start, transcription__accepted__lte=date
+    structured_logger.info(
+        "Retired total report saved successfully.",
+        event_code="retired_total_report_saved",
+        site_report_id=total_site_report.id,
+        created_on=total_site_report.created_on.isoformat(),
     )
-    q_rejected = Q(
-        transcription__rejected__gte=start, transcription__rejected__lte=date
-    )
-    return Asset.objects.filter(q_accepted | q_rejected)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_total(date, days):
-    logger.info(
-        "STARTING: Backfilling daily data for %s on %s",
-        SiteReport.ReportName.TOTAL,
-        date,
-    )
-    site_report = site_reports_for_date(date).filter(
-        report_name=SiteReport.ReportName.TOTAL
-    )[0]
-    logger.info(
-        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    daily_review_actions = assets_for_date(date).count()
-    logger.debug(
-        "%s daily review actions for report %s (%s)",
-        daily_review_actions,
-        site_report.id,
-        date,
-    )
-    site_report.daily_review_actions = daily_review_actions
-    site_report.save()
-    logger.info(
-        "FINISHED: Backfilling daily data for %s on %s",
-        SiteReport.ReportName.TOTAL,
-        date,
-    )
-    logger.info("FINISHED: Backfilling daily data for all reports on %s", date)
-
-    if days > 0:
-        return backfill_topics.delay(date - ONE_DAY, days - 1)
-    else:
-        logger.info("Backfilling daily data complete")
-
-
-@celery_app.task(ignore_result=True)
-def backfill_next_campaign_report(date, days, site_report_ids):
-    try:
-        site_report_id = site_report_ids.pop()
-    except IndexError:
-        logger.info("FINISHED: Backfilling daily data for campaigns on %s", date)
-        backfill_total.delay(date, days)
-        return
-    site_report = SiteReport.objects.get(id=site_report_id)
-    logger.info(
-        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    daily_review_actions = (
-        assets_for_date(date)
-        .filter(item__project__campaign=site_report.campaign)
-        .count()
-    )
-    logger.debug(
-        "%s daily review actions for report %s (%s)",
-        daily_review_actions,
-        site_report.id,
-        date,
-    )
-    site_report.daily_review_actions = daily_review_actions
-    site_report.save()
-    logger.info(
-        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    return backfill_next_campaign_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_campaigns(date, days):
-    site_report_ids = list(
-        site_reports_for_date(date)
-        .filter(campaign__isnull=False)
-        .values_list("id", flat=True)
-    )
-    logger.info("STARTING: Backfilling daily data for campaigns on %s", date)
-    return backfill_next_campaign_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_next_topic_report(date, days, site_report_ids):
-    try:
-        site_report_id = site_report_ids.pop()
-    except IndexError:
-        logger.info("FINISHED: Backfilling daily data for topics on %s", date)
-        backfill_campaigns.delay(date, days)
-        return
-    site_report = SiteReport.objects.get(id=site_report_id)
-    logger.info(
-        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    daily_review_actions = (
-        assets_for_date(date).filter(item__project__topics=site_report.topic).count()
-    )
-    logger.debug(
-        "%s daily review actions for report %s (%s)",
-        daily_review_actions,
-        site_report.id,
-        date,
-    )
-    site_report.daily_review_actions = daily_review_actions
-    site_report.save()
-    logger.info(
-        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    return backfill_next_topic_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_topics(date, days):
-    site_report_ids = list(
-        site_reports_for_date(date)
-        .filter(topic__isnull=False)
-        .values_list("id", flat=True)
-    )
-    logger.info("STARTING: Backfilling daily data for topics on %s", date)
-    return backfill_next_topic_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_daily_data(start, days):
-    date = timezone.make_aware(datetime.datetime(**start))
-    logger.info("Backfilling daily data for the %s days before %s", days, date)
-    logger.info("STARTED: Backfilling daily data for all reports on %s", date)
-    return backfill_topics.delay(date, days - 1)
 
 
 @celery_app.task
