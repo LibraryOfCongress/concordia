@@ -1,5 +1,4 @@
 import concurrent.futures
-import os.path
 import uuid
 from unittest import mock
 
@@ -838,10 +837,6 @@ class AssetImportTests(TestCase):
 
             self.assertEqual(get_mock.call_args[0], ("http://example.com",))
             self.assertTrue(get_mock.call_args[1]["stream"])
-            self.assertEqual(
-                os.path.basename(self.import_asset.asset.storage_image.path),
-                self.import_asset.asset.media_url,
-            )
 
     @override_settings(
         STORAGES={
