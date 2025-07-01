@@ -18,13 +18,15 @@ def concordia_visualization(name, **attrs):
         {% concordia_visualization "daily-activity" style="float:left;" class="chart" %}
 
     This will output:
-        <section style="float:left;" class="chart">
-            <canvas id="daily-activity"></canvas>
-        </section>
-        <script
-            type="module"
-            src="{% static 'js/visualizations/daily-activity.js' %}"
-        ></script>
+        <div class="visualization-container chart" style="float:left;">
+            <section>
+                <canvas id="daily-activity"></canvas>
+            </section>
+            <script
+                type="module"
+                src="{% static 'js/visualizations/daily-activity.js' %}"
+            ></script>
+        </div>
 
     Args:
         name (str):
