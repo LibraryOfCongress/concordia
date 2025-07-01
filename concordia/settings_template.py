@@ -145,6 +145,10 @@ MIDDLEWARE = [
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
+# Hardcoded true - TODO need to change for task def env var
+#  Enable X-Ray tracing if the environment variable is set to true
+AWS_XRAY_SDK_ENABLED = os.environ.get("ENABLE_XRAY", "false").lower() == "true"
+
 
 #  Check if the current process is a web server process
 def is_web_process():
@@ -152,7 +156,7 @@ def is_web_process():
     return any(cmd in sys.argv for cmd in ["runserver", "gunicorn", "uwsgi"])
 
 
-if is_web_process():
+if AWS_XRAY_SDK_ENABLED and is_web_process():
     # Only add X-Ray for web processes
     INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
     MIDDLEWARE = ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"] + MIDDLEWARE
