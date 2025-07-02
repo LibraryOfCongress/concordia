@@ -1682,6 +1682,7 @@ button.btn-outline-primary:hover {
 }
 
 .sidebar {
+    max-height: calc(100vh - 107px);
     width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
@@ -1708,20 +1709,8 @@ button.btn-outline-primary:hover {
     text-decoration: underline;
 }
 
-/*
-@include media-breakpoint-up(lg) {
-    .guide-body {
-        max-height: 462.2px;
-    }
-}
-
-@include media-breakpoint-up(md) {
-    .guide-body {
-        max-height: 396.2px;
-    }
-} */
-
 .guide-body {
+    max-height: calc(100vh - 249px);
     overflow-x: hidden;
 }
 
@@ -2091,4 +2080,83 @@ figure.error-figure {
         padding-top: 5px;
         font-size: 12px;
     }
+}
+
+/*
+ * About page
+ */
+
+#blog-carousel .carousel-control-prev,
+#blog-carousel .carousel-control-next {
+    opacity: 1;
+}
+
+#blog-carousel .carousel-control-prev-icon {
+    background-color: $blue;
+    -webkit-mask-image: url('/static/img/slick-left-arrow.svg');
+    mask-image: url('/static/img/slick-left-arrow.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+#blog-carousel .carousel-control-next-icon {
+    background-color: $blue;
+    -webkit-mask-image: url('/static/img/slick-right-arrow.svg');
+    mask-image: url('/static/img/slick-right-arrow.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+.blog-chunk {
+    width: 684px;
+}
+
+.blog-chunk a {
+    text-decoration: none;
+}
+
+.blog-chunk h5 {
+    min-height: 115.2px;
+}
+
+.about-accordion {
+    background-color: $gray-100;
+    padding-top: 12px;
+    padding-left: 28px;
+    padding-bottom: 8px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.accordion-icon {
+    color: $blue;
+    font-style: normal;
+}
+
+.icon-plus-square::before {
+    content: '\f0fe';
+}
+
+.icon-minus-square::before {
+    content: '\f146';
+}
+
+.press-content,
+.publications-content {
+    display: none;
+}
+
+.visualization-container {
+    display: flex-basis;
+    width: 100%;
+}
+
+.visualization-container section {
+    width: 100%;
+}
+
+.visualization-data-link {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.5rem;
 }

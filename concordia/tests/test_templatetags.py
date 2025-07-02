@@ -102,7 +102,10 @@ class VisualizationTagsTests(TestCase):
     def test_without_attrs_renders_section_and_script(self):
         # No attributes: should render a plain <section> and matching <script>
         result = concordia_visualization("daily-activity")
-        expected_section = '<section><canvas id="daily-activity"></canvas></section>'
+        expected_section = (
+            '<div class="visualization-container"><section>'
+            '<canvas id="daily-activity"></canvas></section></div>'
+        )
         expected_script = '<script type="module" src="{}"></script>'.format(
             static("js/visualizations/daily-activity.js")
         )
@@ -110,14 +113,17 @@ class VisualizationTagsTests(TestCase):
 
     def test_with_attrs_and_escaping(self):
         # Attributes that include characters needing HTML escaping
-        attrs = {"style": "width:100%;", "data-info": "<alert>"}
+        attrs = {"class": "test-class", "style": "width:100%;", "data-info": "<alert>"}
         result = concordia_visualization("chart1", **attrs)
 
         escaped_value = escape("<alert>")
         expected_section = (
-            f'<section style="width:100%;" data-info="{escaped_value}">'  # attrs
+            f'<div class="visualization-container test-class" '
+            f'style="width:100%;" data-info="{escaped_value}">'
+            f"<section >"
             f'<canvas id="chart1"></canvas>'
             f"</section>"
+            f"</div>"
         )
         expected_script = '<script type="module" src="{}"></script>'.format(
             static("js/visualizations/chart1.js")

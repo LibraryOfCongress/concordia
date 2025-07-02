@@ -70,6 +70,12 @@ STORAGES = {
             "querystring_auth": False,
         },
     },
+    "visualizations": {
+        "BACKEND": "concordia.storage_backends.OverwriteS3Boto3Storage",
+        "OPTIONS": {
+            "querystring_auth": False,
+        },
+    },
 }
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
