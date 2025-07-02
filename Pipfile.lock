@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1b3c18595b667a47f8ede74fba1607ec6ebac6c77253e3369eb3f17a7fa36b44"
+            "sha256": "d25dc669b0d8898c54b382f2d816354a7d60b1c47c2eb314e92a9c42ed8f5c9e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -390,11 +390,11 @@
                 "daphne"
             ],
             "hashes": [
-                "sha256:a3c4419307f582c3f71d67bfb6eff748ae819c2f360b9b141694d84f242baa48",
-                "sha256:e0ed375719f5c1851861f05ed4ce78b0166f9245ca0ecd836cb77d4bb531489d"
+                "sha256:8d7208e48ab8fdb972aaeae8311ce920637d97656ffc7ae5eca4f93f84bcd9a0",
+                "sha256:ff36a6e1576cacf40bcdc615fa7aece7a709fc4fdd2dc87f2971f4061ffdaa81"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==4.1.0"
+            "version": "==4.2.2"
         },
         "channels-redis": {
             "hashes": [
