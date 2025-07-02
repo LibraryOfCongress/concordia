@@ -163,7 +163,7 @@ class ConcordiaLogger:
     - `transcription` -> `transcription_id`
     - `campaign` -> `campaign_slug`
     - `item` -> `item_id`
-    - `topic` -> `topic_id`
+    - `topic` -> `topic_slug`
 
     If these objects are passed directly (e.g., as `user=request.user`), their relevant
     fields will be included automatically in the log entry.
