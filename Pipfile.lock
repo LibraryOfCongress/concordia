@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0644bcbcb0a0f6c0e5c7bb1c178fcb3ee95c3c82e63d9069770764dd0f69304b"
+            "sha256": "0676a351da0b56d2f81d690a325e55a69a4c523b6c0e7ebf03cb9730f7fc2015"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -2322,15 +2322,15 @@
         },
         "twisted": {
             "extras": [
-                "http2",
                 "tls"
             ],
             "hashes": [
-                "sha256:02951299672595fea0f70fa2d5f7b5e3d56836157eda68859a6ad6492d36756e",
-                "sha256:67aa7c8aa94387385302acf44ade12967c747858c8bcce0f11d38077a11c5326"
+                "sha256:1deb272358cb6be1e3e8fc6f9c8b36f78eb0fa7c2233d2dbe11ec6fee04ea316",
+                "sha256:8559f654d01a54a8c3efe66d533d43f383531ebf8d81d9f9ab4769d91ca15df7"
             ],
+            "index": "pypi",
             "markers": "python_full_version >= '3.8.0'",
-            "version": "==24.10.0"
+            "version": "==25.5.0"
         },
         "txaio": {
             "hashes": [
