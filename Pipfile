@@ -18,7 +18,7 @@ setuptools-scm = "==8.2.0"
 django-ratelimit = "==4.1.0"
 pylibmc = "==1.6.3"
 django-celery-beat = "==2.7.0"
-kombu = "==5.4.2"
+kombu = "==5.5.4"
 django-flags = "==5.0.14"
 sentry-sdk = "==2.22.0"
 channels = { extras = ["daphne"], version = "==4.1.0" }
