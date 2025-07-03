@@ -1,6 +1,6 @@
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TransactionTestCase
 from django.urls import reverse
 
 from concordia.consumers import AssetConsumer
@@ -10,7 +10,7 @@ from concordia.views.ajax import obtain_reservation
 from .utils import CreateTestUsers, create_asset, create_item, create_transcription
 
 
-class TestAssetConsumer(CreateTestUsers, TestCase):
+class TestAssetConsumer(CreateTestUsers, TransactionTestCase):
     """
     Normally defining communicator would be in setUp
     and communicator.disconnect would be called in tearDown
