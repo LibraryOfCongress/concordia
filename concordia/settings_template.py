@@ -145,7 +145,6 @@ MIDDLEWARE = [
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
-# Hardcoded true - TODO need to change for task def env var
 #  Enable X-Ray tracing if the environment variable is set to true
 AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true"
 
