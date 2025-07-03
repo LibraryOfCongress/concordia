@@ -145,6 +145,9 @@ MIDDLEWARE = [
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
+#  Enable X-Ray tracing if the environment variable is set to true
+AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true"
+
 
 #  Check if the current process is a web server process
 def is_web_process():
