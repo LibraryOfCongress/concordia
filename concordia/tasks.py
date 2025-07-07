@@ -1709,7 +1709,7 @@ def populate_asset_status_visualization_cache(self):
         overview_writer.writerow([label, count])
 
     overview_csv_content = overview_csv.getvalue()
-    overview_csv_path = "visualization_exports/asset-status-overview.csv"
+    overview_csv_path = "visualization_exports/page-status-active-campaigns.csv"
     VISUALIZATION_STORAGE.save(overview_csv_path, ContentFile(overview_csv_content))
     overview_csv_url = VISUALIZATION_STORAGE.url(overview_csv_path)
 
@@ -1726,7 +1726,9 @@ def populate_asset_status_visualization_cache(self):
         by_campaign_writer.writerow([campaign_name] + list(counts_per_campaign))
 
     by_campaign_csv_content = by_campaign_csv.getvalue()
-    by_campaign_csv_path = "visualization_exports/asset-status-by-campaign.csv"
+    by_campaign_csv_path = (
+        "visualization_exports/page-status-by-campaign-active-campaigns.csv"
+    )
     VISUALIZATION_STORAGE.save(
         by_campaign_csv_path, ContentFile(by_campaign_csv_content)
     )
@@ -1848,7 +1850,10 @@ def populate_daily_activity_visualization_cache(self):
         writer.writerow([ds["label"]] + ds["data"])
 
     csv_content = csv_output.getvalue()
-    csv_path = "visualization_exports/daily-transcription-activity-by-campaign.csv"
+    csv_path = (
+        "visualization_exports/daily-transcription-activity-by-campaign-"
+        "last-seven-days.csv"
+    )
     VISUALIZATION_STORAGE.save(csv_path, ContentFile(csv_content))
     csv_url = VISUALIZATION_STORAGE.url(csv_path)
 
