@@ -1727,7 +1727,7 @@ def populate_asset_status_visualization_cache(self):
 
     by_campaign_csv_content = by_campaign_csv.getvalue()
     by_campaign_csv_path = (
-        "visualization_exports/page-status-by-campaign-activy-campaigns.csv"
+        "visualization_exports/page-status-by-campaign-active-campaigns.csv"
     )
     VISUALIZATION_STORAGE.save(
         by_campaign_csv_path, ContentFile(by_campaign_csv_content)
