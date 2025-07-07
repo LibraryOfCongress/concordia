@@ -39,7 +39,10 @@ def extract_og_image(url):
 def fetch_blog_posts():
     """get and parse The Signal's RSS feed"""
     try:
-        response = requests.get("https://blogs.loc.gov/thesignal/feed/", timeout=60)
+        response = requests.get(
+            "https://blogs.loc.gov/thesignal/category/by-the-people-transcription-program/feed/",
+            timeout=60,
+        )
         response.raise_for_status()
         root = ET.fromstring(response.content)
     except Exception:
