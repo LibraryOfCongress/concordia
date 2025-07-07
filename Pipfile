@@ -20,7 +20,7 @@ pylibmc = "==1.6.3"
 django-celery-beat = "==2.8.1"
 kombu = "==5.5.4"
 django-flags = "==5.0.14"
-sentry-sdk = "==2.22.0"
+sentry-sdk = "==2.32.0"
 channels = { extras = ["daphne"], version = "==4.2.2" }
 channels-redis = "==4.2.1"
 more-itertools = "==10.7.0"
