@@ -1668,7 +1668,12 @@ def populate_asset_status_visualization_cache(self):
     """
     visualization_cache = caches["visualization_cache"]
 
-    campaigns = Campaign.objects.active().order_by("ordering", "title")
+    campaigns = (
+        Campaign.objects.published()
+        .listed()
+        .filter(status=Campaign.Status.ACTIVE)
+        .order_by("ordering", "title")
+    )
 
     campaign_ids = [campaign.id for campaign in campaigns]
     campaign_titles = [campaign.title for campaign in campaigns]
