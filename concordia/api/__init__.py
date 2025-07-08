@@ -2,7 +2,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from ninja import Router
+from ninja import NinjaAPI, Router
 from ninja.errors import HttpError
 
 from concordia.models import (
@@ -15,10 +15,9 @@ from concordia.models import (
 )
 from concordia.templatetags.concordia_media_tags import asset_media_url
 
-from .api import CamelCaseAPI
 from .schemas import CamelSchema
 
-api = CamelCaseAPI()
+api = NinjaAPI()
 
 
 class AssetOut(CamelSchema):
