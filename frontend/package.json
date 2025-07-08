@@ -12,6 +12,7 @@
     "dependencies": {
         "lodash.debounce": "^4.0.8",
         "openseadragon": "^5.0.1",
+        "openseadragon-filtering": "^1.0.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "react-redux": "^9.2.0",

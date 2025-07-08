@@ -1,4 +1,28 @@
-export default function GammaFilterForm() {
+export default function GammaFilterForm({gamma, setGamma}) {
+    const handleNumberChange = (e) => {
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value)) setGamma(value);
+    };
+
+    const handleRangeChange = (e) => {
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value)) setGamma(value);
+    };
+
+    const stepUp = () => {
+        const newValue = Math.min(5, gamma + 0.01);
+        setGamma(parseFloat(newValue.toFixed(2)));
+    };
+
+    const stepDown = () => {
+        const newValue = Math.max(0, gamma - 0.01);
+        setGamma(parseFloat(newValue.toFixed(2)));
+    };
+
+    const handleReset = () => {
+        setGamma(1.0);
+    };
+
     return (
         <div
             id="gamma-filter"
@@ -8,9 +32,8 @@ export default function GammaFilterForm() {
             <form
                 id="gamma-form"
                 className="d-flex align-items-center"
-                onSubmit={(e) => {
-                    e.preventDefault();
-                }}
+                onSubmit={(e) => e.preventDefault()}
+                onReset={handleReset}
             >
                 <div className="row ms-0 me-3 number-input">
                     <div className="col p-1">
@@ -21,7 +44,8 @@ export default function GammaFilterForm() {
                             min="0"
                             max="5"
                             step="0.01"
-                            defaultValue="1.00"
+                            value={gamma}
+                            onChange={handleNumberChange}
                         />
                         <label className="visually-hidden" htmlFor="gamma">
                             Gamma
@@ -33,6 +57,7 @@ export default function GammaFilterForm() {
                                 id="gamma-up"
                                 type="button"
                                 className="arrow-button"
+                                onClick={stepUp}
                             >
                                 <span className="fas fa-chevron-up" />
                                 <span className="visually-hidden">
@@ -45,6 +70,7 @@ export default function GammaFilterForm() {
                                 id="gamma-down"
                                 type="button"
                                 className="arrow-button"
+                                onClick={stepDown}
                             >
                                 <span className="fas fa-chevron-down" />
                                 <span className="visually-hidden">
@@ -61,7 +87,8 @@ export default function GammaFilterForm() {
                     min="0"
                     max="5"
                     step="0.01"
-                    defaultValue="1.00"
+                    value={gamma}
+                    onChange={handleRangeChange}
                     className="filter-slider flex-grow-1"
                 />
                 <label className="visually-hidden" htmlFor="gamma-range">
@@ -70,7 +97,7 @@ export default function GammaFilterForm() {
                 <input
                     type="reset"
                     className="btn btn-link underline-link fw-bold"
-                    defaultValue="Reset filter"
+                    value="Reset filter"
                 />
             </form>
         </div>

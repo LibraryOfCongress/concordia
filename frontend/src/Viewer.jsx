@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import OpenSeadragon from 'openseadragon';
+import 'openseadragon-filtering';
 import screenfull from 'screenfull';
 import {prefixUrl, contactUrl} from './config.js';
 
@@ -81,7 +82,7 @@ export default function Viewer({
                 onLayoutVertical={onLayoutVertical}
                 toggleFullscreen={toggleFullscreen}
             />
-            <ImageFilters />
+            <ImageFilters osdViewerRef={osdViewerRef} />
             <KeyboardHelpModal />
             <div
                 id="asset-image"

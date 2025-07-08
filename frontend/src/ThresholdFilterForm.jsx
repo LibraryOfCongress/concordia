@@ -1,4 +1,24 @@
-export default function ThresholdFilterForm() {
+export default function ThresholdFilterForm({threshold, setThreshold}) {
+    const handleNumberChange = (e) => {
+        setThreshold(parseInt(e.target.value, 10));
+    };
+
+    const handleRangeChange = (e) => {
+        setThreshold(parseInt(e.target.value, 10));
+    };
+
+    const handleReset = () => {
+        setThreshold(0);
+    };
+
+    const stepUp = () => {
+        setThreshold((prev) => Math.min(prev + 1, 255));
+    };
+
+    const stepDown = () => {
+        setThreshold((prev) => Math.max(prev - 1, 0));
+    };
+
     return (
         <div
             id="threshold-filter"
@@ -8,9 +28,8 @@ export default function ThresholdFilterForm() {
             <form
                 id="threshold-form"
                 className="d-flex align-items-center"
-                onSubmit={(e) => {
-                    e.preventDefault();
-                }}
+                onSubmit={(e) => e.preventDefault()}
+                onReset={handleReset}
             >
                 <div className="row ms-0 me-3 number-input">
                     <div className="col p-1">
@@ -21,7 +40,8 @@ export default function ThresholdFilterForm() {
                             min="0"
                             max="255"
                             step="1"
-                            defaultValue="0"
+                            value={threshold}
+                            onChange={handleNumberChange}
                         />
                         <label className="visually-hidden" htmlFor="threshold">
                             Threshold
@@ -33,6 +53,7 @@ export default function ThresholdFilterForm() {
                                 id="threshold-up"
                                 type="button"
                                 className="arrow-button"
+                                onClick={stepUp}
                             >
                                 <span className="fas fa-chevron-up" />
                                 <span className="visually-hidden">
@@ -45,6 +66,7 @@ export default function ThresholdFilterForm() {
                                 id="threshold-down"
                                 type="button"
                                 className="arrow-button"
+                                onClick={stepDown}
                             >
                                 <span className="fas fa-chevron-down" />
                                 <span className="visually-hidden">
@@ -61,7 +83,8 @@ export default function ThresholdFilterForm() {
                     min="0"
                     max="255"
                     step="1"
-                    defaultValue="0"
+                    value={threshold}
+                    onChange={handleRangeChange}
                     className="filter-slider flex-grow-1"
                 />
                 <label className="visually-hidden" htmlFor="threshold-range">
@@ -70,7 +93,7 @@ export default function ThresholdFilterForm() {
                 <input
                     type="reset"
                     className="btn btn-link underline-link fw-bold"
-                    defaultValue="Reset filter"
+                    value="Reset filter"
                 />
             </form>
         </div>
