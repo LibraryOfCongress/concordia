@@ -10,11 +10,15 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "lodash.debounce": "^4.0.8",
+        "openseadragon": "^5.0.1",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "react-redux": "^9.2.0",
         "react-router-dom": "^6.30.1",
-        "redux": "^5.0.1"
+        "redux": "^5.0.1",
+        "screenfull": "^6.0.2",
+        "split.js": "^1.6.5"
     },
     "devDependencies": {
         "@eslint/js": "^9.25.0",
@@ -25,6 +29,7 @@
         "eslint-plugin-react-hooks": "^5.2.0",
         "eslint-plugin-react-refresh": "^0.4.19",
         "globals": "^16.0.0",
-        "vite": "^6.3.5"
+        "vite": "^6.3.5",
+        "vite-plugin-static-copy": "^3.1.0"
     }
 }

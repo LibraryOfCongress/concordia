@@ -2,7 +2,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from ninja import NinjaAPI, Router, Schema
+from ninja import Router
 from ninja.errors import HttpError
 
 from concordia.models import (
@@ -15,10 +15,13 @@ from concordia.models import (
 )
 from concordia.templatetags.concordia_media_tags import asset_media_url
 
-api = NinjaAPI()
+from .api import CamelCaseAPI
+from .schemas import CamelSchema
+
+api = CamelCaseAPI()
 
 
-class AssetOut(Schema):
+class AssetOut(CamelSchema):
     id: int  # noqa: A003
     title: str
     item_id: str
@@ -31,6 +34,7 @@ class AssetOut(Schema):
     previous_asset_url: Optional[str]
     next_asset_url: Optional[str]
     asset_navigation: list[tuple[int, str]]
+    image_url: str
     thumbnail_url: str
     current_asset_url: str
     tags: list[str]
@@ -42,13 +46,13 @@ class AssetOut(Schema):
     redo_available: bool
 
 
-class TranscriptionIn(Schema):
+class TranscriptionIn(CamelSchema):
     text: str
     supersedes: Optional[int] = None
     language: Optional[str] = None  # used only when OCR is involved
 
 
-class TranscriptionOut(Schema):
+class TranscriptionOut(CamelSchema):
     id: int  # noqa: A003
     asset_id: int
     status: str
@@ -165,6 +169,7 @@ def serialize_asset(asset, request):
         "previous_asset_url": previous_asset_url,
         "next_asset_url": next_asset_url,
         "asset_navigation": asset_navigation,
+        "image_url": image_url,
         "thumbnail_url": thumbnail_url,
         "tags": tags,
         "registered_contributors": asset.get_contributor_count(),
@@ -182,6 +187,7 @@ assets = Router(tags=["assets"])
 @assets.get(
     "/{campaign_slug}/{project_slug}/{item_id}/{asset_slug}/",
     response=AssetOut,
+    by_alias=True,
 )
 def asset_detail_by_slugs(
     request,
@@ -203,7 +209,7 @@ def asset_detail_by_slugs(
     return serialize_asset(asset, request)
 
 
-@assets.get("/{asset_id}", response=AssetOut)
+@assets.get("/{asset_id}", response=AssetOut, by_alias=True)
 def asset_detail(request, asset_id: int):
     """GET /assets/{asset_id}/ – basic asset record."""
     asset = get_object_or_404(
@@ -212,7 +218,7 @@ def asset_detail(request, asset_id: int):
     return serialize_asset(asset, request)
 
 
-@assets.post("/{asset_id}/transcriptions", response=TranscriptionOut)
+@assets.post("/{asset_id}/transcriptions", response=TranscriptionOut, by_alias=True)
 def create_transcription(request, asset_id: int, payload: TranscriptionIn):
     """
     POST /assets/{id}/transcriptions/ – save a *new* draft transcription.
@@ -223,7 +229,7 @@ def create_transcription(request, asset_id: int, payload: TranscriptionIn):
     raise HttpError(501, "Not implemented yet")
 
 
-@assets.post("/{asset_id}/transcriptions/ocr", response=TranscriptionOut)
+@assets.post("/{asset_id}/transcriptions/ocr", response=TranscriptionOut, by_alias=True)
 def create_ocr_transcription(request, asset_id: int, payload: TranscriptionIn):
     """
     POST /assets/{id}/transcriptions/ocr/ – generate OCR transcription.
@@ -234,7 +240,9 @@ def create_ocr_transcription(request, asset_id: int, payload: TranscriptionIn):
     raise HttpError(501, "Not implemented yet")
 
 
-@assets.post("/{asset_id}/transcriptions/rollback", response=TranscriptionOut)
+@assets.post(
+    "/{asset_id}/transcriptions/rollback", response=TranscriptionOut, by_alias=True
+)
 def rollback(request, asset_id: int):
     """
     POST /assets/{id}/transcriptions/rollback/ – undo to the previous version.
@@ -245,7 +253,9 @@ def rollback(request, asset_id: int):
     raise HttpError(501, "Not implemented yet")
 
 
-@assets.post("/{asset_id}/transcriptions/rollforward", response=TranscriptionOut)
+@assets.post(
+    "/{asset_id}/transcriptions/rollforward", response=TranscriptionOut, by_alias=True
+)
 def rollforward(request, asset_id: int):
     """
     POST /assets/{id}/transcriptions/rollforward/ – redo the last rollback.
@@ -259,7 +269,7 @@ def rollforward(request, asset_id: int):
 transcriptions = Router(tags=["transcriptions"])
 
 
-@transcriptions.post("/{pk}/submit", response=TranscriptionOut)
+@transcriptions.post("/{pk}/submit", response=TranscriptionOut, by_alias=True)
 def submit(request, pk: int):
     """
     POST /transcriptions/{pk}/submit/ – mark a draft as *submitted*.
@@ -268,11 +278,11 @@ def submit(request, pk: int):
     raise HttpError(501, "Not implemented yet")
 
 
-class ReviewIn(Schema):
+class ReviewIn(CamelSchema):
     action: str  # "accept" or "reject"
 
 
-@transcriptions.patch("/{pk}/review", response=TranscriptionOut)
+@transcriptions.patch("/{pk}/review", response=TranscriptionOut, by_alias=True)
 def review(request, pk: int, payload: ReviewIn):
     """
     PATCH /transcriptions/{pk}/review/ – accept or reject.

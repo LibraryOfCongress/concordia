@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {HashRouter, Routes, Route, Link, useParams} from 'react-router-dom';
+import ViewerSplit from './ViewerSplit';
 
 function FetchAndDisplay({endpoint, method = 'GET'}) {
     const [data, setData] = useState(null);
@@ -73,7 +74,10 @@ function AssetRoutes({assetData}) {
         <>
             <NavLinks assetData={assetData} />
             <Routes>
-                <Route path="" element={<AssetView assetData={assetData} />} />
+                <Route
+                    path=""
+                    element={<ViewerSplit assetData={assetData} />}
+                />
                 <Route path="transcriptions" element={<Transcriptions />} />
                 <Route path="ocr" element={<OCRTranscription />} />
                 <Route path="rollback" element={<Rollback />} />
@@ -83,15 +87,6 @@ function AssetRoutes({assetData}) {
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </>
-    );
-}
-
-function AssetView({assetData}) {
-    return (
-        <div>
-            <h2>Asset Data</h2>
-            <pre>{JSON.stringify(assetData, null, 2)}</pre>
-        </div>
     );
 }
 
