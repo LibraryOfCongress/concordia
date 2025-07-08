@@ -1669,10 +1669,7 @@ def populate_asset_status_visualization_cache(self):
     visualization_cache = caches["visualization_cache"]
 
     campaigns = (
-        Campaign.objects.published()
-        .listed()
-        .filter(status=Campaign.Status.ACTIVE)
-        .order_by("ordering", "title")
+        Campaign.objects.published().listed().active().order_by("ordering", "title")
     )
 
     campaign_ids = [campaign.id for campaign in campaigns]
@@ -1787,7 +1784,7 @@ def populate_daily_activity_visualization_cache(self):
     # Convert to "YYYY-MM-DD" strings for the x-axis
     date_strings = [d.strftime("%Y-%m-%d") for d in last_seven_dates]
 
-    active_campaigns = list(Campaign.objects.active())
+    active_campaigns = list(Campaign.objects.published().listed().active())
 
     reports = SiteReport.objects.filter(
         campaign__in=active_campaigns, created_on__date__in=last_seven_dates
