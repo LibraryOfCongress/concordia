@@ -49,11 +49,11 @@ django-opensearch-dsl = "==0.7.0"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
 locust = "==2.37.4"
 django = "==4.2.22"
-django-registration = "==5.2.1"
 defusedxml = "==0.7.1"
 django-ninja = "==1.4.3"
 urllib3 = "==2.5.0"
 bagit = "==1.9.0"
+django-registration = "==3.4"
 
 [dev-packages]
 invoke = "==2.2.0"
