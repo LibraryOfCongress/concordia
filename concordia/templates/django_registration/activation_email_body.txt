@@ -3,7 +3,7 @@ Thank you for registering as a Library of Congress virtual volunteer with By the
 
 To complete your activation, please verify your email address in the next {{ expiration_days }} days by clicking the link below:
 
-https://{{ site }}{% url "django_registration_activate" %}?activation_key={{ activation_key }}
+https://{{ site }}{% url "django_registration_activate" activation_key %}
 
 Once your email is verified, your account will be active! As a registered user you can complete pages by reviewing other volunteers' transcriptions, tag pages, and see a history of your activity on your account page.
 
