@@ -5,7 +5,7 @@ from typing import Any, Optional, Type
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
@@ -26,11 +26,18 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.generic import FormView, ListView, TemplateView
 from django_ratelimit.decorators import ratelimit
-from django_registration.backends.activation.views import RegistrationView
+from django_registration import signals
+from django_registration.backends.activation.views import (
+    REGISTRATION_SALT,
+    ActivationView,
+    RegistrationView,
+)
+from django_registration.exceptions import ActivationError
 from weasyprint import HTML
 
 from concordia.forms import (
@@ -119,6 +126,123 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
         return None
     else:
         return "10/h"
+
+
+@method_decorator(never_cache, name="dispatch")
+@method_decorator(
+    ratelimit(
+        group="registration",
+        key="header:cf-connecting-ip",
+        rate=registration_rate,
+        method="POST",
+        block=settings.RATELIMIT_BLOCK,
+    ),
+    name="post",
+)
+class ConcordiaActivationView(ActivationView):
+    """
+    Legacy view, adapted from django_registration 3.4. Once we've updated our
+    registration workflow, this view should be removed.
+
+    Extends
+    [django_registration.views.ActivationView](https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.ActivationView)
+
+    """
+
+    ALREADY_ACTIVATED_MESSAGE = _(
+        "The account you tried to activate has already been activated."
+    )
+    BAD_USERNAME_MESSAGE = _("The account you attempted to activate is invalid.")
+    EXPIRED_MESSAGE = _("This account has expired.")
+    INVALID_KEY_MESSAGE = _("The activation key you provided is invalid.")
+    success_url = reverse_lazy("django_registration_activation_complete")
+    template_name = "django_registration/activation_complete.html"
+
+    def get_success_url(self, user=None):  # pylint: disable=unused-argument
+        """
+        Return the URL to redirect to after successful redirection.
+
+        """
+        return force_str(self.success_url)
+
+    def get(self, request, *args, **kwargs):
+        """
+        The base activation logic; subclasses should leave this method alone and
+        implement activate(), which is called from this method.
+
+        """
+        extra_context = {}
+        try:
+            activated_user = self.activate(*args, **kwargs)
+        except ActivationError as exc:
+            extra_context["activation_error"] = {
+                "message": exc.message,
+                "code": exc.code,
+                "params": exc.params,
+            }
+        else:
+            signals.user_activated.send(
+                sender=self.__class__, user=activated_user, request=self.request
+            )
+            return HttpResponseRedirect(force_str(self.get_success_url(activated_user)))
+        context_data = self.get_context_data()
+        context_data.update(extra_context)
+        return self.render_to_response(context_data)
+
+    def activate(self, *args, **kwargs):
+        """
+        Attempt to activate the user account.
+
+        """
+        username = self.validate_key(kwargs.get("activation_key"))
+        user = self.get_user(username)
+        user.is_active = True
+        user.save()
+        return user
+
+    def validate_key(self, activation_key):
+        """
+        Verify that the activation key is valid and within the permitted activation
+        time window, returning the username if valid or raising ``ActivationError`` if
+        not.
+
+        """
+        # pylint: disable=raise-missing-from
+        try:
+            username = signing.loads(
+                activation_key,
+                salt=REGISTRATION_SALT,
+                max_age=settings.ACCOUNT_ACTIVATION_DAYS * 86400,
+            )
+            return username
+        except signing.SignatureExpired as err:
+            raise ActivationError(self.EXPIRED_MESSAGE, code="expired") from err
+        except signing.BadSignature as err:
+            raise ActivationError(
+                self.INVALID_KEY_MESSAGE,
+                code="invalid_key",
+                params={"activation_key": activation_key},
+            ) from err
+
+    def get_user(self, username):
+        """
+        Given the verified username, look up and return the corresponding user
+        account if it exists, or raising ``ActivationError`` if it doesn't.
+
+        """
+        # pylint: disable=invalid-name,raise-missing-from
+        User = get_user_model()
+        try:
+            user = User.objects.get(**{User.USERNAME_FIELD: username})
+            if user.is_active:
+                raise ActivationError(
+                    self.ALREADY_ACTIVATED_MESSAGE, code="already_activated"
+                )
+            return user
+        except User.DoesNotExist as err:
+            raise ActivationError(
+                self.BAD_USERNAME_MESSAGE, code="bad_username"
+            ) from err
 
 
 @method_decorator(never_cache, name="dispatch")

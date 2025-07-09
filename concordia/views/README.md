@@ -20,6 +20,7 @@ Views related to user account management, including login, registration and prof
 
 -   **ConcordiaPasswordResetConfirmView** - Customized password reset confirmation
 -   **ConcordiaPasswordResetRequestView** - Customized password reset requests
+-   **ConcordiaActivationView** - Custom view that allows account activation on HTTP GET
 -   **ConcordiaRegistrationView** - Custom registration view with rate limiting
 -   **ConcordiaLoginView** - Login view with Turnstile challenge validation
 -   **AccountProfileView** - View for managing a user's profile and displaying contributions
