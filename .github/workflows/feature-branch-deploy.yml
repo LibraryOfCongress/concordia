@@ -13,6 +13,10 @@ on:
             - jenkins/**
             - kibana-proxy/**
             - postgresql/**
+            - cloudformation/tests/**
+            - concordia/tests/**
+            - exporter/tests/**
+            - importer/tests/**
 
 env:
     AWS_REGION: us-east-1
@@ -46,7 +50,7 @@ jobs:
                   fetch-depth: 0
                   fetch-tags: 'true'
 
-            - name: Set up Python 3.10
+            - name: Set up Python 3.12
               uses: actions/setup-python@v5
               with:
                   # Semantic version range syntax or exact version of a Python version
