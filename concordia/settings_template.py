@@ -183,7 +183,6 @@ if is_web_process():
         "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
         "AWS_XRAY_TRACING_NAME": "concordia",
         "PLUGINS": ("ECSPlugin",),
-    }
 
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
