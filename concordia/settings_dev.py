@@ -79,7 +79,5 @@ if is_web_process():  # noqa: F405
         + [  # noqa: F405
             r"^debug_toolbar\.",
         ],
-        "SAMPLING": False,  # Capture all requests during development
         "PLUGINS": (),
-        "DYNAMIC_NAMING": "*",  # Capture all host names
     }

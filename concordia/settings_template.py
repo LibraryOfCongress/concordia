@@ -160,7 +160,7 @@ if is_web_process():
     INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
     MIDDLEWARE = ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"] + MIDDLEWARE
     XRAY_RECORDER = {
-        "PATCH_MODULES": ["boto3", "botocore", "requests", "psycopg2"],
+        "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
         "IGNORE_MODULE_PATTERNS": [
             r"^django\.contrib\.admin\.views\.decorators\.cache",
             r"^django\.contrib\.admin\.options",
@@ -181,9 +181,16 @@ if is_web_process():
             r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorBase",
         ],
         "AUTO_INSTRUMENT": True,
-        "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
-        "AWS_XRAY_DAEMON_ADDRESS": "127.0.0.1:2000",
-        "AWS_XRAY_TRACING_NAME": "concordia",
+        "AWS_XRAY_CONTEXT_MISSING": os.environ.get(
+            "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
+        ),
+        "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
+            "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
+        ),
+        "AWS_XRAY_TRACING_NAME": os.environ.get(
+            "AWS_XRAY_TRACING_NAME",
+            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
+        ),
         "PLUGINS": ("ECSPlugin"),
         "SAMPLING": False,
     }
