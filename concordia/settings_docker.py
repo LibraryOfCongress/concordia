@@ -23,6 +23,18 @@ OPENSEARCH_DSL = {
     },
 }
 
+# X-Ray configuration for local development
+if is_web_process():  # noqa: F405
+    # Extend the XRAY_RECORDER from settings_template.py
+    XRAY_RECORDER = {
+        **XRAY_RECORDER,  # noqa: F405
+        "IGNORE_MODULE_PATTERNS": XRAY_RECORDER["IGNORE_MODULE_PATTERNS"]  # noqa: F405
+        + [  # noqa: F405
+            r"^debug_toolbar\.",
+        ],
+        "PLUGINS": (),
+    }
+
 
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.
