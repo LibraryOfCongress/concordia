@@ -158,7 +158,7 @@ def is_web_process():
 if is_web_process():
     # Only add X-Ray for web processes
     INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
-    MIDDLEWARE = ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"] + MIDDLEWARE
+    MIDDLEWARE += ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"]
     XRAY_RECORDER = {
         "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
         "IGNORE_MODULE_PATTERNS": [
@@ -191,7 +191,7 @@ if is_web_process():
             "AWS_XRAY_TRACING_NAME",
             os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
         ),
-        "PLUGINS": ("ECSPlugin"),
+        "PLUGINS": ("ECSPlugin",),
         "SAMPLING": False,
     }
 
