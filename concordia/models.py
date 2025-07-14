@@ -1427,7 +1427,7 @@ def _update_useractivity_cache(user_id, campaign_id, attr_name):
     else:
         review_count += 1
     updates[user_id] = (transcribe_count, review_count)
-    cache.set(key, updates)
+    cache.set(key, updates, timeout=None)
 
 
 class AssetTranscriptionReservation(models.Model):
