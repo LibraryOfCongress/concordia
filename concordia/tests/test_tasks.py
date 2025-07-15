@@ -284,8 +284,18 @@ class TaskTestCase(CreateTestUsers, TestCase):
     def test_update_userprofileactivity_from_cache(self, mock_update_table):
         user = self.create_test_user()
         campaign = create_campaign()
-        self.assertEqual(mock_update_table.call_count, 0)
         key = f"userprofileactivity_{campaign.pk}"
+        cache.set(key, None)
+        with mock.patch("concordia.logging.ConcordiaLogger.debug") as mock_debug:
+            update_userprofileactivity_from_cache()
+            self.assertEqual(mock_debug.call_count, 2)
+            mock_debug.assert_called_with(
+                "Cache contained no updates for key. Skipping",
+                event_code="update_userprofileactivity_from_cache_no_updates",
+                key="userprofileactivity_1",
+            )
+        self.assertEqual(mock_update_table.call_count, 0)
+
         cache.set(key, {user.pk: (1, 0)})
         update_userprofileactivity_from_cache()
         self.assertEqual(mock_update_table.call_count, 2)
