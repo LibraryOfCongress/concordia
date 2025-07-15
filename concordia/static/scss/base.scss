@@ -1714,8 +1714,9 @@ button.btn-outline-primary:hover {
     overflow-x: hidden;
 }
 
-.guide-header {
+div.row.guide-header {
     justify-content: center;
+    margin-right: -4px;
     margin-bottom: 1rem;
     padding-bottom: 0.25rem;
     padding-top: 0.25rem;
