@@ -280,22 +280,39 @@ class TaskTestCase(CreateTestUsers, TestCase):
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_called_with("userprofileactivity_cache_lock")
 
+
+class UpdateUserprofileactivityFromCacheTestCase(CreateTestUsers, TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = self.create_test_user()
+        self.campaign = create_campaign()
+        self.key = f"userprofileactivity_{self.campaign.pk}"
+
     @mock.patch("concordia.tasks.update_userprofileactivity_table")
-    def test_update_userprofileactivity_from_cache(self, mock_update_table):
-        user = self.create_test_user()
-        campaign = create_campaign()
+    def test_no_updates(self, mock_update_table):
+        cache.set(self.key, None)
+        with mock.patch("concordia.logging.ConcordiaLogger.debug") as mock_debug:
+            update_userprofileactivity_from_cache()
+            self.assertEqual(mock_debug.call_count, 2)
+            mock_debug.assert_called_with(
+                "Cache contained no updates for key. Skipping",
+                event_code="update_userprofileactivity_from_cache_no_updates",
+                key=self.key,
+            )
         self.assertEqual(mock_update_table.call_count, 0)
-        key = f"userprofileactivity_{campaign.pk}"
-        cache.set(key, {user.pk: (1, 0)})
+
+    @mock.patch("concordia.tasks.update_userprofileactivity_table")
+    def test_update(self, mock_update_table):
+        cache.set(self.key, {self.user.pk: (1, 0)})
         update_userprofileactivity_from_cache()
         self.assertEqual(mock_update_table.call_count, 2)
         mock_update_table.assert_has_calls(
             [
-                mock.call(user, campaign.id, "transcribe_count", 1),
-                mock.call(user, campaign.id, "review_count", 0),
+                mock.call(self.user, self.campaign.id, "transcribe_count", 1),
+                mock.call(self.user, self.campaign.id, "review_count", 0),
             ]
         )
-        self.assertIsNone(cache.get(key))
+        self.assertIsNone(cache.get(self.key))
 
 
 class PopulateNextAssetTasksTests(CreateTestUsers, TestCase):

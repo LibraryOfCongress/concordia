@@ -1210,9 +1210,9 @@ def update_userprofileactivity_from_cache(self):
                 )
         else:
             structured_logger.debug(
-                "Cache contained no updates for user. Skipping",
+                "Cache contained no updates for key. Skipping",
                 event_code="update_userprofileactivity_from_cache_no_updates",
-                user=user_id,
+                key=key,
             )
 
 
