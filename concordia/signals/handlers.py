@@ -8,7 +8,6 @@ from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
-from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -24,7 +23,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserProfile,
 )
-from concordia.tasks import calculate_difficulty_values
+from concordia.tasks import calculate_difficulty_values, update_useractivity_cache
 from concordia.utils.next_asset import remove_next_asset_objects
 
 from .signals import reservation_obtained, reservation_released
@@ -282,24 +281,20 @@ def on_transcription_save(sender, instance, **kwargs):
     """
     if kwargs.get("created", False):
         user = instance.user
-        attr_name = "transcribe_count"
+        attr_name = "transcribe"
     elif instance.reviewed_by:
         user = instance.reviewed_by
-        attr_name = "review_count"
+        attr_name = "review"
     else:
         user = None
         attr_name = None
 
     if user is not None and attr_name is not None and user.username != "anonymous":
-        key = f"userprofileactivity_{instance.asset.item.project.campaign.id}"
-        updates = cache.get(key, {})
-        transcribe_count, review_count = updates.get(user.id, (0, 0))
-        if attr_name == "transcribe_count":
-            transcribe_count += 1
-        else:
-            review_count += 1
-        updates[user.id] = (transcribe_count, review_count)
-        cache.set(key, updates)
+        update_useractivity_cache.delay(
+            user.id,
+            instance.asset.item.project.campaign.id,
+            attr_name,
+        )
 
 
 @receiver(signals.update_failure_response)

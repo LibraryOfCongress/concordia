@@ -1181,8 +1181,17 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
 def update_userprofileactivity_from_cache(self):
+    structured_logger.info(
+        "Starting update_userprofileactivity_from_cache task",
+        event_code="starting_update_userprofileactivity_from_cache_task",
+    )
     for campaign in Campaign.objects.all():
         key = f"userprofileactivity_{campaign.pk}"
+        structured_logger.debug(
+            "Read key",
+            event_code="update_userprofileactivity_from_cache_key_read",
+            key=key,
+        )
         updates_by_user = cache.get(key)
         if updates_by_user is not None:
             cache.delete(key)
@@ -1194,6 +1203,17 @@ def update_userprofileactivity_from_cache(self):
                 update_userprofileactivity_table(
                     user, campaign.id, "review_count", updates_by_user[user_id][1]
                 )
+                structured_logger.debug(
+                    "Updated activity counts for user",
+                    event_code="update_userprofileactivity_from_cache_database_write",
+                    user=user_id,
+                )
+        else:
+            structured_logger.debug(
+                "Cache contained no updates for key. Skipping",
+                event_code="update_userprofileactivity_from_cache_no_updates",
+                key=key,
+            )
 
 
 @celery_app.task(bind=True, ignore_result=True)
