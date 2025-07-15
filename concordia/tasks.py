@@ -1181,8 +1181,10 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
 def update_userprofileactivity_from_cache(self):
+    logger.info("Startng update_userprofileactivity_from_cache task")
     for campaign in Campaign.objects.all():
         key = f"userprofileactivity_{campaign.pk}"
+        logger.debug("Key read: %s", key)
         updates_by_user = cache.get(key)
         if updates_by_user is not None:
             cache.delete(key)
@@ -1194,6 +1196,7 @@ def update_userprofileactivity_from_cache(self):
                 update_userprofileactivity_table(
                     user, campaign.id, "review_count", updates_by_user[user_id][1]
                 )
+                logger.debug("Updated activity counts for user %s", user_id)
 
 
 @celery_app.task(bind=True, ignore_result=True)
