@@ -13,4 +13,10 @@ jQuery(function ($) {
         );
         $('.press-content').toggle();
     });
+    $('.toggle-program-history').click(function (event) {
+        $('.accordion-icon', event.delegateTarget).toggleClass(
+            'fa-plus-square fa-minus-square',
+        );
+        $('.program-history').toggle();
+    });
 });
