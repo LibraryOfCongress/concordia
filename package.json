@@ -4,7 +4,8 @@
         "@puppeteer/browsers": "^2.10.5",
         "child_process": "^1.0.2",
         "fancy-log": "^2.0.0",
-        "stylelint-value-no-unknown-custom-properties": "^6.0.1"
+        "stylelint-value-no-unknown-custom-properties": "^6.0.1",
+        "vite": "^7.0.4"
     },
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
@@ -30,6 +31,7 @@
         "urijs": "^1.19.11"
     },
     "name": "concordia",
+    "private": true,
     "version": "1.0.0",
     "directories": {
         "doc": "docs"
@@ -44,6 +46,9 @@
     },
     "homepage": "https://github.com/LibraryOfCongress/concordia",
     "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
         "postinstall": "cp node_modules/chroma-js/dist/chroma.min.cjs node_modules/chroma-js/dist/chroma.min.js"
     }
 }
