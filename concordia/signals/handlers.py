@@ -290,6 +290,14 @@ def on_transcription_save(sender, instance, **kwargs):
         attr_name = None
 
     if user is not None and attr_name is not None and user.username != "anonymous":
+        structured_logger.info(
+            "Transcription saved; updating user activity cache.",
+            event_code="transcription_useractivity_triggered",
+            transcription=instance,
+            user=user,
+            activity_type=attr_name,
+            campaign=instance.asset.item.project.campaign,
+        )
         update_useractivity_cache.delay(
             user.id,
             instance.asset.item.project.campaign.id,

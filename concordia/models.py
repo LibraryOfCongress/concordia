@@ -1390,12 +1390,27 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 
 def update_userprofileactivity_table(user, campaign_id, field, increment=1):
+    structured_logger.info(
+        "Updating user profile activity table.",
+        event_code="userprofileactivity_update_start",
+        user=user,
+        campaign_id=campaign_id,
+        activity_field=field,
+        increment=increment,
+    )
     user_profile_activity, created = UserProfileActivity.objects.get_or_create(
         user=user,
         campaign_id=campaign_id,
     )
     if created:
         value = increment
+        structured_logger.info(
+            "Created new UserProfileActivity object",
+            event_code="userprofileactivity_created",
+            user=user,
+            campaign_id=campaign_id,
+        )
+
     else:
         value = F(field) + increment
     setattr(user_profile_activity, field, value)
@@ -1407,15 +1422,33 @@ def update_userprofileactivity_table(user, campaign_id, field, increment=1):
         .count()
     )
     user_profile_activity.save()
-
+    structured_logger.info(
+        "Saved UserProfileActivity.",
+        event_code="userprofileactivity_saved",
+        user=user,
+        campaign_id=campaign_id,
+        updated_field=field,
+    )
     if hasattr(user, "profile"):
         profile = user.profile
         value = F(field) + increment
     else:
         profile = UserProfile.objects.create(user=user)
         value = increment
+        structured_logger.info(
+            "Created new UserProfile OBJECT",
+            event_code="userprofile_created",
+            user=user,
+        )
+
     setattr(profile, field, value)
     profile.save()
+    structured_logger.info(
+        "Saved UserProfile",
+        event_code="userprofile_saved",
+        user=user,
+        updated_field=field,
+    )
 
 
 def _update_useractivity_cache(user_id, campaign_id, attr_name):
@@ -1428,6 +1461,15 @@ def _update_useractivity_cache(user_id, campaign_id, attr_name):
         review_count += 1
     updates[user_id] = (transcribe_count, review_count)
     cache.set(key, updates, timeout=None)
+    structured_logger.info(
+        "Updated user activity cache",
+        event_code="useractivity_cache_updated",
+        user_id=user_id,
+        campaign_id=campaign_id,
+        updated_field=attr_name,
+        new_transcribe_count=transcribe_count,
+        new_review_count=review_count,
+    )
 
 
 class AssetTranscriptionReservation(models.Model):
