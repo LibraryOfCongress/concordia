@@ -1141,6 +1141,14 @@ def unusual_activity(ignore_env=False):
     retry_kwargs={"max_retries": 5, "countdown": 5},
 )
 def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kwargs):
+    structured_logger.info(
+        "Running update_useractivity_cache task",
+        event_code="useractivity_cache_task_start",
+        user_id=user_id,
+        campaign_id=campaign_id,
+        activity_type=attr_name,
+        attempt=self.request.retries + 1,
+    )
     try:
         lock_key = "userprofileactivity_cache_lock"
 
@@ -1150,12 +1158,37 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
 
         try:
             _update_useractivity_cache(user_id, campaign_id, attr_name)
+            structured_logger.info(
+                "Successfully updated user activity cache",
+                event_code="useractivity_cache_task_complete",
+                user_id=user_id,
+                campaign_id=campaign_id,
+                activity_type=attr_name,
+            )
         finally:
             # release
             cache.delete(lock_key)
 
     except Exception as e:
         if self.request.retries >= self.max_retries:
+            structured_logger.warning(
+                "Could not acquire cache lock",
+                event_code="useractivity_cache_lock_failed",
+                reason="Another task is holding the lock",
+                reason_code="lock_unavailable",
+                user_id=user_id,
+                campaign_id=campaign_id,
+                activity_type=attr_name,
+            )
+            structured_logger.exception(
+                "Failed to update user activity cache after retries.",
+                event_code="useractivity_cache_task_failed",
+                reason="Max retries reached while trying to acquire lock.",
+                reason_code="max_retries_exceeded",
+                user_id=user_id,
+                campaign_id=campaign_id,
+                activity_type=attr_name,
+            )
             subject = "Task update_useractivity_cache failed: cache is locked."
             message_body = """%s
                             user: %s

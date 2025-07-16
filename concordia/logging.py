@@ -364,6 +364,31 @@ class ConcordiaLogger:
             **kwargs,
         )
 
+    def exception(
+        self,
+        message: str,
+        *,
+        event_code: str,
+        reason: str,
+        reason_code: str,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Emit an error-level structured log with exception info.
+
+        This is equivalent to calling `.error(..., exc_info=True)` and should be used
+        within an exception handler to capture tracebacks.
+        """
+        self.log(
+            "error",
+            message,
+            event_code=event_code,
+            reason=reason,
+            reason_code=reason_code,
+            exc_info=True,
+            **kwargs,
+        )
+
     def bind(self, **kwargs: Any) -> "ConcordiaLogger":
         """
         Return a new ConcordiaLogger with additional context permanently bound.

@@ -192,3 +192,24 @@ class ConcordiaLoggerTests(TestCase):
             self.logger.log(
                 "error", "bad", event_code="something", reason="fail", reason_code=None
             )
+
+    def test_exception_logs_with_exc_info(self):
+        try:
+            raise ValueError("Something went wrong")
+        except ValueError:
+            self.logger.exception(
+                "Exception occurred",
+                event_code="test_exception",
+                reason="An error was raised",
+                reason_code="value_error",
+                extra="context",
+            )
+
+        self.mock_structlog_logger.error.assert_called_once()
+        args, kwargs = self.mock_structlog_logger.error.call_args
+        self.assertEqual(args[0], "Exception occurred")
+        self.assertEqual(kwargs["event_code"], "test_exception")
+        self.assertEqual(kwargs["reason"], "An error was raised")
+        self.assertEqual(kwargs["reason_code"], "value_error")
+        self.assertEqual(kwargs["extra"], "context")
+        self.assertTrue(kwargs.get("exc_info"))
