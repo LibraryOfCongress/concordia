@@ -767,77 +767,66 @@ class VisualizationCacheTasksTests(TestCase):
         self.assertEqual(counts["completed"], [0, 1])
 
     def test_populate_daily_activity_visualization_cache(self):
-        # Create two active campaigns
-        c1 = create_campaign(status=Campaign.Status.ACTIVE, title="Alpha")
-        c2 = create_campaign(status=Campaign.Status.ACTIVE, title="Beta")
+        date1 = (timezone.now() - timedelta(days=2)).date()
+        date2 = (timezone.now() - timedelta(days=1)).date()
 
-        # Create site reports spanning two dates
-        date1 = timezone.now() - timedelta(days=1)
-        date2 = timezone.now()
         sr1 = SiteReport.objects.create(
-            campaign=c1,
+            report_name=SiteReport.ReportName.TOTAL,
             transcriptions_saved=5,
             daily_review_actions=1,
         )
         sr2 = SiteReport.objects.create(
-            campaign=c1,
+            report_name=SiteReport.ReportName.TOTAL,
             transcriptions_saved=10,
             daily_review_actions=2,
         )
-
-        sr3 = SiteReport.objects.create(
-            campaign=c2,
-            transcriptions_saved=3,
-            daily_review_actions=0,
-        )
-        # created is set by auto_now_add, so we have to update it in the database
+        # Set specific created_on dates directly in DB
         SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
         SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
-        SiteReport.objects.filter(pk=sr3.pk).update(created_on=date2)
 
         populate_daily_activity_visualization_cache.run()
 
-        result = self.cache.get("daily-transcription-activity-by-campaign")
-        # Labels should be the two dates in YYYY-MM-DD
-        labels = [d.strftime("%Y-%m-%d") for d in sorted([date1.date(), date2.date()])]
-        self.assertEqual(result["labels"], labels)
+        result = self.cache.get("daily-transcription-activity-last-28-days")
+        self.assertIsNotNone(result)
 
+        expected_labels = [(date2 - timedelta(days=1)), date2]
+        expected_labels = [d.strftime("%Y-%m-%d") for d in expected_labels]
+
+        # Extract the two datasets
         datasets = result["transcription_datasets"]
-        # Campaign 1: day1 = 5+1 = 6; day2 = (10 - 5) + 2 = 7
-        self.assertEqual(datasets[0]["label"], "Alpha")
-        self.assertEqual(datasets[0]["data"], [6, 7])
-        # Campaign 2: day1 = 0; day2 = 3 - 0 + 0 = 3
-        self.assertEqual(datasets[1]["label"], "Beta")
-        self.assertEqual(datasets[1]["data"], [0, 3])
+        self.assertEqual(len(datasets), 2)
+        trans = next(ds for ds in datasets if ds["label"] == "Transcriptions")
+        reviews = next(ds for ds in datasets if ds["label"] == "Reviews")
+
+        # transcriptions = 5 on date1, 10 - 5 = 5 on date2
+        # reviews = 1 on date1, 2 on date2
+        self.assertEqual(trans["data"][-2:], [5, 5])  # last two days in the data range
+        self.assertEqual(reviews["data"][-2:], [1, 2])
 
     def test_negative_daily_saved_clamps_to_zero(self):
-        # Active campaign with a decrease in cumulative saved
-        # This shouldn't happen, but we account for it in the task,
-        # so we need to test to make sure that works correctly
-        c = create_campaign(status=Campaign.Status.ACTIVE, title="Gamma")
-        date1 = timezone.now() - timedelta(days=1)
-        date2 = timezone.now()
-        # First report: 10 saved, no reviews
+        date1 = (timezone.now() - timedelta(days=2)).date()
+        date2 = (timezone.now() - timedelta(days=1)).date()
+
         sr1 = SiteReport.objects.create(
-            campaign=c,
-            created_on=date1,
+            report_name=SiteReport.ReportName.TOTAL,
             transcriptions_saved=10,
             daily_review_actions=0,
         )
-        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
-        # Second report: 5 saved, no reviews -> negative delta
         sr2 = SiteReport.objects.create(
-            campaign=c,
-            created_on=date2,
-            transcriptions_saved=5,
+            report_name=SiteReport.ReportName.TOTAL,
+            transcriptions_saved=5,  # decreased total, which shouldn't happen
             daily_review_actions=0,
         )
+        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
         SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
 
         populate_daily_activity_visualization_cache.run()
 
-        result = self.cache.get("daily-transcription-activity-by-campaign")
+        result = self.cache.get("daily-transcription-activity-last-28-days")
+        self.assertIsNotNone(result)
+
         datasets = result["transcription_datasets"]
-        # day1 = 10; day2 = 5 - 10 = -5, clamped to 0
-        self.assertEqual(datasets[0]["label"], "Gamma")
-        self.assertEqual(datasets[0]["data"], [10, 0])
+        trans = next(ds for ds in datasets if ds["label"] == "Transcriptions")
+
+        # Should clamp the second day to 0
+        self.assertEqual(trans["data"][-2:], [10, 0])

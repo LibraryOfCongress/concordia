@@ -1,6 +1,7 @@
 import csv
 import datetime
 import os.path
+from datetime import timedelta
 from io import StringIO
 from itertools import chain
 from logging import getLogger
@@ -1809,110 +1810,85 @@ def populate_asset_status_visualization_cache(self):
 @locked_task
 def populate_daily_activity_visualization_cache(self):
     """
-    Queries SiteReport objects for all ACTIVE campaigns and builds a dataset:
+    Queries total SiteReport objects for the past 28 days and builds a dataset.
 
-        The dataset contains:
-            - `labels`: [ "YYYY-MM-DD", "YYYY-MM-DD", … ] (up to seven dates)
-
-            - `transcription_datasets`: [
-                {
-                    "label": "Campaign A",
-                    "data": [ daily_count_for_date1, daily_count_for_date2, … ],
-                },
-                {
-                    "label": "Campaign B",
-                    "data": [ … ],
-                },
-                …
-            ]
+    The dataset contains:
+        - `labels`: [ "YYYY-MM-DD", ..., ] (28 dates)
+        - `transcription_datasets`: [
+              {
+                  "label": "Transcriptions",
+                  "data": [ daily_total, daily_total, ... ],
+              },
+              {
+                  "label": "Reviews",
+                  "data": [ daily_total, daily_total, ... ],
+              },
+          ]
+        - `csv_url`: URL to download a CSV of the data
     """
-    data = {}
-    # Fetch the seven distinct report‐dates for active campaigns,
-    # starting seven days back to make sure we have full data
-    last_seven_dates = SiteReport.objects.filter(
-        campaign__status=Campaign.Status.ACTIVE
-    ).dates("created_on", "day", order="DESC")[:7]
-    last_seven_dates = sorted(last_seven_dates)
-
-    # Convert to "YYYY-MM-DD" strings for the x-axis
-    date_strings = [d.strftime("%Y-%m-%d") for d in last_seven_dates]
-
-    active_campaigns = list(Campaign.objects.published().listed().active())
+    yesterday = timezone.now().date() - timedelta(days=1)
+    start_date = yesterday - timedelta(days=27)
+    date_range = [start_date + timedelta(days=i) for i in range(28)]
+    date_strings = [d.strftime("%Y-%m-%d") for d in date_range]
 
     reports = SiteReport.objects.filter(
-        campaign__in=active_campaigns, created_on__date__in=last_seven_dates
-    ).select_related("campaign")
+        report_name=SiteReport.ReportName.TOTAL,
+        created_on__date__in=date_range,
+    )
 
-    # Create a lookup dict to make retrieving the data we need easier
-    report_lookup = {
-        (report.campaign_id, report.created_on.date()): report for report in reports
+    report_lookup = {report.created_on.date(): report for report in reports}
+
+    # Find the most recent SiteReport BEFORE the first of our dates, if any
+    prev_report = (
+        SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.TOTAL,
+            created_on__date__lt=start_date,
+        )
+        .order_by("-created_on")
+        .first()
+    )
+    prev_cumulative = prev_report.transcriptions_saved if prev_report else 0
+    running_prev = prev_cumulative
+
+    transcriptions = []
+    reviews = []
+
+    for report_date in date_range:
+        sitereport = report_lookup.get(report_date)
+        if sitereport:
+            cumulative = sitereport.transcriptions_saved or 0
+            daily_saved = cumulative - running_prev
+            if daily_saved < 0:
+                daily_saved = 0
+            running_prev = cumulative
+            daily_review = sitereport.daily_review_actions or 0
+        else:
+            daily_saved = 0
+            daily_review = 0
+
+        transcriptions.append(daily_saved)
+        reviews.append(daily_review)
+
+    data = {
+        "labels": date_strings,
+        "transcription_datasets": [
+            {"label": "Transcriptions", "data": transcriptions},
+            {"label": "Reviews", "data": reviews},
+        ],
     }
 
-    transcription_datasets = []
-    for campaign in active_campaigns:
-        # 1) Find the most recent SiteReport BEFORE our first date, if any
-        first_date = last_seven_dates[0]
-        prev_sitereport = (
-            SiteReport.objects.filter(
-                campaign=campaign, created_on__date__lt=first_date
-            )
-            .order_by("-created_on")
-            .first()
-        )
-        prev_cumulative = prev_sitereport.transcriptions_saved if prev_sitereport else 0
-
-        campaign_row = []
-        running_prev = prev_cumulative
-
-        for report_date in last_seven_dates:
-            sitereport = report_lookup.get((campaign.id, report_date))
-            if sitereport:
-                cumulative = sitereport.transcriptions_saved or 0
-                # daily_transcriptions_saved = difference between today and yesterday
-                daily_saved = cumulative - running_prev
-                # clamp at 0 if something odd happened
-                if daily_saved < 0:
-                    daily_saved = 0
-                running_prev = cumulative
-                # We don't need to do anything special with these
-                # since review actions are already daily
-                daily_review = sitereport.daily_review_actions or 0
-                campaign_row.append(daily_saved + daily_review)
-            else:
-                # no report for that date
-                campaign_row.append(0)
-
-        transcription_datasets.append(
-            {
-                "label": campaign.title,
-                "data": campaign_row,
-            }
-        )
-
-    data.update(
-        {
-            "labels": date_strings,
-            "transcription_datasets": transcription_datasets,
-        }
-    )
-
-    # Prepare CSV data
+    # Write CSV
     csv_output = StringIO()
     writer = csv.writer(csv_output)
-
-    writer.writerow(["Campaign"] + date_strings)
-    for ds in transcription_datasets:
-        writer.writerow([ds["label"]] + ds["data"])
+    writer.writerow(["Date", "Transcriptions", "Reviews"])
+    for i in range(28):
+        writer.writerow([date_strings[i], transcriptions[i], reviews[i]])
 
     csv_content = csv_output.getvalue()
-    csv_path = (
-        "visualization_exports/daily-transcription-activity-by-campaign-"
-        "last-seven-days.csv"
-    )
+    csv_path = "visualization_exports/daily-transcription-activity-last-28-days.csv"
     VISUALIZATION_STORAGE.save(csv_path, ContentFile(csv_content))
-    csv_url = VISUALIZATION_STORAGE.url(csv_path)
+    data["csv_url"] = VISUALIZATION_STORAGE.url(csv_path)
 
-    data["csv_url"] = csv_url
     caches["visualization_cache"].set(
-        "daily-transcription-activity-by-campaign", data, None
+        "daily-transcription-activity-last-28-days", data, None
     )
