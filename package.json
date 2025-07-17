@@ -1,7 +1,7 @@
 {
     "devDependencies": {
         "@axe-core/cli": "^4.10.2",
-        "@puppeteer/browsers": "^2.10.5",
+        "@puppeteer/browsers": "^2.10.6",
         "child_process": "^1.0.2",
         "chromedriver": "^137.0.4",
         "fancy-log": "^2.0.0",
