@@ -1,9 +1,9 @@
 {% load group_list %}
-<h3>Featured blog posts</h3>
+<h3 class="mb-4">Featured blog posts</h3>
 <div id="blog-carousel" class="carousel slide">
     <div class="carouse-inner" blog-post-count="{{ blog_posts|length }}" slice-count="{{ blog_posts|slice:':3'|length }}" batch-count="{{ blog_posts|slice:':3'|batch:3|length }}">
         {% for segment in blog_posts %}
-            <div class="carousel-item mb-5{% if forloop.first %} active{% endif %}">
+            <div class="carousel-item mb-4{% if forloop.first %} active{% endif %}">
                 <div class="row mx-auto blog-chunk">
                     {% for post in segment %}
                         <div class="col-md-4">
@@ -11,7 +11,7 @@
                                 <div class="card-body">
                                     <a href="{{ post.link }}">
                                         <img alt="" width="197" height="132" style="opacity: 1;" src="{{ post.og_image }}">
-                                        <h5>
+                                        <h5 class="pt-2">
                                             {{ post.title }}
                                         </h5>
                                     </a>
@@ -25,7 +25,7 @@
     </div>
     {% if not forloop.first %}
         <button class="carousel-control-prev" type="button" data-bs-target="#blog-carousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="carousel-control-icon prev" aria-hidden="true"></span>
             <span class="visually-hidden">Previous</span>
         </button>
     {% endif %}
@@ -37,7 +37,7 @@
     </div>
     {% if not forloop.last %}
         <button class="carousel-control-next" type="button" data-bs-target="#blog-carousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="carousel-control-icon next" aria-hidden="true"></span>
             <span class="visually-hidden">Next</span>
         </button>
     {% endif %}

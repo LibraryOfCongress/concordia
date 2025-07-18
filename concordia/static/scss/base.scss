@@ -1714,8 +1714,9 @@ button.btn-outline-primary:hover {
     overflow-x: hidden;
 }
 
-.guide-header {
+div.row.guide-header {
     justify-content: center;
+    margin-right: -4px;
     margin-bottom: 1rem;
     padding-bottom: 0.25rem;
     padding-top: 0.25rem;
@@ -2086,25 +2087,35 @@ figure.error-figure {
  * About page
  */
 
-#blog-carousel .carousel-control-prev,
-#blog-carousel .carousel-control-next {
+#blog-carousel .carousel-control-prev {
+    top: 2rem;
+    left: 9rem;
     opacity: 1;
 }
 
-#blog-carousel .carousel-control-prev-icon {
-    background-color: $blue;
-    -webkit-mask-image: url('/static/img/slick-left-arrow.svg');
-    mask-image: url('/static/img/slick-left-arrow.svg');
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
+#blog-carousel .carousel-control-next {
+    top: 2rem;
+    right: 7rem;
+    opacity: 1;
 }
 
-#blog-carousel .carousel-control-next-icon {
+#blog-carousel .carousel-control-icon {
     background-color: $blue;
-    -webkit-mask-image: url('/static/img/slick-right-arrow.svg');
-    mask-image: url('/static/img/slick-right-arrow.svg');
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
+    mask-size: 25% 50%;
+    height: 3.5rem;
+    width: 3.5rem;
+}
+
+#blog-carousel .carousel-control-icon.prev {
+    -webkit-mask-image: url('/static/img/slick-left-arrow.svg');
+    mask-image: url('/static/img/slick-left-arrow.svg');
+}
+
+#blog-carousel .carousel-control-icon.next {
+    -webkit-mask-image: url('/static/img/slick-right-arrow.svg');
+    mask-image: url('/static/img/slick-right-arrow.svg');
 }
 
 .blog-chunk {
