@@ -36,10 +36,10 @@ from concordia.utils import (
     get_anonymous_user,
     get_or_create_reservation_token,
 )
+from concordia.utils.constants import MESSAGE_LEVEL_NAMES, URL_REGEX
 from configuration.utils import configuration_value
 
 from .decorators import reserve_rate, validate_anonymous_user
-from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
 structured_logger = ConcordiaLogger.get_logger(__name__)

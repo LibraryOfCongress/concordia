@@ -1,10 +1,21 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import Split from 'split.js';
+
+import Editor from './Editor';
 import Viewer from './Viewer';
 
 export default function ViewerSplit({assetData}) {
     const contributeContainerRef = useRef(null);
     const editorColumnRef = useRef(null);
+
+    const {
+        id,
+        imageUrl,
+        transcription,
+        transcriptionStatus,
+        undoAvailable,
+        redoAvailable,
+    } = assetData;
 
     const verticalKey = 'transcription-split-sizes-vertical';
     const horizontalKey = 'transcription-split-sizes-horizontal';
@@ -75,17 +86,23 @@ export default function ViewerSplit({assetData}) {
                 }`}
                 style={{height: '100vh'}}
             >
-                <Viewer
-                    imageUrl={assetData.imageUrl}
-                    onLayoutHorizontal={() => handleToggle('h')}
-                    onLayoutVertical={() => handleToggle('v')}
-                />
-
+                <div
+                    id="viewer-column"
+                    className="ps-0 d-flex align-items-stretch bg-dark d-print-block flex-column"
+                >
+                    <Viewer
+                        imageUrl={imageUrl}
+                        onLayoutHorizontal={() => handleToggle('h')}
+                        onLayoutVertical={() => handleToggle('v')}
+                    />
+                </div>
                 <div id="editor-column" ref={editorColumnRef}>
-                    {/* TODO: Replace with real form */}
-                    <textarea
-                        style={{width: '100%', height: '100%'}}
-                        placeholder="Transcription here..."
+                    <Editor
+                        assetId={id}
+                        transcription={transcription}
+                        transcriptionStatus={transcriptionStatus}
+                        undoAvailable={undoAvailable}
+                        redoAvailable={redoAvailable}
                     />
                 </div>
             </div>

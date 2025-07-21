@@ -3,7 +3,6 @@ from collections.abc import Iterable
 from time import time
 
 from django.conf import settings
-from django.contrib import messages
 from django.db.models import Count, Max, Q, QuerySet
 from django.db.models.functions import Greatest
 from django.http import HttpRequest
@@ -11,19 +10,6 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from concordia.models import Asset, Transcription, TranscriptionStatus
-
-ASSETS_PER_PAGE = 36
-PROJECTS_PER_PAGE = 36
-ITEMS_PER_PAGE = 36
-URL_REGEX = r"http[s]?://"
-
-MESSAGE_LEVEL_NAMES = dict(
-    zip(
-        messages.DEFAULT_LEVELS.values(),
-        map(str.lower, messages.DEFAULT_LEVELS.keys()),
-        strict=False,
-    )
-)
 
 
 def _get_pages(request: HttpRequest) -> QuerySet:

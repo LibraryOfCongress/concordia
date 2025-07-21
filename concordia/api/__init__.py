@@ -1,23 +1,37 @@
+import re
+from time import time
 from typing import Optional
 
 from django.conf import settings
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils.timezone import now
 from ninja import NinjaAPI, Router
 from ninja.errors import HttpError
 
+from concordia.exceptions import RateLimitExceededError
+from concordia.logging import ConcordiaLogger
 from concordia.models import (
     Asset,
     CardFamily,
+    ConcordiaUser,
     Guide,
+    Transcription,
     TranscriptionStatus,
     TutorialCard,
     UserAssetTagCollection,
 )
 from concordia.templatetags.concordia_media_tags import asset_media_url
+from concordia.utils import get_anonymous_user
+from concordia.utils.constants import URL_REGEX
+from configuration.utils import configuration_value
 
 from .schemas import CamelSchema
 
-api = NinjaAPI()
+structured_logger = ConcordiaLogger.get_logger(__name__)
+
+api = NinjaAPI(version=None, urls_namespace="api")
 
 
 class AssetOut(CamelSchema):
@@ -45,6 +59,16 @@ class AssetOut(CamelSchema):
     redo_available: bool
 
 
+class AssetSummary(CamelSchema):
+    id: int  # noqa: A003
+    status: str
+    contributors: int
+
+
+class ReviewIn(CamelSchema):
+    action: str  # "accept" or "reject"
+
+
 class TranscriptionIn(CamelSchema):
     text: str
     supersedes: Optional[int] = None
@@ -53,9 +77,11 @@ class TranscriptionIn(CamelSchema):
 
 class TranscriptionOut(CamelSchema):
     id: int  # noqa: A003
-    asset_id: int
-    status: str
-    contributors: int
+    sent: float
+    submission_url: Optional[str] = None
+    asset: AssetSummary
+    undo_available: bool
+    redo_available: bool
 
 
 def serialize_asset(asset, request):
@@ -220,12 +246,114 @@ def asset_detail(request, asset_id: int):
 @assets.post("/{asset_id}/transcriptions", response=TranscriptionOut, by_alias=True)
 def create_transcription(request, asset_id: int, payload: TranscriptionIn):
     """
-    POST /assets/{id}/transcriptions/ – save a *new* draft transcription.
+    Create a new draft transcription for the given asset.
 
-    *Supersession / validation / URL-checking logic to be ported here.*
+    Replaces any open draft transcription and validates content. Mirrors
+    the legacy `save_transcription` view.
     """
-    # TODO: Port save_transcription() logic
-    raise HttpError(501, "Not implemented yet")
+    asset = get_object_or_404(
+        Asset.objects.published().select_related("item__project__campaign"), pk=asset_id
+    )
+
+    user = request.user if not request.user.is_anonymous else get_anonymous_user()
+
+    structured_logger.info(
+        "API transcription save start",
+        event_code="transcription_save_start",
+        user=user,
+        asset=asset,
+    )
+
+    # Validate transcription text (disallow URLs)
+    if re.search(URL_REGEX, payload.text):
+        structured_logger.warning(
+            "API transcription rejected due to URL",
+            event_code="transcription_save_rejected",
+            reason="URL detected in transcription",
+            reason_code="url_detected",
+            user=user,
+            asset=asset,
+        )
+        raise HttpError(
+            400,
+            "It looks like your text contains URLs. Please remove them and try again.",
+        )
+
+    # Supersede logic
+    supersedes_pk = payload.supersedes
+    superseded = None
+
+    if not supersedes_pk:
+        if asset.transcription_set.filter(supersedes=None).exists():
+            structured_logger.warning(
+                "API transcription save failed: open transcription exists",
+                event_code="transcription_save_aborted",
+                reason="Open transcription already exists",
+                reason_code="already_exists",
+                user=user,
+                asset=asset,
+            )
+            raise HttpError(409, "An open transcription already exists")
+    else:
+        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+            structured_logger.warning(
+                "API transcription save failed: already superseded",
+                event_code="transcription_save_aborted",
+                reason="Superseded transcription is invalid",
+                reason_code="superseded_invalid",
+                user=user,
+                asset=asset,
+                supersedes_pk=supersedes_pk,
+            )
+            raise HttpError(409, "This transcription has been superseded")
+
+        try:
+            superseded = asset.transcription_set.get(pk=supersedes_pk)
+        except Transcription.DoesNotExist as err:
+            structured_logger.warning(
+                "API transcription save failed: supersedes not found",
+                event_code="transcription_save_aborted",
+                reason="Superseded transcription not found",
+                reason_code="not_found",
+                user=user,
+                asset=asset,
+                supersedes_pk=supersedes_pk,
+            )
+            raise HttpError(400, "Invalid supersedes value") from err
+
+    ocr_originated = bool(
+        superseded and (superseded.ocr_generated or superseded.ocr_originated)
+    )
+
+    transcription = Transcription(
+        asset=asset,
+        user=user,
+        supersedes=superseded,
+        text=payload.text,
+        ocr_originated=ocr_originated,
+    )
+    transcription.full_clean()
+    transcription.save()
+
+    structured_logger.info(
+        "API transcription save success",
+        event_code="transcription_save_success",
+        user=user,
+        transcription=transcription,
+    )
+
+    return TranscriptionOut(
+        id=transcription.pk,
+        sent=time(),
+        submission_url=reverse("api:submit_transcription", args=[transcription.pk]),
+        asset=AssetSummary(
+            id=asset.id,
+            status=asset.transcription_status,
+            contributors=asset.get_contributor_count(),
+        ),
+        undo_available=asset.can_rollback()[0],
+        redo_available=asset.can_rollforward()[0],
+    )
 
 
 @assets.post("/{asset_id}/transcriptions/ocr", response=TranscriptionOut, by_alias=True)
@@ -269,27 +397,163 @@ transcriptions = Router(tags=["transcriptions"])
 
 
 @transcriptions.post("/{pk}/submit", response=TranscriptionOut, by_alias=True)
-def submit(request, pk: int):
+def submit_transcription(request: HttpRequest, pk: int):
     """
-    POST /transcriptions/{pk}/submit/ – mark a draft as *submitted*.
+    Submit a transcription for review (API version of legacy view).
     """
-    # TODO: Port submit_transcription() logic
-    raise HttpError(501, "Not implemented yet")
+    transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    user = request.user if not request.user.is_anonymous else get_anonymous_user()
+
+    structured_logger.info(
+        "API transcription submit start",
+        event_code="transcription_submit_start",
+        user=user,
+        transcription=transcription,
+    )
+
+    # Cannot submit already-submitted or superseded transcription
+    is_superseded = asset.transcription_set.filter(supersedes=pk).exists()
+    is_already_submitted = transcription.submitted and not transcription.rejected
+
+    if is_superseded or is_already_submitted:
+        structured_logger.warning(
+            "API transcription submit failed: already submitted or superseded",
+            event_code="transcription_submit_rejected",
+            reason_code="already_updated",
+            user=user,
+            transcription=transcription,
+        )
+        raise HttpError(
+            400,
+            "This transcription has already been updated. "
+            "Reload the current status before continuing.",
+        )
+
+    # Perform the submission
+    transcription.submitted = now()
+    transcription.rejected = None
+    transcription.full_clean()
+    transcription.save()
+
+    structured_logger.info(
+        "API transcription submitted",
+        event_code="transcription_submit_success",
+        user=user,
+        transcription=transcription,
+    )
+
+    return TranscriptionOut(
+        id=transcription.pk,
+        sent=time(),
+        asset=AssetSummary(
+            id=asset.id,
+            status=asset.transcription_status,
+            contributors=asset.get_contributor_count(),
+        ),
+        undo_available=False,
+        redo_available=False,
+    )
 
 
-class ReviewIn(CamelSchema):
-    action: str  # "accept" or "reject"
-
-
-@transcriptions.patch("/{pk}/review", response=TranscriptionOut, by_alias=True)
-def review(request, pk: int, payload: ReviewIn):
+@transcriptions.patch(
+    "/{pk}/review",
+    response=TranscriptionOut,
+    by_alias=True,
+)
+def review_transcription(request: HttpRequest, pk: int, payload: ReviewIn):
     """
-    PATCH /transcriptions/{pk}/review/ – accept or reject.
-
-    `payload.action` must be "accept" or "reject".
+    Accept or reject a submitted transcription.
     """
-    # TODO: Port review_transcription() logic
-    raise HttpError(501, "Not implemented yet")
+    transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+    user = request.user
+
+    structured_logger.info(
+        "API transcription review start",
+        event_code="transcription_review_start",
+        user=user,
+        transcription_id=pk,
+        action=payload.action,
+    )
+
+    if payload.action not in ("accept", "reject"):
+        structured_logger.warning(
+            "API review rejected: invalid action",
+            event_code="transcription_review_rejected",
+            reason="Invalid review action",
+            reason_code="invalid_action",
+            user=user,
+            transcription_id=pk,
+        )
+        raise HttpError(400, "Invalid action")
+
+    if transcription.accepted or transcription.rejected:
+        structured_logger.warning(
+            "API review rejected: already reviewed",
+            event_code="transcription_review_rejected",
+            reason="Transcription has already been reviewed",
+            reason_code="already_reviewed",
+            user=user,
+            transcription=transcription,
+        )
+        raise HttpError(400, "This transcription has already been reviewed")
+
+    if payload.action == "accept" and transcription.user.pk == user.pk:
+        structured_logger.warning(
+            "API review rejected: self-accept",
+            reason="User attempted to accept their own transcription",
+            reason_code="self_accept",
+            user=user,
+            transcription=transcription,
+        )
+        raise HttpError(400, "You cannot accept your own transcription")
+
+    transcription.reviewed_by = user
+
+    if payload.action == "accept":
+        concordia_user = ConcordiaUser.objects.get(pk=user.pk)
+        try:
+            concordia_user.check_and_track_accept_limit(transcription)
+        except RateLimitExceededError as err:
+            structured_logger.warning(
+                "API review rejected: rate limit exceeded",
+                event_code="transcription_review_rejected",
+                reason="User exceeded review rate limit",
+                reason_code="rate_limit_exceeded",
+                user=user,
+                transcription=transcription,
+            )
+            raise HttpError(
+                429, configuration_value("review_rate_limit_banner_message")
+            ) from err
+        transcription.accepted = now()
+    else:
+        transcription.rejected = now()
+
+    transcription.full_clean()
+    transcription.save()
+
+    structured_logger.info(
+        "API transcription review success",
+        event_code="transcription_review_success",
+        user=user,
+        transcription=transcription,
+        action=payload.action,
+    )
+
+    return TranscriptionOut(
+        id=transcription.pk,
+        sent=time(),
+        asset=AssetSummary(
+            id=asset.id,
+            status=asset.transcription_status,
+            contributors=asset.get_contributor_count(),
+        ),
+        undo_available=False,
+        redo_available=False,
+    )
 
 
 api.add_router("/assets", assets)
