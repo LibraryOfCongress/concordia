@@ -1,7 +1,7 @@
 import React from 'react';
-import EditableButtons from './EditorButtonsEditable';
-import SubmitButton from './EditorButtonSubmit';
-import ReviewButton from './EditorButtonReview';
+import EditableButtons from './buttons/Editable';
+import SubmitButton from './buttons/Submit';
+import ReviewButton from './buttons/Review';
 
 export default function EditorButtons({
     isEditable,

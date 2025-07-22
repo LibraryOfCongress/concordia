@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import EditorHeader from './EditorHeader';
+import EditorHeader from './Header';
 import TranscriptionTextarea from './TranscriptionTextarea';
-import EditorStatusMessages from './EditorStatusMessages';
-import EditorButtons from './EditorButtons';
+import EditorStatusMessages from './StatusMessages';
+import EditorButtons from './Buttons';
 
 async function submitTranscription(transcriptionId) {
     const response = await fetch(

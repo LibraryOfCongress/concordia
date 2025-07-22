@@ -1,7 +1,7 @@
 import React from 'react';
-import EditorButtonSave from './EditorButtonSave';
-import EditorButtonUndo from './EditorButtonUndo';
-import EditorButtonRedo from './EditorButtonRedo';
+import EditorButtonSave from './Save';
+import EditorButtonUndo from './Undo';
+import EditorButtonRedo from './Redo';
 
 export default function EditorButtonsEditable({
     isSaving,

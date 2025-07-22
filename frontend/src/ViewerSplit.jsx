@@ -1,8 +1,8 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import Split from 'split.js';
 
-import Editor from './Editor';
-import Viewer from './Viewer';
+import Editor from './editor/Editor';
+import Viewer from './viewer/Viewer';
 
 export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
     const contributeContainerRef = useRef(null);
