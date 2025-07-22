@@ -232,19 +232,24 @@
         }
         if (storageAvailable) {
             for(var i in storage) {
-                if (i.startsWith("banner-") && $('#' + i).hasClass("alert")) {
-                    $('#' + i).attr("hidden", true);
+                if (i.startsWith("banner-")) {
+                    const banner = document.getElementById(i);
+                    if (banner && banner.classList.contains('alert')) {
+                        banner.setAttribute("hidden", 'hidden');
+                    }
                 }
             }
         }
-        $("#no-interface-banner").click(function(event) {
-            var banner = event.target.parentElement.parentElement;
-            if (banner.hasAttribute('id')) {
-                storage.setItem(banner.id, true);
-                var element = document.getElementById(banner.id);
-                element.classList.remove("d-flex");
-                $(element).attr("hidden", "hidden");
-            }
-        });
+        const noInterfaceBanner = document.getElementById('no-interface-banner');
+        if (noInterfaceBanner) {
+            noInterfaceBanner.addEventListener('click', (event) => {
+                var banner = event.target.parentElement.parentElement;
+                if (banner.hasAttribute('id')) {
+                    storage.setItem(banner.id, 'true');
+                    banner.classList.remove("d-flex");
+                    banner.setAttribute("hidden", "hidden");
+                }
+            });
+        }
     </script>
 {% endblock body_scripts %}
