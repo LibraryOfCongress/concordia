@@ -23,6 +23,7 @@ export default function Editor({
     assetId,
     transcription,
     transcriptionStatus,
+    registeredContributors,
     undoAvailable,
     redoAvailable,
     onTranscriptionUpdate,
@@ -34,15 +35,10 @@ export default function Editor({
     const [success, setSuccess] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
 
-    const isEditable = ['not_started', 'in_progress'].includes(
-        transcriptionStatus,
-    );
-    const submitVisible = ['not_started', 'in_progress'].includes(
-        transcriptionStatus,
-    );
-    const canSubmit =
-        transcriptionStatus === 'in_progress' && transcription?.id;
-
+    const status = transcriptionStatus;
+    const isEditable = ['not_started', 'in_progress'].includes(status);
+    const submitVisible = ['not_started', 'in_progress'].includes(status);
+    const submitEnabled = status === 'in_progress' && transcription?.id;
     const supersedes = transcription?.id;
 
     const handleSave = async () => {
@@ -114,8 +110,16 @@ export default function Editor({
     return (
         <div className="editor p-3 d-flex flex-column flex-grow-1">
             <div className="mb-2">
-                <h2>{statusMap[transcriptionStatus] || 'Unknown status'}</h2>
-                <p>{instructionsMap[transcriptionStatus]}</p>
+                <h2>{statusMap[status] || 'Unknown status'}</h2>
+                {status !== 'not_started' && (
+                    <h2>
+                        Registered Contributors:{' '}
+                        <span className="fw-normal">
+                            {registeredContributors}
+                        </span>
+                    </h2>
+                )}
+                <p>{instructionsMap[status]}</p>
             </div>
 
             <textarea
@@ -140,7 +144,7 @@ export default function Editor({
                 <div className="text-success">Transcription submitted.</div>
             )}
 
-            {(isEditable || canSubmit) && (
+            {(isEditable || submitVisible) && (
                 <div className="d-flex justify-content-center mt-3 flex-wrap">
                     {isEditable && (
                         <>
@@ -171,7 +175,8 @@ export default function Editor({
                         <button
                             className="btn btn-primary mx-1 mb-2"
                             onClick={handleSubmit}
-                            disabled={!canSubmit || isSubmitting}
+                            disabled={!submitEnabled || isSubmitting}
+                            title="Request another volunteer to review the text you entered above"
                         >
                             {isSubmitting ? 'Submitting…' : 'Submit for Review'}
                         </button>

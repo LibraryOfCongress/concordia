@@ -92,6 +92,9 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
                         assetId={assetData.id}
                         transcription={assetData.transcription}
                         transcriptionStatus={assetData.transcriptionStatus}
+                        registeredContributors={
+                            assetData.registeredContributors
+                        }
                         undoAvailable={assetData.undoAvailable}
                         redoAvailable={assetData.redoAvailable}
                         onTranscriptionUpdate={onTranscriptionUpdate}
