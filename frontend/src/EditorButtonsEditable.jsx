@@ -10,6 +10,7 @@ export default function EditorButtonsEditable({
     redoAvailable,
     onSave,
 }) {
+    console.log('EditorButtonsEditable redoAvailable: ', redoAvailable);
     return (
         <>
             <EditorButtonSave isSaving={isSaving} text={text} onSave={onSave} />

@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function EditorButtonUndo({disabled, onClick}) {
+export default function EditorButtonUndo({undoAvailable, onClick}) {
     return (
         <button
             className="btn btn-outline-primary mx-1 mb-2"
-            disabled={disabled}
+            disabled={!undoAvailable}
             onClick={onClick}
             title="Undo not yet implemented"
         >
