@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function EditorButtonsSubmit({
+export default function EditorButtonSubmit({
     onSubmit,
     isSubmitting,
     submitEnabled,

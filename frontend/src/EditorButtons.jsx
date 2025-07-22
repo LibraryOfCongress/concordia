@@ -1,7 +1,7 @@
 import React from 'react';
 import EditableButtons from './EditorButtonsEditable';
 import SubmitButton from './EditorButtonSubmit';
-import ReviewButtons from './EditorButtonsReview';
+import ReviewButton from './EditorButtonReview';
 
 export default function EditorButtons({
     isEditable,
@@ -40,7 +40,7 @@ export default function EditorButtons({
                 />
             )}
             {inReview && (
-                <ReviewButtons
+                <ReviewButton
                     onAccept={onAccept}
                     onReject={onReject}
                     isReviewing={isReviewing}
