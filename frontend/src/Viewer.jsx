@@ -17,7 +17,7 @@ export default function Viewer({
     const osdViewerRef = useRef(null);
 
     useEffect(() => {
-        if (!viewerRef.current) return;
+        if (!viewerRef.current || !imageUrl) return;
 
         osdViewerRef.current = OpenSeadragon({
             element: viewerRef.current,
@@ -43,6 +43,8 @@ export default function Viewer({
             defaultZoomLevel: 0,
             homeFillsView: false,
         });
+
+        window.seadragonViewer = osdViewerRef.current;
 
         osdViewerRef.current.addHandler('open', () => {
             setTimeout(() => {

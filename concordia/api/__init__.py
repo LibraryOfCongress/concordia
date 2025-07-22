@@ -59,12 +59,6 @@ class AssetOut(CamelSchema):
     redo_available: bool
 
 
-class AssetSummary(CamelSchema):
-    id: int  # noqa: A003
-    status: str
-    contributors: int
-
-
 class ReviewIn(CamelSchema):
     action: str  # "accept" or "reject"
 
@@ -79,7 +73,7 @@ class TranscriptionOut(CamelSchema):
     id: int  # noqa: A003
     sent: float
     submission_url: Optional[str] = None
-    asset: AssetSummary
+    asset: AssetOut
     undo_available: bool
     redo_available: bool
 
@@ -180,30 +174,30 @@ def serialize_asset(asset, request):
     undo_available = asset.can_rollback()[0] if transcription else False
     redo_available = asset.can_rollforward()[0] if transcription else False
 
-    return {
-        "id": asset.id,
-        "title": asset.title,
-        "item_id": item.item_id,
-        "project_slug": project.slug,
-        "campaign_slug": campaign.slug,
-        "transcription": transcription_out,
-        "transcription_status": transcription_status,
-        "activity_mode": activity_mode,
-        "disable_ocr": disable_ocr,
-        "current_asset_url": current_asset_url,
-        "previous_asset_url": previous_asset_url,
-        "next_asset_url": next_asset_url,
-        "asset_navigation": asset_navigation,
-        "image_url": image_url,
-        "thumbnail_url": thumbnail_url,
-        "tags": tags,
-        "registered_contributors": asset.get_contributor_count(),
-        "cards": cards,
-        "guides": guides,
-        "languages": list(settings.LANGUAGE_CODES.items()),
-        "undo_available": undo_available,
-        "redo_available": redo_available,
-    }
+    return AssetOut(
+        id=asset.id,
+        title=asset.title,
+        item_id=item.item_id,
+        project_slug=project.slug,
+        campaign_slug=campaign.slug,
+        transcription=transcription_out,
+        transcription_status=transcription_status,
+        activity_mode=activity_mode,
+        disable_ocr=disable_ocr,
+        current_asset_url=current_asset_url,
+        previous_asset_url=previous_asset_url,
+        next_asset_url=next_asset_url,
+        asset_navigation=asset_navigation,
+        image_url=image_url,
+        thumbnail_url=thumbnail_url,
+        tags=tags,
+        registered_contributors=asset.get_contributor_count(),
+        cards=cards,
+        guides=guides,
+        languages=list(settings.LANGUAGE_CODES.items()),
+        undo_available=undo_available,
+        redo_available=redo_available,
+    )
 
 
 assets = Router(tags=["assets"])
@@ -346,11 +340,7 @@ def create_transcription(request, asset_id: int, payload: TranscriptionIn):
         id=transcription.pk,
         sent=time(),
         submission_url=reverse("api:submit_transcription", args=[transcription.pk]),
-        asset=AssetSummary(
-            id=asset.id,
-            status=asset.transcription_status,
-            contributors=asset.get_contributor_count(),
-        ),
+        asset=serialize_asset(asset, request),
         undo_available=asset.can_rollback()[0],
         redo_available=asset.can_rollforward()[0],
     )
@@ -421,9 +411,12 @@ def submit_transcription(request: HttpRequest, pk: int):
         structured_logger.warning(
             "API transcription submit failed: already submitted or superseded",
             event_code="transcription_submit_rejected",
+            reason="Transcrition already submitted or superseded",
             reason_code="already_updated",
             user=user,
             transcription=transcription,
+            is_superseded=is_superseded,
+            is_already_submitted=is_already_submitted,
         )
         raise HttpError(
             400,
@@ -447,11 +440,7 @@ def submit_transcription(request: HttpRequest, pk: int):
     return TranscriptionOut(
         id=transcription.pk,
         sent=time(),
-        asset=AssetSummary(
-            id=asset.id,
-            status=asset.transcription_status,
-            contributors=asset.get_contributor_count(),
-        ),
+        asset=serialize_asset(asset, request),
         undo_available=False,
         redo_available=False,
     )
@@ -546,11 +535,7 @@ def review_transcription(request: HttpRequest, pk: int, payload: ReviewIn):
     return TranscriptionOut(
         id=transcription.pk,
         sent=time(),
-        asset=AssetSummary(
-            id=asset.id,
-            status=asset.transcription_status,
-            contributors=asset.get_contributor_count(),
-        ),
+        asset=serialize_asset(asset, request),
         undo_available=False,
         redo_available=False,
     )

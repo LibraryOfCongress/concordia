@@ -4,18 +4,9 @@ import Split from 'split.js';
 import Editor from './Editor';
 import Viewer from './Viewer';
 
-export default function ViewerSplit({assetData}) {
+export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
     const contributeContainerRef = useRef(null);
     const editorColumnRef = useRef(null);
-
-    const {
-        id,
-        imageUrl,
-        transcription,
-        transcriptionStatus,
-        undoAvailable,
-        redoAvailable,
-    } = assetData;
 
     const verticalKey = 'transcription-split-sizes-vertical';
     const horizontalKey = 'transcription-split-sizes-horizontal';
@@ -91,18 +82,19 @@ export default function ViewerSplit({assetData}) {
                     className="ps-0 d-flex align-items-stretch bg-dark d-print-block flex-column"
                 >
                     <Viewer
-                        imageUrl={imageUrl}
+                        imageUrl={assetData.imageUrl}
                         onLayoutHorizontal={() => handleToggle('h')}
                         onLayoutVertical={() => handleToggle('v')}
                     />
                 </div>
                 <div id="editor-column" ref={editorColumnRef}>
                     <Editor
-                        assetId={id}
-                        transcription={transcription}
-                        transcriptionStatus={transcriptionStatus}
-                        undoAvailable={undoAvailable}
-                        redoAvailable={redoAvailable}
+                        assetId={assetData.id}
+                        transcription={assetData.transcription}
+                        transcriptionStatus={assetData.transcriptionStatus}
+                        undoAvailable={assetData.undoAvailable}
+                        redoAvailable={assetData.redoAvailable}
+                        onTranscriptionUpdate={onTranscriptionUpdate}
                     />
                 </div>
             </div>

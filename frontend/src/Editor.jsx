@@ -1,20 +1,48 @@
 import React, {useState} from 'react';
 
+async function submitTranscription(transcriptionId) {
+    const response = await fetch(
+        `/api/transcriptions/${transcriptionId}/submit`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    );
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to submit transcription');
+    }
+
+    return await response.json();
+}
+
 export default function Editor({
     assetId,
     transcription,
     transcriptionStatus,
     undoAvailable,
     redoAvailable,
+    onTranscriptionUpdate,
 }) {
     const [text, setText] = useState(transcription?.text || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
 
     const isEditable = ['not_started', 'in_progress'].includes(
         transcriptionStatus,
     );
+    const submitVisible = ['not_started', 'in_progress'].includes(
+        transcriptionStatus,
+    );
+    const canSubmit =
+        transcriptionStatus === 'in_progress' && transcription?.id;
+
     const supersedes = transcription?.id;
 
     const handleSave = async () => {
@@ -42,12 +70,30 @@ export default function Editor({
                 throw new Error(data.error || response.statusText);
             }
 
-            await response.json(); // Don't need data right now
+            const updated = await response.json();
             setSuccess(true);
+            if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
         } catch (err) {
             setError(err.message);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!transcription?.id) return;
+        setIsSubmitting(true);
+        setError(null);
+        setSubmitSuccess(false);
+
+        try {
+            const updated = await submitTranscription(transcription.id);
+            setSubmitSuccess(true);
+            if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -90,30 +136,46 @@ export default function Editor({
             {success && (
                 <div className="text-success">Transcription saved.</div>
             )}
+            {submitSuccess && (
+                <div className="text-success">Transcription submitted.</div>
+            )}
 
-            {isEditable && (
+            {(isEditable || canSubmit) && (
                 <div className="d-flex justify-content-center mt-3 flex-wrap">
-                    <button
-                        className="btn btn-primary mx-1 mb-2"
-                        onClick={handleSave}
-                        disabled={isSaving || !text.trim()}
-                    >
-                        Save
-                    </button>
-                    <button
-                        className="btn btn-outline-primary mx-1 mb-2"
-                        disabled={!undoAvailable}
-                        title="Undo not yet implemented"
-                    >
-                        <span className="fas fa-undo"></span> Undo
-                    </button>
-                    <button
-                        className="btn btn-outline-primary mx-1 mb-2"
-                        disabled={!redoAvailable}
-                        title="Redo not yet implemented"
-                    >
-                        Redo <span className="fas fa-redo"></span>
-                    </button>
+                    {isEditable && (
+                        <>
+                            <button
+                                className="btn btn-primary mx-1 mb-2"
+                                onClick={handleSave}
+                                disabled={isSaving || !text.trim()}
+                            >
+                                Save
+                            </button>
+                            <button
+                                className="btn btn-outline-primary mx-1 mb-2"
+                                disabled={!undoAvailable}
+                                title="Undo not yet implemented"
+                            >
+                                <span className="fas fa-undo"></span> Undo
+                            </button>
+                            <button
+                                className="btn btn-outline-primary mx-1 mb-2"
+                                disabled={!redoAvailable}
+                                title="Redo not yet implemented"
+                            >
+                                Redo <span className="fas fa-redo"></span>
+                            </button>
+                        </>
+                    )}
+                    {submitVisible && (
+                        <button
+                            className="btn btn-primary mx-1 mb-2"
+                            onClick={handleSubmit}
+                            disabled={!canSubmit || isSubmitting}
+                        >
+                            {isSubmitting ? 'Submitting…' : 'Submit for Review'}
+                        </button>
+                    )}
                 </div>
             )}
         </div>
