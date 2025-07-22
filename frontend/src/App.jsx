@@ -63,20 +63,41 @@ function AssetLoader({children}) {
             .catch((err) => setError(err.toString()));
     }, [params]);
 
+    const handleTranscriptionUpdate = (updatedTranscription) => {
+        if (!updatedTranscription?.asset) {
+            console.error(
+                'Missing asset on updatedTranscription:',
+                updatedTranscription,
+            );
+            return;
+        }
+
+        setAssetData({
+            ...updatedTranscription.asset,
+            transcription: updatedTranscription,
+            transcriptionStatus: updatedTranscription.asset.transcriptionStatus,
+        });
+    };
+
     if (error) return <div style={{color: 'red'}}>Error: {error}</div>;
     if (!assetData) return <div>Loading asset data...</div>;
 
-    return children({assetData});
+    return children({assetData, handleTranscriptionUpdate});
 }
 
-function AssetRoutes({assetData}) {
+function AssetRoutes({assetData, handleTranscriptionUpdate}) {
     return (
         <>
             <NavLinks assetData={assetData} />
             <Routes>
                 <Route
                     path=""
-                    element={<ViewerSplit assetData={assetData} />}
+                    element={
+                        <ViewerSplit
+                            assetData={assetData}
+                            onTranscriptionUpdate={handleTranscriptionUpdate}
+                        />
+                    }
                 />
                 <Route path="transcriptions" element={<Transcriptions />} />
                 <Route path="ocr" element={<OCRTranscription />} />
@@ -167,8 +188,13 @@ export default function App() {
                     path="/:assetId/*"
                     element={
                         <AssetLoader>
-                            {({assetData}) => (
-                                <AssetRoutes assetData={assetData} />
+                            {({assetData, handleTranscriptionUpdate}) => (
+                                <AssetRoutes
+                                    assetData={assetData}
+                                    handleTranscriptionUpdate={
+                                        handleTranscriptionUpdate
+                                    }
+                                />
                             )}
                         </AssetLoader>
                     }
@@ -177,8 +203,13 @@ export default function App() {
                     path="/:campaignSlug/:projectSlug/:itemId/:assetSlug/*"
                     element={
                         <AssetLoader>
-                            {({assetData}) => (
-                                <AssetRoutes assetData={assetData} />
+                            {({assetData, handleTranscriptionUpdate}) => (
+                                <AssetRoutes
+                                    assetData={assetData}
+                                    handleTranscriptionUpdate={
+                                        handleTranscriptionUpdate
+                                    }
+                                />
                             )}
                         </AssetLoader>
                     }

@@ -17,7 +17,7 @@ export default function Viewer({
     const osdViewerRef = useRef(null);
 
     useEffect(() => {
-        if (!viewerRef.current) return;
+        if (!viewerRef.current || !imageUrl) return;
 
         osdViewerRef.current = OpenSeadragon({
             element: viewerRef.current,
@@ -43,6 +43,8 @@ export default function Viewer({
             defaultZoomLevel: 0,
             homeFillsView: false,
         });
+
+        window.seadragonViewer = osdViewerRef.current;
 
         osdViewerRef.current.addHandler('open', () => {
             setTimeout(() => {
@@ -73,10 +75,7 @@ export default function Viewer({
     };
 
     return (
-        <div
-            id="viewer-column"
-            className="ps-0 d-flex align-items-stretch bg-dark d-print-block flex-column"
-        >
+        <>
             <ViewerControls
                 onLayoutHorizontal={onLayoutHorizontal}
                 onLayoutVertical={onLayoutVertical}
@@ -89,6 +88,6 @@ export default function Viewer({
                 ref={viewerRef}
                 className="h-100 bg-dark d-print-none w-100"
             ></div>
-        </div>
+        </>
     );
 }

@@ -1,8 +1,10 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import Split from 'split.js';
+
+import Editor from './Editor';
 import Viewer from './Viewer';
 
-export default function ViewerSplit({assetData}) {
+export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
     const contributeContainerRef = useRef(null);
     const editorColumnRef = useRef(null);
 
@@ -75,17 +77,27 @@ export default function ViewerSplit({assetData}) {
                 }`}
                 style={{height: '100vh'}}
             >
-                <Viewer
-                    imageUrl={assetData.imageUrl}
-                    onLayoutHorizontal={() => handleToggle('h')}
-                    onLayoutVertical={() => handleToggle('v')}
-                />
-
+                <div
+                    id="viewer-column"
+                    className="ps-0 d-flex align-items-stretch bg-dark d-print-block flex-column"
+                >
+                    <Viewer
+                        imageUrl={assetData.imageUrl}
+                        onLayoutHorizontal={() => handleToggle('h')}
+                        onLayoutVertical={() => handleToggle('v')}
+                    />
+                </div>
                 <div id="editor-column" ref={editorColumnRef}>
-                    {/* TODO: Replace with real form */}
-                    <textarea
-                        style={{width: '100%', height: '100%'}}
-                        placeholder="Transcription here..."
+                    <Editor
+                        assetId={assetData.id}
+                        transcription={assetData.transcription}
+                        transcriptionStatus={assetData.transcriptionStatus}
+                        registeredContributors={
+                            assetData.registeredContributors
+                        }
+                        undoAvailable={assetData.undoAvailable}
+                        redoAvailable={assetData.redoAvailable}
+                        onTranscriptionUpdate={onTranscriptionUpdate}
                     />
                 </div>
             </div>

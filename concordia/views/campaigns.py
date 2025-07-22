@@ -20,10 +20,10 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
+from concordia.utils.constants import ASSETS_PER_PAGE
 
 from .decorators import default_cache_control, user_cache_control
 from .utils import (
-    ASSETS_PER_PAGE,
     annotate_children_with_progress_stats,
     calculate_asset_stats,
 )
