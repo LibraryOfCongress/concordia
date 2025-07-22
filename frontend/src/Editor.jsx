@@ -5,9 +5,7 @@ async function submitTranscription(transcriptionId) {
         `/api/transcriptions/${transcriptionId}/submit`,
         {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: {'Content-Type': 'application/json'},
         },
     );
 
@@ -17,6 +15,32 @@ async function submitTranscription(transcriptionId) {
     }
 
     return await response.json();
+}
+
+async function reviewTranscription(transcriptionId, action) {
+    const response = await fetch(
+        `/api/transcriptions/${transcriptionId}/review`,
+        {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action}),
+        },
+    );
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to review transcription');
+    }
+
+    return await response.json();
+}
+
+async function acceptTranscription(transcriptionId) {
+    return await reviewTranscription(transcriptionId, 'accept');
+}
+
+async function rejectTranscription(transcriptionId) {
+    return await reviewTranscription(transcriptionId, 'reject');
 }
 
 export default function Editor({
@@ -31,6 +55,7 @@ export default function Editor({
     const [text, setText] = useState(transcription?.text || '');
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -39,6 +64,7 @@ export default function Editor({
     const isEditable = ['not_started', 'in_progress'].includes(status);
     const submitVisible = ['not_started', 'in_progress'].includes(status);
     const submitEnabled = status === 'in_progress' && transcription?.id;
+    const inReview = status === 'submitted';
     const supersedes = transcription?.id;
 
     const handleSave = async () => {
@@ -51,9 +77,7 @@ export default function Editor({
                 `/api/assets/${assetId}/transcriptions`,
                 {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         text,
                         ...(supersedes ? {supersedes} : {}),
@@ -90,6 +114,36 @@ export default function Editor({
             setError(err.message);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleAccept = async () => {
+        if (!transcription?.id) return;
+        setIsReviewing(true);
+        setError(null);
+
+        try {
+            const updated = await acceptTranscription(transcription.id);
+            if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsReviewing(false);
+        }
+    };
+
+    const handleReject = async () => {
+        if (!transcription?.id) return;
+        setIsReviewing(true);
+        setError(null);
+
+        try {
+            const updated = await rejectTranscription(transcription.id);
+            if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsReviewing(false);
         }
     };
 
@@ -144,7 +198,7 @@ export default function Editor({
                 <div className="text-success">Transcription submitted.</div>
             )}
 
-            {(isEditable || submitVisible) && (
+            {(isEditable || submitVisible || inReview) && (
                 <div className="d-flex justify-content-center mt-3 flex-wrap">
                     {isEditable && (
                         <>
@@ -180,6 +234,26 @@ export default function Editor({
                         >
                             {isSubmitting ? 'Submitting…' : 'Submit for Review'}
                         </button>
+                    )}
+                    {inReview && (
+                        <>
+                            <button
+                                className="btn btn-primary mx-1 mb-2"
+                                onClick={handleReject}
+                                disabled={isReviewing}
+                                title="Correct errors you see in the text"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                className="btn btn-primary mx-1 mb-2"
+                                onClick={handleAccept}
+                                disabled={isReviewing}
+                                title="Confirm that the text is accurately transcribed"
+                            >
+                                Accept
+                            </button>
+                        </>
                     )}
                 </div>
             )}
