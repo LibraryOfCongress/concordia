@@ -66,7 +66,7 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
             }, 10);
         }
     };
-    console.log('assetData: ', assetData);
+
     return (
         <div className="viewer-split">
             <div

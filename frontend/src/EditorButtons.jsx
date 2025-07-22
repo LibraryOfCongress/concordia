@@ -20,7 +20,7 @@ export default function EditorButtons({
     onReject,
 }) {
     if (!isEditable && !submitVisible && !inReview) return null;
-    console.log('EditorButtons redoAvailable: ', redoAvailable);
+
     return (
         <div className="d-flex justify-content-center mt-3 flex-wrap">
             {isEditable && (

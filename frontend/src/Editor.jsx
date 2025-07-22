@@ -57,7 +57,6 @@ export default function Editor(props) {
         redoAvailable,
         onTranscriptionUpdate,
     } = props;
-    console.log('redoAvailable: ', redoAvailable);
 
     const [text, setText] = useState(transcription?.text || '');
     const [isSaving, setIsSaving] = useState(false);
