@@ -18,6 +18,8 @@ export default function EditorButtons({
     onSubmit,
     onAccept,
     onReject,
+    onUndo,
+    onRedo,
 }) {
     if (!isEditable && !submitVisible && !inReview) return null;
 
@@ -30,6 +32,8 @@ export default function EditorButtons({
                     text={text}
                     undoAvailable={undoAvailable}
                     redoAvailable={redoAvailable}
+                    onUndo={onUndo}
+                    onRedo={onRedo}
                 />
             )}
             {submitVisible && (

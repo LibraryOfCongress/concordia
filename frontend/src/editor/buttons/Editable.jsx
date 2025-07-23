@@ -9,13 +9,14 @@ export default function EditorButtonsEditable({
     undoAvailable,
     redoAvailable,
     onSave,
+    onUndo,
+    onRedo,
 }) {
-    console.log('EditorButtonsEditable redoAvailable: ', redoAvailable);
     return (
         <>
             <EditorButtonSave isSaving={isSaving} text={text} onSave={onSave} />
-            <EditorButtonUndo undoAvailable={undoAvailable} />
-            <EditorButtonRedo redoAvailable={redoAvailable} />
+            <EditorButtonUndo undoAvailable={undoAvailable} onClick={onUndo} />
+            <EditorButtonRedo redoAvailable={redoAvailable} onClick={onRedo} />
         </>
     );
 }
