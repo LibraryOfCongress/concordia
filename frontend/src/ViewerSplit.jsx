@@ -3,6 +3,7 @@ import Split from 'split.js';
 
 import Editor from './editor/Editor';
 import Viewer from './viewer/Viewer';
+import OcrSection from './ocr/Section';
 
 export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
     const contributeContainerRef = useRef(null);
@@ -30,7 +31,6 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
         if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
     };
 
-    // Handle live typing
     const handleTranscriptionTextChange = (newText) => {
         setTranscription((prev) => ({
             ...prev,
@@ -107,6 +107,12 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
                         imageUrl={assetData.imageUrl}
                         onLayoutHorizontal={() => handleToggle('h')}
                         onLayoutVertical={() => handleToggle('v')}
+                    />
+                    <OcrSection
+                        assetId={assetData.id}
+                        transcription={transcription}
+                        onTranscriptionUpdate={handleTranscriptionUpdate}
+                        languages={assetData.languages}
                     />
                 </div>
                 <div id="editor-column" ref={editorColumnRef}>

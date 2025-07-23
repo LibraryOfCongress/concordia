@@ -65,9 +65,25 @@ class ReviewIn(CamelSchema):
 
 
 class TranscriptionIn(CamelSchema):
+    """
+    Request Parameters:
+        text (str): The transcription text to save.
+        supersedes (Optional[int]): The ID of the transcription being superseded.
+    """
+
     text: str
-    supersedes: Optional[int] = None
-    language: Optional[str] = None  # used only when OCR is involved
+    supersedes: Optional[int]
+
+
+class OcrTranscriptionIn(CamelSchema):
+    """
+    Request Parameters:
+        language (str): The ISO 639-3 code of the OCR language to use.
+        supersedes (Optional[int]): The ID of the transcription being superseded.
+    """
+
+    language: str
+    supersedes: Optional[int]
 
 
 class TranscriptionOut(CamelSchema):
@@ -350,14 +366,109 @@ def create_transcription(request, asset_id: int, payload: TranscriptionIn):
 
 
 @assets.post("/{asset_id}/transcriptions/ocr", response=TranscriptionOut, by_alias=True)
-def create_ocr_transcription(request, asset_id: int, payload: TranscriptionIn):
+@atomic
+def create_ocr_transcription(request, asset_id: int, payload: OcrTranscriptionIn):
     """
-    POST /assets/{id}/transcriptions/ocr/ – generate OCR transcription.
+    Create and save a new OCR-generated transcription for an asset.
+    """
+    asset = get_object_or_404(
+        Asset.objects.published().select_related("item__project__campaign"),
+        pk=asset_id,
+    )
+    user = request.user if not request.user.is_anonymous else get_anonymous_user()
 
-    Mirrors generate_ocr_transcription() view.
-    """
-    # TODO: Port generate_ocr_transcription() logic
-    raise HttpError(501, "Not implemented yet")
+    supersedes_pk = payload.supersedes
+    language = payload.language
+
+    structured_logger.info(
+        "API OCR transcription generation start",
+        event_code="ocr_generation_start",
+        user=user,
+        asset=asset,
+        supersedes_pk=supersedes_pk,
+        language=language,
+    )
+
+    # Determine superseded transcription
+    superseded = None
+    if supersedes_pk:
+        superseded_qs = asset.transcription_set.filter(pk=supersedes_pk)
+        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+            structured_logger.warning(
+                "API OCR generation aborted: superseded transcription is invalid.",
+                event_code="ocr_generation_aborted",
+                reason="Superseded transcription is already superseded",
+                reason_code="superseded_invalid",
+                user=user,
+                asset=asset,
+                supersedes_pk=supersedes_pk,
+            )
+            raise HttpError(409, "This transcription has already been superseded")
+        try:
+            superseded = superseded_qs.get()
+        except Transcription.DoesNotExist as err:
+            structured_logger.warning(
+                "API OCR generation aborted: superseded transcription not found.",
+                event_code="ocr_generation_aborted",
+                reason="Superseded transcription not found",
+                reason_code="not_found",
+                user=user,
+                asset=asset,
+                supersedes_pk=supersedes_pk,
+            )
+            raise HttpError(400, "Invalid supersedes value") from err
+    else:
+        # No transcription exists, so we create a blank one
+        structured_logger.info(
+            "No existing transcription; creating blank for OCR supersession",
+            event_code="ocr_blank_supersede",
+            user=user,
+            asset=asset,
+        )
+        superseded = Transcription(
+            asset=asset,
+            user=get_anonymous_user(),
+            text="",
+        )
+        superseded.full_clean()
+        superseded.save()
+
+        structured_logger.info(
+            "Blank transcription created for OCR supersession",
+            event_code="ocr_blank_transcription_created",
+            user=user,
+            transcription=superseded,
+        )
+
+    transcription_text = asset.get_ocr_transcript(language)
+
+    transcription = Transcription(
+        asset=asset,
+        user=user,
+        supersedes=superseded,
+        text=transcription_text,
+        ocr_generated=True,
+        ocr_originated=True,
+    )
+    transcription.full_clean()
+    transcription.save()
+
+    structured_logger.info(
+        "API OCR transcription successfully created",
+        event_code="ocr_generation_success",
+        user=user,
+        transcription=transcription,
+    )
+
+    return TranscriptionOut(
+        id=transcription.pk,
+        sent=time(),
+        text=transcription.text,
+        submission_url=reverse("api:submit_transcription", args=[transcription.pk]),
+        asset=serialize_asset(asset, request),
+        undo_available=asset.can_rollback()[0],
+        redo_available=asset.can_rollforward()[0],
+    )
 
 
 @assets.post(
