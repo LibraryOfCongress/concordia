@@ -1,11 +1,11 @@
 import React from 'react';
 
-export default function EditorButtonRedo({redoAvailable}) {
+export default function EditorButtonRedo({redoAvailable, onClick}) {
     return (
         <button
             className="btn btn-outline-primary mx-1 mb-2"
             disabled={!redoAvailable}
-            title="Redo not yet implemented"
+            onClick={onClick}
         >
             Redo <span className="fas fa-redo"></span>
         </button>

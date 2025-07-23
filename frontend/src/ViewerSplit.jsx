@@ -1,8 +1,8 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import Split from 'split.js';
 
-import Editor from './Editor';
-import Viewer from './Viewer';
+import Editor from './editor/Editor';
+import Viewer from './viewer/Viewer';
 
 export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
     const contributeContainerRef = useRef(null);
@@ -15,6 +15,28 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
     const [splitDirection, setSplitDirection] = useState(
         JSON.parse(localStorage.getItem(directionKey)) || 'h',
     );
+
+    const [transcription, setTranscription] = useState(assetData.transcription);
+
+    const handleTranscriptionUpdate = (updated) => {
+        if (!updated?.text) {
+            console.warn(
+                'handleTranscriptionUpdate called with malformed object:',
+                updated,
+            );
+            return;
+        }
+        setTranscription(updated);
+        if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
+    };
+
+    // Handle live typing
+    const handleTranscriptionTextChange = (newText) => {
+        setTranscription((prev) => ({
+            ...prev,
+            text: newText,
+        }));
+    };
 
     const getSizes = (key, defaultSizes) => {
         const sizes = localStorage.getItem(key);
@@ -90,14 +112,17 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
                 <div id="editor-column" ref={editorColumnRef}>
                     <Editor
                         assetId={assetData.id}
-                        transcription={assetData.transcription}
+                        transcription={transcription}
                         transcriptionStatus={assetData.transcriptionStatus}
                         registeredContributors={
                             assetData.registeredContributors
                         }
                         undoAvailable={assetData.undoAvailable}
                         redoAvailable={assetData.redoAvailable}
-                        onTranscriptionUpdate={onTranscriptionUpdate}
+                        onTranscriptionUpdate={handleTranscriptionUpdate}
+                        onTranscriptionTextChange={
+                            handleTranscriptionTextChange
+                        }
                     />
                 </div>
             </div>

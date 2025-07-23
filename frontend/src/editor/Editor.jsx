@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
-import EditorHeader from './EditorHeader';
+import React from 'react';
+import EditorHeader from './Header';
 import TranscriptionTextarea from './TranscriptionTextarea';
-import EditorStatusMessages from './EditorStatusMessages';
-import EditorButtons from './EditorButtons';
+import EditorStatusMessages from './StatusMessages';
+import EditorButtons from './Buttons';
 
 async function submitTranscription(transcriptionId) {
     const response = await fetch(
@@ -12,12 +12,10 @@ async function submitTranscription(transcriptionId) {
             headers: {'Content-Type': 'application/json'},
         },
     );
-
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Failed to submit transcription');
     }
-
     return await response.json();
 }
 
@@ -30,12 +28,10 @@ async function reviewTranscription(transcriptionId, action) {
             body: JSON.stringify({action}),
         },
     );
-
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Failed to review transcription');
     }
-
     return await response.json();
 }
 
@@ -56,15 +52,15 @@ export default function Editor(props) {
         undoAvailable,
         redoAvailable,
         onTranscriptionUpdate,
+        onTranscriptionTextChange,
     } = props;
 
-    const [text, setText] = useState(transcription?.text || '');
-    const [isSaving, setIsSaving] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isReviewing, setIsReviewing] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(false);
-    const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [isSaving, setIsSaving] = React.useState(false);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isReviewing, setIsReviewing] = React.useState(false);
+    const [error, setError] = React.useState(null);
+    const [success, setSuccess] = React.useState(false);
+    const [submitSuccess, setSubmitSuccess] = React.useState(false);
 
     const status = transcriptionStatus;
     const isEditable = ['not_started', 'in_progress'].includes(status);
@@ -72,6 +68,7 @@ export default function Editor(props) {
     const submitEnabled = status === 'in_progress' && transcription?.id;
     const inReview = status === 'submitted';
     const supersedes = transcription?.id;
+    const text = transcription?.text || '';
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -153,6 +150,54 @@ export default function Editor(props) {
         }
     };
 
+    const handleUndo = async () => {
+        setIsSaving(true);
+        setError(null);
+        try {
+            const response = await fetch(
+                `/api/assets/${assetId}/transcriptions/rollback`,
+                {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                },
+            );
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || data.error || 'Undo failed');
+            }
+            const updated = await response.json();
+            if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleRedo = async () => {
+        setIsSaving(true);
+        setError(null);
+        try {
+            const response = await fetch(
+                `/api/assets/${assetId}/transcriptions/rollforward`,
+                {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                },
+            );
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || data.error || 'Redo failed');
+            }
+            const updated = await response.json();
+            if (onTranscriptionUpdate) onTranscriptionUpdate(updated);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <div className="editor p-3 d-flex flex-column flex-grow-1">
             <EditorHeader
@@ -162,7 +207,7 @@ export default function Editor(props) {
 
             <TranscriptionTextarea
                 value={text}
-                onChange={setText}
+                onChange={onTranscriptionTextChange}
                 editable={isEditable}
             />
 
@@ -187,6 +232,8 @@ export default function Editor(props) {
                 onSubmit={handleSubmit}
                 onAccept={handleAccept}
                 onReject={handleReject}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
             />
         </div>
     );

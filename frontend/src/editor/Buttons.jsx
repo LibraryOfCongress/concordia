@@ -1,7 +1,7 @@
 import React from 'react';
-import EditableButtons from './EditorButtonsEditable';
-import SubmitButton from './EditorButtonSubmit';
-import ReviewButton from './EditorButtonReview';
+import EditableButtons from './buttons/Editable';
+import SubmitButton from './buttons/Submit';
+import ReviewButton from './buttons/Review';
 
 export default function EditorButtons({
     isEditable,
@@ -18,6 +18,8 @@ export default function EditorButtons({
     onSubmit,
     onAccept,
     onReject,
+    onUndo,
+    onRedo,
 }) {
     if (!isEditable && !submitVisible && !inReview) return null;
 
@@ -30,6 +32,8 @@ export default function EditorButtons({
                     text={text}
                     undoAvailable={undoAvailable}
                     redoAvailable={redoAvailable}
+                    onUndo={onUndo}
+                    onRedo={onRedo}
                 />
             )}
             {submitVisible && (

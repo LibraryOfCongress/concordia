@@ -3,6 +3,7 @@ from time import time
 from typing import Optional
 
 from django.conf import settings
+from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -71,6 +72,7 @@ class TranscriptionIn(CamelSchema):
 
 class TranscriptionOut(CamelSchema):
     id: int  # noqa: A003
+    text: str
     sent: float
     submission_url: Optional[str] = None
     asset: AssetOut
@@ -339,6 +341,7 @@ def create_transcription(request, asset_id: int, payload: TranscriptionIn):
     return TranscriptionOut(
         id=transcription.pk,
         sent=time(),
+        text=transcription.text,
         submission_url=reverse("api:submit_transcription", args=[transcription.pk]),
         asset=serialize_asset(asset, request),
         undo_available=asset.can_rollback()[0],
@@ -358,29 +361,91 @@ def create_ocr_transcription(request, asset_id: int, payload: TranscriptionIn):
 
 
 @assets.post(
-    "/{asset_id}/transcriptions/rollback", response=TranscriptionOut, by_alias=True
+    "/{asset_id}/transcriptions/rollback",
+    response=TranscriptionOut,
+    by_alias=True,
 )
-def rollback(request, asset_id: int):
+@atomic
+def rollback(request: HttpRequest, asset_id: int):
     """
-    POST /assets/{id}/transcriptions/rollback/ – undo to the previous version.
+    Restores the asset's transcription to the previous version in its history.
+    """
+    asset = get_object_or_404(Asset, pk=asset_id)
+    user = request.user if not request.user.is_anonymous else get_anonymous_user()
 
-    Mirrors rollback_transcription().
-    """
-    # TODO: Port rollback_transcription() logic
-    raise HttpError(501, "Not implemented yet")
+    try:
+        transcription = asset.rollback_transcription(user)
+    except ValueError as e:
+        structured_logger.warning(
+            "Rollback failed: no previous transcription to revert to.",
+            event_code="rollback_failed",
+            reason_code="no_valid_target",
+            reason=str(e),
+            asset=asset,
+            user=user,
+        )
+        raise HttpError(400, "No previous transcription available") from e
+
+    structured_logger.info(
+        "Rollback successfully performed.",
+        event_code="rollback_success",
+        user=user,
+        transcription=transcription,
+    )
+
+    return TranscriptionOut(
+        id=transcription.pk,
+        sent=time(),
+        text=transcription.text,
+        submission_url=reverse("api:submit_transcription", args=[transcription.pk]),
+        asset=serialize_asset(asset, request),
+        undo_available=asset.can_rollback()[0],
+        redo_available=asset.can_rollforward()[0],
+    )
 
 
 @assets.post(
-    "/{asset_id}/transcriptions/rollforward", response=TranscriptionOut, by_alias=True
+    "/{asset_id}/transcriptions/rollforward",
+    response=TranscriptionOut,
+    by_alias=True,
 )
-def rollforward(request, asset_id: int):
+@atomic
+def rollforward(request: HttpRequest, asset_id: int):
     """
-    POST /assets/{id}/transcriptions/rollforward/ – redo the last rollback.
+    Restores the asset's transcription to the next version in its history.
+    """
+    asset = get_object_or_404(Asset, pk=asset_id)
+    user = request.user if not request.user.is_anonymous else get_anonymous_user()
 
-    Mirrors rollforward_transcription().
-    """
-    # TODO: Port rollforward_transcription() logic
-    raise HttpError(501, "Not implemented yet")
+    try:
+        transcription = asset.rollforward_transcription(user)
+    except ValueError as e:
+        structured_logger.warning(
+            "Rollforward failed: no transcription available to restore.",
+            event_code="rollforward_failed",
+            reason_code="no_valid_target",
+            reason=str(e),
+            asset=asset,
+            user=user,
+        )
+        raise HttpError(400, "No transcription to restore") from e
+
+    structured_logger.info(
+        "Rollforward successfully performed.",
+        event_code="rollforward_success",
+        user=user,
+        transcription=transcription,
+    )
+
+    return TranscriptionOut(
+        id=transcription.pk,
+        sent=time(),
+        text=transcription.text,
+        submission_url=reverse("api:submit_transcription", args=[transcription.pk]),
+        asset=serialize_asset(asset, request),
+        undo_available=asset.can_rollback()[0],
+        redo_available=asset.can_rollforward()[0],
+    )
 
 
 transcriptions = Router(tags=["transcriptions"])
@@ -439,6 +504,7 @@ def submit_transcription(request: HttpRequest, pk: int):
 
     return TranscriptionOut(
         id=transcription.pk,
+        text=transcription.text,
         sent=time(),
         asset=serialize_asset(asset, request),
         undo_available=False,
@@ -540,6 +606,7 @@ def review_transcription(request: HttpRequest, pk: int, payload: ReviewIn):
 
     return TranscriptionOut(
         id=transcription.pk,
+        text=transcription.text,
         sent=time(),
         asset=serialize_asset(asset, request),
         undo_available=False,

@@ -2,9 +2,9 @@ import React, {useEffect, useRef} from 'react';
 import OpenSeadragon from 'openseadragon';
 import 'openseadragon-filtering';
 import screenfull from 'screenfull';
-import {prefixUrl, contactUrl} from './config.js';
 
-import ViewerControls from './ViewerControls';
+import {prefixUrl, contactUrl} from '../config.js';
+import ViewerControls from './Controls';
 import ImageFilters from './ImageFilters';
 import KeyboardHelpModal from './KeyboardHelpModal';
 
