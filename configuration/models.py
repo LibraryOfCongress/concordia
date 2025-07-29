@@ -1,7 +1,10 @@
 import json
 
 from django import template
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from configuration.validation import validate_rate
 
 
 class Configuration(models.Model):
@@ -11,6 +14,7 @@ class Configuration(models.Model):
         BOOLEAN = "boolean", "Boolean"
         JSON = "json", "JSON"
         HTML = "html", "HTML"
+        RATE = "rate", "Rate"
 
     key = models.CharField(
         max_length=255,
@@ -53,6 +57,11 @@ class Configuration(models.Model):
         elif self.data_type == Configuration.DataType.HTML:
             value = template.Template(self.value)
             return value.render(template.Context({}))
+        elif self.data_type == Configuration.DataType.RATE:
+            try:
+                return validate_rate(self.value)
+            except ValidationError:
+                return ""
         else:
             # DataType.TEXT or an unkonwn type,
             # so just return the value itself

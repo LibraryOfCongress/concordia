@@ -3,11 +3,14 @@ from functools import wraps
 from time import time
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.vary import vary_on_headers
 
 from concordia.forms import TurnstileForm
+from configuration.utils import configuration_value
+from configuration.validation import validate_rate
 
 
 def default_cache_control(view_function: Callable) -> Callable:
@@ -105,7 +108,7 @@ def validate_anonymous_user(view: Callable) -> Callable:
 
 def reserve_rate(group: str, request: HttpRequest) -> str | None:
     """
-    Determines the rate limit key for a request, based on user authentication.
+    Determines the rate limit value for a request, based on user authentication.
 
     Used to control throttling behavior. If the user is anonymous, returns a fixed
     rate limit string (e.g., "100/m"). Authenticated users are not rate-limited and
@@ -124,3 +127,32 @@ def reserve_rate(group: str, request: HttpRequest) -> str | None:
         str | None: A rate string like "100/m" for anonymous users, or None otherwise.
     """
     return None if request.user.is_authenticated else "100/m"
+
+
+def next_asset_rate(group: str, request: HttpRequest) -> str | None:
+    """
+    Determines the rate limit value for a request, based on user authentication.
+
+    If the user is anonymous, returns a rate limit string from the
+    `next_asset_rate_limit` configuration value (e.g., "4/m"). Authenticated users are
+    not rate-limited and return `None`.
+
+    `group` groups rate limits together. It's used internally by django-ratelimit, but
+    we don't use it here--it could be used to return different rate limits based on the
+    group, for instance, but we have no need for that currently.
+
+    Args:
+        group (str): The group name used to bucket rate limits. Defaults to the dotted
+            view name if not set manually.
+        request (HttpRequest): The incoming HTTP request.
+
+    Returns:
+        str | None: A rate string like "4/m" for anonymous users, or None otherwise.
+    """
+    if request.user.is_authenticated:
+        return None
+    try:
+        rate_limit = configuration_value("next_asset_rate_limita")
+        return validate_rate(rate_limit)
+    except (ObjectDoesNotExist, ValidationError):
+        return "4/m"

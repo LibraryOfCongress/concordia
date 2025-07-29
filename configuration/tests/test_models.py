@@ -155,3 +155,68 @@ class TestConfiguration(TestCase):
             data_type=Configuration.DataType.HTML,
         )
         self.assertEqual(config6.get_value(), "/")
+
+    def test_rate(self):
+        # Valid rates
+        config1 = Configuration.objects.create(
+            key="test-key1", value="1/s", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config1.get_value(), "1/s")
+
+        config2 = Configuration.objects.create(
+            key="test-key2", value="100/m", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config2.get_value(), "100/m")
+
+        config3 = Configuration.objects.create(
+            key="test-key3", value="50/h", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config3.get_value(), "50/h")
+
+        config4 = Configuration.objects.create(
+            key="test-key4", value="1000/d", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config4.get_value(), "1000/d")
+
+        # Invalid formats
+        config5 = Configuration.objects.create(
+            key="test-key5", value="5/hour", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config5.get_value(), "")
+
+        config6 = Configuration.objects.create(
+            key="test-key6", value="ten/m", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config6.get_value(), "")
+
+        config7 = Configuration.objects.create(
+            key="test-key7", value="10", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config7.get_value(), "")
+
+        config8 = Configuration.objects.create(
+            key="test-key8", value="10/", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config8.get_value(), "")
+
+        config9 = Configuration.objects.create(
+            key="test-key9", value="/m", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config9.get_value(), "")
+
+        # Zero and negative values
+        config10 = Configuration.objects.create(
+            key="test-key10", value="0/s", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config10.get_value(), "")
+
+        config11 = Configuration.objects.create(
+            key="test-key11", value="-5/m", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config11.get_value(), "")
+
+        # Empty value
+        config12 = Configuration.objects.create(
+            key="test-key12", value="", data_type=Configuration.DataType.RATE
+        )
+        self.assertEqual(config12.get_value(), "")

@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
+from django_ratelimit.decorators import ratelimit
 
 from concordia.api_views import APIDetailView
 from concordia.forms import TurnstileForm
@@ -43,6 +44,7 @@ from concordia.utils.next_asset import (
     remove_next_asset_objects,
 )
 
+from .decorators import next_asset_rate
 from .utils import AnonymousUserValidationCheckMixin
 
 logger = logging.getLogger(__name__)
@@ -365,6 +367,9 @@ def redirect_to_next_asset(
         return redirect("homepage")
 
 
+@ratelimit(
+    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+)
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedirect:
@@ -466,6 +471,9 @@ def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedir
     return redirect_to_next_asset(asset, "review", request, user)
 
 
+@ratelimit(
+    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRedirect:
@@ -571,6 +579,9 @@ def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRe
     return redirect_to_next_asset(asset, "transcribe", request, request.user)
 
 
+@ratelimit(
+    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+)
 @never_cache
 @atomic
 def redirect_to_next_reviewable_campaign_asset(
@@ -634,6 +645,9 @@ def redirect_to_next_reviewable_campaign_asset(
     return redirect_to_next_asset(asset, "review", request, user)
 
 
+@ratelimit(
+    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_campaign_asset(
@@ -693,6 +707,9 @@ def redirect_to_next_transcribable_campaign_asset(
     return redirect_to_next_asset(asset, "transcribe", request, user)
 
 
+@ratelimit(
+    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+)
 @never_cache
 @atomic
 def redirect_to_next_reviewable_topic_asset(
@@ -757,6 +774,9 @@ def redirect_to_next_reviewable_topic_asset(
     return redirect_to_next_asset(asset, "review", request, user)
 
 
+@ratelimit(
+    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_topic_asset(
