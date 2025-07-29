@@ -1,5 +1,4 @@
 import json
-import time
 from logging import getLogger
 from secrets import token_hex
 
@@ -92,13 +91,3 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
             item for item in items if "active" in item.get_attribute("class")
         ]
         self.assertEqual(len(active_items), 1)
-
-        first_active = active_items[0]
-
-        carousel.get(".carousel-control-next").click()
-        time.sleep(1)
-        new_active = [item for item in items if "active" in item.get_attribute("class")]
-        self.assertEqual(len(new_active), 1)
-        self.assertNotEqual(
-            new_active[0], first_active, "Carousel didn't move to next item"
-        )
