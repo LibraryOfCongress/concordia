@@ -11,7 +11,7 @@ on:
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
-            - kibana-proxy/**
+            - search-proxy/**
             - postgresql/**
     pull_request:
         branches: [main, 'feature-*']
@@ -22,7 +22,7 @@ on:
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
-            - kibana-proxy/**
+            - search-proxy/**
             - postgresql/**
 
 jobs:

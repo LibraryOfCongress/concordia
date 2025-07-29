@@ -1,5 +1,5 @@
 Description: >
-    This template deploys a kibana/opensearch dashboard proxy server to the specified VPC
+    This template deploys an opensearch dashboard proxy server to the specified VPC
 
 Parameters:
     VpcId:
