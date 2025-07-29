@@ -62,14 +62,20 @@ def fetch_blog_posts():
     except requests.exceptions.ConnectionError:
         structured_logger.warning(
             "Error connecting to The Signal: %s",
+            reason="Connection error when fetching blog posts",
+            reason_code="fetch_blog_connection_error",
         )
     except requests.exceptions.Timeout:
         structured_logger.warning(
             "Timeout Error: %s",
+            reason="Timeout when fetching blog posts",
+            reason_code="fetch_blog_timeout_error",
         )
     except requests.exceptions.RequestException:
         structured_logger.warning(
             "Error on request to The Signal: %s",
+            reason="Request exception when fetching blog posts",
+            reason_code="fetch_blog_request_exception",
         )
 
     items = root.find("channel").findall("item")
