@@ -1,12 +1,13 @@
 import html
-import logging
 from html.parser import HTMLParser
 
 import defusedxml.ElementTree as ET
 import requests
 from django.core.cache import cache
 
-logger = logging.getLogger(__name__)
+from concordia.logging import ConcordiaLogger
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 class OGImageParser(HTMLParser):
@@ -35,8 +36,12 @@ def extract_og_image(url):
         parser.feed(html.unescape(response.text))
         cache.set(cache_key, None, timeout=24 * 60 * 60)
         return parser.og_image
-    except requests.RequestException as e:
-        logger.warning("Failed to fetch image for blog post: %s", e, exc_info=True)
+    except requests.RequestException:
+        structured_logger.warning(
+            "Failed to fetch image for blog post",
+            reason="Image extract failed",
+            reason_code="extract_og_image_failed",
+        )
 
 
 def fetch_blog_posts():
@@ -48,14 +53,24 @@ def fetch_blog_posts():
         )
         response.raise_for_status()
         root = ET.fromstring(response.content)
-    except requests.exceptions.HTTPError as e:
-        logging.warning("HTTP Error: %s", e)
-    except requests.exceptions.ConnectionError as e:
-        logging.warning("Connection Error: %s", e)
-    except requests.exceptions.Timeout as e:
-        logging.warning("Timeout Error: %s", e)
-    except requests.exceptions.RequestException as e:
-        logging.warning("General Requests Error: %s", e)
+    except requests.exceptions.HTTPError:
+        structured_logger.warning(
+            "HTTP Error: %s",
+            reason="HTTP error when fetching blog posts",
+            reason_code="fetch_blog_http_error",
+        )
+    except requests.exceptions.ConnectionError:
+        structured_logger.warning(
+            "Error connecting to The Signal: %s",
+        )
+    except requests.exceptions.Timeout:
+        structured_logger.warning(
+            "Timeout Error: %s",
+        )
+    except requests.exceptions.RequestException:
+        structured_logger.warning(
+            "Error on request to The Signal: %s",
+        )
 
     items = root.find("channel").findall("item")
     feed_items = []
