@@ -145,7 +145,7 @@ MIDDLEWARE = [
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
-RATELIMIT_VIEW = "concordia.views.ratelimit_view"
+RATELIMIT_VIEW = "concordia.views.rate_limit.ratelimit_view"
 RATELIMIT_BLOCK = False
 
 TEMPLATES = [
