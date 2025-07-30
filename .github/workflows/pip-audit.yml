@@ -2,19 +2,8 @@ name: pip-audit
 
 on:
     workflow_dispatch:
-    push:
-        branches: [release]
-        paths-ignore:
-            - docs/**
-            - README.md
-            - .github/**
-            - cloudformation/**
-            - db_scripts/**
-            - jenkins/**
-            - search-proxy/**
-            - postgresql/**
     pull_request:
-        branches: [main]
+        branches: [main, release]
         paths-ignore:
             - docs/**
             - README.md
