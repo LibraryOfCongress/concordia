@@ -37,7 +37,7 @@ Review Incidents: 2 or more transcriptions accepted in 1 minute.
     {% for row in reviews %}
         <tr>
             <td>
-                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?reviewed_by__id__exact={{ row.0 }}">
+                <a href="{{ domain }}{% url 'admin:concordia_transcription_changelist' %}?reviewed_by__id__exact={{ row.0 }}&accepted=not-null">
                     {{ row.1 }}
                 </a>
             </td>

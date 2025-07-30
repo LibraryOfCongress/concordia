@@ -5,6 +5,10 @@ import defusedxml.ElementTree as ET
 import requests
 from django.core.cache import cache
 
+from concordia.logging import ConcordiaLogger
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
+
 
 class OGImageParser(HTMLParser):
     def __init__(self):
@@ -33,7 +37,11 @@ def extract_og_image(url):
         cache.set(cache_key, None, timeout=24 * 60 * 60)
         return parser.og_image
     except requests.RequestException:
-        return None
+        structured_logger.warning(
+            "Failed to fetch image for blog post",
+            reason="Image extract failed",
+            reason_code="extract_og_image_failed",
+        )
 
 
 def fetch_blog_posts():
@@ -45,8 +53,30 @@ def fetch_blog_posts():
         )
         response.raise_for_status()
         root = ET.fromstring(response.content)
-    except Exception:
-        return []
+    except requests.exceptions.HTTPError:
+        structured_logger.warning(
+            "HTTP Error: %s",
+            reason="HTTP error when fetching blog posts",
+            reason_code="fetch_blog_http_error",
+        )
+    except requests.exceptions.ConnectionError:
+        structured_logger.warning(
+            "Error connecting to The Signal: %s",
+            reason="Connection error when fetching blog posts",
+            reason_code="fetch_blog_connection_error",
+        )
+    except requests.exceptions.Timeout:
+        structured_logger.warning(
+            "Timeout Error: %s",
+            reason="Timeout when fetching blog posts",
+            reason_code="fetch_blog_timeout_error",
+        )
+    except requests.exceptions.RequestException:
+        structured_logger.warning(
+            "Error on request to The Signal: %s",
+            reason="Request exception when fetching blog posts",
+            reason_code="fetch_blog_request_exception",
+        )
 
     items = root.find("channel").findall("item")
     feed_items = []

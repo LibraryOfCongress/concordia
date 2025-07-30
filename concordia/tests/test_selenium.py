@@ -4,13 +4,14 @@ from secrets import token_hex
 
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.template.loader import render_to_string
 from django.test import tag
 from django.urls import reverse
 from pylenium.config import PyleniumConfig
 from pylenium.driver import Pylenium
 
 from .axe import Axe
-from .utils import CreateTestUsers
+from .utils import CreateTestUsers, create_simple_page
 
 logger = getLogger(__name__)
 
@@ -72,3 +73,21 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
 
         violations = self.axe.violations()
         self.assertEqual(len(violations), 0, self.axe.report(violations))
+
+    def test_blog_carousel(self):
+        context = {"blog_posts": [[{}], [{}]]}
+        html_string = render_to_string("fragments/featured_blog_posts.html", context)
+        create_simple_page(path="/about/", title="About", body=html_string)
+        self.py.visit(self.reverse("about"))
+
+        carousel = self.py.get("#blog-carousel")
+        self.assertTrue(carousel.should().be_visible())
+
+        inner = carousel.get(".carousel-inner")
+        items = inner.find(".carousel-item")
+        self.assertGreater(len(items), 1, "No carousel items found")
+
+        active_items = [
+            item for item in items if "active" in item.get_attribute("class")
+        ]
+        self.assertEqual(len(active_items), 1)
