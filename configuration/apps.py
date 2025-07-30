@@ -6,4 +6,4 @@ class ConfigurationConfig(AppConfig):
     name = "configuration"
 
     def ready(self):
-        pass
+        import configuration.signals  # NOQA
