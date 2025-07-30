@@ -152,7 +152,7 @@ def next_asset_rate(group: str, request: HttpRequest) -> str | None:
     if request.user.is_authenticated:
         return None
     try:
-        rate_limit = configuration_value("next_asset_rate_limita")
+        rate_limit = configuration_value("next_asset_rate_limit")
         return validate_rate(rate_limit)
     except (ObjectDoesNotExist, ValidationError):
         return "4/m"
