@@ -23,7 +23,7 @@ aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp ${DUMP_FILE}
 echo "${POSTGRESQL_HOST}:5432:*:concordia:${POSTGRESQL_PW}" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-aws s3 sync s3://crowd-content s3://crowd-${ENV_NAME}-content
+aws s3 sync s3://crowd-content s3://crowd-${ENV_NAME}-content --delete
 
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia with (force);"
