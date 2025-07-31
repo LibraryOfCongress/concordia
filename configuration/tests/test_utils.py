@@ -1,12 +1,21 @@
 import json
 
+from django.core.cache import caches
 from django.test import TestCase
 
 from configuration.models import Configuration
-from configuration.utils import configuration_value
+from configuration.utils import (
+    CONFIGURATION_KEY_PREFIX,
+    cache_configuration_value,
+    configuration_value,
+)
 
 
 class TestConfigurationUtils(TestCase):
+    def setUp(self):
+        self.cache = caches["configuration_cache"]
+        self.cache.clear()
+
     def test_configuration_value(self):
         Configuration.objects.create(
             key="test-key", value="Test value", data_type=Configuration.DataType.TEXT
@@ -43,3 +52,29 @@ class TestConfigurationUtils(TestCase):
             data_type=Configuration.DataType.HTML,
         )
         self.assertEqual(configuration_value("test-key6"), "<p>Test value</p>")
+
+
+class TestCacheConfigurationValue(TestCase):
+    def setUp(self):
+        self.cache = caches["configuration_cache"]
+        self.cache.clear()
+
+    def test_explicit_value_is_cached(self):
+        key = "explicit-key"
+        cached = cache_configuration_value(key, 123)
+        self.assertEqual(cached, 123)
+        self.assertEqual(
+            self.cache.get(f"{CONFIGURATION_KEY_PREFIX}_{key}"),
+            123,
+        )
+
+    def test_value_is_fetched_from_model_if_not_supplied(self):
+        Configuration.objects.create(
+            key="fetched-key", value="true", data_type=Configuration.DataType.BOOLEAN
+        )
+        cached = cache_configuration_value("fetched-key")
+        self.assertEqual(cached, True)
+        self.assertEqual(
+            self.cache.get(f"{CONFIGURATION_KEY_PREFIX}_fetched-key"),
+            True,
+        )

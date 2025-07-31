@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="_confirm_update" value="1">
+    <input type="hidden" name="key" value="{{ new_instance.key }}">
+    <input type="hidden" name="data_type" value="{{ new_instance.data_type }}">
+    <input type="hidden" name="value" value="{{ new_instance.value }}">
+    <input type="hidden" name="description" value="{{ new_instance.description }}">
+
+    <table class="admin-confirmation-table">
+      <tr>
+        <th>Key</th>
+        <td>{{ new_instance.key }}</td>
+      </tr>
+      <tr>
+        <th>Original Value</th>
+        <td>{{ original.value }}</td>
+      </tr>
+      <tr>
+        <th>New Raw Value</th>
+        <td>{{ new_instance.value }}</td>
+      </tr>
+      <tr>
+        <th>Interpreted Value</th>
+        <td><pre>{{ parsed_value }}</pre></td>
+      </tr>
+    </table>
+
+    <div class="submit-row">
+      <input type="submit" value="{% trans "Confirm Save" %}" class="default">
+      <a href="#" class="button cancel-link" onclick="document.getElementById('cancel-form').submit(); return false;">
+        {% trans "Cancel" %}
+      </a>
+    </div>
+  </form>
+
+  <form id="cancel-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="cancel_update" value="1">
+    <input type="hidden" name="key" value="{{ new_instance.key }}">
+    <input type="hidden" name="data_type" value="{{ new_instance.data_type }}">
+    <input type="hidden" name="value" value="{{ new_instance.value }}">
+    <input type="hidden" name="description" value="{{ new_instance.description }}">
+  </form>
+{% endblock %}
