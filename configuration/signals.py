@@ -7,4 +7,9 @@ from configuration.utils import cache_configuration_value
 
 @receiver(post_save, sender=Configuration)
 def update_cached_configuration_value(sender, *, instance, **kwargs):
-    cache_configuration_value(instance.key, instance.get_value())
+    try:
+        value = instance.get_value()
+    except Exception:
+        # Do not cache if value is invalid
+        return
+    cache_configuration_value(instance.key, value)

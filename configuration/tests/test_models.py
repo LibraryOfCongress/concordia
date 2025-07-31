@@ -1,11 +1,15 @@
 import json
 
+from django.core.cache import caches
 from django.test import TestCase
 
 from configuration.models import Configuration
 
 
 class TestConfiguration(TestCase):
+    def setUp(self):
+        caches["configuration_cache"].clear()
+
     def test_str(self):
         config = Configuration.objects.create(
             key="test-key", value="Test value", data_type=Configuration.DataType.TEXT
