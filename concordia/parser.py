@@ -56,27 +56,35 @@ def fetch_blog_posts():
     except requests.exceptions.HTTPError:
         structured_logger.warning(
             "HTTP Error: %s",
+            event_code="fetch_blog_posts_failed",
             reason="HTTP error when fetching blog posts",
             reason_code="fetch_blog_http_error",
         )
+        return []
     except requests.exceptions.ConnectionError:
         structured_logger.warning(
             "Error connecting to The Signal: %s",
+            event_code="fetch_blog_posts_failed",
             reason="Connection error when fetching blog posts",
             reason_code="fetch_blog_connection_error",
         )
+        return []
     except requests.exceptions.Timeout:
         structured_logger.warning(
             "Timeout Error: %s",
+            event_code="fetch_blog_timed_out",
             reason="Timeout when fetching blog posts",
             reason_code="fetch_blog_timeout_error",
         )
+        return []
     except requests.exceptions.RequestException:
         structured_logger.warning(
             "Error on request to The Signal: %s",
+            event_code="fetch_blog_posts_failed",
             reason="Request exception when fetching blog posts",
             reason_code="fetch_blog_request_exception",
         )
+        return []
 
     items = root.find("channel").findall("item")
     feed_items = []
