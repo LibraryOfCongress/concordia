@@ -1,4 +1,5 @@
 import os
+import sys
 
 import sentry_sdk
 import structlog
@@ -144,6 +145,57 @@ MIDDLEWARE = [
     "django_ratelimit.middleware.RatelimitMiddleware",
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
+
+#  Enable X-Ray tracing if the environment variable is set to true
+AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true"
+
+
+#  Check if the current process is a web server process
+def is_web_process():
+    # Add other web server commands as needed
+    return any(cmd in sys.argv for cmd in ["runserver", "gunicorn", "uwsgi"])
+
+
+if is_web_process():
+    # Only add X-Ray for web processes
+    INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
+    MIDDLEWARE += ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"]
+    XRAY_RECORDER = {
+        "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
+        "IGNORE_MODULE_PATTERNS": [
+            r"^django\.contrib\.admin\.views\.decorators\.cache",
+            r"^django\.contrib\.admin\.options",
+            r"^django\.contrib\.admin\.options\.ModelAdmin",
+            r"^django\.contrib\.admin\.options\.InlineModelAdmin",
+            r"^django\.contrib\.admin\.options\.BaseModelAdmin",
+            r"^django\.contrib\.admin\.options\.ModelAdminMixin",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminMixin",
+            r"^django\.contrib\.admin\.options\.ModelAdminBase",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminBase",
+            r"^django\.contrib\.admin\.options\.ModelAdminMixinBase",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminMixinBase",
+            r"^django\.contrib\.admin\.options\.ModelAdminDecorator",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminDecorator",
+            r"^django\.contrib\.admin\.options\.ModelAdminDecoratorMixin",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorMixin",
+            r"^django\.contrib\.admin\.options\.ModelAdminDecoratorBase",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorBase",
+        ],
+        "AUTO_INSTRUMENT": True,
+        "AWS_XRAY_CONTEXT_MISSING": os.environ.get(
+            "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
+        ),
+        "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
+            "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
+        ),
+        "AWS_XRAY_TRACING_NAME": os.environ.get(
+            "AWS_XRAY_TRACING_NAME",
+            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
+        ),
+        "PLUGINS": ("ECSPlugin"),
+        "SAMPLING": False,
+    }
+
 
 RATELIMIT_VIEW = "concordia.views.rate_limit.ratelimit_view"
 RATELIMIT_BLOCK = False
@@ -329,6 +381,7 @@ LOGGING = {
         "django": {"handlers": ["file"], "level": "INFO"},
         "celery": {"handlers": ["celery"], "level": "INFO"},
         "concordia": {"handlers": ["file"], "level": "INFO"},
+        "aws_xray_sdk": {"handlers": ["file"], "level": "INFO", "propagate": True},
         "structlog": {
             "handlers": ["structlog_file"],
             "level": "INFO",
