@@ -54,6 +54,7 @@ django-ninja = "==1.4.3"
 urllib3 = "==2.5.0"
 bagit = "==1.9.0"
 django-registration = "==3.4"
+aws-xray-sdk = "==2.14.0"
 
 [dev-packages]
 invoke = "==2.2.0"
