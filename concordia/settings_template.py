@@ -161,7 +161,20 @@ if is_web_process():
     INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
     MIDDLEWARE += ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"]
     XRAY_RECORDER = {
+        "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
+            "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
+        ),
+        "AUTO_INSTRUMENT": True,
+        "AWS_XRAY_CONTEXT_MISSING": os.environ.get(
+            "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
+        ),
+        "PLUGINS": ("ECSPlugin"),
+        "AWS_XRAY_TRACING_NAME": os.environ.get(
+            "AWS_XRAY_TRACING_NAME",
+            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
+        ),
         "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
+        "SAMPLING": False,
         "IGNORE_MODULE_PATTERNS": [
             r"^django\.contrib\.admin\.views\.decorators\.cache",
             r"^django\.contrib\.admin\.options",
@@ -181,19 +194,6 @@ if is_web_process():
             r"^django\.contrib\.admin\.options\.ModelAdminDecoratorBase",
             r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorBase",
         ],
-        "AUTO_INSTRUMENT": True,
-        "AWS_XRAY_CONTEXT_MISSING": os.environ.get(
-            "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
-        ),
-        "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
-            "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
-        ),
-        "AWS_XRAY_TRACING_NAME": os.environ.get(
-            "AWS_XRAY_TRACING_NAME",
-            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
-        ),
-        "PLUGINS": ("ECSPlugin"),
-        "SAMPLING": False,
     }
 
 
@@ -381,7 +381,7 @@ LOGGING = {
         "django": {"handlers": ["file"], "level": "INFO"},
         "celery": {"handlers": ["celery"], "level": "INFO"},
         "concordia": {"handlers": ["file"], "level": "INFO"},
-        "aws_xray_sdk": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "aws_xray_sdk": {"handlers": ["file"], "level": "DEBUG", "propagate": True},
         "structlog": {
             "handlers": ["structlog_file"],
             "level": "INFO",
