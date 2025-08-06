@@ -1,3 +1,4 @@
+import logging  # jkue
 import os
 import sys
 
@@ -8,6 +9,10 @@ from django.core.management.utils import get_random_secret_key
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from concordia.version import get_concordia_version
+
+# Add this near the top of your settings file #jkue
+logger = logging.getLogger(__name__)  # jkue
+
 
 # New in 3.2, if no field in a model is defined with primary_key=True an implicit
 # primary key is added. This can now be controlled by changing the value below
@@ -145,9 +150,39 @@ MIDDLEWARE = [
     "django_ratelimit.middleware.RatelimitMiddleware",
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
-
 #  Enable X-Ray tracing if the environment variable is set to true
 AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true"
+
+# Check X-Ray environment variable
+xray_enabled = os.environ.get("AWS_XRAY_SDK_ENABLED", "false")
+logger.info("AWS_XRAY_SDK_ENABLED environment variable: %s", xray_enabled)
+
+if xray_enabled.lower() == "true":
+    logger.info("X-Ray SDK should be enabled - checking auto-instrumentation")
+    try:
+        from aws_xray_sdk.ext.django import middleware  # noqa: F401
+
+        logger.info("X-Ray Django middleware imported successfully")
+    except ImportError as e:
+        logger.error("Failed to import X-Ray Django middleware: %s", e)
+else:
+    logger.info("X-Ray SDK is disabled via environment variable")
+
+# jkue
+if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true":
+    from aws_xray_sdk.core import patch_all, xray_recorder
+
+    logger.info("Manually configuring X-Ray recorder")
+    xray_recorder.configure(
+        context_missing="LOG_ERROR",
+        plugins=("ECSPlugin",),
+        daemon_address=os.environ.get("AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"),
+        service="concordia",
+    )
+
+    logger.info("Calling patch_all() for AWS SDK instrumentation")
+    patch_all()
+    logger.info("X-Ray configuration completed")  # jkue
 
 
 #  Check if the current process is a web server process
