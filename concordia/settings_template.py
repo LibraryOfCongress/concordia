@@ -331,6 +331,12 @@ logger.info("AWS_XRAY_SDK_ENABLED environment variable: %s", xray_enabled)
 
 if xray_enabled.lower() == "true":
     logger.info("X-Ray SDK should be enabled - checking auto-instrumentation")
+    # Add this debug logging
+    logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list")
+    logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0])
+    logger.info(
+        "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware"
+    )  # noqa: E501
     try:
         from aws_xray_sdk.ext.django import middleware  # noqa: F401
 
