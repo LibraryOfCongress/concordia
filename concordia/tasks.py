@@ -49,6 +49,7 @@ from concordia.models import (
     _update_useractivity_cache,
     update_userprofileactivity_table,
 )
+from concordia.parser import extract_og_image, fetch_blog_posts
 from concordia.signals.signals import reservation_released
 from concordia.storage import ASSET_STORAGE, VISUALIZATION_STORAGE
 from concordia.utils import get_anonymous_user
@@ -1892,3 +1893,12 @@ def populate_daily_activity_visualization_cache(self):
     caches["visualization_cache"].set(
         "daily-transcription-activity-last-28-days", data, None
     )
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def fetch_and_cache_blog_images(self):
+    for item in fetch_blog_posts():
+        link = item.find("link")
+        if link is not None:
+            extract_og_image(link.text)
