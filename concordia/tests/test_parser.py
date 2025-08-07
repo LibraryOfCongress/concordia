@@ -1,5 +1,6 @@
 from unittest import mock
 
+import requests
 from django.test import TestCase
 from requests.models import Response
 
@@ -68,3 +69,44 @@ class ParserTestCase(TestCase):
         self.assertEqual(feed_item["title"], TITLE)
         self.assertEqual(feed_item["link"], LINK)
         self.assertEqual(feed_item["og_image"], IMAGE)
+
+    @mock.patch("concordia.parser.requests.get")
+    def test_get_http_error(self, mock_get):
+        mock_response = mock.Mock()
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "500 Server Error"
+        )
+        mock_get.return_value = mock_response
+
+        with self.assertLogs("", level="WARNING") as cm:
+            result = fetch_blog_posts()
+
+        self.assertEqual(result, [])
+        self.assertIn("HTTP error when fetching blog posts", cm.output[0])
+
+    @mock.patch("concordia.parser.requests.get")
+    def test_get_exception_timeout(self, mock_get):
+        mock_get.side_effect = requests.exceptions.Timeout()
+        with self.assertLogs("", level="WARNING") as cm:
+            result = fetch_blog_posts()
+
+        self.assertEqual(result, [])
+        self.assertIn("Timeout when fetching blog posts", cm.output[0])
+
+    @mock.patch("concordia.parser.requests.get")
+    def test_get_connection_error(self, mock_get):
+        mock_get.side_effect = requests.exceptions.ConnectionError()
+        with self.assertLogs("", level="WARNING") as cm:
+            result = fetch_blog_posts()
+
+        self.assertEqual(result, [])
+        self.assertIn("Connection error when fetching blog posts", cm.output[0])
+
+    @mock.patch("concordia.parser.requests.get")
+    def test_get_request_exception(self, mock_get):
+        mock_get.side_effect = requests.exceptions.RequestException()
+        with self.assertLogs("", level="WARNING") as cm:
+            result = fetch_blog_posts()
+
+        self.assertEqual(result, [])
+        self.assertIn("Request exception when fetching blog posts", cm.output[0])

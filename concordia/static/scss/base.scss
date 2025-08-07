@@ -2130,6 +2130,10 @@ figure.error-figure {
     min-height: 115.2px;
 }
 
+#blog-carousel .card {
+    border-width: 0;
+}
+
 .about-accordion {
     background-color: $gray-100;
     padding-top: 12px;
@@ -2153,7 +2157,8 @@ figure.error-figure {
 }
 
 .press-content,
-.publications-content {
+.publications-content,
+.program-history {
     display: none;
 }
 

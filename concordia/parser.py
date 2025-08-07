@@ -1,9 +1,12 @@
 import html
+import logging
 from html.parser import HTMLParser
 
 import defusedxml.ElementTree as ET
 import requests
 from django.core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 
 class OGImageParser(HTMLParser):
@@ -32,8 +35,12 @@ def extract_og_image(url):
         parser.feed(html.unescape(response.text))
         cache.set(cache_key, None, timeout=24 * 60 * 60)
         return parser.og_image
-    except requests.RequestException:
-        return None
+    except requests.RequestException as e:
+        logger.warning(
+            "Failed to fetch image for blog post: %s",
+            e,
+            exc_info=True,
+        )
 
 
 def fetch_blog_posts():
@@ -45,7 +52,33 @@ def fetch_blog_posts():
         )
         response.raise_for_status()
         root = ET.fromstring(response.content)
-    except Exception:
+    except requests.exceptions.HTTPError as e:
+        logger.warning(
+            "HTTP error when fetching blog posts, but handled: %s",
+            e,
+            exc_info=True,
+        )
+        return []
+    except requests.exceptions.ConnectionError as e:
+        logger.warning(
+            "Connection error when fetching blog posts: %s",
+            e,
+            exc_info=True,
+        )
+        return []
+    except requests.exceptions.Timeout as e:
+        logger.warning(
+            "Timeout when fetching blog posts: %s",
+            e,
+            exc_info=True,
+        )
+        return []
+    except requests.exceptions.RequestException as e:
+        logger.warning(
+            "Request exception when fetching blog posts: %s",
+            e,
+            exc_info=True,
+        )
         return []
 
     items = root.find("channel").findall("item")
