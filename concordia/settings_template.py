@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info("=== SETTINGS_TEMPLATE.PY IS LOADING ===")
 
+
 # New in 3.2, if no field in a model is defined with primary_key=True an implicit
 # primary key is added. This can now be controlled by changing the value below
 # 3.2 default value is BigAutoField. But migrations does not support M2M PK
