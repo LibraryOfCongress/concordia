@@ -279,10 +279,36 @@ AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() =
 
 
 #  Check if the current process is a web server process
-def is_web_process():
-    # Add other web server commands as needed
-    return any(cmd in sys.argv for cmd in ["runserver", "gunicorn", "uwsgi"])
+#  def is_web_process():     # noqa: ERA001
+#     # Add other web server commands as needed
+#     return any(cmd in sys.argv for cmd in ["runserver", "gunicorn", "uwsgi"])  # noqa: ERA001 E501
 
+
+# jkue
+def is_web_process():
+    """
+    Return True if this process should handle web requests
+    """
+    result = not any(
+        [
+            "celery" in sys.argv,
+            "manage.py" in sys.argv and "runserver" not in sys.argv,
+        ]
+    )
+
+    # Add this debug logging
+    logger.info("=== is_web_process() DEBUG ===")
+    logger.info("sys.argv: %s", sys.argv)
+    logger.info("celery in sys.argv: %s", "celery" in sys.argv)
+    logger.info("manage.py in sys.argv: %s", "manage.py" in sys.argv)
+    logger.info("runserver in sys.argv: %s", "runserver" in sys.argv)
+    logger.info("is_web_process() returning: %s", result)
+    logger.info("=== END is_web_process() DEBUG ===")
+
+    return result
+
+
+# jkue end
 
 if is_web_process():
     # Only add X-Ray for web processes
