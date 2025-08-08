@@ -296,14 +296,17 @@ def is_web_process():
         ]
     )
 
-    # Add this debug logging
-    logger.info("=== is_web_process() DEBUG ===")
-    logger.info("sys.argv: %s", sys.argv)
-    logger.info("celery in sys.argv: %s", "celery" in sys.argv)
-    logger.info("manage.py in sys.argv: %s", "manage.py" in sys.argv)
-    logger.info("runserver in sys.argv: %s", "runserver" in sys.argv)
-    logger.info("is_web_process() returning: %s", result)
-    logger.info("=== END is_web_process() DEBUG ===")
+    # Safe debug logging that won't cause import errors
+    import logging
+
+    temp_logger = logging.getLogger(__name__)
+    temp_logger.info("=== is_web_process() DEBUG ===")
+    temp_logger.info("sys.argv: %s", sys.argv)
+    temp_logger.info("celery in sys.argv: %s", "celery" in sys.argv)
+    temp_logger.info("manage.py in sys.argv: %s", "manage.py" in sys.argv)
+    temp_logger.info("runserver in sys.argv: %s", "runserver" in sys.argv)
+    temp_logger.info("is_web_process() returning: %s", result)
+    temp_logger.info("=== END is_web_process() DEBUG ===")
 
     return result
 
