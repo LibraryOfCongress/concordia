@@ -288,33 +288,39 @@ AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() =
 def is_web_process():
     """
     Return True if this process should handle web requests
+    Takes into account both development (runserver) and production (daphne) web servers
     """
-    result = not any(
-        [
-            "celery" in sys.argv,
-            "manage.py" in sys.argv and "runserver" not in sys.argv,
-        ]
+    web_processes = ["runserver", "daphne", "gunicorn", "uwsgi"]
+
+    result = any(cmd in " ".join(sys.argv) for cmd in web_processes) or (
+        # For daphne in ECS which may not show in sys.argv
+        os.environ.get("SERVER_SOFTWARE", "").startswith("daphne")
     )
 
-    # Safe debug logging that won't cause import errors
-    import logging
-
-    temp_logger = logging.getLogger(__name__)
-    temp_logger.info("=== is_web_process() DEBUG ===")
-    temp_logger.info("sys.argv: %s", sys.argv)
-    temp_logger.info("celery in sys.argv: %s", "celery" in sys.argv)
-    temp_logger.info("manage.py in sys.argv: %s", "manage.py" in sys.argv)
-    temp_logger.info("runserver in sys.argv: %s", "runserver" in sys.argv)
-    temp_logger.info("is_web_process() returning: %s", result)
-    temp_logger.info("=== END is_web_process() DEBUG ===")
-
+    # Debug logging
+    logger.info("=== is_web_process() DEBUG ===")
+    logger.info(f"sys.argv: {sys.argv}")  # noqa: G004
+    logger.info(
+        f"SERVER_SOFTWARE: {os.environ.get('SERVER_SOFTWARE', 'NOT SET')}"  # noqa: G004
+    )  # noqa: G004
+    logger.info(f"is_web_process() returning: {result}")  # noqa: G004
+    logger.info("=== END is_web_process() DEBUG ===")
     return result
+
+
 # jkue end
 
 if is_web_process():
     # Only add X-Ray for web processes
     INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
     MIDDLEWARE += ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"]
+    logger.info("X-Ray SDK should be enabled - checking auto-instrumentation")
+    # Add this debug logging
+    logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list")
+    logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0])
+    logger.info(
+        "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware"
+    )  # noqa: E501
     XRAY_RECORDER = {
         "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
             "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
@@ -356,22 +362,23 @@ if is_web_process():
 xray_enabled = os.environ.get("AWS_XRAY_SDK_ENABLED", "false")
 logger.info("AWS_XRAY_SDK_ENABLED environment variable: %s", xray_enabled)
 
-if xray_enabled.lower() == "true":
-    logger.info("X-Ray SDK should be enabled - checking auto-instrumentation")
-    # Add this debug logging
-    logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list")
-    logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0])
-    logger.info(
-        "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware"
-    )  # noqa: E501
-    try:
-        from aws_xray_sdk.ext.django import middleware  # noqa: F401
+# jkue
+# if xray_enabled.lower() == "true":
+#     logger.info("X-Ray SDK should be enabled - checking auto-instrumentation") # noqa: ERA001 E501
+#     # Add this debug logging
+#     logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list") # noqa: ERA001 E501
+#     logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0]) # noqa: ERA001 E501
+#     logger.info(  # noqa: ERA001 E501
+#         "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware" # noqa: ERA001 E501
+#     )  # noqa: ERA001 E501
+#     try:  #noqa: ERA001
+#         from aws_xray_sdk.ext.django import middleware  # noqa: F401 ERA001 E501
 
-        logger.info("X-Ray Django middleware imported successfully")
-    except ImportError as e:
-        logger.error("Failed to import X-Ray Django middleware: %s", e)
-else:
-    logger.info("X-Ray SDK is disabled via environment variable")
+#         logger.info("X-Ray Django middleware imported successfully") # noqa: ERA001 E501
+#     except ImportError as e:  # noqa: ERA001 E501
+#         logger.error("Failed to import X-Ray Django middleware: %s", e) # noqa: ERA001 E501
+# else: # noqa: ERA001 E501
+#     logger.info("X-Ray SDK is disabled via environment variable") # noqa: ERA001 E501
 
 # jkue
 # if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true": # noqa: ERA001 E501
