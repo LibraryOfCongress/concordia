@@ -309,8 +309,6 @@ def is_web_process():
     temp_logger.info("=== END is_web_process() DEBUG ===")
 
     return result
-
-
 # jkue end
 
 if is_web_process():
