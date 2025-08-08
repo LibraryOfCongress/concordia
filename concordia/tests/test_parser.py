@@ -4,7 +4,7 @@ import requests
 from django.test import TestCase
 from requests.models import Response
 
-from concordia.parser import extract_og_image, fetch_blog_posts
+from concordia.parser import extract_og_image, fetch_blog_posts, paginate_blog_posts
 
 TITLE = "What’s New Online at the Library of Congress: May 2025"
 LINK = "https://blogs.loc.gov/thesignal/2025/05/new-loc-may-2025/"
@@ -53,7 +53,7 @@ class ParserTestCase(TestCase):
 
     @mock.patch("concordia.parser.extract_og_image")
     @mock.patch("requests.get")
-    def test_fetch_blog_posts(self, mock_urlopen, mock_extract_og_image):
+    def test_paginate_blog_posts(self, mock_urlopen, mock_extract_og_image):
         mock_response = mock.MagicMock(spec=Response)
         mock_response.content = RSS
         mock_response.status_code = 200
@@ -61,7 +61,7 @@ class ParserTestCase(TestCase):
 
         mock_extract_og_image.return_value = IMAGE
 
-        feed_items = fetch_blog_posts()
+        feed_items = paginate_blog_posts()
 
         self.assertEqual(len(feed_items), 1)
         self.assertEqual(len(feed_items[0]), 2)
