@@ -331,6 +331,12 @@ logger.info("AWS_XRAY_SDK_ENABLED environment variable: %s", xray_enabled)
 
 if xray_enabled.lower() == "true":
     logger.info("X-Ray SDK should be enabled - checking auto-instrumentation")
+    # Add this debug logging
+    logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list")
+    logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0])
+    logger.info(
+        "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware"
+    )  # noqa: E501
     try:
         from aws_xray_sdk.ext.django import middleware  # noqa: F401
 
@@ -341,20 +347,20 @@ else:
     logger.info("X-Ray SDK is disabled via environment variable")
 
 # jkue
-if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true":
-    from aws_xray_sdk.core import patch_all, xray_recorder
+# if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true": # noqa: ERA001 E501
+#     from aws_xray_sdk.core import patch_all, xray_recorder    # noqa: ERA001
 
-    logger.info("Manually configuring X-Ray recorder")
-    xray_recorder.configure(
-        context_missing="LOG_ERROR",
-        plugins=("ECSPlugin",),
-        daemon_address=os.environ.get("AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"),
-        service="concordia",
-    )
+#     logger.info("Manually configuring X-Ray recorder")        # noqa: ERA001
+#     xray_recorder.configure(                  # noqa: ERA001
+#         context_missing="LOG_ERROR",          # noqa: ERA001
+#         plugins=("ECSPlugin",),           # noqa: ERA001
+#         daemon_address=os.environ.get("AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"), # noqa: ERA001 E501
+#         service="concordia", # noqa: ERA001
+#     )         # noqa: ERA001
 
-    logger.info("Calling patch_all() for AWS SDK instrumentation")
-    patch_all()
-    logger.info("X-Ray configuration completed")  # jkue
+#     logger.info("Calling patch_all() for AWS SDK instrumentation") # noqa: ERA001
+#     patch_all()       # noqa: ERA001
+#     logger.info("X-Ray configuration completed")  # jkue          # noqa: ERA001
 # jkue end
 
 LOGGING = {
