@@ -1,6 +1,4 @@
-import logging  # jkue
 import os
-import sys
 
 import sentry_sdk
 import structlog
@@ -9,14 +7,6 @@ from django.core.management.utils import get_random_secret_key
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from concordia.version import get_concordia_version
-
-# jkue
-# Add this near the top of your settings file
-logger = logging.getLogger(__name__)  # jkue
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.info("=== SETTINGS_TEMPLATE.PY IS LOADING ===")
-
 
 # New in 3.2, if no field in a model is defined with primary_key=True an implicit
 # primary key is added. This can now be controlled by changing the value below
@@ -273,139 +263,6 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "interval_step": 0.2,
     "interval_max": 0.5,
 }
-
-#  Enable X-Ray tracing if the environment variable is set to true
-AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true"
-
-
-#  Check if the current process is a web server process
-#  def is_web_process():     # noqa: ERA001
-#     # Add other web server commands as needed
-#     return any(cmd in sys.argv for cmd in ["runserver", "gunicorn", "uwsgi"])  # noqa: ERA001 E501
-
-
-# jkue
-def is_web_process():
-    """
-    Return True if this process should handle web requests
-    """
-    # Print debug info
-    print(f"DEBUG: sys.argv = {sys.argv}")
-
-    # Check for Celery (definitely not a web process)
-    if "celery" in sys.argv:
-        print("DEBUG: Found celery in sys.argv - returning False")
-        return False
-
-    # In ECS, if we're not Celery, we're probably the web process
-    if "ECS_CONTAINER_METADATA_URI" in os.environ:
-        print("DEBUG: ECS environment detected - returning True")
-        return True
-
-    # Local development logic
-    if "manage.py" in sys.argv and "runserver" not in sys.argv:
-        print("DEBUG: Found manage.py without runserver - returning False")
-        return False
-
-    print("DEBUG: Default case - returning True")
-    return True
-
-    # Debug logging
-    logger.info("=== is_web_process() DEBUG ===")
-    logger.info(f"sys.argv: {sys.argv}")  # noqa: G004
-    logger.info(
-        f"SERVER_SOFTWARE: {os.environ.get('SERVER_SOFTWARE', 'NOT SET')}"  # noqa: G004
-    )  # noqa: G004
-    logger.info("=== END is_web_process() DEBUG ===")
-    # jkue end
-
-
-if is_web_process():
-    # Only add X-Ray for web processes
-    INSTALLED_APPS += ["aws_xray_sdk.ext.django"]
-    MIDDLEWARE += ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"]
-    logger.info("X-Ray SDK should be enabled - checking auto-instrumentation")
-    # Add this debug logging
-    logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list")
-    logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0])
-    logger.info(
-        "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware"
-    )  # noqa: E501
-    XRAY_RECORDER = {
-        "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
-            "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
-        ),
-        "AUTO_INSTRUMENT": True,
-        "AWS_XRAY_CONTEXT_MISSING": os.environ.get(
-            "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
-        ),
-        "PLUGINS": ("ECSPlugin"),
-        "AWS_XRAY_TRACING_NAME": os.environ.get(
-            "AWS_XRAY_TRACING_NAME",
-            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
-        ),
-        "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
-        "SAMPLING": False,
-        "IGNORE_MODULE_PATTERNS": [
-            r"^django\.contrib\.admin\.views\.decorators\.cache",
-            r"^django\.contrib\.admin\.options",
-            r"^django\.contrib\.admin\.options\.ModelAdmin",
-            r"^django\.contrib\.admin\.options\.InlineModelAdmin",
-            r"^django\.contrib\.admin\.options\.BaseModelAdmin",
-            r"^django\.contrib\.admin\.options\.ModelAdminMixin",
-            r"^django\.contrib\.admin\.options\.InlineModelAdminMixin",
-            r"^django\.contrib\.admin\.options\.ModelAdminBase",
-            r"^django\.contrib\.admin\.options\.InlineModelAdminBase",
-            r"^django\.contrib\.admin\.options\.ModelAdminMixinBase",
-            r"^django\.contrib\.admin\.options\.InlineModelAdminMixinBase",
-            r"^django\.contrib\.admin\.options\.ModelAdminDecorator",
-            r"^django\.contrib\.admin\.options\.InlineModelAdminDecorator",
-            r"^django\.contrib\.admin\.options\.ModelAdminDecoratorMixin",
-            r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorMixin",
-            r"^django\.contrib\.admin\.options\.ModelAdminDecoratorBase",
-            r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorBase",
-        ],
-    }
-
-# jkue
-# Check X-Ray environment variable
-xray_enabled = os.environ.get("AWS_XRAY_SDK_ENABLED", "false")
-logger.info("AWS_XRAY_SDK_ENABLED environment variable: %s", xray_enabled)
-
-# jkue
-# if xray_enabled.lower() == "true":
-#     logger.info("X-Ray SDK should be enabled - checking auto-instrumentation") # noqa: ERA001 E501
-#     # Add this debug logging
-#     logger.info("X-Ray middleware added to position 0 in MIDDLEWARE list") # noqa: ERA001 E501
-#     logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0]) # noqa: ERA001 E501
-#     logger.info(  # noqa: ERA001 E501
-#         "X-Ray middleware should be: aws_xray_sdk.ext.django.middleware.XRayMiddleware" # noqa: ERA001 E501
-#     )  # noqa: ERA001 E501
-#     try:  #noqa: ERA001
-#         from aws_xray_sdk.ext.django import middleware  # noqa: F401 ERA001 E501
-
-#         logger.info("X-Ray Django middleware imported successfully") # noqa: ERA001 E501
-#     except ImportError as e:  # noqa: ERA001 E501
-#         logger.error("Failed to import X-Ray Django middleware: %s", e) # noqa: ERA001 E501
-# else: # noqa: ERA001 E501
-#     logger.info("X-Ray SDK is disabled via environment variable") # noqa: ERA001 E501
-
-# jkue
-# if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true": # noqa: ERA001 E501
-#     from aws_xray_sdk.core import patch_all, xray_recorder    # noqa: ERA001
-
-#     logger.info("Manually configuring X-Ray recorder")        # noqa: ERA001
-#     xray_recorder.configure(                  # noqa: ERA001
-#         context_missing="LOG_ERROR",          # noqa: ERA001
-#         plugins=("ECSPlugin",),           # noqa: ERA001
-#         daemon_address=os.environ.get("AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"), # noqa: ERA001 E501
-#         service="concordia", # noqa: ERA001
-#     )         # noqa: ERA001
-
-#     logger.info("Calling patch_all() for AWS SDK instrumentation") # noqa: ERA001
-#     patch_all()       # noqa: ERA001
-#     logger.info("X-Ray configuration completed")  # jkue          # noqa: ERA001
-# jkue end
 
 LOGGING = {
     "version": 1,
@@ -786,17 +643,3 @@ CONFIGURATION_CACHE_TIMEOUT = 3600  # One hour
 # The number of assets to store for next_transcribabe/next_reviewable, per campaign
 NEXT_TRANSCRIBABE_ASSET_COUNT = 100
 NEXT_REVIEWABLE_ASSET_COUNT = NEXT_TRANSCRIBABE_ASSET_COUNT
-
-# jkue
-# This should ALWAYS log, regardless of X-Ray config
-logger.info("=== ENVIRONMENT VARIABLE DEBUG ===")
-logger.info(
-    "AWS_XRAY_SDK_ENABLED: %s", os.environ.get("AWS_XRAY_SDK_ENABLED", "NOT_SET")
-)
-logger.info(
-    "AWS_XRAY_DAEMON_ADDRESS: %s", os.environ.get("AWS_XRAY_DAEMON_ADDRESS", "NOT_SET")
-)
-logger.info(
-    "DJANGO_SETTINGS_MODULE: %s", os.environ.get("DJANGO_SETTINGS_MODULE", "NOT_SET")
-)
-logger.info("=== END ENVIRONMENT DEBUG ===")
