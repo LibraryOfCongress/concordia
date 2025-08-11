@@ -288,14 +288,29 @@ AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() =
 def is_web_process():
     """
     Return True if this process should handle web requests
-    Takes into account both development (runserver) and production (daphne) web servers
     """
-    web_processes = ["runserver", "daphne", "gunicorn", "uwsgi"]
+    # Check for Celery
+    if "celery" in sys.argv:
+        return False
 
-    result = any(cmd in " ".join(sys.argv) for cmd in web_processes) or (
-        # For daphne in ECS which may not show in sys.argv
-        os.environ.get("SERVER_SOFTWARE", "").startswith("daphne")
-    )
+    # Check for app Importer
+    if "importer" in sys.argv:
+        return False
+
+    # Check for Django management commands (except runserver)
+    if "manage.py" in sys.argv and "runserver" not in sys.argv:
+        return False
+
+    # Check for Daphne (ASGI server used in ECS)
+    if "daphne" in sys.argv:
+        return True
+
+    # Check for runserver (local development)
+    if "runserver" in sys.argv:
+        return True
+
+    # Default to True for other cases (like ECS containers)
+    return True
 
     # Debug logging
     logger.info("=== is_web_process() DEBUG ===")
@@ -303,12 +318,9 @@ def is_web_process():
     logger.info(
         f"SERVER_SOFTWARE: {os.environ.get('SERVER_SOFTWARE', 'NOT SET')}"  # noqa: G004
     )  # noqa: G004
-    logger.info(f"is_web_process() returning: {result}")  # noqa: G004
     logger.info("=== END is_web_process() DEBUG ===")
-    return result
+    # jkue end
 
-
-# jkue end
 
 if is_web_process():
     # Only add X-Ray for web processes
