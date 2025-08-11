@@ -6,13 +6,13 @@ from concordia.models import Campaign
 
 class SanitizedDescriptionAdminFormTests(TestCase):
     def test_clean(self):
-        short_description = "<strong>Arm</strong>"
+        short_description = "<p>Arm</p>"
         data = {
             "slug": "test",
             "title": "Test",
             "status": Campaign.Status.ACTIVE,
             "ordering": 0,
-            "short_description": short_description,
+            "short_description": "<div>%s</<div>" % short_description,
             "description": "<script src=example.com/evil.js></script>",
         }
         data["description"] += "<strong>Arm</strong>"
