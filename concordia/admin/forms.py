@@ -27,6 +27,7 @@ FRAGMENT_ALLOWED_TAGS = {
     "kbd",
     "li",
     "ol",
+    "p",
     "span",
     "strong",
     "ul",
@@ -41,7 +42,6 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
     "h5",
     "h6",
     "hr",
-    "p",
     "section",
 }
 
