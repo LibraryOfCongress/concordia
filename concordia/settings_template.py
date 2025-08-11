@@ -288,6 +288,7 @@ AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() =
 def is_web_process():
     """
     Return True if this process should handle web requests
+    Takes into account both development (runserver) and production (daphne) web servers
     """
     # Check for Celery
     if "celery" in sys.argv:
