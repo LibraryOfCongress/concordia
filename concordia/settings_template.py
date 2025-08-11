@@ -288,29 +288,26 @@ AWS_XRAY_SDK_ENABLED = os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() =
 def is_web_process():
     """
     Return True if this process should handle web requests
-    Takes into account both development (runserver) and production (daphne) web servers
     """
-    # Check for Celery
+    # Print debug info
+    print(f"DEBUG: sys.argv = {sys.argv}")
+
+    # Check for Celery (definitely not a web process)
     if "celery" in sys.argv:
+        print("DEBUG: Found celery in sys.argv - returning False")
         return False
 
-    # Check for app Importer
-    if "importer" in sys.argv:
-        return False
+    # In ECS, if we're not Celery, we're probably the web process
+    if "ECS_CONTAINER_METADATA_URI" in os.environ:
+        print("DEBUG: ECS environment detected - returning True")
+        return True
 
-    # Check for Django management commands (except runserver)
+    # Local development logic
     if "manage.py" in sys.argv and "runserver" not in sys.argv:
+        print("DEBUG: Found manage.py without runserver - returning False")
         return False
 
-    # Check for Daphne (ASGI server used in ECS)
-    if "daphne" in sys.argv:
-        return True
-
-    # Check for runserver (local development)
-    if "runserver" in sys.argv:
-        return True
-
-    # Default to True for other cases (like ECS containers)
+    print("DEBUG: Default case - returning True")
     return True
 
     # Debug logging
@@ -343,6 +340,10 @@ if is_web_process():
             "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
         ),
         "PLUGINS": ("ECSPlugin"),
+        "AWS_XRAY_TRACING_NAME": os.environ.get(
+            "AWS_XRAY_TRACING_NAME",
+            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
+        ),
         "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
         "SAMPLING": False,
         "IGNORE_MODULE_PATTERNS": [
