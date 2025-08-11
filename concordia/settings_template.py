@@ -343,10 +343,6 @@ if is_web_process():
             "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
         ),
         "PLUGINS": ("ECSPlugin"),
-        "AWS_XRAY_TRACING_NAME": os.environ.get(
-            "AWS_XRAY_TRACING_NAME",
-            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
-        ),
         "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
         "SAMPLING": False,
         "IGNORE_MODULE_PATTERNS": [
