@@ -9,9 +9,10 @@ from django.test import tag
 from django.urls import reverse
 from pylenium.config import PyleniumConfig
 from pylenium.driver import Pylenium
+from selenium.webdriver.common.keys import Keys
 
 from .axe import Axe
-from .utils import CreateTestUsers, create_simple_page
+from .utils import CreateTestUsers, create_campaign, create_simple_page
 
 logger = getLogger(__name__)
 
@@ -73,6 +74,31 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
 
         violations = self.axe.violations()
         self.assertEqual(len(violations), 0, self.axe.report(violations))
+
+    def test_tinymce(self):
+        self.py.visit(self.reverse("admin:login"))
+        user = self.create_user("login-test")
+        self.py.get("[name='username']").type(user.username)
+        self.py.get("[name='password']").type(user._password).enter()
+
+        campaign = create_campaign()
+        self.py.visit(
+            self.reverse("admin:concordia_campaign_change", args=(campaign.pk,))
+        )
+        tinymce_frame = self.py.get("iframe#id_description_ifr")
+        self.py.switch_to.frame(tinymce_frame.webelement)
+
+        editor_body = self.py.get("body")
+        editor_body.type("test")
+        editor_body.type(Keys.ENTER)
+        editor_body.type("test")
+
+        # back to main
+        self.py.switch_to.default_content()
+
+        self.py.get('[name="_save]').click()
+
+        self.assertIn("<br>", campaign.description)
 
     def test_blog_carousel(self):
         context = {"blog_posts": [[{}], [{}]]}
