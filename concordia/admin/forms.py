@@ -72,13 +72,6 @@ class AdminProjectBulkImportForm(forms.Form):
     )
 
 
-class AdminRedownloadImagesForm(forms.Form):
-    spreadsheet_file = forms.FileField(
-        required=True,
-        label="Spreadsheet containing the URLs of assets to re-download",
-    )
-
-
 class SanitizedDescriptionAdminForm(forms.ModelForm):
     class Meta:
         model = Campaign
