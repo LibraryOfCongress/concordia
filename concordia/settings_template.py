@@ -513,6 +513,7 @@ TINYMCE_DEFAULT_CONFIG = {
     "content_css": "dark",
     "plugins": "link lists searchreplace wordcount",
     "browser_spellcheck": "true",
+    "newline_behavior": "linebreak",
     "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
     "width": 624,
 }
