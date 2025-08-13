@@ -567,6 +567,9 @@ class Item(MetricsModelMixin("item"), models.Model):
         help_text="Raw metadata returned by the remote API",
     )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
+    thumbnail_image = models.ImageField(
+        upload_to="item-thumbnails", blank=True, null=True
+    )
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for all assets of this item"
