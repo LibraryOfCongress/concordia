@@ -329,7 +329,7 @@ LOGGING = {
         "django": {"handlers": ["file"], "level": "INFO"},
         "celery": {"handlers": ["celery"], "level": "INFO"},
         "concordia": {"handlers": ["file"], "level": "INFO"},
-        "aws_xray_sdk": {"handlers": ["file"], "level": "DEBUG", "propagate": True},
+        "aws_xray_sdk": {"handlers": ["file"], "level": "INFO", "propagate": True},
         "structlog": {
             "handlers": ["structlog_file"],
             "level": "INFO",
