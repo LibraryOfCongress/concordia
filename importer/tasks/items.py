@@ -103,10 +103,11 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
 
     import_item.item.metadata.update(item_data)
 
-    populate_item_from_data(import_item.item, item_data["item"])
+    thumbnail_url = populate_item_from_data(import_item.item, item_data["item"])
 
     item.full_clean()
     item.save()
+    download_and_set_item_thumbnail(item, thumbnail_url)
 
     return import_item_task.delay(import_item.pk)
 
@@ -320,8 +321,6 @@ def populate_item_from_data(item, item_info):
     thumb_urls = [i for i in item_info["image_url"] if ".jpg" in i]
     if thumb_urls:
         item.thumbnail_url = urljoin(item.item_url, thumb_urls[0])
-    # Previously just set item.thumbnail_url. Now, resolve a candidate URL
-    # and spawn the download task using that URL directly.
     try:
         image_urls = item_info.get("image_url") or []
         thumb_urls = [u for u in image_urls if ".jpg" in u]
@@ -332,7 +331,7 @@ def populate_item_from_data(item, item_info):
         resolved = urljoin(item.item_url, thumb_urls[0])
         # TODO: remove setting thumbnail_url once field is removed
         item.thumbnail_url = resolved
-        download_and_set_item_thumbnail(item, resolved)
+        return resolved
 
 
 def get_asset_urls_from_item_resources(resources):
@@ -506,10 +505,9 @@ def download_and_set_item_thumbnail(
             )
             return msg
         locked.thumbnail_image.save(filename, content, save=True)
-
-    logger.info(
-        "download_and_set_item_thumbnail: saved as %s item_id=%s",
-        locked.thumbnail_image.name,
-        locked.pk,
-    )
+        logger.info(
+            "download_and_set_item_thumbnail: saved as %s item_id=%s",
+            locked.thumbnail_image.name,
+            locked.pk,
+        )
     return locked.thumbnail_image.name
