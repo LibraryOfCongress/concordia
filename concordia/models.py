@@ -592,6 +592,26 @@ class Item(MetricsModelMixin("item"), models.Model):
             },
         )
 
+    @property
+    def thumbnail_link(self) -> str | None:
+        """
+        Return the preferred thumbnail URL.
+
+        Prefers thumbnail_image if present and valid; otherwise falls back to
+        thumbnail_url. Returns None if neither is available.
+
+        TODO: Remove this when removing thumbnail_url and switch template
+        to use thumbnail_image directly (transcriptions/project_detail.html)
+        """
+        if self.thumbnail_image:
+            try:
+                return self.thumbnail_image.url
+            except ValueError:
+                # File missing from storage, fall back to thumbnail_url
+                # since we can for now
+                pass
+        return self.thumbnail_url or None
+
     def turn_off_ocr(self):
         return self.disable_ocr or self.project.turn_off_ocr()
 
