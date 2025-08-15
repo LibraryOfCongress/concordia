@@ -1,4 +1,7 @@
 import concurrent.futures
+import io
+import shutil
+import tempfile
 import uuid
 from unittest import mock
 
@@ -6,10 +9,12 @@ import requests
 from django.core.cache import caches
 from django.core.cache.backends.base import BaseCache
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db.models import Max
 from django.test import TestCase, override_settings
 from django.utils import timezone
-from PIL import UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
 
 from concordia.models import Asset, Item
 from concordia.tests.utils import (
@@ -37,6 +42,7 @@ from importer.tasks.collections import (
 from importer.tasks.decorators import update_task_status
 from importer.tasks.images import redownload_image_task
 from importer.tasks.items import (
+    download_and_set_item_thumbnail,
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_items_into_project_from_url,
@@ -507,7 +513,10 @@ class CreateItemImportTaskTests(TestCase):
         get_mock.return_value = self.response_mock
         self.response_mock.json.return_value = self.item_data
 
-        with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
+        with (
+            mock.patch("importer.tasks.items.import_item_task.delay") as task_mock,
+            mock.patch("importer.tasks.items.download_and_set_item_thumbnail"),
+        ):
             tasks.items.create_item_import_task(self.job.pk, self.item_url)
             self.assertTrue(task_mock.called)
             self.assertEqual(Item.objects.count(), 1)
@@ -518,25 +527,28 @@ class CreateItemImportTaskTests(TestCase):
         get_mock.return_value = self.response_mock
         self.response_mock.json.return_value = self.item_data
 
-        with mock.patch(
-            "importer.tasks.items.get_asset_urls_from_item_resources"
-        ) as asset_url_mock:
-            with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
-                with self.assertLogs("importer.tasks", level="WARNING") as log:
-                    asset_url_mock.return_value = [
-                        ["http://example.com/test.jpg"],
-                        self.item_url,
-                    ]
-                    tasks.items.create_item_import_task(self.job.pk, self.item_url)
-                    self.assertEqual(
-                        log.output,
-                        [
-                            f"WARNING:importer.tasks.items:"
-                            f"Reprocessing existing item {item} that is missing assets"
-                        ],
-                    )
-                    self.assertEqual(Item.objects.count(), 1)
-                    self.assertTrue(task_mock.called)
+        with (
+            self.assertLogs("importer.tasks", level="WARNING") as log,
+            mock.patch(
+                "importer.tasks.items.get_asset_urls_from_item_resources"
+            ) as asset_url_mock,
+            mock.patch("importer.tasks.items.import_item_task.delay") as task_mock,
+            mock.patch("importer.tasks.items.download_and_set_item_thumbnail"),
+        ):
+            asset_url_mock.return_value = [
+                ["http://example.com/test.jpg"],
+                self.item_url,
+            ]
+            tasks.items.create_item_import_task(self.job.pk, self.item_url)
+            self.assertEqual(
+                log.output,
+                [
+                    f"WARNING:importer.tasks.items:"
+                    f"Reprocessing existing item {item} that is missing assets"
+                ],
+            )
+            self.assertEqual(Item.objects.count(), 1)
+            self.assertTrue(task_mock.called)
 
     def test_create_item_import_task_existing_item_no_missing_assets(self, get_mock):
         item = create_item(item_id="testid1", project=self.job.project)
@@ -544,29 +556,32 @@ class CreateItemImportTaskTests(TestCase):
         get_mock.return_value = self.response_mock
         self.response_mock.json.return_value = self.item_data
 
-        with mock.patch(
-            "importer.tasks.items.get_asset_urls_from_item_resources"
-        ) as asset_url_mock:
-            with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
-                with self.assertLogs("importer.tasks", level="WARNING") as log:
-                    asset_url_mock.return_value = [
-                        ["http://example.com/test.jpg"],
-                        self.item_url,
-                    ]
-                    tasks.items.create_item_import_task(self.job.pk, self.item_url)
+        with (
+            self.assertLogs("importer.tasks", level="WARNING") as log,
+            mock.patch(
+                "importer.tasks.items.get_asset_urls_from_item_resources"
+            ) as asset_url_mock,
+            mock.patch("importer.tasks.items.import_item_task.delay") as task_mock,
+            mock.patch("importer.tasks.items.download_and_set_item_thumbnail"),
+        ):
+            asset_url_mock.return_value = [
+                ["http://example.com/test.jpg"],
+                self.item_url,
+            ]
+            tasks.items.create_item_import_task(self.job.pk, self.item_url)
 
-                    self.assertEqual(
-                        log.output,
-                        [
-                            f"WARNING:importer.tasks.items:"
-                            f"Not reprocessing existing item with all asssets: {item}"
-                        ],
-                    )
-                    self.assertEqual(
-                        ImportItem.objects.get(item=item).status,
-                        f"Not reprocessing existing item with all assets: {item}",
-                    )
-                    self.assertFalse(task_mock.called)
+            self.assertEqual(
+                log.output,
+                [
+                    f"WARNING:importer.tasks.items:"
+                    f"Not reprocessing existing item with all asssets: {item}"
+                ],
+            )
+            self.assertEqual(
+                ImportItem.objects.get(item=item).status,
+                f"Not reprocessing existing item with all assets: {item}",
+            )
+            self.assertFalse(task_mock.called)
 
     def test_create_item_import_task_existing_item_redownload(self, get_mock):
         item = create_item(item_id="testid1", project=self.job.project)
@@ -576,18 +591,21 @@ class CreateItemImportTaskTests(TestCase):
             "item": {"id": "testid1", "title": "Test Title", "image_url": []}
         }
 
-        with mock.patch(
-            "importer.tasks.items.get_asset_urls_from_item_resources"
-        ) as asset_url_mock:
-            with mock.patch("importer.tasks.items.import_item_task.delay") as task_mock:
-                asset_url_mock.return_value = [
-                    ["http://example.com/test.jpg"],
-                    self.item_url,
-                ]
-                tasks.items.create_item_import_task(
-                    self.job.pk, self.item_url, redownload=True
-                )
-                self.assertTrue(task_mock.called)
+        with (
+            mock.patch(
+                "importer.tasks.items.get_asset_urls_from_item_resources"
+            ) as asset_url_mock,
+            mock.patch("importer.tasks.items.import_item_task.delay") as task_mock,
+            mock.patch("importer.tasks.items.download_and_set_item_thumbnail"),
+        ):
+            asset_url_mock.return_value = [
+                ["http://example.com/test.jpg"],
+                self.item_url,
+            ]
+            tasks.items.create_item_import_task(
+                self.job.pk, self.item_url, redownload=True
+            )
+            self.assertTrue(task_mock.called)
 
 
 class ItemImportTests(TestCase):
@@ -1520,3 +1538,151 @@ class DownloadAssetImageTaskTests(TestCase):
             tasks.images.download_asset_image_task(
                 self.asset.pk, self.batch_id, create_job=True
             )
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.FileSystemStorage")
+class DownloadItemThumbnailTests(TestCase):
+    class FakeResponse:
+        """Minimal streamable response for mocking requests.get(...)."""
+
+        def __init__(self, content, content_type="image/png", on_iter=None):
+            self.headers = {"Content-Type": content_type} if content_type else {}
+            self._content = content
+            self._on_iter = on_iter
+            self._iter_called = False
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def raise_for_status(self):
+            return
+
+        def iter_content(self, chunk_size=64 * 1024):
+            if self._on_iter and not self._iter_called:
+                self._on_iter()
+                self._iter_called = True
+            yield self._content
+
+    def setUp(self):
+        self.temp_media = tempfile.mkdtemp(prefix="test-media-")
+        self._override = override_settings(MEDIA_ROOT=self.temp_media)
+        self._override.enable()
+
+    def tearDown(self):
+        self._override.disable()
+        shutil.rmtree(self.temp_media, ignore_errors=True)
+
+    def make_image_bytes(self, fmt="PNG", size=(2, 2), color=(1, 2, 3)):
+        buf = io.BytesIO()
+        img = Image.new("RGB", size, color)
+        img.save(buf, format=fmt)
+        return buf.getvalue()
+
+    def test_skip_when_already_present_and_not_force(self):
+        item = create_item()
+        # Seed an existing thumbnail
+        item.thumbnail_image.save("existing.jpg", ContentFile(b"old"), save=True)
+        with mock.patch("importer.tasks.items.requests.get") as get_mock:
+            msg = download_and_set_item_thumbnail(item, "https://example.com/test.jpg")
+        self.assertIn("skipping", msg.lower())
+        self.assertFalse(get_mock.called)
+        item.refresh_from_db()
+        self.assertTrue(item.thumbnail_image.name.endswith("existing.jpg"))
+        self.assertTrue(default_storage.exists(item.thumbnail_image.name))
+
+    def test_success_with_content_type_extension(self):
+        item = create_item()
+        payload = self.make_image_bytes(fmt="PNG")
+        url = "https://example.com/path/name.png"
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=type(self).FakeResponse(payload, "image/png"),
+        ):
+            saved = download_and_set_item_thumbnail(item, url)
+        item.refresh_from_db()
+        self.assertEqual(saved, item.thumbnail_image.name)
+        self.assertTrue(saved.endswith(".png"))
+        self.assertTrue(default_storage.exists(saved))
+        with default_storage.open(saved, "rb") as fh:
+            self.assertEqual(fh.read(), payload)
+
+    def test_fallback_extension_via_pillow_sniff_when_guess_is_bin(self):
+        item = create_item()
+        payload = self.make_image_bytes(fmt="PNG")
+        url = "https://example.com/noext"  # no extension to force sniff path
+        with (
+            mock.patch("importer.tasks.items._guess_extension", return_value=".bin"),
+            mock.patch(
+                "importer.tasks.items.requests.get",
+                return_value=type(self).FakeResponse(payload, content_type=""),
+            ),
+        ):
+            saved = download_and_set_item_thumbnail(item, url)
+        item.refresh_from_db()
+        self.assertEqual(saved, item.thumbnail_image.name)
+        # Pillow sniff sees PNG, so .png via the mapping in the function
+        self.assertTrue(saved.endswith(".png"))
+        self.assertTrue(default_storage.exists(saved))
+
+    def test_invalid_image_raises_value_error(self):
+        item = create_item()
+        bad_bytes = b"not-an-image"
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=type(self).FakeResponse(bad_bytes, "application/octet-stream"),
+        ):
+            with self.assertRaises(ValueError):
+                download_and_set_item_thumbnail(item, "https://example.com/notimg")
+        item.refresh_from_db()
+        self.assertFalse(bool(item.thumbnail_image))
+
+    def test_requests_exception_propagates(self):
+        item = create_item()
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            side_effect=requests.RequestException("error"),
+        ):
+            with self.assertRaises(requests.RequestException):
+                download_and_set_item_thumbnail(item, "https://example.com/error")
+
+    def test_race_present_after_download_skips_final_save(self):
+        """Simulate another writer saving the thumbnail mid-download."""
+        item = create_item()
+
+        def _concurrent_writer():
+            # Another process writes a thumbnail before the second transaction.
+            item.refresh_from_db()
+            item.thumbnail_image.save("pre.jpg", ContentFile(b"pre"), save=True)
+
+        payload = self.make_image_bytes(fmt="PNG")
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=type(self).FakeResponse(
+                payload, "image/png", on_iter=_concurrent_writer
+            ),
+        ):
+            msg = download_and_set_item_thumbnail(item, "https://example.com/new.png")
+        self.assertIn("skipping save", msg.lower())
+        item.refresh_from_db()
+        self.assertTrue(item.thumbnail_image.name.endswith("pre.jpg"))
+        self.assertTrue(default_storage.exists(item.thumbnail_image.name))
+
+    def test_force_overwrite_path_runs_and_sets_thumbnail(self):
+        item = create_item()
+        # Seed an existing thumbnail
+        item.thumbnail_image.save("existing.jpg", ContentFile(b"old"), save=True)
+        payload = self.make_image_bytes(fmt="PNG")
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=type(self).FakeResponse(payload, "image/png"),
+        ):
+            saved = download_and_set_item_thumbnail(
+                item, "https://example.com/new.png", force=True
+            )
+        item.refresh_from_db()
+        self.assertEqual(saved, item.thumbnail_image.name)
+        self.assertTrue(saved.endswith(".png"))
+        self.assertTrue(default_storage.exists(saved))
