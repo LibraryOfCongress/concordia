@@ -79,10 +79,10 @@ jobs:
                   pipenv install --dev --deploy
                   pipenv install tblib # For parallel test debugging
 
-            - name: Install Node Dependencies and Add .bin to Path
-              run: |
-                  npm install
-                  echo "PATH=$PWD/node_modules/.bin:$PATH" >> $GITHUB_ENV
+            # - name: Install Node Dependencies and Add .bin to Path
+            #   run: |
+            #       npm install
+            #       echo "PATH=$PWD/node_modules/.bin:$PATH" >> $GITHUB_ENV
 
             - name: Configure Logs
               run: |
