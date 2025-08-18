@@ -38,6 +38,7 @@ from concordia.utils import (
 )
 from concordia.utils.constants import MESSAGE_LEVEL_NAMES, URL_REGEX
 from configuration.utils import configuration_value
+from exporter.utils import find_unacceptable_characters
 
 from .decorators import reserve_rate, validate_anonymous_user
 
@@ -695,9 +696,10 @@ def save_transcription(
         asset=asset,
     )
 
+    transcription_text = request.POST["text"]
+
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
-    transcription_text = request.POST["text"]
     url_match = re.search(URL_REGEX, transcription_text)
     if url_match:
         structured_logger.warning(
@@ -711,7 +713,31 @@ def save_transcription(
         return JsonResponse(
             {
                 "error": "It looks like your text contains URLs. "
-                "Please remove the URLs and try again."
+                "Please remove the URLs and try again.",
+                "error-code": "url_detected",
+            },
+            status=400,
+        )
+
+    # Check whether this transcription text contains any non-printable
+    # characters that could break the asset when exported. If so, ask
+    # the user to correct the transcription.
+    violations = find_unacceptable_characters(transcription_text)
+    if violations:
+        structured_logger.warning(
+            "Transcription save rejected due to unacceptable characters in text.",
+            event_code="transcription_save_rejected",
+            reason="Transcription text contains unacceptable characters",
+            reason_code="unacceptable_characters",
+            user=user,
+            asset=asset,
+        )
+        return JsonResponse(
+            {
+                "error": "It looks like your text contains unacceptable characters. "
+                "Please remove the characters and try again.",
+                "unacceptable-characters": violations,
+                "error-code": "unacceptable_characters",
             },
             status=400,
         )

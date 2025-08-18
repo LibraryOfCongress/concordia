@@ -567,6 +567,9 @@ class Item(MetricsModelMixin("item"), models.Model):
         help_text="Raw metadata returned by the remote API",
     )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
+    thumbnail_image = models.ImageField(
+        upload_to="item-thumbnails", blank=True, null=True
+    )
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for all assets of this item"
@@ -588,6 +591,26 @@ class Item(MetricsModelMixin("item"), models.Model):
                 "item_id": self.item_id,
             },
         )
+
+    @property
+    def thumbnail_link(self) -> str | None:
+        """
+        Return the preferred thumbnail URL.
+
+        Prefers thumbnail_image if present and valid; otherwise falls back to
+        thumbnail_url. Returns None if neither is available.
+
+        TODO: Remove this when removing thumbnail_url and switch template
+        to use thumbnail_image directly (transcriptions/project_detail.html)
+        """
+        if self.thumbnail_image:
+            try:
+                return self.thumbnail_image.url
+            except ValueError:
+                # File missing from storage, fall back to thumbnail_url
+                # since we can for now
+                pass
+        return self.thumbnail_url or None
 
     def turn_off_ocr(self):
         return self.disable_ocr or self.project.turn_off_ocr()

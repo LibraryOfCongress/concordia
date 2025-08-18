@@ -1237,6 +1237,23 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             data = self.assertValidJSON(resp, expected_status=400)
             self.assertIn("error", data)
 
+            # Unacceptable characters: should return 400 with details
+            with patch(
+                "concordia.views.ajax.find_unacceptable_characters"
+            ) as mock_find:
+                # one violation at line 1, col 2: zero-width space
+                mock_find.return_value = [(1, 2, "\u200b")]
+                resp = self.client.post(
+                    reverse("save-transcription", args=(asset.pk,)),
+                    data={"text": "contains bad char"},
+                )
+            data = self.assertValidJSON(resp, expected_status=400)
+            self.assertIn("error", data)
+            self.assertEqual(data.get("error-code"), "unacceptable_characters")
+            self.assertIn("unacceptable-characters", data)
+            # tuples become lists in JSON
+            self.assertEqual(data["unacceptable-characters"], [[1, 2, "\u200b"]])
+
             # Test that it correctly works when supersedes is set
             resp = self.client.post(
                 reverse("save-transcription", args=(asset.pk,)),
