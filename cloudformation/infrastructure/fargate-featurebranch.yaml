@@ -250,6 +250,7 @@ Resources:
                 MaximumPercent: 200
                 MinimumHealthyPercent: 75
             DesiredCount: 1
+            EnableExecuteCommand: true
             NetworkConfiguration:
                 AwsvpcConfiguration:
                     SecurityGroups:
