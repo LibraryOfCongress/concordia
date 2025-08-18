@@ -3,7 +3,7 @@ import mimetypes
 import os
 import re
 from logging import getLogger
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -334,50 +334,90 @@ def populate_item_from_data(item, item_info):
         return resolved
 
 
-def get_asset_urls_from_item_resources(resources):
-    """
-    Given a loc.gov JSON response, return the list of asset URLs matching our
-    criteria (JPEG, largest version available)
+def get_asset_urls_from_item_resources(
+    resources: list[dict[str, Any]],
+) -> tuple[list[str], str]:
+    """Extract preferred image asset URLs from a LoC `resources` JSON block.
+
+    Selection is done *within each file group* (i.e., each element of
+    `resource["files"]`) by mimetype, then resolution, with a service tie-break.
+
+    Preference, evaluated in this order:
+      1) JP2 with the largest resolution (width * height)
+      2) JPG with the largest resolution
+      3) GIF with the largest resolution
+
+    If multiple variants of the same mimetype share the same resolution, break
+    the tie by service host preference:
+      storage-services  >  image-services  >  anything else.
+
+    Variants missing any of "url", "height", or "width" are skipped.
+    The first resource's "url" is returned as `item_resource_url` for reference.
+
+    Args:
+        resources: Parsed list of resource dicts from a loc.gov JSON response.
+
+    Returns:
+        A 2-tuple of:
+            - assets: List of chosen asset URLs (one per input file group).
+            - item_resource_url: The first resource's "url" or an empty string.
     """
 
-    assets = []
+    def _service_rank(url: str) -> int:
+        # lower is better.
+        if "storage-services" in url:
+            return 0
+        if "image-services" in url:
+            return 1
+        return 2
+
+    # Mimetype order we will evaluate, most preferred first.
+    _mimetype_order: list[str] = ["image/jp2", "image/jpeg", "image/gif"]
+
+    assets: list[str] = []
     try:
         item_resource_url = resources[0]["url"] or ""
     except (IndexError, KeyError):
         item_resource_url = ""
 
     for resource in resources:
-        # The JSON response for each file is a list of available image versions
-        # we will attempt to save the highest resolution jpg, falling back to
-        # to the highest resolution gif if there are none
-
+        # The JSON response for each file is a list of available image versions.
+        # We will attempt to save the highest-priority variant using the order
+        # described above. Within a mimetype, we choose the largest resolution
+        # and, only if tied, prefer storage over image over other services.
         for item_file in resource.get("files", []):
-            candidates = []
-            backup_candidates = []
+            chosen_url: str | None = None
 
-            for variant in item_file:
+            for mt in _mimetype_order:
+                # Collect all valid variants for this mimetype.
+                group: list[tuple[int, int, str]] = []
+                for variant in item_file:
+                    if any(
+                        key for key in ("url", "height", "width") if key not in variant
+                    ):
+                        continue
+                    if variant.get("mimetype") != mt:
+                        continue
 
-                if any(i for i in ("url", "height", "width") if i not in variant):
-                    continue
+                    try:
+                        url = variant["url"]
+                        height = int(variant["height"]) or 0
+                        width = int(variant["width"]) or 0
+                        resolution = height * width
+                        group.append((-resolution, _service_rank(url), url))
+                    except ValueError:
+                        # height or width was not an int,
+                        # so ignore this image
+                        pass
 
-                url = variant["url"]
-                height = variant["height"]
-                width = variant["width"]
-                mimetype = variant.get("mimetype")
+                # If we found any of this mimetype, pick the best and stop.
+                if group:
+                    group.sort()
+                    chosen_url = group[0][2]
+                    break
 
-                # We prefer jpgs, but if there are none,
-                # we'll fallback to gifs
-                if mimetype == "image/jpeg":
-                    candidates.append((url, height * width))
-                elif mimetype == "image/gif":
-                    backup_candidates.append((url, height * width))
-
-            if candidates:
-                candidates.sort(key=lambda i: i[1], reverse=True)
-                assets.append(candidates[0][0])
-            elif backup_candidates:
-                backup_candidates.sort(key=lambda i: i[1], reverse=True)
-                assets.append(backup_candidates[0][0])
+            if chosen_url:
+                assets.append(chosen_url)
 
     return assets, item_resource_url
 

@@ -42,10 +42,12 @@ from importer.tasks.collections import (
 from importer.tasks.decorators import update_task_status
 from importer.tasks.images import redownload_image_task
 from importer.tasks.items import (
+    _guess_extension,
     download_and_set_item_thumbnail,
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_items_into_project_from_url,
+    populate_item_from_data,
 )
 
 from .utils import (
@@ -678,6 +680,48 @@ class ItemImportTests(TestCase):
         self.assertEqual(item.description, "Test description")
         self.assertEqual(item.thumbnail_url, "http://example.com/image.jpg")
 
+    def test_handles_exception_when_get_image_url_raises(self):
+        item = self.import_item.item
+        item.item_url = "http://example.com/"
+        item.save()
+
+        class FakeInfo:
+            """Dict-like; raises on get('image_url') to hit the except branch."""
+
+            def __init__(self):
+                self._store = {
+                    "title": "T",
+                    "description": "D",
+                    # Used by the early list-comp (outside try/except). No .jpg so
+                    # it won't set thumbnail_url there either.
+                    "image_url": ["http://example.com/nope.png"],
+                }
+
+            def __getitem__(self, key):
+                return self._store[key]
+
+            def get(self, key, default=None):
+                if key == "image_url":
+                    # Trigger the `except Exception: thumb_urls = []`
+                    raise Exception("Error")
+                return self._store.get(key, default)
+
+        info = FakeInfo()
+        result = populate_item_from_data(item, info)
+
+        # Function should swallow the exception and NOT return a URL.
+        self.assertIsNone(result)
+
+        # In-memory fields are updated
+        self.assertEqual(item.title, "T")
+        self.assertEqual(item.description, "D")
+        self.assertFalse(item.thumbnail_url)
+
+        # but not persisted, since the function doesn't save.
+        item.refresh_from_db()
+        self.assertEqual(item.title, "Test Item")  # original value in DB
+        self.assertFalse(item.thumbnail_url)
+
 
 class AssetImportTests(TestCase):
     def setUp(self):
@@ -753,6 +797,41 @@ class AssetImportTests(TestCase):
         )
         self.assertEqual(results, (["http://example.com/3.jpg"], "http://example.com"))
 
+    def test_get_asset_urls_from_item_resources_invalid_dimension(self):
+        # Because 3.jpg has invalid dimensions, it should fall back to
+        # 1.jpg
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com",
+                    "files": [
+                        [
+                            {
+                                "url": "http://example.com/1.jpg",
+                                "height": 1,
+                                "width": 1,
+                                "mimetype": "image/jpeg",
+                            },
+                            {"url": "http://example.com/2.jpg"},
+                            {
+                                "url": "http://example.com/3.jpg",
+                                "height": "badnum",
+                                "width": 2,
+                                "mimetype": "image/jpeg",
+                            },
+                            {
+                                "url": "http://example.com/4.jpg",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(results, (["http://example.com/1.jpg"], "http://example.com"))
+
     def test_get_asset_urls_from_item_resource_no_valid(self):
         results = tasks.items.get_asset_urls_from_item_resources(
             [
@@ -818,6 +897,310 @@ class AssetImportTests(TestCase):
             ]
         )
         self.assertEqual(results, (["http://example.com/4.gif"], "http://example.com"))
+
+    def test_prefers_jp2_over_jpg_even_if_smaller(self):
+        # JP2 (smaller) should win over JPG (larger) due to mimetype priority.
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com/item",
+                    "files": [
+                        [
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/j.jpg",
+                                "height": 5000,
+                                "width": 5000,
+                                "mimetype": "image/jpeg",
+                            },
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/jp2.jp2",
+                                "height": 10,
+                                "width": 10,
+                                "mimetype": "image/jp2",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                ["https://tile.loc.gov/image-services/iiif/xx/jp2.jp2"],
+                "http://example.com/item",
+            ),
+        )
+
+    def test_picks_largest_within_mimetype_then_service_tie(self):
+        # Two JP2s: different resolutions and different services.
+        # Largest resolution wins; if tied, service breaks the tie.
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com/item",
+                    "files": [
+                        [
+                            # image-services JP2 (larger)
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/a.jp2",
+                                "height": 200,
+                                "width": 200,
+                                "mimetype": "image/jp2",
+                            },
+                            # storage-services JP2 (smaller)
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/b.jp2",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/jp2",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                ["https://tile.loc.gov/image-services/iiif/xx/a.jp2"],
+                "http://example.com/item",
+            ),
+        )
+
+        # Now make them the same resolution, so storage-services should win.
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com/item2",
+                    "files": [
+                        [
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/c.jp2",
+                                "height": 300,
+                                "width": 300,
+                                "mimetype": "image/jp2",
+                            },
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/d.jp2",
+                                "height": 300,
+                                "width": 300,
+                                "mimetype": "image/jp2",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                ["https://tile.loc.gov/storage-services/xx/d.jp2"],
+                "http://example.com/item2",
+            ),
+        )
+
+    def test_falls_back_to_jpg_then_gif_and_picks_largest(self):
+        # No JP2, then choose largest JPG; if no JPG, then choose largest GIF.
+        # Also prove that service preference does not override resolution
+        # across mimetypes.
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com/r1",
+                    "files": [
+                        [
+                            # JPG candidates only
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/large.jpg",
+                                "height": 1000,
+                                "width": 1000,
+                                "mimetype": "image/jpeg",
+                            },
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/small.jpg",
+                                "height": 10,
+                                "width": 10,
+                                "mimetype": "image/jpeg",
+                            },
+                            # A huge GIF should still lose to JPG
+                            # due to mimetype priority.
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/huge.gif",
+                                "height": 10000,
+                                "width": 10000,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                },
+                {
+                    "url": "http://example.com/r2",
+                    "files": [
+                        [
+                            # No JP2/JPG here, so fall back to largest GIF
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/a.gif",
+                                "height": 5,
+                                "width": 5,
+                                "mimetype": "image/gif",
+                            },
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/b.gif",
+                                "height": 6,
+                                "width": 6,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                },
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                [
+                    "https://tile.loc.gov/storage-services/xx/large.jpg",
+                    "https://tile.loc.gov/storage-services/xx/b.gif",
+                ],
+                "http://example.com/r1",
+            ),
+        )
+
+    def test_service_tie_breaker_unknown_service_is_last(self):
+        # Tie on resolution within the same mimetype across three services:
+        # storage-services should win over image-services, which should
+        # win over unknown.
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com/item",
+                    "files": [
+                        [
+                            {
+                                "url": "https://unknown.example.com/path/x.jpg",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/jpeg",
+                            },
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/y.jpg",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/jpeg",
+                            },
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/z.jpg",
+                                "height": 100,
+                                "width": 100,
+                                "mimetype": "image/jpeg",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                ["https://tile.loc.gov/storage-services/xx/z.jpg"],
+                "http://example.com/item",
+            ),
+        )
+
+    def test_ignores_variants_missing_fields_and_unknown_mimetype(self):
+        # Mix of invalid variants and one valid target.
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    "url": "http://example.com/item",
+                    "files": [
+                        [
+                            # Missing width
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/misswidth.jpg",
+                                "height": 10,
+                                "mimetype": "image/jpeg",
+                            },
+                            # Missing height
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/missheight.jpg",
+                                "width": 10,
+                                "mimetype": "image/jpeg",
+                            },
+                            # Missing url
+                            {
+                                "height": 10,
+                                "width": 10,
+                                "mimetype": "image/jpeg",
+                            },
+                            # Unknown mimetype
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/wrong.tif",
+                                "height": 10,
+                                "width": 10,
+                                "mimetype": "image/tiff",
+                            },
+                            # Valid GIF (only valid one)
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/ok.gif",
+                                "height": 2,
+                                "width": 3,
+                                "mimetype": "image/gif",
+                            },
+                        ]
+                    ],
+                }
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                ["https://tile.loc.gov/image-services/iiif/xx/ok.gif"],
+                "http://example.com/item",
+            ),
+        )
+
+    def test_first_resource_missing_url_key_sets_empty_item_resource_url(self):
+        results = tasks.items.get_asset_urls_from_item_resources(
+            [
+                {
+                    # No "url" key
+                    "files": [
+                        [
+                            {
+                                "url": "https://tile.loc.gov/storage-services/xx/aa.jp2",
+                                "height": 5,
+                                "width": 5,
+                                "mimetype": "image/jp2",
+                            }
+                        ]
+                    ],
+                },
+                {
+                    "url": "http://example.com/second",
+                    "files": [
+                        [
+                            {
+                                "url": "https://tile.loc.gov/image-services/iiif/xx/bb.jpg",
+                                "height": 10,
+                                "width": 10,
+                                "mimetype": "image/jpeg",
+                            }
+                        ]
+                    ],
+                },
+            ]
+        )
+        self.assertEqual(
+            results,
+            (
+                [
+                    "https://tile.loc.gov/storage-services/xx/aa.jp2",
+                    "https://tile.loc.gov/image-services/iiif/xx/bb.jpg",
+                ],
+                "",
+            ),
+        )
 
     def test_download_asset_task(self):
         with mock.patch("importer.tasks.assets.download_asset") as task_mock:
@@ -1686,3 +2069,58 @@ class DownloadItemThumbnailTests(TestCase):
         self.assertEqual(saved, item.thumbnail_image.name)
         self.assertTrue(saved.endswith(".png"))
         self.assertTrue(default_storage.exists(saved))
+
+    def test_iter_content_skips_empty_chunks(self):
+        """Ensure empty chunks are skipped and valid data is still written."""
+        item = create_item()
+        payload = self.make_image_bytes(fmt="PNG")
+
+        class EmptyThenDataResponse:
+            def __init__(self, data):
+                self.headers = {"Content-Type": "image/png"}
+                self._data = data
+
+            def __enter__(self):  # context manager support
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def raise_for_status(self):
+                return
+
+            def iter_content(self, chunk_size=64 * 1024):
+                # First an empty/falsy chunk, then the real PNG bytes.
+                yield b""
+                yield self._data
+
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=EmptyThenDataResponse(payload),
+        ):
+            saved = download_and_set_item_thumbnail(
+                item, "https://example.com/empty-first.png"
+            )
+
+        self.assertTrue(saved.endswith(".png"))
+        self.assertTrue(default_storage.exists(saved))
+        with default_storage.open(saved, "rb") as fh:
+            self.assertEqual(fh.read(), payload)
+
+    def test_uses_url_extension_when_no_content_type_and_ext_present(self):
+        # No content-type, so fall back to URL; returns lowercase extension.
+        ext = _guess_extension(None, "/path/to/IMAGE.JPG")
+        self.assertEqual(ext, ".jpg")
+
+    def test_returns_bin_when_no_content_type_and_no_url_extension(self):
+        # No content-type and no extension in URL, so return ".bin"
+        ext = _guess_extension(None, "/path/to/filename")
+        self.assertEqual(ext, ".bin")
+
+    @mock.patch("importer.tasks.items.mimetypes.guess_extension", return_value=None)
+    def test_falls_back_to_url_when_content_type_unmapped(self, _mock_guess):
+        # Content-Type is present but unmapped, meaning mimetypes.guess_extension
+        # returns None, so the function must fall back to the URL and lowercase the
+        # extension.
+        ext = _guess_extension("application/x-unknown-type", "/some/Path/IMAGE.JPG")
+        self.assertEqual(ext, ".jpg")
