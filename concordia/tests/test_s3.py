@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock, patch
 
 from django.core.files.base import ContentFile
@@ -38,6 +39,20 @@ class S3StorageAPITest(TestCase):
         },
         AWS_STORAGE_BUCKET_NAME="test-bucket",
     )
+    @patch.dict(
+        os.environ,
+        {
+            # Force static creds so botocore uses the "env" provider
+            "AWS_ACCESS_KEY_ID": "test",
+            "AWS_SECRET_ACCESS_KEY": "test",
+            "AWS_SESSION_TOKEN": "test",
+            "AWS_DEFAULT_REGION": "us-east-1",
+            # Prevent profile/config-based resolution and IMDS
+            "AWS_SDK_LOAD_CONFIG": "0",
+            "AWS_EC2_METADATA_DISABLED": "true",
+        },
+        clear=False,
+    )
     @patch("botocore.auth.SigV4Auth.add_auth")
     @patch("botocore.endpoint.Endpoint._send")
     def test_s3_upload_api_layer(self, mock_send, mock_add_auth):
@@ -48,18 +63,38 @@ class S3StorageAPITest(TestCase):
         mock_response.content = b""
         mock_send.return_value = mock_response
 
-        # We import this here to stop it from being
-        # evaluated before we override the storage settings
-        from concordia.storage import ASSET_STORAGE
+        with patch.dict(
+            os.environ,
+            {
+                # Force the env-credentials provider to win
+                "AWS_ACCESS_KEY_ID": "test",
+                "AWS_SECRET_ACCESS_KEY": "test",
+                "AWS_SESSION_TOKEN": "test",
+                "AWS_DEFAULT_REGION": "us-east-1",
+                # Make boto ignore shared config and IMDS
+                "AWS_SDK_LOAD_CONFIG": "0",
+                "AWS_EC2_METADATA_DISABLED": "true",
+            },
+            clear=False,  # keep PATH, HOME, etc.
+        ):
+            # Ensure AWS_PROFILE is truly absent (not an empty string)
+            # Setting it to an empty string causes an error because
+            # boto tries to use it as a profile name
+            os.environ.pop("AWS_PROFILE", None)
+            os.environ.pop("AWS_DEFAULT_PROFILE", None)
 
-        ASSET_STORAGE._setup()
+            # We import this here to stop it from being
+            # evaluated before we override the storage settings
+            from concordia.storage import ASSET_STORAGE
 
-        # Simulate manually saving to the storage backend
-        asset_image_filename = "test-campaign/test-project/1.jpg"
-        content = ContentFile(b"abc123", name="test.jpg")
+            ASSET_STORAGE._setup()
 
-        ASSET_STORAGE.save(asset_image_filename, content)
-        asset = create_asset(storage_image=asset_image_filename)
+            # Simulate manually saving to the storage backend
+            asset_image_filename = "test-campaign/test-project/1.jpg"
+            content = ContentFile(b"abc123", name="test.jpg")
 
-        self.assertTrue(asset.storage_image.name.endswith("1.jpg"))
-        mock_send.assert_called()
+            ASSET_STORAGE.save(asset_image_filename, content)
+            asset = create_asset(storage_image=asset_image_filename)
+
+            self.assertTrue(asset.storage_image.name.endswith("1.jpg"))
+            mock_send.assert_called()

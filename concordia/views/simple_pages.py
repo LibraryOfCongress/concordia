@@ -1,7 +1,9 @@
 import datetime
+from typing import Any
 
 import markdown
 from django.core.cache import cache
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import Context, Template
 from django.utils.http import http_date
@@ -9,23 +11,37 @@ from django.utils.timezone import now
 from django.views.generic import RedirectView
 
 from concordia.models import Guide, SimplePage, SiteReport
-from concordia.parser import fetch_blog_posts
+from concordia.parser import paginate_blog_posts
 
 from .decorators import default_cache_control
 
 
 @default_cache_control
 def simple_page(
-    request, path=None, slug=None, body_ctx=None, template="static-page.html"
-):
+    request: HttpRequest,
+    path: str | None = None,
+    slug: str | None = None,
+    body_ctx: dict[str, Any] | None = None,
+    template: str = "static-page.html",
+) -> HttpResponse:
     """
-    Basic content management using Markdown managed in the SimplePage model
+    Renders a simple Markdown-based page stored in the `SimplePage` model.
 
-    This expects a pre-existing URL path matching the path specified in the database::
+    If no `path` is provided, defaults to the current request path. Markdown is
+    rendered with optional associated guide content. Breadcrumbs and language
+    detection are computed from the URL structure.
 
-        path("about/", views.simple_page, name="about"),
+    Request Parameters:
+        path (str, optional): The database path of the page. Defaults to the
+            current request path.
+        slug (str, optional): Unused in current logic; passed for route compatibility.
+        body_ctx (dict[str, Any], optional): Additional context injected into the page
+            body during rendering.
+        template (str): Template used to render the page.
+
+    Returns:
+        HttpResponse: Rendered HTML of the simple page.
     """
-
     if not path:
         path = request.path
 
@@ -72,9 +88,23 @@ def simple_page(
 
 
 @default_cache_control
-def about_simple_page(request, path=None, slug=None):
+def about_simple_page(
+    request: HttpRequest, path: str | None = None, slug: str | None = None
+) -> HttpResponse:
     """
-    Adds additional context to the "about" SimplePage
+    Renders the "about" simple page with additional cached campaign and blog stats.
+
+    Adds the following keys to the context:
+        - `report_date` (datetime): Yesterday’s date.
+        - `campaigns_published` (int): Count from active SiteReport.
+        - `assets_published` (int): Active + retired total.
+        - `assets_completed` (int): Active + retired total.
+        - `assets_waiting_review` (int): Active + retired total.
+        - `users_activated` (int): From active SiteReport.
+        - `blog_posts` (Callable): Reference to blog post fetcher.
+
+    Returns:
+        HttpResponse: Rendered HTML of the about page with campaign stats.
     """
     context_cache_key = "about_simple_page-about_context"
     about_context = cache.get(context_cache_key)
@@ -111,7 +141,7 @@ def about_simple_page(request, path=None, slug=None):
             "assets_waiting_review": active_campaigns.assets_waiting_review
             + retired_campaigns.assets_waiting_review,
             "users_activated": active_campaigns.users_activated,
-            "blog_posts": fetch_blog_posts,
+            "blog_posts": paginate_blog_posts(),
         }
         cache.set(context_cache_key, about_context, 60 * 60)
 

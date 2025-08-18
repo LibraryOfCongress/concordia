@@ -27,6 +27,7 @@ FRAGMENT_ALLOWED_TAGS = {
     "kbd",
     "li",
     "ol",
+    "p",
     "span",
     "strong",
     "ul",
@@ -41,7 +42,6 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
     "h5",
     "h6",
     "hr",
-    "p",
     "section",
 }
 
@@ -69,13 +69,6 @@ class AdminProjectBulkImportForm(forms.Form):
 
     redownload = forms.BooleanField(
         required=False, label="Should existing items be redownloaded?"
-    )
-
-
-class AdminRedownloadImagesForm(forms.Form):
-    spreadsheet_file = forms.FileField(
-        required=True,
-        label="Spreadsheet containing the URLs of assets to re-download",
     )
 
 

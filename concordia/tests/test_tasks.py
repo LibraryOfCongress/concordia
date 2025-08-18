@@ -5,6 +5,7 @@ from django.core import mail
 from django.core.cache import cache, caches
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from requests.models import Response
 
 from concordia.models import (
     Campaign,
@@ -24,6 +25,7 @@ from concordia.tasks import (
     clean_next_reviewable_for_topic,
     clean_next_transcribable_for_campaign,
     clean_next_transcribable_for_topic,
+    fetch_and_cache_blog_images,
     populate_asset_status_visualization_cache,
     populate_daily_activity_visualization_cache,
     populate_next_reviewable_for_campaign,
@@ -279,6 +281,32 @@ class TaskTestCase(CreateTestUsers, TestCase):
         mock_update.assert_called_with(user.id, campaign.id, "review")
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_called_with("userprofileactivity_cache_lock")
+
+    @mock.patch("concordia.tasks.extract_og_image")
+    @mock.patch("concordia.parser.requests.get")
+    def test_fetch_and_cache_blog_images(self, mock_get, mock_extract):
+        link1 = "https://blogs.loc.gov/thesignal/2025/05/volunteers-ocr/"
+        link2 = "https://blogs.loc.gov/thesignal/2025/02/douglass-day-2025/"
+        rss = """<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0">
+          <channel>
+            <item><link>%s</link></item><item><link>%s</link></item>
+          </channel>
+        </rss>""" % (
+            link1,
+            link2,
+        )
+        mock_response = mock.MagicMock(spec=Response)
+        mock_response.content = rss
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        # run the celery task
+        fetch_and_cache_blog_images()
+
+        mock_extract.assert_any_call(link1)
+        mock_extract.assert_any_call(link2)
+        self.assertEqual(mock_extract.call_count, 2)
 
 
 class UpdateUserprofileactivityFromCacheTestCase(CreateTestUsers, TestCase):

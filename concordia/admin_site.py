@@ -22,11 +22,6 @@ class ConcordiaAdminSite(admin.AdminSite):
                 name="retired-site-report",
             ),
             path(
-                "redownload-images/",
-                views.redownload_images_view,
-                name="redownload-images",
-            ),
-            path(
                 "project-level-export/",
                 views.project_level_export,
                 name="project-level-export",
