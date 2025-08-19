@@ -69,7 +69,7 @@ NPM_FILE_PATTERNS = {
     "js-cookie": ["dist/*"],
     "@popperjs/core": ["dist/*"],
     "bootstrap": ["dist/*"],
-    "screenfull": ["dist/*"],
+    "screenfull": ["*"],
     "@duetds/date-picker/": ["dist/*"],
     "@fortawesome/fontawesome-free/": [
         "css/*",
@@ -81,6 +81,8 @@ NPM_FILE_PATTERNS = {
     "chart.js": ["auto/*", "dist/*"],
     "@kurkle/color": ["dist/*"],
     "chroma-js": ["dist/*"],
+    "@sentry": ["*"],
+    "@sentry-internal": ["*"],
 }
 
 TEMPLATE_DEBUG = False

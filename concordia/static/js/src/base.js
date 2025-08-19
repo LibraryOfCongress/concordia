@@ -1,10 +1,9 @@
-/* exported displayMessage displayHtmlMessage buildErrorMessage trackUIInteraction */
-
-import $ from 'jquery';
 import 'bootstrap';
 import Cookies from 'js-cookie';
 import screenfull from 'screenfull';
-import * as Sentry from 'sentry';
+import * as Sentry from '@sentry/browser';
+
+const $ = window.jQuery;
 
 (function () {
     /*
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // eslint-disable-next-line no-unused-vars
-function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+export function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errorMessage;
     // eslint-disable-next-line unicorn/prefer-ternary
@@ -49,7 +48,7 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errorMessage;
 }
 
-function displayHtmlMessage(level, message, uniqueId) {
+export function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
@@ -93,7 +92,7 @@ function displayHtmlMessage(level, message, uniqueId) {
     return $newMessage;
 }
 
-function displayMessage(level, message, uniqueId) {
+export function displayMessage(level, message, uniqueId) {
     return displayHtmlMessage(
         level,
         document.createTextNode(message),
@@ -236,7 +235,7 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
 );
 
 // eslint-disable-next-line no-unused-vars
-function debounce(function_, timeout = 300) {
+export function debounce(function_, timeout = 300) {
     // Based on https://www.freecodecamp.org/news/javascript-debounce-example/
     let timer;
     return (...arguments_) => {
@@ -277,9 +276,9 @@ var $copyUrlButton = $('.copy-url-button');
 var $facebookShareButton = $('.facebook-share-button');
 var $twitterShareButton = $('.twitter-share-button');
 
-document
-    .querySelector('.copy-url-button')
-    .addEventListener('click', function (event) {
+const copyUrlButton = document.querySelector('.copy-url-button');
+if (copyUrlButton) {
+    copyUrlButton.addEventListener('click', function (event) {
         event.preventDefault();
 
         // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
@@ -326,23 +325,26 @@ document
 
         return false;
     });
+}
 
-document
-    .querySelector('.facebook-share-button')
-    .addEventListener('click', function () {
+const fbShareButton = document.querySelector('.copy-url-button');
+if (fbShareButton) {
+    fbShareButton.addEventListener('click', function () {
         trackShareInteraction($facebookShareButton, 'Facebook Share');
         return true;
     });
+}
 
-document
-    .querySelector('.twitter-share-button')
-    .addEventListener('click', function () {
+const xShareButton = document.querySelector('.twitter-share-button');
+if (xShareButton) {
+    xShareButton.addEventListener('click', function () {
         trackShareInteraction($twitterShareButton, 'Twitter Share');
         return true;
     });
+}
 
 // eslint-disable-next-line no-unused-vars
-function trackUIInteraction(element, category, action, label) {
+export function trackUIInteraction(element, category, action, label) {
     if ('loc_ux_tracking' in window) {
         let loc_ux_tracking = window['loc_ux_tracking'];
         let data = [element, category, action, label];

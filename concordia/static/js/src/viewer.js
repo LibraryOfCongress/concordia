@@ -1,4 +1,6 @@
-/* global OpenSeadragon screenfull debounce displayHtmlMessage */
+import {debounce, displayHtmlMessage} from './base.js';
+import {OpenSeadragon} from 'openseadragon';
+import screenfull from 'screenfull';
 
 const viewerData = document.getElementById('viewer-data').dataset;
 

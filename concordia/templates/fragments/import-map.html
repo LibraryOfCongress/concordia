@@ -16,9 +16,14 @@
             "concordia-visualization": "{% static 'js/modules/concordia-visualization.js' %}",
             "visualization-errors" : "{% static 'js/modules/visualization-errors.js' %}",
             "accessible-colors" : "{% static 'js/modules/accessible-colors.js' %}",
-            "screenfull": "{% static 'screenfull/dist/screenfull.js' %}",
-            "sentry": "{% static '@sentry/browser/dist/index.js' %}",
-            "jquery": "{% static 'jquery/dist/jquery.min.js' %}"
+            "openseadragon": "{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}",
+            "screenfull": "{% static 'screenfull/index.js' %}",
+            "@sentry/browser": "{% static '@sentry/browser/build/npm/esm/index.js' %}",
+            "@sentry/core": "{% static '@sentry/core/build/esm/index.js' %}",
+            "@sentry-internal/browser-utils": "{% static '@sentry-internal/browser-utils/build/esm/index.js' %}",
+            "@sentry-internal/feedback": "{% static '@sentry-internal/feedback/build/npm/esm/index.js' %}",
+            "@sentry-internal/replay": "{% static '@sentry-internal/replay/build/npm/esm/index.js' %}",
+            "@sentry-internal/replay-canvas": "{% static '@sentry-internal/replay-canvas/build/npm/esm/index.js' %}"
         }
     }
 </script>
