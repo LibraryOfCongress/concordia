@@ -6,11 +6,15 @@ export default defineConfig({
     base: '/static/',
     build: {
         outDir: 'static',
-        emptyOutDir: true,
+        emptyOutDir: false,
         rollupOptions: {
-            input: './main.js',
+            input: './concordia/static/js/src/main.js',
             output: {
                 entryFileNames: 'bundle.js',
+                assetFileNames: ({name}) =>
+                    name && name.endsWith('.css')
+                        ? 'css/bundle.css'
+                        : '[name][extname]',
             },
         },
     },
