@@ -209,6 +209,7 @@ class ImportItemAsset(TaskStatusModel):
     )
 
     url = models.URLField()
+    storage_services_url = models.CharField(max_length=255, blank=True, null=True)
     sequence_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
 
     asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)

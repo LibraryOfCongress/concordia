@@ -3,7 +3,7 @@ import mimetypes
 import os
 import re
 from logging import getLogger
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -140,7 +140,9 @@ def import_item(self, import_item):
             ]
         )
 
-        for sequence, asset_url in enumerate(asset_urls, start=1):
+        for sequence, (asset_url, storage_services_url) in enumerate(
+            asset_urls, start=1
+        ):
             asset_title = f"{import_item.item.item_id}-{sequence}"
             file_extension = (
                 os.path.splitext(urlparse(asset_url).path)[1].lstrip(".").lower()
@@ -154,6 +156,7 @@ def import_item(self, import_item):
                 media_type=MediaType.IMAGE,
                 download_url=asset_url,
                 resource_url=item_resource_url,
+                storage_services_url=storage_services_url,
                 storage_image="/".join(
                     [relative_asset_file_path, f"{sequence}.{file_extension}"]
                 ),
@@ -178,6 +181,7 @@ def import_item(self, import_item):
                 import_item=import_item,
                 asset=asset,
                 url=asset.download_url,
+                storage_services_url=storage_services_url,
                 sequence_number=asset.sequence,
             )
             import_asset.full_clean()
@@ -334,50 +338,94 @@ def populate_item_from_data(item, item_info):
         return resolved
 
 
-def get_asset_urls_from_item_resources(resources):
-    """
-    Given a loc.gov JSON response, return the list of asset URLs matching our
-    criteria (JPEG, largest version available)
+def get_asset_urls_from_item_resources(
+    resources: list[dict[str, Any]],
+) -> tuple[list[tuple[str, Optional[str]]], str]:
+    """Extract image URLs from a LoC `resources` JSON block.
+
+    Selection is done *within each file group* (an element of `resource["files"]`)
+    by mimetype and resolution, **ignoring service host** for the chosen asset:
+
+      • Prefer **JPG** with the largest resolution (width * height)
+      • Otherwise, prefer **GIF** with the largest resolution
+
+    Additionally, if any variant's URL is a **storage-services** link that ends
+    with **.jp2** (checked by URL path extension only), record that URL for the
+    same file group (no network requests). The chosen asset URL will still be a
+    JPG or GIF as described above.
+
+    Variants missing any of "url", "height", or "width" are skipped. The first
+    resource's "url" is returned as `item_resource_url` for reference.
+
+    Args:
+        resources: Parsed list of resource dicts from a loc.gov JSON response.
+
+    Returns:
+        A 2-tuple of:
+            - assets: List of (chosen_asset_url, storage_services_jp2_url_or_None),
+              one tuple per input file group where a JPG/GIF was chosen.
+            - item_resource_url: The first resource's "url" or an empty string.
     """
 
-    assets = []
+    def _is_storage_jp2(url: str) -> bool:
+        if "storage-services" not in url:
+            return False
+        path = urlparse(url).path.lower()
+        return path.endswith(".jp2")
+
+    assets: list[tuple[str, Optional[str]]] = []
     try:
         item_resource_url = resources[0]["url"] or ""
     except (IndexError, KeyError):
         item_resource_url = ""
 
     for resource in resources:
-        # The JSON response for each file is a list of available image versions
-        # we will attempt to save the highest resolution jpg, falling back to
-        # to the highest resolution gif if there are none
-
+        # Each "files" entry is a list of variant dicts for one logical image.
         for item_file in resource.get("files", []):
-            candidates = []
-            backup_candidates = []
+            best_jpg: tuple[int, str] | None = None  # (-resolution, url)
+            best_gif: tuple[int, str] | None = None  # (-resolution, url)
+            storage_jp2_url: Optional[str] = None
 
             for variant in item_file:
-
-                if any(i for i in ("url", "height", "width") if i not in variant):
+                if any(k for k in ("url", "height", "width") if k not in variant):
                     continue
 
                 url = variant["url"]
-                height = variant["height"]
-                width = variant["width"]
+                # Track a storage-services .jp2 URL if present.
+                if storage_jp2_url is None and _is_storage_jp2(url):
+                    storage_jp2_url = url
+
                 mimetype = variant.get("mimetype")
+                if mimetype not in ("image/jpeg", "image/gif"):
+                    # We do not choose JP2 (or other types) as the asset URL.
+                    # Only JPG or GIF are candidates.
+                    continue
 
-                # We prefer jpgs, but if there are none,
-                # we'll fallback to gifs
+                try:
+                    height = int(variant["height"]) or 0
+                    width = int(variant["width"]) or 0
+                except (ValueError, TypeError):
+                    # Non-integer height/width, so skip this variant.
+                    continue
+
+                resolution = height * width
+                key = (-resolution, url)  # larger resolution sorts first
+
                 if mimetype == "image/jpeg":
-                    candidates.append((url, height * width))
-                elif mimetype == "image/gif":
-                    backup_candidates.append((url, height * width))
+                    if best_jpg is None or key < best_jpg:
+                        best_jpg = key
+                else:  # image/gif
+                    if best_gif is None or key < best_gif:
+                        best_gif = key
 
-            if candidates:
-                candidates.sort(key=lambda i: i[1], reverse=True)
-                assets.append(candidates[0][0])
-            elif backup_candidates:
-                backup_candidates.sort(key=lambda i: i[1], reverse=True)
-                assets.append(backup_candidates[0][0])
+            chosen_url: Optional[str] = None
+            if best_jpg is not None:
+                chosen_url = best_jpg[1]
+            elif best_gif is not None:
+                chosen_url = best_gif[1]
+
+            if chosen_url:
+                assets.append((chosen_url, storage_jp2_url))
 
     return assets, item_resource_url
 

@@ -28,7 +28,11 @@
 
     <script id="viewer-data"
             data-prefix-url="{% static 'openseadragon/build/openseadragon/images/' %}"
-            data-tile-source-url="{% asset_media_url asset %}?canvas"
+            {% if asset.storage_services_url %}
+                data-tile-source-url="{{ asset.storage_services_url }}"
+            {% else %}
+                data-tile-source-url="{% asset_media_url asset %}?canvas"
+            {% endif %}
             data-contact-url="https://ask.loc.gov/crowd"
     ></script>
 

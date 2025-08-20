@@ -655,6 +655,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     resource_url = models.URLField(max_length=255, blank=True, null=True)
     # The URL used to download this image from loc.gov
     download_url = models.CharField(max_length=255, blank=True, null=True)
+    # The URL of the jp2 equivalent of the Asset's image from loc.gov storage-services
+    storage_services_url = models.CharField(max_length=255, blank=True, null=True)
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
