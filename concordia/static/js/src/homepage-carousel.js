@@ -1,6 +1,6 @@
 /* global $ */
 
-import 'bootstrap;';
+import 'bootstrap';
 import {Carousel} from 'bootstrap';
 
 // initialization
