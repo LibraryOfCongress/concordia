@@ -1,5 +1,5 @@
-import {seadragonViewer} from 'viewer';
-import Split from '/static/split.js/dist/split.es.js';
+import {seadragonViewer} from './viewer.js';
+import Split from 'split.js';
 
 let pageSplit;
 let contributeContainer = document.getElementById('contribute-container');
