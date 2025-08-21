@@ -1,9 +1,8 @@
 /* global $ displayMessage buildErrorMessage */
 
 import {Modal} from 'bootstrap';
-import {selectLanguage} from 'ocr';
-import {reserveAssetForEditing} from 'asset-reservation';
-import {resetTurnstile} from 'turnstile';
+import {selectLanguage} from './ocr.js';
+import {reserveAssetForEditing} from './asset-reservation.js';
 
 function lockControls($container) {
     if (!$container) {
@@ -64,6 +63,12 @@ $(document).on('keydown', function (event) {
         return false;
     }
 });
+
+function resetTurnstile() {
+    if (window.turnstile) {
+        window.turnstile.reset('.cf-turnstile');
+    }
+}
 
 function setupPage() {
     $('form.ajax-submission').each(function (index, formElement) {
