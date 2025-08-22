@@ -1,4 +1,6 @@
-/* global $ trackUIInteraction */
+/* global trackUIInteraction */
+
+import $ from 'jquery';
 
 import {setTutorialHeight} from './modules/quick-tips.js';
 

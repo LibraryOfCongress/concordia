@@ -1,4 +1,6 @@
-/* global $ trackUIInteraction */
+/* global trackUIInteraction */
+
+import $ from 'jquery';
 
 function openOffcanvas() {
     let guide = document.getElementById('guide-sidebar');
