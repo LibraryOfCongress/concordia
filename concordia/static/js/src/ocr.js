@@ -1,4 +1,6 @@
-/* global $ */
+/* global */
+
+import $ from 'jquery';
 
 function selectLanguage() {
     $('#ocr-transcription-modal').modal('hide');
