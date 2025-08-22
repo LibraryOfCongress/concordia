@@ -1,5 +1,6 @@
-/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
+/* global displayHtmlMessage displayMessage buildErrorMessage Sentry */
 
+import $ from 'jquery';
 import {Modal} from 'bootstrap';
 
 const assetReservationData = document.getElementById(
@@ -7,7 +8,7 @@ const assetReservationData = document.getElementById(
 ).dataset;
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
-    let $transcriptionEditor = jQuery('#transcription-editor');
+    let $transcriptionEditor = $('#transcription-editor');
     // We need to do this because BS5 does not automatically initialize modals when you
     // try to show them; without new boostrap.Modal, it doesn't recognize it as a modal
     // at all (it's treated as ordinary HTML), so BS controls do not work
@@ -19,12 +20,11 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         Modal.getInstance(reservationModalElement) ||
         new Modal(reservationModalElement);
 
-    jQuery
-        .ajax({
-            url: reservationURL,
-            type: 'POST',
-            dataType: 'json',
-        })
+    $.ajax({
+        url: reservationURL,
+        type: 'POST',
+        dataType: 'json',
+    })
         .done(function () {
             $transcriptionEditor
                 .data('hasReservation', true)
@@ -92,21 +92,19 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     window.addEventListener('beforeunload', function () {
         let payload = {
             release: true,
-            csrfmiddlewaretoken: jQuery(
-                'input[name="csrfmiddlewaretoken"]',
-            ).val(),
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
         };
 
         // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
         if ('sendBeacon' in navigator) {
             navigator.sendBeacon(
                 reservationURL,
-                new Blob([jQuery.param(payload)], {
+                new Blob([$.param(payload)], {
                     type: 'application/x-www-form-urlencoded',
                 }),
             );
         } else {
-            jQuery.ajax({url: reservationURL, type: 'POST', data: payload});
+            $.ajax({url: reservationURL, type: 'POST', data: payload});
         }
     });
 }
@@ -121,7 +119,7 @@ function reserveAssetForEditing() {
     }
 }
 
-jQuery(function () {
+$(function () {
     if (assetReservationData.reserveForEditing) {
         reserveAssetForEditing();
     }
