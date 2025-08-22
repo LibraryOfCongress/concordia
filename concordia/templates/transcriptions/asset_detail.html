@@ -39,11 +39,7 @@
         <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
     {% endif %}
 
-    <script type="module" src="{% static 'js/contribute.js' %}"></script>
-    <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
-    <script type="module" src="{% static 'js/guide.js' %}"></script>
-    <script type="module" src="{% static 'js/quick-tips-setup.js' %}"></script>
-    <script type="module" src="{% static 'js/ocr.js' %}"></script>
+    <script type="module" src="{% static 'bundle.js' %}"></script>
 {% endblock head_content %}
 
 {% block breadcrumbs %}
