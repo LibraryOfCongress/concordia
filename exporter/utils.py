@@ -81,3 +81,42 @@ def validate_text_for_export(text: str) -> bool:
     if violations:
         raise UnacceptableCharacterError(violations)
     return True
+
+
+def remove_unacceptable_characters(text: str) -> str:
+    """
+    Produce a copy of `text` with all non-printable characters removed.
+
+    The removal uses the same acceptability rules as validation, ensuring the
+    behaviour stays consistent with `is_acceptable_character()` and the shared
+    whitelist.  Standard line breaks are preserved.  Characters considered
+    unacceptable (i.e., not printable and not in the whitelist) are omitted
+    from the result.
+
+    Args:
+        text: The input string to sanitize.
+
+    Returns:
+        A new string with all unacceptable characters removed.
+
+    Notes:
+        The scan mirrors `find_unacceptable_characters()` by operating
+        line-by-line.  Unlike validation, there is no error raised; the
+        offending characters are dropped from the output.  Newline characters
+        (``\\n`` and ``\\r``) are preserved so the original line structure is
+        maintained.
+    """
+
+    cleaned_parts: List[str] = []
+    for line in text.splitlines(keepends=True):
+        # Keepends means any trailing '\n'/'\r\n' is part of `line`.
+        out_line_chars: List[str] = []
+        for ch in line:
+            # Preserve standard line breaks exactly as seen.
+            if ch == "\n" or ch == "\r":
+                out_line_chars.append(ch)
+                continue
+            if is_acceptable_character(ch):
+                out_line_chars.append(ch)
+        cleaned_parts.append("".join(out_line_chars))
+    return "".join(cleaned_parts)
