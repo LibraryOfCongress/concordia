@@ -1,11 +1,11 @@
 from urllib.parse import urlencode
 
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, F, Q
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 from concordia.api_views import APIDetailView
-from concordia.models import Asset, ProjectTopic, Topic, TranscriptionStatus
+from concordia.models import Asset, Topic, TranscriptionStatus
 
 from .decorators import default_cache_control
 from .utils import annotate_children_with_progress_stats, calculate_asset_stats
@@ -37,21 +37,25 @@ class TopicDetailView(APIDetailView):
                     for key in TranscriptionStatus.CHOICE_MAP.keys()
                 }
             )
-            # Prefetch the ProjectTopic link for this topic onto each project
-            # so we can access the url_filter without extra queries
-            .prefetch_related(
-                Prefetch(
-                    "projecttopic_set",
-                    queryset=ProjectTopic.objects.filter(topic=ctx["topic"]),
-                    to_attr="topic_links",
-                )
+            .annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset",
+                        filter=Q(
+                            item__published=True,
+                            item__asset__published=True,
+                            item__asset__transcription_status=key,
+                        ),
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                }
             )
-            .order_by("campaign", "ordering", "title")
+            .annotate(
+                topic_ordering=F("projecttopic__ordering"),
+                topic_url_filter=F("projecttopic__url_filter"),
+            )
+            .order_by("topic_ordering", "campaign__title", "title")
         )
-
-        # Attach the url_filter, if any, to the project itself to access in the template
-        for project in projects:
-            project.url_filter = project.topic_links[0].url_filter
 
         ctx["filters"] = filters = {}
         status = self.request.GET.get("transcription_status")

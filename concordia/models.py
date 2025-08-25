@@ -1927,9 +1927,13 @@ class ProjectTopic(models.Model):
         null=True,
         help_text="Optional filter on the status for this project-topic link",
     )
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: lower values will be listed first"
+    )
 
     class Meta:
         db_table = (
             "concordia_project_topics"  # pre-existing table, so we reuse the name
         )
         unique_together = ("project", "topic")
+        ordering = ("ordering",)
