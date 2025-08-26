@@ -532,7 +532,10 @@ class Project(MetricsModelMixin("project"), models.Model):
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
-        indexes = [models.Index(fields=["id", "campaign", "published"])]
+        indexes = [
+            models.Index(fields=["id", "campaign", "published"]),
+            models.Index(fields=["published", "campaign", "title"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -682,6 +685,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         unique_together = (("slug", "item"),)
         indexes = [
             models.Index(fields=["id", "item", "published", "transcription_status"]),
+            models.Index(fields=["item", "published", "transcription_status"]),
             models.Index(fields=["published", "transcription_status"]),
         ]
         permissions = [
@@ -1937,3 +1941,8 @@ class ProjectTopic(models.Model):
         )
         unique_together = ("project", "topic")
         ordering = ("ordering",)
+        indexes = [
+            models.Index(fields=["topic", "project"]),
+            models.Index(fields=["topic", "ordering"]),
+            models.Index(fields=["topic", "url_filter"]),
+        ]
