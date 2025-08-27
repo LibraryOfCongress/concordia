@@ -148,21 +148,39 @@ function setupPage() {
         .on('change', function () {
             var $textarea = $transcriptionEditor.find('textarea');
             if (this.checked) {
+                const nothingToTranscribeElement = document.getElementById(
+                    'nothing-to-transcribe-modal',
+                );
+                const nothingToTranscribeModal =
+                    Modal.getInstance(nothingToTranscribeElement) ||
+                    new Modal(nothingToTranscribeElement);
+                var nothingToTranscribeTitle =
+                    nothingToTranscribeElement.querySelector('.modal-title');
+                var nothingToTranscribeBody =
+                    nothingToTranscribeElement.querySelector('.modal-body');
                 if ($textarea.val()) {
-                    if (
-                        confirm(
-                            'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?',
-                        )
-                    ) {
-                        $textarea.val('');
-                    } else {
-                        this.checked = false;
-                    }
-                } else if (!confirm('Are you sure?')) {
-                    this.checked = false;
+                    nothingToTranscribeTitle.textContent =
+                        'Text will be deleted';
+                    nothingToTranscribeBody.innerHTML =
+                        '<p>You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
+                } else {
+                    nothingToTranscribeBody.innerHTML = '<p>Are you sure?</p>';
                 }
+                nothingToTranscribeModal.show();
+
+                const okButton = document.getElementById('confirmDiscard');
+                okButton.addEventListener('click', function () {
+                    $textarea.val('');
+                    nothingToTranscribeModal.hide();
+                    $transcriptionEditor.trigger('update-ui-state');
+                });
+                const cancelButton = document.getElementById('cancelDiscard');
+                cancelButton.addEventListener('click', function () {
+                    $('#nothing-to-transcribe').prop('checked', false);
+                    nothingToTranscribeModal.hide();
+                    $transcriptionEditor.trigger('update-ui-state');
+                });
             }
-            $transcriptionEditor.trigger('update-ui-state');
         });
     var $ocrSection = $('#ocr-section');
     var $ocrForm = $('#ocr-transcription-form');
