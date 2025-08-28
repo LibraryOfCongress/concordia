@@ -162,8 +162,10 @@ function setupPage() {
                     nothingToTranscribeTitle.textContent =
                         'Text will be deleted';
                     nothingToTranscribeBody.innerHTML =
-                        '<p>You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
+                        '<p>Text in the transcription box will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
                 } else {
+                    nothingToTranscribeTitle.textContent =
+                        'Nothing to transcribe';
                     nothingToTranscribeBody.innerHTML = '<p>Are you sure?</p>';
                 }
                 nothingToTranscribeModal.show();
@@ -172,15 +174,14 @@ function setupPage() {
                 okButton.addEventListener('click', function () {
                     $textarea.val('');
                     nothingToTranscribeModal.hide();
-                    $transcriptionEditor.trigger('update-ui-state');
                 });
                 const cancelButton = document.getElementById('cancelDiscard');
                 cancelButton.addEventListener('click', function () {
                     $('#nothing-to-transcribe').prop('checked', false);
                     nothingToTranscribeModal.hide();
-                    $transcriptionEditor.trigger('update-ui-state');
                 });
             }
+            $transcriptionEditor.trigger('update-ui-state');
         });
     var $ocrSection = $('#ocr-section');
     var $ocrForm = $('#ocr-transcription-form');
