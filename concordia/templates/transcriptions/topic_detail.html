@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+{% load humanize %}
 {% load concordia_text_tags %}
 {% load concordia_querystring %}
 {% load concordia_filtering_tags %}
@@ -22,9 +23,14 @@
 
 {% block main_content %}
     <div class="container py-3">
-        <div class="row mb-4">
-            <div class="col-md-9">
+        <div class="row">
+            <div class="col-md-12">
                 <h1>{{ topic.title }}</h1>
+            </div>
+        </div>
+        {% include "fragments/transcription-progress-row.html" %}
+        <div class="row mt-3">
+            <div class="col-md-9">
                 <div class="hero-text">{{ topic.description|safe }}</div>
             </div>
             <div class="col-md-3">
@@ -43,61 +49,59 @@
                     </aside>
                 {% endif %}
             </div>
-        </div>
-        <div class="d-flex justify-content-between mt-4">
-            <div>
-                <h3>Filter pages:</h3>
+            <div class="d-flex justify-content-between mt-4">
+                <div>
+                    <h3>Filter pages:</h3>
+                </div>
+                {% url 'transcriptions:topic-detail' topic.slug as all_assets %}
             </div>
-            {% url 'transcriptions:topic-detail' topic.slug as all_assets %}
-        </div>
-        <div class="row">
-            <div class="col-12 col-lg text-center">
-                {% transcription_status_filters transcription_status_counts transcription_status "large" True all_assets %}
+            <div class="row">
+                <div class="col-12 col-lg text-center">
+                    {% transcription_status_filters transcription_status_counts transcription_status "large" True all_assets %}
+                </div>
             </div>
-        </div>
-        {% include "fragments/transcription-progress-row.html" %}
-        <div class="row justify-content-center concordia-object-card-row">
-            {% for project in projects %}
-                <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
-                    <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
-                        {% url 'transcriptions:project-detail' project.campaign.slug project.slug as project_url %}
-                        {% if sublevel_querystring %}
+            <div class="row justify-content-center concordia-object-card-row mt-3">
+                {% for project in projects %}
+                    <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
+                        <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
+                            {% url 'transcriptions:project-detail' project.campaign.slug project.slug as project_url %}
+                            {% if sublevel_querystring %}
                             {# If a filter has been set, we want to always respect that #}
                             {# Essentially, this just assigns sublevel_querystring to the temp variable project_querystring for use below #}
-                            {% qs_alter sublevel_querystring as project_querystring %}
-                        {% elif project.topic_url_filter %}
+                                {% qs_alter sublevel_querystring as project_querystring %}
+                            {% elif project.topic_url_filter %}
                             {# No overriding filter has been set, so use the one assigned to the project, if any #}
-                            {% qs_alter sublevel_querystring add_if_missing:transcription_status=project.topic_url_filter as project_querystring %}
-                        {% else %}
+                                {% qs_alter sublevel_querystring add_if_missing:transcription_status=project.topic_url_filter as project_querystring %}
+                            {% else %}
                             {# Explicitly blank the querystring, since none are set; this is needed so the last project's querystring isn't used #}
-                            {% qs_alter "" as project_querystring %}
-                        {% endif %}
+                                {% qs_alter "" as project_querystring %}
+                            {% endif %}
 
-                        <a href="{{ project_url }}{% if project_querystring %}?{{ project_querystring }}{% endif %}" aria-hidden="true">
-                            <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
-                        </a>
+                            <a href="{{ project_url }}{% if project_querystring %}?{{ project_querystring }}{% endif %}" aria-hidden="true">
+                                <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
+                            </a>
 
-                        <div class="progress w-100">
-                            <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ project.in_progress_percent }}%" aria-valuenow="{{ project.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-
-                        <h6 class="text-center primary-text m-0 concordia-object-card-title">
-                            <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}{% if project_querystring %}?{{ project_querystring }}{% endif %}">{{ project.campaign.title }} - {{ project.title }}</a>
-                        </h6>
-
-                        {% if project.lowest_transcription_status == 'completed' %}
-                            <div class="card-actions">
-                                <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}{% if project_querystring %}?{{ project_querystring }}{% endif %}">
-                                    <span class="fas fa-check tx-completed"></span>
-                                    Complete
-                                </a>
+                            <div class="progress w-100">
+                                <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ project.in_progress_percent }}%" aria-valuenow="{{ project.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
-                        {% endif %}
+
+                            <h6 class="text-center primary-text m-0 concordia-object-card-title">
+                                <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}{% if project_querystring %}?{{ project_querystring }}{% endif %}">{{ project.campaign.title }} - {{ project.title }}</a>
+                            </h6>
+
+                            {% if project.lowest_transcription_status == 'completed' %}
+                                <div class="card-actions">
+                                    <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}{% if project_querystring %}?{{ project_querystring }}{% endif %}">
+                                        <span class="fas fa-check tx-completed"></span>
+                                        Complete
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
 {% endblock main_content %}
