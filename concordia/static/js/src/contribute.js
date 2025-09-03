@@ -162,7 +162,7 @@ function setupPage() {
                     nothingToTranscribeTitle.textContent =
                         'Text will be deleted';
                     nothingToTranscribeBody.innerHTML =
-                        '<p>Text in the transcription box will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
+                        '<p>Text in the transcription box is removed when “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
                 } else {
                     nothingToTranscribeTitle.textContent =
                         'Nothing to transcribe';
