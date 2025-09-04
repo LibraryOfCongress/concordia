@@ -57,6 +57,7 @@ class TopicDetailView(APIDetailView):
         # don't don't have assets in that status, as well as any
         # that have a URL filter that's different than the status filter
         if status_valid:
+            ctx["transcription_status"] = status
             projects = projects.filter(
                 Q(pt__url_filter__isnull=True)
                 | Q(pt__url_filter="")
