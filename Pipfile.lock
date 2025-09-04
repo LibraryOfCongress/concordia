@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e105517405dec2535e170cfc67eebacf8fde20cc850f9bd8d5dc2b308b166d9e"
+            "sha256": "ee55ae9abfb4775bb92a1ac4ff16c807d3ac459616ba27f8eee313162916aaaf"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -565,11 +565,11 @@
         },
         "cron-descriptor": {
             "hashes": [
-                "sha256:386a1d75c57410cf5cb719e08eefbea2c0c076c4a798aa6d7bf51816112fbbd1",
-                "sha256:443ccd21a36a7fc9464a42472199cbdbc0d86b09021af1a8dd1595e4c391d85e"
+                "sha256:736b3ae9d1a99bc3dbfc5b55b5e6e7c12031e7ba5de716625772f8b02dcd6013",
+                "sha256:f51ce4ffc1d1f2816939add8524f206c376a42c87a5fca3091ce26725b3b1bca"
             ],
-            "markers": "python_version >= '3.9'",
-            "version": "==2.0.5"
+            "index": "pypi",
+            "version": "==1.4.5"
         },
         "cryptography": {
             "hashes": [
