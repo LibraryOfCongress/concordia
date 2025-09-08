@@ -8,6 +8,140 @@ from concordia.utils.celery import get_registered_task
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
+def _reserved_asset_ids_subq(campaign):
+    """
+    Subquery of reserved asset IDs for the given campaign. Used to exclude
+    assets that currently have an active reservation.
+    """
+    return concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__campaign=campaign
+    ).values("asset_id")
+
+
+def _eligible_reviewable_base_qs(campaign, user=None):
+    """
+    Base queryset for reviewable assets within a campaign, restricted to
+    published objects and SUBMITTED status. Optionally excludes assets
+    transcribed by the given user.
+    """
+    qs = concordia_models.Asset.objects.filter(
+        campaign_id=campaign.id,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+        transcription_status=concordia_models.TranscriptionStatus.SUBMITTED,
+    ).select_related("item", "item__project")
+    if user:
+        qs = qs.exclude(transcription__user=user.id)
+    return qs
+
+
+def _next_seq_after(pk: int | None) -> int | None:
+    """
+    Resolve the sequence number for the given asset primary key. Returns None
+    if the PK is falsy or if no corresponding asset exists.
+    """
+    if not pk:
+        return None
+    return (
+        concordia_models.Asset.objects.filter(pk=pk)
+        .values_list("sequence", flat=True)
+        .first()
+    )
+
+
+@transaction.atomic
+def _find_reviewable_in_item(
+    campaign, user, *, item_id: str, after_asset_pk: int | None
+):
+    """
+    Short-circuit: find the next eligible SUBMITTED asset in the same item,
+    ordered by sequence. Excludes reserved assets and locks the chosen row.
+    """
+    reserved_ids = _reserved_asset_ids_subq(campaign)
+    base = (
+        _eligible_reviewable_base_qs(campaign, user)
+        .filter(item__item_id=item_id)
+        .exclude(pk__in=Subquery(reserved_ids))
+    )
+
+    after_seq = _next_seq_after(after_asset_pk)
+    if after_seq is not None:
+        base = base.filter(sequence__gt=after_seq)
+
+    asset = (
+        base.order_by("sequence")
+        .select_for_update(skip_locked=True, of=("self",))
+        .first()
+    )
+
+    if asset:
+        structured_logger.debug(
+            "Short-circuit hit: found reviewable within item.",
+            event_code="reviewable_shortcircuit_item_hit",
+            campaign=campaign,
+            user=user,
+            item_id=item_id,
+            after_asset_pk=after_asset_pk,
+            asset=asset,
+        )
+    else:
+        structured_logger.debug(
+            "Short-circuit miss within item.",
+            event_code="reviewable_shortcircuit_item_miss",
+            campaign=campaign,
+            user=user,
+            item_id=item_id,
+            after_asset_pk=after_asset_pk,
+        )
+    return asset
+
+
+@transaction.atomic
+def _find_reviewable_in_project(
+    campaign, user, *, project_slug: str, after_asset_pk: int | None
+):
+    """
+    Short-circuit: find the first eligible SUBMITTED asset in the same
+    project, ordered by (item_id, sequence). Items are not ordered, so we
+    use the DB's item FK ordering as a stable proxy. Excludes reserved
+    assets and locks the chosen row.
+    """
+    reserved_ids = _reserved_asset_ids_subq(campaign)
+    base = (
+        _eligible_reviewable_base_qs(campaign, user)
+        .filter(item__project__slug=project_slug)
+        .exclude(pk__in=Subquery(reserved_ids))
+    )
+
+    asset = (
+        base.order_by("item_id", "sequence")
+        .select_for_update(skip_locked=True, of=("self",))
+        .first()
+    )
+
+    if asset:
+        structured_logger.debug(
+            "Short-circuit hit: found reviewable within project.",
+            event_code="reviewable_shortcircuit_project_hit",
+            campaign=campaign,
+            user=user,
+            project_slug=project_slug,
+            after_asset_pk=after_asset_pk,
+            asset=asset,
+        )
+    else:
+        structured_logger.debug(
+            "Short-circuit miss within project.",
+            event_code="reviewable_shortcircuit_project_miss",
+            campaign=campaign,
+            user=user,
+            project_slug=project_slug,
+            after_asset_pk=after_asset_pk,
+        )
+    return asset
+
+
 def find_new_reviewable_campaign_assets(campaign, user=None):
     """
     Returns a queryset of assets in the given campaign that are eligible for review
@@ -189,12 +323,18 @@ def find_next_reviewable_campaign_asset(
     """
     Retrieves the next best reviewable asset for a user within a campaign.
 
-    Prioritizes assets from the cache that are:
-    - After the current asset in sequence
-    - In the same project or item
+    - If item_id is provided, first try to return the next eligible asset
+      in that item by sequence (short-circuit).
+    - Else if project_slug is provided, try to return the first eligible
+      asset within that project (short-circuit).
+    - Else fall back to the existing cache-backed path:
 
-    Falls back to computing candidates if the cache is empty, and triggers
-    a background task to repopulate the cache after selection.
+    Attempts to retrieve an asset from the cache table (NextReviewableCampaignAsset).
+    If no eligible asset is found, falls back to computing one directly from the
+    Asset table and asynchronously schedules a background task to repopulate the cache.
+
+    Ensures database row-level locking to prevent multiple concurrent consumers
+    from selecting the same asset.
 
     Args:
         campaign (Campaign): The campaign to find an asset in.
@@ -204,9 +344,31 @@ def find_next_reviewable_campaign_asset(
         original_asset_id (int): ID of the asset the user just reviewed.
 
     Returns:
-        Asset or None: A locked asset eligible for review, or None if unavailable.
+        Asset or None: A locked asset eligible for review, or None if
+        unavailable.
     """
+    try:
+        after_pk = int(original_asset_id) if original_asset_id else None
+    except (TypeError, ValueError):
+        after_pk = None
 
+    # Short-circuit: same item
+    if item_id:
+        asset = _find_reviewable_in_item(
+            campaign, user, item_id=item_id, after_asset_pk=after_pk
+        )
+        if asset:
+            return asset
+
+    # Short-circuit: same project
+    if project_slug:
+        asset = _find_reviewable_in_project(
+            campaign, user, project_slug=project_slug, after_asset_pk=after_pk
+        )
+        if asset:
+            return asset
+
+    # cache-backed selection, then manual fallback
     potential_next_assets = find_and_order_potential_reviewable_campaign_assets(
         campaign, user, project_slug, item_id, original_asset_id
     )
@@ -264,6 +426,7 @@ def find_next_reviewable_campaign_asset(
             "Spawned background task to populate cache",
             event_code="reviewable_next_cache_population",
             campaign=campaign,
+            user=user,
         )
         populate_task = get_registered_task(
             "concordia.tasks.populate_next_reviewable_for_campaign"
