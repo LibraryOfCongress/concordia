@@ -335,12 +335,19 @@ def find_next_transcribable_campaign_asset(
     """
     Retrieves the next best transcribable asset for a user within a campaign.
 
+    - If item_id is provided, first try to return the next eligible asset
+      in that item by sequence (short-circuit).
+    - Else if project_slug is provided, try to return the first eligible
+      asset within that project (short-circuit).
+    - Else fall back to the cached behavior, below.
+
+
     Prioritizes assets from the cache that are:
     - After the current asset in sequence
     - In the NOT_STARTED state
     - In the same project or item
 
-    Falls back to computing candidates if the cache is empty, and triggers
+    Then falls back to computing candidates if the cache is empty, and triggers
     a background task to repopulate the cache after selection.
 
     Args:
@@ -354,6 +361,28 @@ def find_next_transcribable_campaign_asset(
         unavailable.
     """
 
+    # Short-circuit: same item
+    try:
+        after_pk = int(original_asset_id) if original_asset_id else None
+    except (TypeError, ValueError):
+        after_pk = None
+
+    if item_id:
+        asset = _find_transcribable_in_item(
+            campaign, item_id=item_id, after_asset_pk=after_pk
+        )
+        if asset:
+            return asset
+
+    # Short-circuit: same project
+    if project_slug:
+        asset = _find_transcribable_in_project(
+            campaign, project_slug=project_slug, after_asset_pk=after_pk
+        )
+        if asset:
+            return asset
+
+    # cache-backed selection, then manual fallback
     potential_next_assets = find_and_order_potential_transcribable_campaign_assets(
         campaign, project_slug, item_id, original_asset_id
     )
