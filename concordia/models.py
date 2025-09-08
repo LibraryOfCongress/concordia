@@ -684,9 +684,15 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     class Meta:
         unique_together = (("slug", "item"),)
         indexes = [
-            models.Index(fields=["id", "item", "published", "transcription_status"]),
-            models.Index(fields=["item", "published", "transcription_status"]),
+            models.Index(
+                fields=["item", "published", "transcription_status", "sequence"]
+            ),
+            models.Index(
+                fields=["published", "transcription_status", "item", "sequence"]
+            ),
             models.Index(fields=["published", "transcription_status"]),
+            models.Index(fields=["item", "sequence"]),
+            models.Index(fields=["campaign", "sequence"]),
         ]
         permissions = [
             ("reopen_asset", "Can reopen asset"),

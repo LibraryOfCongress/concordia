@@ -8,6 +8,153 @@ from concordia.utils.celery import get_registered_task
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
+def _reserved_asset_ids_subq(campaign):
+    """
+    Subquery of reserved asset IDs for the campaign. Used to exclude assets
+    that have an active reservation.
+    """
+    return concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__campaign=campaign
+    ).values("asset_id")
+
+
+def _eligible_transcribable_base_qs(campaign):
+    """
+    Base queryset for transcribable assets in a campaign, restricted to
+    published objects and the correct transcription_status values.
+    """
+    return concordia_models.Asset.objects.filter(
+        campaign_id=campaign.id,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+        transcription_status__in=[
+            concordia_models.TranscriptionStatus.NOT_STARTED,
+            concordia_models.TranscriptionStatus.IN_PROGRESS,
+        ],
+    ).select_related("item", "item__project")
+
+
+def _next_seq_after(pk: int | None) -> int | None:
+    """
+    Resolve the sequence number for the given asset PK. Returns None if PK is
+    falsy or the asset does not exist.
+    """
+    if not pk:
+        return None
+    return (
+        concordia_models.Asset.objects.filter(pk=pk)
+        .values_list("sequence", flat=True)
+        .first()
+    )
+
+
+def _order_unstarted_first(qs):
+    """
+    Stable ordering that prefers NOT_STARTED over IN_PROGRESS, then by sequence.
+    """
+    return qs.annotate(
+        unstarted=Case(
+            When(
+                transcription_status=concordia_models.TranscriptionStatus.NOT_STARTED,
+                then=1,
+            ),
+            default=0,
+            output_field=IntegerField(),
+        )
+    ).order_by("-unstarted", "sequence")
+
+
+@transaction.atomic
+def _find_transcribable_in_item(campaign, *, item_id: str, after_asset_pk: int | None):
+    """
+    Short-circuit: find the next eligible asset in the same item, ordered by
+    sequence. Excludes reserved assets and uses row locking to avoid races.
+    """
+    reserved_ids = _reserved_asset_ids_subq(campaign)
+    base = (
+        _eligible_transcribable_base_qs(campaign)
+        .filter(item__item_id=item_id)
+        .exclude(pk__in=Subquery(reserved_ids))
+    )
+
+    after_seq = _next_seq_after(after_asset_pk)
+    if after_seq is not None:
+        base = base.filter(sequence__gt=after_seq)
+
+    qs = _order_unstarted_first(base)
+
+    asset = qs.select_for_update(skip_locked=True, of=("self",)).first()
+    if asset:
+        structured_logger.debug(
+            "Short-circuit hit: found next transcribable within item.",
+            event_code="transcribable_shortcircuit_item_hit",
+            campaign=campaign,
+            item_id=item_id,
+            after_asset_pk=after_asset_pk,
+            asset=asset,
+        )
+    else:
+        structured_logger.debug(
+            "Short-circuit miss within item.",
+            event_code="transcribable_shortcircuit_item_miss",
+            campaign=campaign,
+            item_id=item_id,
+            after_asset_pk=after_asset_pk,
+        )
+    return asset
+
+
+@transaction.atomic
+def _find_transcribable_in_project(
+    campaign, *, project_slug: str, after_asset_pk: int | None
+):
+    """
+    Short-circuit: find the next eligible asset in the same project, ordered
+    by project-local position: (item_id, sequence). Items have no business
+    ordering, so we use DB insertion order via PK (item_id) as a stable proxy.
+    Excludes reserved assets and uses row locking to avoid races.
+    """
+    reserved_ids = _reserved_asset_ids_subq(campaign)
+    base = (
+        _eligible_transcribable_base_qs(campaign)
+        .filter(item__project__slug=project_slug)
+        .exclude(pk__in=Subquery(reserved_ids))
+    )
+
+    # Prefer NOT_STARTED within project, then item FK, then per-item sequence.
+    qs = base.annotate(
+        unstarted=Case(
+            When(
+                transcription_status=concordia_models.TranscriptionStatus.NOT_STARTED,
+                then=1,
+            ),
+            default=0,
+            output_field=IntegerField(),
+        )
+    ).order_by("-unstarted", "item_id", "sequence")
+
+    asset = qs.select_for_update(skip_locked=True, of=("self",)).first()
+    if asset:
+        structured_logger.debug(
+            "Short-circuit hit: found transcribable within project.",
+            event_code="transcribable_shortcircuit_project_hit",
+            campaign=campaign,
+            project_slug=project_slug,
+            after_asset_pk=after_asset_pk,
+            asset=asset,
+        )
+    else:
+        structured_logger.debug(
+            "Short-circuit miss within project.",
+            event_code="transcribable_shortcircuit_project_miss",
+            campaign=campaign,
+            project_slug=project_slug,
+            after_asset_pk=after_asset_pk,
+        )
+    return asset
+
+
 def find_new_transcribable_campaign_assets(campaign):
     """
     Returns a queryset of assets in the given campaign that are eligible for
@@ -100,7 +247,7 @@ def find_transcribable_campaign_asset(campaign):
     else:
         # No asset in the NextTranscribableCampaignAsset table for this campaign,
         # so fallback to manually finding on
-        structured_logger.info(
+        structured_logger.debug(
             "No cached assets available, falling back to manual lookup",
             event_code="transcribable_fallback_manual_lookup",
             campaign=campaign,
@@ -119,7 +266,7 @@ def find_transcribable_campaign_asset(campaign):
         # We wait to do this until after getting an asset because otherwise there's a
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
-        structured_logger.info(
+        structured_logger.debug(
             "Spawned background task to populate cache",
             event_code="transcribable_cache_population_triggered",
             campaign=campaign,
@@ -222,7 +369,7 @@ def find_next_transcribable_campaign_asset(
     else:
         # Since we had no potential next assets in the caching table, we have to check
         # the asset table directly.
-        structured_logger.info(
+        structured_logger.debug(
             "No cached assets matched, falling back to manual lookup",
             event_code="transcribable_next_fallback_manual",
             campaign=campaign,
@@ -268,7 +415,7 @@ def find_next_transcribable_campaign_asset(
         # We wait to do this until after getting an asset because otherwise there's a
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
-        structured_logger.info(
+        structured_logger.debug(
             "Spawned background task to populate cache",
             event_code="transcribable_next_cache_population",
             campaign=campaign,
