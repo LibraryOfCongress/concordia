@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Case, IntegerField, Subquery, When
+from django.db.models import Case, IntegerField, Q, Subquery, Value, When
 
 from concordia import models as concordia_models
 from concordia.logging import ConcordiaLogger
@@ -55,45 +55,84 @@ def _find_reviewable_in_item(
     campaign, user, *, item_id: str, after_asset_pk: int | None
 ):
     """
-    Short-circuit: find the next eligible SUBMITTED asset in the same item,
-    ordered by sequence. Excludes reserved assets and locks the chosen row.
+    Short-circuit helper: return the next reviewable asset within the same item
+    for the given campaign and user.
+
+    Ordering rule:
+        - Advance within the item by (sequence, id) strictly greater than the
+          current asset, if an original asset is provided and belongs to the same
+          item/campaign.
+        - Otherwise return the earliest eligible by (sequence, id).
+
+    Eligibility:
+        - Asset.published = True, Item.published = True, Project.published = True
+        - transcription_status == SUBMITTED
+        - Not reserved in AssetTranscriptionReservation
+        - Exclude assets transcribed by `user`
+
+    Args:
+        campaign (Campaign): Campaign scope.
+        user (User): Requesting user (to exclude their own work).
+        item_id (str): Item.item_id to stay within.
+        after_asset_pk (int | None): The pk of the asset we are advancing from.
+
+    Returns:
+        Asset | None: Locked eligible asset, or None if no match.
     """
-    reserved_ids = _reserved_asset_ids_subq(campaign)
-    base = (
-        _eligible_reviewable_base_qs(campaign, user)
-        .filter(item__item_id=item_id)
-        .exclude(pk__in=Subquery(reserved_ids))
+    reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__item__item_id=item_id,
+        asset__item__project__campaign=campaign,
+    ).values("asset_id")
+
+    eligible = (
+        concordia_models.Asset.objects.filter(
+            item__item_id=item_id,
+            item__project__campaign=campaign,
+            item__project__published=True,
+            item__published=True,
+            published=True,
+            transcription_status=concordia_models.TranscriptionStatus.SUBMITTED,
+        )
+        .exclude(pk__in=Subquery(reserved_asset_ids))
+        .exclude(transcription__user=user.id)
     )
 
-    after_seq = _next_seq_after(after_asset_pk)
-    if after_seq is not None:
-        base = base.filter(sequence__gt=after_seq)
+    seq_gt_filter = None
+    if after_asset_pk is not None:
+        try:
+            current = (
+                concordia_models.Asset.objects.only("id", "sequence", "item_id", "item")
+                .select_related("item")
+                .get(pk=after_asset_pk)
+            )
+            if (
+                current.item.item_id == item_id
+                and current.item.project.campaign_id == campaign.id
+            ):
+                seq_gt_filter = Q(sequence__gt=current.sequence) | (
+                    Q(sequence=current.sequence) & Q(id__gt=after_asset_pk)
+                )
+        except concordia_models.Asset.DoesNotExist:
+            pass
+
+    if seq_gt_filter is not None:
+        eligible = eligible.filter(seq_gt_filter)
 
     asset = (
-        base.order_by("sequence")
-        .select_for_update(skip_locked=True, of=("self",))
+        eligible.select_for_update(skip_locked=True, of=("self",))
+        .select_related("item", "item__project")
+        .order_by("sequence", "id")
         .first()
     )
 
-    if asset:
-        structured_logger.debug(
-            "Short-circuit hit: found reviewable within item.",
-            event_code="reviewable_shortcircuit_item_hit",
-            campaign=campaign,
-            user=user,
-            item_id=item_id,
-            after_asset_pk=after_asset_pk,
-            asset=asset,
-        )
-    else:
-        structured_logger.debug(
-            "Short-circuit miss within item.",
-            event_code="reviewable_shortcircuit_item_miss",
-            campaign=campaign,
-            user=user,
-            item_id=item_id,
-            after_asset_pk=after_asset_pk,
-        )
+    structured_logger.debug(
+        "Item short-circuit (campaign reviewable) resolved.",
+        event_code="reviewable_item_short_circuit_campaign",
+        campaign=campaign,
+        item_id=item_id,
+        after_asset_pk=after_asset_pk,
+        chosen_asset_id=getattr(asset, "id", None),
+    )
     return asset
 
 
@@ -102,44 +141,54 @@ def _find_reviewable_in_project(
     campaign, user, *, project_slug: str, after_asset_pk: int | None
 ):
     """
-    Short-circuit: find the first eligible SUBMITTED asset in the same
-    project, ordered by (item_id, sequence). Items are not ordered, so we
-    use the DB's item FK ordering as a stable proxy. Excludes reserved
-    assets and locks the chosen row.
-    """
-    reserved_ids = _reserved_asset_ids_subq(campaign)
-    base = (
-        _eligible_reviewable_base_qs(campaign, user)
-        .filter(item__project__slug=project_slug)
-        .exclude(pk__in=Subquery(reserved_ids))
-    )
+    Short-circuit helper: return the first eligible reviewable asset within the same
+    project for the given campaign and user.
 
-    asset = (
-        base.order_by("item_id", "sequence")
+    Notes:
+        - This is a *first eligible* selector, not an "after current" selector,
+          since sequence is per-item. We keep the result deterministic by ordering
+          by (item__item_id, sequence, id).
+
+    Eligibility:
+        - Same campaign & project
+        - Asset/Item/Project published
+        - transcription_status == SUBMITTED
+        - Not reserved; exclude assets transcribed by `user`
+
+    Returns:
+        Asset | None
+    """
+    reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
+        asset__item__project__slug=project_slug,
+        asset__item__project__campaign=campaign,
+    ).values("asset_id")
+
+    eligible = (
+        concordia_models.Asset.objects.filter(
+            item__project__campaign=campaign,
+            item__project__slug=project_slug,
+            item__project__published=True,
+            item__published=True,
+            published=True,
+            transcription_status=concordia_models.TranscriptionStatus.SUBMITTED,
+        )
+        .exclude(pk__in=Subquery(reserved_asset_ids))
+        .exclude(transcription__user=user.id)
         .select_for_update(skip_locked=True, of=("self",))
+        .select_related("item", "item__project")
+        .order_by("item__item_id", "sequence", "id")
         .first()
     )
 
-    if asset:
-        structured_logger.debug(
-            "Short-circuit hit: found reviewable within project.",
-            event_code="reviewable_shortcircuit_project_hit",
-            campaign=campaign,
-            user=user,
-            project_slug=project_slug,
-            after_asset_pk=after_asset_pk,
-            asset=asset,
-        )
-    else:
-        structured_logger.debug(
-            "Short-circuit miss within project.",
-            event_code="reviewable_shortcircuit_project_miss",
-            campaign=campaign,
-            user=user,
-            project_slug=project_slug,
-            after_asset_pk=after_asset_pk,
-        )
-    return asset
+    structured_logger.debug(
+        "Project short-circuit (campaign reviewable) resolved.",
+        event_code="reviewable_project_short_circuit_campaign",
+        campaign=campaign,
+        project_slug=project_slug,
+        after_asset_pk=after_asset_pk,
+        chosen_asset_id=getattr(eligible, "id", None),
+    )
+    return eligible
 
 
 def find_new_reviewable_campaign_assets(campaign, user=None):
@@ -299,6 +348,16 @@ def find_and_order_potential_reviewable_campaign_assets(
     potential_next_assets = find_next_reviewable_campaign_assets(campaign, user)
 
     # We'll favor assets which are in the same item or project as the original:
+    next_case = (
+        Case(
+            When(asset_id__gt=asset_pk, then=1),
+            default=0,
+            output_field=IntegerField(),
+        )
+        if asset_pk is not None
+        else Value(0, output_field=IntegerField())
+    )
+
     potential_next_assets = potential_next_assets.annotate(
         same_project=Case(
             When(project_slug=project_slug, then=1),
@@ -308,9 +367,7 @@ def find_and_order_potential_reviewable_campaign_assets(
         same_item=Case(
             When(item_item_id=item_id, then=1), default=0, output_field=IntegerField()
         ),
-        next_asset=Case(
-            When(asset_id__gt=asset_pk, then=1), default=0, output_field=IntegerField()
-        ),
+        next_asset=next_case,
     ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
 
     return potential_next_assets
@@ -370,7 +427,7 @@ def find_next_reviewable_campaign_asset(
 
     # cache-backed selection, then manual fallback
     potential_next_assets = find_and_order_potential_reviewable_campaign_assets(
-        campaign, user, project_slug, item_id, original_asset_id
+        campaign, user, project_slug, item_id, after_pk
     )
 
     asset_id = (
@@ -393,6 +450,17 @@ def find_next_reviewable_campaign_asset(
         )
         spawn_task = True
         asset_query = find_new_reviewable_campaign_assets(campaign, user)
+
+        next_case = (
+            Case(
+                When(id__gt=after_pk, then=1),
+                default=0,
+                output_field=IntegerField(),
+            )
+            if after_pk is not None
+            else Value(0, output_field=IntegerField())
+        )
+
         asset_query = asset_query.annotate(
             same_project=Case(
                 When(item__project__slug=project_slug, then=1),
@@ -404,11 +472,7 @@ def find_next_reviewable_campaign_asset(
                 default=0,
                 output_field=IntegerField(),
             ),
-            next_asset=Case(
-                When(id__gt=original_asset_id, then=1),
-                default=0,
-                output_field=IntegerField(),
-            ),
+            next_asset=next_case,
         ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
 
     asset = (
