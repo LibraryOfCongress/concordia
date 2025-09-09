@@ -1,8 +1,9 @@
-/* global $ displayMessage buildErrorMessage */
+/* global displayMessage buildErrorMessage */
 
 import {Modal} from 'bootstrap';
 import {selectLanguage} from './ocr.js';
 import {reserveAssetForEditing} from './asset-reservation.js';
+import $ from 'jquery';
 
 function lockControls($container) {
     if (!$container) {

@@ -1,11 +1,16 @@
-/* global displayHtmlMessage displayMessage buildErrorMessage Sentry */
+/* global displayHtmlMessage */
 
 import $ from 'jquery';
 import {Modal} from 'bootstrap';
+import {buildErrorMessage, displayMessage} from './base.js';
+import * as Sentry from '@sentry/browser';
 
-const assetReservationData = document.getElementById(
+const assetReservationElement = document.getElementById(
     'asset-reservation-data',
-).dataset;
+);
+const assetReservationData = assetReservationElement
+    ? assetReservationElement.dataset
+    : {};
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     let $transcriptionEditor = $('#transcription-editor');
