@@ -85,8 +85,6 @@ from concordia.utils.next_asset.transcribable.campaign import (
 from concordia.utils.next_asset.transcribable.campaign import (
     find_next_transcribable_campaign_assets as find_cached_transcribable_assets,
 )
-
-# Add to imports near the other "transcribable.topic" imports
 from concordia.utils.next_asset.transcribable.topic import (
     _eligible_transcribable_base_qs as topic_transcribable_eligible_base_qs,
 )
