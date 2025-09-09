@@ -375,14 +375,20 @@ def find_next_transcribable_campaign_asset(
         Asset or None: A locked asset eligible for transcription, or None if
         unavailable.
     """
+    # Normalize original_asset_id for safe use in filters/comparisons
+    try:
+        original_pk = int(original_asset_id) if original_asset_id is not None else None
+    except (TypeError, ValueError):
+        original_pk = None
+
     # Resolve "after sequence" only when the original asset belongs to the same item.
     after_seq = None
-    if item_id and original_asset_id:
+    if item_id and original_pk is not None:
         try:
             orig = (
                 concordia_models.Asset.objects.select_related("item")
                 .only("id", "sequence", "item__item_id")
-                .get(pk=original_asset_id)
+                .get(pk=original_pk)
             )
             if getattr(orig.item, "item_id", None) == item_id:
                 after_seq = orig.sequence
@@ -403,12 +409,12 @@ def find_next_transcribable_campaign_asset(
             published=True,
             transcription_status=concordia_models.TranscriptionStatus.NOT_STARTED,
         ).exclude(pk__in=Subquery(reserved_asset_ids))
-        if original_asset_id:
-            qs = qs.exclude(pk=original_asset_id)
+        if original_pk is not None:
+            qs = qs.exclude(pk=original_pk)
         if after_seq is not None:
             qs = qs.filter(
                 Q(sequence__gt=after_seq)
-                | (Q(sequence=after_seq) & Q(id__gt=original_asset_id))
+                | (Q(sequence=after_seq) & Q(id__gt=original_pk))
             )
         asset = (
             qs.order_by("sequence", "id")
@@ -430,8 +436,8 @@ def find_next_transcribable_campaign_asset(
             published=True,
             transcription_status=concordia_models.TranscriptionStatus.NOT_STARTED,
         ).exclude(pk__in=Subquery(reserved_asset_ids))
-        if original_asset_id:
-            candidate = candidate.exclude(pk=original_asset_id)
+        if original_pk is not None:
+            candidate = candidate.exclude(pk=original_pk)
         if item_id:
             candidate = candidate.exclude(item__item_id=item_id)
 
@@ -449,10 +455,8 @@ def find_next_transcribable_campaign_asset(
     potential_next_assets = find_and_order_potential_transcribable_campaign_assets(
         campaign, project_slug, item_id, original_asset_id
     )
-    if original_asset_id:
-        potential_next_assets = potential_next_assets.exclude(
-            asset_id=original_asset_id
-        )
+    if original_pk is not None:
+        potential_next_assets = potential_next_assets.exclude(asset_id=original_pk)
     if item_id:
         # Keep moving forward: avoid bouncing to the same item
         potential_next_assets = potential_next_assets.exclude(item_item_id=item_id)
@@ -474,8 +478,8 @@ def find_next_transcribable_campaign_asset(
         )
         spawn_task = True
         asset_query = find_new_transcribable_campaign_assets(campaign)
-        if original_asset_id:
-            asset_query = asset_query.exclude(pk=original_asset_id)
+        if original_pk is not None:
+            asset_query = asset_query.exclude(pk=original_pk)
         if item_id:
             asset_query = asset_query.exclude(item__item_id=item_id)
         asset_query = asset_query.annotate(
@@ -533,12 +537,12 @@ def find_next_transcribable_campaign_asset(
             published=True,
             transcription_status=concordia_models.TranscriptionStatus.IN_PROGRESS,
         ).exclude(pk__in=Subquery(reserved_asset_ids))
-        if original_asset_id:
-            qs = qs.exclude(pk=original_asset_id)
+        if original_pk is not None:
+            qs = qs.exclude(pk=original_pk)
         if after_seq is not None:
             qs = qs.filter(
                 Q(sequence__gt=after_seq)
-                | (Q(sequence=after_seq) & Q(id__gt=original_asset_id))
+                | (Q(sequence=after_seq) & Q(id__gt=original_pk))
             )
         asset = (
             qs.order_by("sequence", "id")
