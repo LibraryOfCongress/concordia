@@ -1,18 +1,30 @@
-/* global $ */
+/* global */
 
-if (typeof Storage !== 'undefined') {
-    if (!(window.screen.width < 1024 || window.screen.height < 768)) {
-        for (var key in localStorage) {
-            if (key.startsWith('banner-')) {
-                if ($('#' + key).hasClass('alert')) {
-                    $('#' + key).attr('hidden', true);
-                }
-            }
+import $ from 'jquery';
+
+var storage = window.localStorage;
+var storageAvailable;
+try {
+    const x = '__storage_test__';
+    storage.setItem(x, x);
+    storage.removeItem(x);
+    storageAvailable = true;
+} catch {
+    storageAvailable = false;
+}
+if (storageAvailable) {
+    for (var key in storage) {
+        if (key.startsWith('banner-') && $('#' + key).hasClass('alert')) {
+            $('#' + key).attr('hidden', true);
         }
     }
 }
-
 $('#no-interface-banner').click(function (event) {
-    localStorage.setItem(event.target.parentElement.id, true);
-    $('#' + event.target.parentElement.id).attr('hidden', true);
+    var banner = event.target.parentElement.parentElement;
+    if (banner.hasAttribute('id')) {
+        storage.setItem(banner.id, true);
+        var element = document.getElementById(banner.id);
+        element.classList.remove('d-flex');
+        $(element).attr('hidden', 'hidden');
+    }
 });
