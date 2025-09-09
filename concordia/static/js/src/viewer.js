@@ -1,6 +1,10 @@
-/* global OpenSeadragon screenfull debounce displayHtmlMessage */
+/* global OpenSeadragon displayHtmlMessage */
 
-const viewerData = document.getElementById('viewer-data').dataset;
+import {debounce} from './base.js';
+import screenfull from 'screenfull';
+
+const viewerElement = document.getElementById('viewer-data');
+const viewerData = viewerElement ? viewerElement.dataset : {};
 
 let seadragonViewer = OpenSeadragon({
     id: 'asset-image',

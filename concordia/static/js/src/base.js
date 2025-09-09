@@ -1,5 +1,10 @@
-/* global $ Cookies screenfull Sentry */
-/* exported displayMessage displayHtmlMessage buildErrorMessage trackUIInteraction */
+/* global Sentry */
+/* exported displayHtmlMessage trackUIInteraction */
+
+import Cookies from 'js-cookie';
+import $ from 'jquery';
+import screenfull from 'screenfull';
+import {Popover} from 'bootstrap';
 
 (function () {
     /*
@@ -27,12 +32,17 @@
     });
 })();
 
-$(function () {
-    $('[data-toggle="popover"]').popover();
+document.addEventListener('DOMContentLoaded', () => {
+    const popoverTriggerList = document.querySelectorAll(
+        '[data-bs-toggle="popover"]',
+    );
+    for (const popoverTriggerElement of popoverTriggerList) {
+        new Popover(popoverTriggerElement);
+    }
 });
 
 // eslint-disable-next-line no-unused-vars
-function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+export function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errorMessage;
     // eslint-disable-next-line unicorn/prefer-ternary
@@ -88,7 +98,7 @@ function displayHtmlMessage(level, message, uniqueId) {
     return $newMessage;
 }
 
-function displayMessage(level, message, uniqueId) {
+export function displayMessage(level, message, uniqueId) {
     return displayHtmlMessage(
         level,
         document.createTextNode(message),
@@ -241,6 +251,8 @@ function debounce(function_, timeout = 300) {
         }, timeout);
     };
 }
+
+export {debounce};
 
 /* Social share stuff */
 

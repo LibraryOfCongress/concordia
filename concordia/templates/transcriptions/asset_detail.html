@@ -39,7 +39,13 @@
         <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
     {% endif %}
 
-    <script type="module" src="{% static 'bundle.js' %}"></script>
+    {% if debug %}
+        <script type="module" src="http://localhost:5173/static/src/main.js"></script>
+        <script type="module" src="http://localhost:5173/static/src/asset-detail.js"></script>
+    {% else %}
+        <script type="module" src="{% static 'js/bundle.js' %}"></script>
+        <script type="module" src="{% static 'dist/assetDetail.js' %}"></script>
+    {% endif %}
 {% endblock head_content %}
 
 {% block breadcrumbs %}
