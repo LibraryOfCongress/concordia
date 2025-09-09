@@ -216,6 +216,7 @@ class NextTranscribableRedirectViewTests(
         asset_in_campaign = create_asset(
             item=create_item(
                 project=create_project(campaign=campaign, title="other project"),
+                item_id="another-item-in-different-project",
                 title="item in other project",
             ),
             slug="test-asset-in-same-campaign",
