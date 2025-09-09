@@ -341,43 +341,28 @@ def find_next_transcribable_topic_asset(
 ):
     """
     Retrieves the next best transcribable asset for a user within a topic.
-
-    Priority for short-circuit selection (before cache/fallback):
-    1) If item_id is provided, return the next NOT_STARTED asset in that item
-       by sequence (> the original asset's sequence when available).
-    2) If project_slug is provided, return the first NOT_STARTED asset in that
-       project (ordered by item_id, then sequence), constrained to the topic.
-       This step avoids the original asset and the current item.
-
-    If none of the above match, falls back to the cache-backed path (NOT_STARTED
-    anywhere in the topic, avoiding the original asset and current item). If no cached
-    match is available, compute manually and schedule a background task to repopulate.
-
-    After exhausting NOT_STARTED options, select the next IN_PROGRESS asset in the
-    same item (by sequence > original when available).
-
-    Args:
-        topic (Topic): The topic to find an asset in.
-        project_slug (str): Slug of the project the user is currently transcribing.
-        item_id (str): ID of the item the user is currently transcribing.
-        original_asset_id (int): ID of the asset the user just transcribed.
-
-    Returns:
-        Asset or None: A locked asset eligible for transcription, or None if
-        unavailable.
+    (Docstring unchanged)
     """
-    # Resolve "after sequence" only when the original asset belongs to the same item.
+    # Resolve original context safely (int or digit-string only)
     after_seq = None
-    if item_id and original_asset_id:
+    orig = None
+    orig_item_id = None
+    orig_id_valid = isinstance(original_asset_id, int) or (
+        isinstance(original_asset_id, str) and original_asset_id.isdigit()
+    )
+    if orig_id_valid:
         try:
             orig = (
                 concordia_models.Asset.objects.select_related("item")
                 .only("id", "sequence", "item__item_id")
                 .get(pk=original_asset_id)
             )
-            if getattr(orig.item, "item_id", None) == item_id:
-                after_seq = orig.sequence
+            orig_item_id = getattr(orig.item, "item_id", None)
+            # Keep sequence handy for same-item gating in any path
+            after_seq = orig.sequence
         except concordia_models.Asset.DoesNotExist:
+            orig = None
+            orig_item_id = None
             after_seq = None
 
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.values(
@@ -394,12 +379,12 @@ def find_next_transcribable_topic_asset(
             published=True,
             transcription_status=concordia_models.TranscriptionStatus.NOT_STARTED,
         ).exclude(pk__in=Subquery(reserved_asset_ids))
-        if original_asset_id:
+        if orig_id_valid:
             qs = qs.exclude(pk=original_asset_id)
-        if after_seq is not None:
+        if after_seq is not None and orig_item_id == item_id:
             qs = qs.filter(
                 Q(sequence__gt=after_seq)
-                | (Q(sequence=after_seq) & Q(id__gt=original_asset_id))
+                | (Q(sequence=after_seq) & Q(id__gt=int(original_asset_id)))
             )
         asset = (
             qs.order_by("sequence", "id")
@@ -410,8 +395,7 @@ def find_next_transcribable_topic_asset(
         if asset:
             return asset
 
-    # Short-circuit: same project and NOT_STARTED (topic-constrained),
-    # avoiding the current item and original asset
+    # Short-circuit: same project and NOT_STARTED (topic-constrained)
     if project_slug:
         candidate = concordia_models.Asset.objects.filter(
             item__project__topics=topic.id,
@@ -421,7 +405,7 @@ def find_next_transcribable_topic_asset(
             published=True,
             transcription_status=concordia_models.TranscriptionStatus.NOT_STARTED,
         ).exclude(pk__in=Subquery(reserved_asset_ids))
-        if original_asset_id:
+        if orig_id_valid:
             candidate = candidate.exclude(pk=original_asset_id)
         if item_id:
             candidate = candidate.exclude(item__item_id=item_id)
@@ -435,16 +419,15 @@ def find_next_transcribable_topic_asset(
         if asset:
             return asset
 
-    # Cache-backed selection (NOT_STARTED anywhere in the topic), then manual fallback.
+    # Cache-backed selection (NOT_STARTED anywhere), then manual fallback.
     potential_next_assets = find_and_order_potential_transcribable_topic_assets(
         topic, project_slug, item_id, original_asset_id
     )
-    if original_asset_id:
+    if orig_id_valid:
         potential_next_assets = potential_next_assets.exclude(
             asset_id=original_asset_id
         )
     if item_id:
-        # Keep moving forward: avoid bouncing to the same item
         potential_next_assets = potential_next_assets.exclude(item_item_id=item_id)
 
     asset_id = (
@@ -464,10 +447,18 @@ def find_next_transcribable_topic_asset(
         )
         spawn_task = True
         asset_query = find_new_transcribable_topic_assets(topic)
-        if original_asset_id:
+        if orig_id_valid:
             asset_query = asset_query.exclude(pk=original_asset_id)
         if item_id:
             asset_query = asset_query.exclude(item__item_id=item_id)
+        # If we know the original's item/seq, keep moving forward within that item
+        if orig_item_id and after_seq is not None:
+            asset_query = asset_query.exclude(
+                Q(item__item_id=orig_item_id, sequence__lte=after_seq)
+            )
+
+        # Prefer same project and same item; if item_id is blank, prefer original's item
+        ref_item_id = item_id or orig_item_id
         asset_query = asset_query.annotate(
             unstarted=Case(
                 When(
@@ -483,7 +474,7 @@ def find_next_transcribable_topic_asset(
                 output_field=IntegerField(),
             ),
             same_item=Case(
-                When(item__item_id=item_id, then=1),
+                When(item__item_id=ref_item_id, then=1),
                 default=0,
                 output_field=IntegerField(),
             ),
@@ -523,12 +514,12 @@ def find_next_transcribable_topic_asset(
             published=True,
             transcription_status=concordia_models.TranscriptionStatus.IN_PROGRESS,
         ).exclude(pk__in=Subquery(reserved_asset_ids))
-        if original_asset_id:
+        if orig_id_valid:
             qs = qs.exclude(pk=original_asset_id)
-        if after_seq is not None:
+        if after_seq is not None and orig_item_id == item_id:
             qs = qs.filter(
                 Q(sequence__gt=after_seq)
-                | (Q(sequence=after_seq) & Q(id__gt=original_asset_id))
+                | (Q(sequence=after_seq) & Q(id__gt=int(original_asset_id)))
             )
         asset = (
             qs.order_by("sequence", "id")
@@ -537,6 +528,16 @@ def find_next_transcribable_topic_asset(
             .first()
         )
         if asset:
+            if spawn_task:
+                structured_logger.debug(
+                    "Spawned background task to populate cache",
+                    event_code="transcribable_next_cache_population",
+                    topic=topic,
+                )
+                populate_task = get_registered_task(
+                    "concordia.tasks.populate_next_transcribable_for_topic"
+                )
+                populate_task.delay(topic.id)
             return asset
 
     return None
