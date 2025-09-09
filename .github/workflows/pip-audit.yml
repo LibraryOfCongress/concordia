@@ -2,19 +2,8 @@ name: pip-audit
 
 on:
     workflow_dispatch:
-    push:
-        branches: [release]
-        paths-ignore:
-            - docs/**
-            - README.md
-            - .github/**
-            - cloudformation/**
-            - db_scripts/**
-            - jenkins/**
-            - kibana-proxy/**
-            - postgresql/**
     pull_request:
-        branches: [main]
+        branches: [main, release]
         paths-ignore:
             - docs/**
             - README.md
@@ -22,7 +11,7 @@ on:
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
-            - kibana-proxy/**
+            - search-proxy/**
             - postgresql/**
 
 jobs:

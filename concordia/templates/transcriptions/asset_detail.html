@@ -58,6 +58,7 @@
 
 {% block main_content %}
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
+    <div id="unacceptable-characters-content"></div>
 
     <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
@@ -121,6 +122,9 @@
         </div>
         <div id="error-modal" class="modal" tabindex="-1" role="dialog">
             {% include "transcriptions/asset_detail/error_modal.html" %}
+        </div>
+        <div id="nothing-to-transcribe-modal" class="modal" tabindex="-1" role="dialog">
+            {% include "transcriptions/asset_detail/nothing_to_transcribe_modal.html" %}
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>

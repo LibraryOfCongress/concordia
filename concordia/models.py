@@ -532,7 +532,10 @@ class Project(MetricsModelMixin("project"), models.Model):
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
-        indexes = [models.Index(fields=["id", "campaign", "published"])]
+        indexes = [
+            models.Index(fields=["id", "campaign", "published"]),
+            models.Index(fields=["published", "campaign", "title"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -567,6 +570,9 @@ class Item(MetricsModelMixin("item"), models.Model):
         help_text="Raw metadata returned by the remote API",
     )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
+    thumbnail_image = models.ImageField(
+        upload_to="item-thumbnails", blank=True, null=True
+    )
 
     disable_ocr = models.BooleanField(
         default=False, help_text="Turn OCR off for all assets of this item"
@@ -588,6 +594,26 @@ class Item(MetricsModelMixin("item"), models.Model):
                 "item_id": self.item_id,
             },
         )
+
+    @property
+    def thumbnail_link(self) -> str | None:
+        """
+        Return the preferred thumbnail URL.
+
+        Prefers thumbnail_image if present and valid; otherwise falls back to
+        thumbnail_url. Returns None if neither is available.
+
+        TODO: Remove this when removing thumbnail_url and switch template
+        to use thumbnail_image directly (transcriptions/project_detail.html)
+        """
+        if self.thumbnail_image:
+            try:
+                return self.thumbnail_image.url
+            except ValueError:
+                # File missing from storage, fall back to thumbnail_url
+                # since we can for now
+                pass
+        return self.thumbnail_url or None
 
     def turn_off_ocr(self):
         return self.disable_ocr or self.project.turn_off_ocr()
@@ -658,8 +684,15 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     class Meta:
         unique_together = (("slug", "item"),)
         indexes = [
-            models.Index(fields=["id", "item", "published", "transcription_status"]),
+            models.Index(
+                fields=["item", "published", "transcription_status", "sequence"]
+            ),
+            models.Index(
+                fields=["published", "transcription_status", "item", "sequence"]
+            ),
             models.Index(fields=["published", "transcription_status"]),
+            models.Index(fields=["item", "sequence"]),
+            models.Index(fields=["campaign", "sequence"]),
         ]
         permissions = [
             ("reopen_asset", "Can reopen asset"),
@@ -1390,12 +1423,27 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 
 def update_userprofileactivity_table(user, campaign_id, field, increment=1):
+    structured_logger.info(
+        "Updating user profile activity table.",
+        event_code="userprofileactivity_update_start",
+        user=user,
+        campaign_id=campaign_id,
+        activity_field=field,
+        increment=increment,
+    )
     user_profile_activity, created = UserProfileActivity.objects.get_or_create(
         user=user,
         campaign_id=campaign_id,
     )
     if created:
         value = increment
+        structured_logger.info(
+            "Created new UserProfileActivity object",
+            event_code="userprofileactivity_created",
+            user=user,
+            campaign_id=campaign_id,
+        )
+
     else:
         value = F(field) + increment
     setattr(user_profile_activity, field, value)
@@ -1407,15 +1455,33 @@ def update_userprofileactivity_table(user, campaign_id, field, increment=1):
         .count()
     )
     user_profile_activity.save()
-
+    structured_logger.info(
+        "Saved UserProfileActivity.",
+        event_code="userprofileactivity_saved",
+        user=user,
+        campaign_id=campaign_id,
+        updated_field=field,
+    )
     if hasattr(user, "profile"):
         profile = user.profile
         value = F(field) + increment
     else:
         profile = UserProfile.objects.create(user=user)
         value = increment
+        structured_logger.info(
+            "Created new UserProfile OBJECT",
+            event_code="userprofile_created",
+            user=user,
+        )
+
     setattr(profile, field, value)
     profile.save()
+    structured_logger.info(
+        "Saved UserProfile",
+        event_code="userprofile_saved",
+        user=user,
+        updated_field=field,
+    )
 
 
 def _update_useractivity_cache(user_id, campaign_id, attr_name):
@@ -1427,7 +1493,16 @@ def _update_useractivity_cache(user_id, campaign_id, attr_name):
     else:
         review_count += 1
     updates[user_id] = (transcribe_count, review_count)
-    cache.set(key, updates)
+    cache.set(key, updates, timeout=None)
+    structured_logger.info(
+        "Updated user activity cache",
+        event_code="useractivity_cache_updated",
+        user_id=user_id,
+        campaign_id=campaign_id,
+        updated_field=attr_name,
+        new_transcribe_count=transcribe_count,
+        new_review_count=review_count,
+    )
 
 
 class AssetTranscriptionReservation(models.Model):
@@ -1862,9 +1937,18 @@ class ProjectTopic(models.Model):
         null=True,
         help_text="Optional filter on the status for this project-topic link",
     )
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: lower values will be listed first"
+    )
 
     class Meta:
         db_table = (
             "concordia_project_topics"  # pre-existing table, so we reuse the name
         )
         unique_together = ("project", "topic")
+        ordering = ("ordering",)
+        indexes = [
+            models.Index(fields=["topic", "project"]),
+            models.Index(fields=["topic", "ordering"]),
+            models.Index(fields=["topic", "url_filter"]),
+        ]

@@ -1,14 +1,19 @@
+import io
+import mimetypes
 import os
 import re
 from logging import getLogger
+from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import requests
 from celery import group
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils.text import slugify
 from django.utils.timezone import now
+from PIL import Image, UnidentifiedImageError
 from requests.exceptions import HTTPError
 
 from concordia.models import Asset, Item, MediaType
@@ -98,10 +103,11 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
 
     import_item.item.metadata.update(item_data)
 
-    populate_item_from_data(import_item.item, item_data["item"])
+    thumbnail_url = populate_item_from_data(import_item.item, item_data["item"])
 
     item.full_clean()
     item.save()
+    download_and_set_item_thumbnail(item, thumbnail_url)
 
     return import_item_task.delay(import_item.pk)
 
@@ -315,6 +321,17 @@ def populate_item_from_data(item, item_info):
     thumb_urls = [i for i in item_info["image_url"] if ".jpg" in i]
     if thumb_urls:
         item.thumbnail_url = urljoin(item.item_url, thumb_urls[0])
+    try:
+        image_urls = item_info.get("image_url") or []
+        thumb_urls = [u for u in image_urls if ".jpg" in u]
+    except Exception:
+        thumb_urls = []
+
+    if thumb_urls:
+        resolved = urljoin(item.item_url, thumb_urls[0])
+        # TODO: remove setting thumbnail_url once field is removed
+        item.thumbnail_url = resolved
+        return resolved
 
 
 def get_asset_urls_from_item_resources(resources):
@@ -363,3 +380,134 @@ def get_asset_urls_from_item_resources(resources):
                 assets.append(backup_candidates[0][0])
 
     return assets, item_resource_url
+
+
+def _guess_extension(content_type: Optional[str], url_path: str) -> str:
+    """Guess a safe extension from Content-Type or URL, defaulting to .bin."""
+    if content_type:
+        ext = mimetypes.guess_extension(content_type.split(";")[0].strip())
+        if ext:
+            return ext
+    _, ext = os.path.splitext(url_path)
+    if ext:
+        return ext.lower()
+    return ".bin"
+
+
+def _safe_filename(item: Item, ext: str) -> str:
+    """Build a filename for the item's thumbnail."""
+    base = slugify(item.item_id or f"item-{item.pk}") or f"item-{item.pk}"
+    return f"{base}{ext}"
+
+
+def download_and_set_item_thumbnail(
+    item: Item,
+    url: str,
+    force: bool = False,
+    connect_timeout: float = 5.0,
+    read_timeout: float = 30.0,
+) -> str:
+    """
+    Download an image from url and save it to item.thumbnail_image.
+
+    The image is validated with Pillow. The function will not set a new
+    thumbnail_image if one already exists, unless `force=True`. Filename
+    is stable per item and inferred from Content-Type or URL, with a safe fallback.
+
+    Args:
+        item: The Item instance to modify and save.
+        url: Absolute URL for the image to download.
+        force: Overwrite an existing thumbnail if True.
+        connect_timeout: Requests connect timeout in seconds.
+        read_timeout: Requests read timeout in seconds.
+
+    Returns:
+        The storage path of the saved image, or a message if skipped.
+
+    Raises:
+        ValueError: If the image is invalid.
+        requests.RequestException: Network errors during download.
+    """
+    # Lock the row briefly to avoid pointless work if someone else is already writing.
+    with transaction.atomic():
+        locked = (
+            Item.objects.select_for_update(of=("self",))
+            .only("id", "thumbnail_image")
+            .get(pk=item.pk)
+        )
+        if locked.thumbnail_image and not force:
+            msg = "Thumbnail already exists; skipping (use force=True to overwrite)."
+            logger.warning(
+                "download_and_set_item_thumbnail: %s item_pk=%s", msg, item.pk
+            )
+            return msg
+
+    timeout = (connect_timeout, read_timeout)
+    logger.info(
+        "download_and_set_item_thumbnail: downloading url=%s item_pk=%s",
+        url,
+        item.pk,
+    )
+
+    with requests.get(url, stream=True, timeout=timeout) as resp:
+        resp.raise_for_status()
+        content_type = (resp.headers.get("Content-Type") or "").lower()
+
+        buf = io.BytesIO()
+        for chunk in resp.iter_content(chunk_size=64 * 1024):
+            if not chunk:
+                continue
+            buf.write(chunk)
+
+    # Validate image integrity with Pillow.
+    try:
+        buf.seek(0)
+        with Image.open(buf) as img:
+            img.verify()
+    except UnidentifiedImageError as exc:
+        raise ValueError("Downloaded file is not a valid image.") from exc
+
+    # Decide file extension. Try header, URL, then Pillow.
+    url_path = urlparse(url).path
+    ext = _guess_extension(content_type, url_path)
+    # If we got a blank of bin extension, that probably means we couldn't
+    # figure out what the correct extension was, so we look at the file directly
+    # and default to 'jpg' if nothing else
+    if ext in (".bin", ""):
+        try:
+            buf.seek(0)
+            with Image.open(buf) as probe:
+                fmt = (probe.format or "").lower()
+            ext = {
+                "jpeg": ".jpg",
+                "jpg": ".jpg",
+                "png": ".png",
+                "gif": ".gif",
+                "webp": ".webp",
+                "tiff": ".tif",
+                "bmp": ".bmp",
+            }.get(fmt, ".jpg")
+        finally:
+            buf.seek(0)
+
+    filename = _safe_filename(item, ext)
+    content = ContentFile(buf.getvalue())
+
+    with transaction.atomic():
+        locked = Item.objects.select_for_update(of=("self",)).get(pk=item.pk)
+        if locked.thumbnail_image and not force:
+            msg = (
+                "Thumbnail already present after download; skipping save. "
+                "Use force=True to overwrite."
+            )
+            logger.warning(
+                "download_and_set_item_thumbnail: %s item_id=%s", msg, item.pk
+            )
+            return msg
+        locked.thumbnail_image.save(filename, content, save=True)
+        logger.info(
+            "download_and_set_item_thumbnail: saved as %s item_id=%s",
+            locked.thumbnail_image.name,
+            locked.pk,
+        )
+    return locked.thumbnail_image.name

@@ -1,7 +1,9 @@
+from typing import Any, Iterable
 from urllib.parse import urlencode
 
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
@@ -11,16 +13,17 @@ from concordia.models import (
     STATUS_COUNT_KEYS,
     Asset,
     Campaign,
+    Project,
     ResearchCenter,
     SiteReport,
     Topic,
     Transcription,
     TranscriptionStatus,
 )
+from concordia.utils.constants import ASSETS_PER_PAGE
 
 from .decorators import default_cache_control, user_cache_control
 from .utils import (
-    ASSETS_PER_PAGE,
     annotate_children_with_progress_stats,
     calculate_asset_stats,
 )
@@ -28,8 +31,26 @@ from .utils import (
 
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignListView(APIListView):
-    template_name = "transcriptions/campaign_list.html"
+    """
+    Display a list of active campaigns.
 
+    Renders a list of published, listed, and active campaigns ordered by
+    their configured ordering and title. Adds context entries for topics
+    and completed campaigns for secondary display.
+
+    Inherits from APIListView to support both HTML rendering and API
+    serialization of campaigns.
+
+    Attributes:
+        template_name (str): Template used to render the campaign list.
+        queryset (QuerySet[Campaign]): The base queryset of campaigns.
+        context_object_name (str): The name of the context variable for campaigns.
+
+    Returns:
+        HttpResponse: Renders the campaign list template with context.
+    """
+
+    template_name = "transcriptions/campaign_list.html"
     queryset = (
         Campaign.objects.published()
         .listed()
@@ -38,7 +59,20 @@ class CampaignListView(APIListView):
     )
     context_object_name = "campaigns"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Build context data for the campaign list template.
+
+        Adds:
+        - 'topics': Ordered list of published topics.
+        - 'completed_campaigns': Ordered list of completed or retired campaigns.
+
+        Args:
+            **kwargs: Additional context arguments.
+
+        Returns:
+            dict[str, Any]: Context data for rendering.
+        """
         data = super().get_context_data(**kwargs)
         data["topics"] = (
             Topic.objects.published().listed().order_by("ordering", "title")
@@ -51,7 +85,18 @@ class CampaignListView(APIListView):
         )
         return data
 
-    def serialize_context(self, context):
+    def serialize_context(self, context: dict[str, Any]) -> dict[str, Any]:
+        """
+        Serialize context data for API responses.
+
+        Annotates each campaign object with its asset status counts.
+
+        Args:
+            context (dict[str, Any]): The view context.
+
+        Returns:
+            dict[str, Any]: Serialized context data for API output.
+        """
         data = super().serialize_context(context)
 
         object_list = data["objects"]
@@ -87,11 +132,32 @@ class CampaignListView(APIListView):
 
 @method_decorator(default_cache_control, name="dispatch")
 class CompletedCampaignListView(APIListView):
+    """
+    Display a list of completed and/or retired campaigns.
+
+    Renders a list of published, listed campaigns filtered by completion or
+    retirement status. Optionally filters by research center or campaign type.
+
+    Attributes:
+        model (Model): The Campaign model class.
+        template_name (str): Template used to render the campaign list.
+        context_object_name (str): The name of the context variable for campaigns.
+
+    Returns:
+        HttpResponse: Renders the completed campaign list template with context.
+    """
+
     model = Campaign
     template_name = "transcriptions/campaign_list_small_blocks.html"
     context_object_name = "campaigns"
 
-    def _get_all_campaigns(self):
+    def _get_all_campaigns(self) -> QuerySet[Campaign]:
+        """
+        Retrieve all completed or retired campaigns, optionally filtered by type.
+
+        Returns:
+            QuerySet[Campaign]: Filtered campaigns.
+        """
         campaignType = self.request.GET.get("type", None)
         campaigns = Campaign.objects.published().listed()
         if campaignType is None:
@@ -105,14 +171,35 @@ class CompletedCampaignListView(APIListView):
 
         return campaigns.filter(status=status)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Campaign]:
+        """
+        Build the queryset of completed or retired campaigns.
+
+        Optionally filters by research center if provided.
+
+        Returns:
+            QuerySet[Campaign]: The queryset for completed campaigns.
+        """
         campaigns = self._get_all_campaigns()
         research_center = self.request.GET.get("research_center", None)
         if research_center is not None:
             campaigns = campaigns.filter(research_centers=research_center)
         return campaigns.order_by("-completed_date")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Build context data for the completed campaign list template.
+
+        Adds:
+        - 'result_count': The number of campaigns in the list.
+        - 'research_centers': Distinct research centers for these campaigns.
+
+        Args:
+            **kwargs: Additional context arguments.
+
+        Returns:
+            dict[str, Any]: Context data for rendering.
+        """
         campaigns = self._get_all_campaigns()
         data = super().get_context_data(**kwargs)
         data["result_count"] = self.object_list.count()
@@ -125,9 +212,38 @@ class CompletedCampaignListView(APIListView):
 
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignTopicListView(TemplateView):
+    """
+    Display a list of campaigns grouped by topic.
+
+    Renders active campaigns, a subset of topics and completed/retired campaigns
+    for navigation and discovery pages.
+
+    Attributes:
+        template_name (str): Template used to render the campaign-topic list page.
+
+    Returns:
+        HttpResponse: Renders the campaign topic list template with context.
+    """
+
     template_name = "transcriptions/campaign_topic_list.html"
 
-    def get(self, context):
+    def get(self, request, *args: Any, **kwargs: Any) -> HttpResponse:
+        """
+        Handle GET requests for the campaign-topic list page.
+
+        Builds context containing:
+        - 'campaigns': Ordered list of active campaigns.
+        - 'topics': Ordered list of up to 5 topics.
+        - 'completed_campaigns': Ordered list of completed and retired campaigns.
+
+        Args:
+            request (HttpRequest): The incoming HTTP request.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            HttpResponse: Rendered campaign topic list page.
+        """
         data = {}
         data["campaigns"] = (
             Campaign.objects.published()
@@ -146,18 +262,49 @@ class CampaignTopicListView(TemplateView):
             .order_by("ordering", "title")
         )
 
-        return render(self.request, self.template_name, data)
+        return render(request, self.template_name, data)
 
 
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(APIDetailView):
+    """
+    Display details for a single campaign.
+
+    Renders campaign information, associated projects, and aggregated asset
+    statistics. Selects different templates based on campaign status
+    (active, completed, or retired).
+
+    Attributes:
+        template_name (str): Template for active campaigns.
+        completed_template_name (str): Template for completed campaigns.
+        retired_template_name (str): Template for retired campaigns.
+        context_object_name (str): Context variable name for the campaign.
+        queryset (QuerySet[Campaign]): Base queryset of campaigns.
+
+    Returns:
+        HttpResponse: Renders the campaign detail template with context.
+    """
+
     template_name = "transcriptions/campaign_detail.html"
     completed_template_name = "transcriptions/campaign_detail_completed.html"
     retired_template_name = "transcriptions/campaign_detail_retired.html"
     context_object_name = "campaign"
     queryset = Campaign.objects.published().order_by("title")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Build context data for the campaign detail page.
+
+        Adds:
+        - For retired campaigns: contributor and completed counts from SiteReport.
+        - For active campaigns: filtered and annotated projects, asset statistics.
+
+        Args:
+            **kwargs: Additional context arguments.
+
+        Returns:
+            dict[str, Any]: Context data for rendering.
+        """
         ctx = super().get_context_data(**kwargs)
         if self.object and self.object.status == Campaign.Status.RETIRED:
             latest_report = SiteReport.objects.filter(campaign=ctx["campaign"]).latest(
@@ -224,7 +371,19 @@ class CampaignDetailView(APIDetailView):
 
         return ctx
 
-    def serialize_context(self, context):
+    def serialize_context(self, context: dict[str, Any]) -> dict[str, Any]:
+        """
+        Serialize campaign context data for API responses.
+
+        Adds:
+        - 'related_links': Resource title and URL pairs for the campaign.
+
+        Args:
+            context (dict[str, Any]): The view context.
+
+        Returns:
+            dict[str, Any]: Serialized context data for API output.
+        """
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
             {"title": title, "url": url}
@@ -234,7 +393,13 @@ class CampaignDetailView(APIDetailView):
         ]
         return ctx
 
-    def get_template_names(self):
+    def get_template_names(self) -> list[str]:
+        """
+        Determine the template to use based on campaign status.
+
+        Returns:
+            list[str]: List containing the selected template name.
+        """
         if self.object.status == Campaign.Status.COMPLETED:
             return [self.completed_template_name]
         elif self.object.status == Campaign.Status.RETIRED:
@@ -244,7 +409,28 @@ class CampaignDetailView(APIDetailView):
 
 @method_decorator(user_cache_control, name="dispatch")
 class FilteredCampaignDetailView(CampaignDetailView):
-    def get_context_data(self, **kwargs):
+    """
+    Display campaign details with reviewable asset filtering for staff users.
+
+    Inherits from CampaignDetailView, overriding context data to include only
+    assets eligible for review by staff users when authenticated.
+
+    Returns:
+        HttpResponse: Renders the filtered campaign detail template with context.
+    """
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Build context data with reviewable asset filtering for staff users.
+
+        Adds 'filter_by_reviewable' to kwargs when user is authenticated and staff.
+
+        Args:
+            **kwargs: Additional context arguments.
+
+        Returns:
+            dict[str, Any]: Context data for rendering.
+        """
         if self.request.user.is_authenticated and self.request.user.is_staff:
             kwargs["filter_by_reviewable"] = True
 
@@ -254,12 +440,41 @@ class FilteredCampaignDetailView(CampaignDetailView):
 @method_decorator(default_cache_control, name="dispatch")
 class ReportCampaignView(TemplateView):
     """
-    Report about campaign resources and status
+    Display a report summarizing campaign resources and status.
+
+    Renders a paginated report including project-level asset counts, tag counts,
+    contributor counts, reviewer counts and transcription status summaries.
+
+    Attributes:
+        template_name (str): Template used to render the campaign report page.
+
+    Returns:
+        HttpResponse: Renders the campaign report template with context.
     """
 
     template_name = "transcriptions/campaign_report.html"
 
-    def get(self, request, campaign_slug):
+    def get(
+        self, request, campaign_slug: str, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        """
+        Handle GET requests for the campaign report page.
+
+        Builds context containing:
+        - Campaign title and slug
+        - Total asset count
+        - Paginated projects with asset, tag, transcriber and reviewer counts
+        - Transcription status summaries per project
+
+        Args:
+            request (HttpRequest): The incoming HTTP request.
+            campaign_slug (str): Slug for the campaign to report on.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            HttpResponse: Rendered campaign report page.
+        """
         campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
 
         try:
@@ -308,7 +523,21 @@ class ReportCampaignView(TemplateView):
 
         return render(self.request, self.template_name, ctx)
 
-    def add_transcription_status_summary_to_projects(self, projects):
+    def add_transcription_status_summary_to_projects(
+        self, projects: Iterable[Project]
+    ) -> None:
+        """
+        Annotate each project with a summary of transcription statuses.
+
+        Adds a 'transcription_statuses' attribute to each project, containing
+        status names and their respective counts, ordered by status.
+
+        Args:
+            projects (Iterable): Projects to annotate.
+
+        Returns:
+            None
+        """
         status_qs = Asset.objects.filter(
             item__published=True, item__project__in=projects, published=True
         )

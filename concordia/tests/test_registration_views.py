@@ -8,7 +8,7 @@ from unittest import mock
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -26,6 +26,7 @@ INTERNAL_RESET_SESSION_TOKEN = "_password_reset_token"  # nosec
 
 
 @override_settings(RATELIMIT_ENABLE=False)
+@tag("registration")
 class ConcordiaViewTests(
     JSONAssertMixin, CacheControlAssertions, TestCase, CreateTestUsers
 ):

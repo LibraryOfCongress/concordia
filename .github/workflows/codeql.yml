@@ -2,25 +2,15 @@ name: 'CodeQL Advanced'
 
 on:
     workflow_dispatch:
-    push:
-        branches: [release]
-        paths-ignore:
-            - docs/**
-            - README.md
-            - cloudformation/**
-            - db_scripts/**
-            - jenkins/**
-            - kibana-proxy/**
-            - postgresql/**
     pull_request:
-        branches: [main, 'feature-*']
+        branches: [main, 'feature-*', release]
         paths-ignore:
             - docs/**
             - README.md
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
-            - kibana-proxy/**
+            - search-proxy/**
             - postgresql/**
     schedule:
         - cron: '20 23 * * 2'

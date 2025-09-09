@@ -11,7 +11,7 @@ on:
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
-            - kibana-proxy/**
+            - search-proxy/**
             - postgresql/**
             - cloudformation/tests/**
             - concordia/tests/**
@@ -42,7 +42,7 @@ jobs:
             - name: Install node and npm
               uses: actions/setup-node@v4
               with:
-                  node-version: '18'
+                  node-version: '20'
 
             - name: Checkout repository
               uses: actions/checkout@v4

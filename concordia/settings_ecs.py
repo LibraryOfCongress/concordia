@@ -7,6 +7,7 @@ from .settings_template import (
     CONCORDIA_ENVIRONMENT,
     DATABASES,
     INSTALLED_APPS,
+    MIDDLEWARE,
     STORAGES,
 )
 
@@ -70,6 +71,12 @@ STORAGES = {
             "querystring_auth": False,
         },
     },
+    "visualizations": {
+        "BACKEND": "concordia.storage_backends.OverwriteS3Boto3Storage",
+        "OPTIONS": {
+            "querystring_auth": False,
+        },
+    },
 }
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
@@ -97,3 +104,24 @@ RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")
 
 if os.getenv("USE_PERSISTENT_DATABASE_CONNECTIONS"):
     DATABASES["default"].update({"CONN_MAX_AGE": 15 * 60})
+
+# ECS-specific X-Ray auto-instrumentation (minimal Django config)
+if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true":
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    logger.info("ECS X-Ray auto-instrumentation starting")
+
+    # Add X-Ray to INSTALLED_APPS
+    INSTALLED_APPS = INSTALLED_APPS + ["aws_xray_sdk.ext.django"]
+
+    # Add middleware
+    MIDDLEWARE = [
+        "aws_xray_sdk.ext.django.middleware.XRayMiddleware"
+    ] + MIDDLEWARE  # noqa F405
+
+    logger.info("ECS X-Ray auto-instrumentation completed")
+    logger.info("X-Ray middleware added at position 0: %s", MIDDLEWARE[0])
+    logger.info("aws_xray_sdk.ext.django added to INSTALLED_APPS")
+    logger.info("All X-Ray configuration handled via environment variables")

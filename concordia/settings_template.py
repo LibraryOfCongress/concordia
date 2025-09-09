@@ -145,7 +145,7 @@ MIDDLEWARE = [
     "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
-RATELIMIT_VIEW = "concordia.views.ratelimit_view"
+RATELIMIT_VIEW = "concordia.views.rate_limit.ratelimit_view"
 RATELIMIT_BLOCK = False
 
 TEMPLATES = [
@@ -329,6 +329,7 @@ LOGGING = {
         "django": {"handlers": ["file"], "level": "INFO"},
         "celery": {"handlers": ["celery"], "level": "INFO"},
         "concordia": {"handlers": ["file"], "level": "INFO"},
+        "aws_xray_sdk": {"handlers": ["file"], "level": "INFO", "propagate": True},
         "structlog": {
             "handlers": ["structlog_file"],
             "level": "INFO",
@@ -424,6 +425,9 @@ STORAGES = {
     "assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
+    "visualizations": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
@@ -510,6 +514,7 @@ TINYMCE_DEFAULT_CONFIG = {
     "content_css": "dark",
     "plugins": "link lists searchreplace wordcount",
     "browser_spellcheck": "true",
+    "newline_behavior": "linebreak",
     "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
     "width": 624,
 }

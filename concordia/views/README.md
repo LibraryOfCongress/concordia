@@ -98,7 +98,8 @@ Custom decorators used by views
 -   **default_cache_control** - Applies default public caching headers for pages that don't vary per user
 -   **user_cache_control** - Applies public caching headers with variation for logged-in users
 -   **validate_anonymous_user** - Validates anonymous users via Turnstile before processing requests
--   **reserve_rate** - Returns a rate-limit value for unauthenticated users
+-   **reserve_rate** - Returns a rate-limit value for unauthenticated users for reserving assets
+-   **next_asset_rate** - Returns a rate-limit value for unauthenicated users for next\_\*\_asset views
 
 ## items.py
 

@@ -2,20 +2,8 @@ name: 'Build'
 
 on:
     workflow_dispatch:
-    push:
-        branches: [release]
-        paths-ignore:
-            - docs/**
-            - README.md
-            - .github/**
-            - cloudformation/**
-            - db_scripts/**
-            - jenkins/**
-            - kibana-proxy/**
-            - postgresql/**
-
     pull_request:
-        branches: [main, 'feature-*']
+        branches: [main, 'feature-*', release]
         paths-ignore:
             - docs/**
             - README.md
@@ -23,7 +11,7 @@ on:
             - cloudformation/**
             - db_scripts/**
             - jenkins/**
-            - kibana-proxy/**
+            - search-proxy/**
             - postgresql/**
 
 jobs:
@@ -41,7 +29,7 @@ jobs:
             - name: Install node and npm
               uses: actions/setup-node@v4
               with:
-                  node-version: '18'
+                  node-version: '20'
 
             - name: Checkout repository
               uses: actions/checkout@v4

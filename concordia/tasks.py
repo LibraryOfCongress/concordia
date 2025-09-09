@@ -1,16 +1,21 @@
+import csv
 import datetime
 import os.path
+from datetime import timedelta
+from io import StringIO
 from itertools import chain
 from logging import getLogger
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import boto3
 import requests
-from celery import chord
+from celery import chord, group
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
+from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.management import call_command
 from django.db import transaction
@@ -21,8 +26,8 @@ from more_itertools.more import chunked
 
 from concordia.decorators import locked_task
 from concordia.exceptions import CacheLockedError
+from concordia.logging import ConcordiaLogger
 from concordia.models import (
-    ONE_DAY,
     ONE_DAY_AGO,
     Asset,
     AssetTranscriptionReservation,
@@ -45,8 +50,9 @@ from concordia.models import (
     _update_useractivity_cache,
     update_userprofileactivity_table,
 )
+from concordia.parser import extract_og_image, fetch_blog_posts
 from concordia.signals.signals import reservation_released
-from concordia.storage import ASSET_STORAGE
+from concordia.storage import ASSET_STORAGE, VISUALIZATION_STORAGE
 from concordia.utils import get_anonymous_user
 from concordia.utils.next_asset import (
     find_invalid_next_reviewable_campaign_assets,
@@ -62,6 +68,7 @@ from concordia.utils.next_asset import (
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
 
@@ -128,13 +135,19 @@ def delete_old_tombstoned_reservations():
 
 
 def _recent_transcriptions():
-    return Transcription.objects.filter(
+    qs = Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
         | Q(rejected__gte=ONE_DAY_AGO)
         | Q(submitted__gte=ONE_DAY_AGO)
         | Q(updated_on__gte=ONE_DAY_AGO)
     )
+    structured_logger.info(
+        "Fetched recent transcriptions for DAU calculation.",
+        event_code="recent_transcriptions_fetched",
+        transcription_count=qs.count(),
+    )
+    return qs
 
 
 def _daily_active_users():
@@ -145,11 +158,26 @@ def _daily_active_users():
         .values_list("reviewed_by", flat=True)
         .distinct()
     )
-    return len(set(list(reviewer_ids) + list(transcriber_ids)))
+    transcriber_count = transcriber_ids.count()
+    reviewer_count = reviewer_ids.count()
+    daily_active_users = len(set(list(reviewer_ids) + list(transcriber_ids)))
+
+    structured_logger.info(
+        "Calculated daily active users from recent transcriptions.",
+        event_code="daily_active_users_calculated",
+        transcriber_count=transcriber_count,
+        reviewer_count=reviewer_count,
+        daily_active_users=daily_active_users,
+    )
+    return daily_active_users
 
 
 @celery_app.task
 def site_report():
+    structured_logger.info(
+        "Starting site report generation task.",
+        event_code="site_report_task_start",
+    )
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -215,18 +243,82 @@ def site_report():
     site_report.users_registered = users_registered
     site_report.users_activated = users_activated
     site_report.daily_active_users = _daily_active_users()
+
+    structured_logger.info(
+        "Site-wide counts calculated for report generation.",
+        event_code="site_report_counts_calculated",
+        assets_total=assets_total,
+        assets_published=assets_published,
+        assets_unpublished=assets_unpublished,
+        items_published=items_published,
+        items_unpublished=items_unpublished,
+        projects_published=projects_published,
+        projects_unpublished=projects_unpublished,
+        campaigns_published=campaigns_published,
+        campaigns_unpublished=campaigns_unpublished,
+        users_registered=users_registered,
+        users_activated=users_activated,
+        anonymous_transcriptions=anonymous_transcriptions,
+        transcriptions_saved=transcriptions_saved,
+        daily_review_actions=daily_review_actions,
+        distinct_tags=distinct_tag_count,
+        tag_uses=tag_count,
+        daily_active_users=site_report.daily_active_users,
+    )
+
     site_report.save()
 
-    for campaign in Campaign.objects.exclude(status=Campaign.Status.RETIRED):
-        campaign_report(campaign)
+    structured_logger.info(
+        "Site-wide report saved successfully.",
+        event_code="site_report_saved",
+        site_report_id=site_report.id,
+        created_on=site_report.created_on.isoformat(),
+    )
 
-    for topic in Topic.objects.all():
+    campaigns = Campaign.objects.exclude(status=Campaign.Status.RETIRED)
+    structured_logger.info(
+        "Generating campaign reports.",
+        event_code="campaign_reports_generation_start",
+        campaign_count=campaigns.count(),
+    )
+    for campaign in campaigns:
+        campaign_report(campaign)
+    structured_logger.info(
+        "Campaign reports generation completed.",
+        event_code="campaign_reports_generation_complete",
+    )
+
+    topics = Topic.objects.all()
+    structured_logger.info(
+        "Generating topic reports.",
+        event_code="topic_reports_generation_start",
+        topic_count=topics.count(),
+    )
+    for topic in topics:
         topic_report(topic)
+    structured_logger.info(
+        "Topic reports generation completed.",
+        event_code="topic_reports_generation_complete",
+    )
 
     retired_total_report()
+    structured_logger.info(
+        "Retired total report generation completed.",
+        event_code="retired_total_report_complete",
+    )
+
+    structured_logger.info(
+        "Site report generation task completed successfully.",
+        event_code="site_report_task_complete",
+    )
 
 
 def topic_report(topic):
+    structured_logger.info(
+        "Starting topic report generation.",
+        event_code="topic_report_generation_start",
+        topic_slug=topic,
+    )
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -245,6 +337,14 @@ def topic_report(topic):
         report[f"assets_{status}"] = count
 
     assets_total = Asset.objects.filter(item__project__topics=topic).count()
+    if assets_total == 0:
+        structured_logger.warning(
+            "Topic report generated with zero total assets.",
+            event_code="topic_report_zero_assets",
+            reason="Topic has no associated assets",
+            reason_code="no_assets",
+            topic=topic,
+        )
     assets_published = (
         Asset.objects.published().filter(item__project__topics=topic).count()
     )
@@ -285,6 +385,23 @@ def topic_report(topic):
 
     distinct_tag_count = len(distinct_tag_list)
 
+    structured_logger.info(
+        "Topic counts calculated for report generation.",
+        event_code="topic_report_counts_calculated",
+        topic=topic,
+        assets_total=assets_total,
+        assets_published=assets_published,
+        assets_unpublished=assets_unpublished,
+        items_published=items_published,
+        items_unpublished=items_unpublished,
+        projects_published=projects_published,
+        projects_unpublished=projects_unpublished,
+        anonymous_transcriptions=anonymous_transcriptions,
+        transcriptions_saved=transcriptions_saved,
+        daily_review_actions=daily_review_actions,
+        distinct_tags=distinct_tag_count,
+        tag_uses=tag_count,
+    )
     site_report = SiteReport()
     site_report.topic = topic
     site_report.assets_total = assets_total
@@ -304,9 +421,21 @@ def topic_report(topic):
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
+    structured_logger.info(
+        "Topic report saved successfully.",
+        event_code="topic_report_saved",
+        topic=topic,
+        site_report_id=site_report.id,
+        created_on=site_report.created_on.isoformat(),
+    )
 
 
 def campaign_report(campaign):
+    structured_logger.info(
+        "Starting campaign report generation.",
+        event_code="campaign_report_generation_start",
+        campaign=campaign,
+    )
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -325,6 +454,14 @@ def campaign_report(campaign):
         report[f"assets_{status}"] = count
 
     assets_total = Asset.objects.filter(item__project__campaign=campaign).count()
+    if assets_total == 0:
+        structured_logger.warning(
+            "Campaign report generated with zero total assets.",
+            event_code="campaign_report_zero_assets",
+            reason="Campaign has no associated assets",
+            reason_code="no_assets",
+            campaign=campaign,
+        )
     assets_published = (
         Asset.objects.published().filter(item__project__campaign=campaign).count()
     )
@@ -388,6 +525,24 @@ def campaign_report(campaign):
     }
     registered_contributor_count = len(user_ids)
 
+    structured_logger.info(
+        "Campaign counts calculated for report generation.",
+        event_code="campaign_report_counts_calculated",
+        campaign=campaign,
+        assets_total=assets_total,
+        assets_published=assets_published,
+        assets_unpublished=assets_unpublished,
+        items_published=items_published,
+        items_unpublished=items_unpublished,
+        projects_published=projects_published,
+        projects_unpublished=projects_unpublished,
+        anonymous_transcriptions=anonymous_transcriptions,
+        transcriptions_saved=transcriptions_saved,
+        daily_review_actions=daily_review_actions,
+        distinct_tags=distinct_tag_count,
+        tag_uses=tag_count,
+        registered_contributors=registered_contributor_count,
+    )
     site_report = SiteReport()
     site_report.campaign = campaign
     site_report.assets_total = assets_total
@@ -408,13 +563,30 @@ def campaign_report(campaign):
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
     site_report.save()
+    structured_logger.info(
+        "Campaign report saved successfully.",
+        event_code="campaign_report_saved",
+        campaign=campaign,
+        site_report_id=site_report.id,
+        created_on=site_report.created_on.isoformat(),
+    )
 
 
 def retired_total_report():
+    structured_logger.info(
+        "Starting retired total report generation.",
+        event_code="retired_total_report_generation_start",
+    )
     site_reports = (
         SiteReport.objects.filter(campaign__status=Campaign.Status.RETIRED)
         .order_by("campaign_id", "-created_on")
         .distinct("campaign_id")
+    )
+    site_report_count = site_reports.count()
+    structured_logger.info(
+        "Fetched site reports for retired campaigns aggregation.",
+        event_code="retired_total_reports_fetched",
+        report_count=site_report_count,
     )
 
     FIELDS = [
@@ -452,147 +624,12 @@ def retired_total_report():
             ),
         )
     total_site_report.save()
-
-
-def site_reports_for_date(date):
-    start = date - ONE_DAY
-    return SiteReport.objects.filter(created_on__gte=start, created_on__lte=date)
-
-
-def assets_for_date(date):
-    start = date - ONE_DAY
-    q_accepted = Q(
-        transcription__accepted__gte=start, transcription__accepted__lte=date
+    structured_logger.info(
+        "Retired total report saved successfully.",
+        event_code="retired_total_report_saved",
+        site_report_id=total_site_report.id,
+        created_on=total_site_report.created_on.isoformat(),
     )
-    q_rejected = Q(
-        transcription__rejected__gte=start, transcription__rejected__lte=date
-    )
-    return Asset.objects.filter(q_accepted | q_rejected)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_total(date, days):
-    logger.info(
-        "STARTING: Backfilling daily data for %s on %s",
-        SiteReport.ReportName.TOTAL,
-        date,
-    )
-    site_report = site_reports_for_date(date).filter(
-        report_name=SiteReport.ReportName.TOTAL
-    )[0]
-    logger.info(
-        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    daily_review_actions = assets_for_date(date).count()
-    logger.debug(
-        "%s daily review actions for report %s (%s)",
-        daily_review_actions,
-        site_report.id,
-        date,
-    )
-    site_report.daily_review_actions = daily_review_actions
-    site_report.save()
-    logger.info(
-        "FINISHED: Backfilling daily data for %s on %s",
-        SiteReport.ReportName.TOTAL,
-        date,
-    )
-    logger.info("FINISHED: Backfilling daily data for all reports on %s", date)
-
-    if days > 0:
-        return backfill_topics.delay(date - ONE_DAY, days - 1)
-    else:
-        logger.info("Backfilling daily data complete")
-
-
-@celery_app.task(ignore_result=True)
-def backfill_next_campaign_report(date, days, site_report_ids):
-    try:
-        site_report_id = site_report_ids.pop()
-    except IndexError:
-        logger.info("FINISHED: Backfilling daily data for campaigns on %s", date)
-        backfill_total.delay(date, days)
-        return
-    site_report = SiteReport.objects.get(id=site_report_id)
-    logger.info(
-        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    daily_review_actions = (
-        assets_for_date(date)
-        .filter(item__project__campaign=site_report.campaign)
-        .count()
-    )
-    logger.debug(
-        "%s daily review actions for report %s (%s)",
-        daily_review_actions,
-        site_report.id,
-        date,
-    )
-    site_report.daily_review_actions = daily_review_actions
-    site_report.save()
-    logger.info(
-        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    return backfill_next_campaign_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_campaigns(date, days):
-    site_report_ids = list(
-        site_reports_for_date(date)
-        .filter(campaign__isnull=False)
-        .values_list("id", flat=True)
-    )
-    logger.info("STARTING: Backfilling daily data for campaigns on %s", date)
-    return backfill_next_campaign_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_next_topic_report(date, days, site_report_ids):
-    try:
-        site_report_id = site_report_ids.pop()
-    except IndexError:
-        logger.info("FINISHED: Backfilling daily data for topics on %s", date)
-        backfill_campaigns.delay(date, days)
-        return
-    site_report = SiteReport.objects.get(id=site_report_id)
-    logger.info(
-        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    daily_review_actions = (
-        assets_for_date(date).filter(item__project__topics=site_report.topic).count()
-    )
-    logger.debug(
-        "%s daily review actions for report %s (%s)",
-        daily_review_actions,
-        site_report.id,
-        date,
-    )
-    site_report.daily_review_actions = daily_review_actions
-    site_report.save()
-    logger.info(
-        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
-    )
-    return backfill_next_topic_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_topics(date, days):
-    site_report_ids = list(
-        site_reports_for_date(date)
-        .filter(topic__isnull=False)
-        .values_list("id", flat=True)
-    )
-    logger.info("STARTING: Backfilling daily data for topics on %s", date)
-    return backfill_next_topic_report.delay(date, days, site_report_ids)
-
-
-@celery_app.task(ignore_result=True)
-def backfill_daily_data(start, days):
-    date = timezone.make_aware(datetime.datetime(**start))
-    logger.info("Backfilling daily data for the %s days before %s", days, date)
-    logger.info("STARTED: Backfilling daily data for all reports on %s", date)
-    return backfill_topics.delay(date, days - 1)
 
 
 @celery_app.task
@@ -1107,6 +1144,14 @@ def unusual_activity(ignore_env=False):
     retry_kwargs={"max_retries": 5, "countdown": 5},
 )
 def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kwargs):
+    structured_logger.info(
+        "Running update_useractivity_cache task",
+        event_code="useractivity_cache_task_start",
+        user_id=user_id,
+        campaign_id=campaign_id,
+        activity_type=attr_name,
+        attempt=self.request.retries + 1,
+    )
     try:
         lock_key = "userprofileactivity_cache_lock"
 
@@ -1116,12 +1161,37 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
 
         try:
             _update_useractivity_cache(user_id, campaign_id, attr_name)
+            structured_logger.info(
+                "Successfully updated user activity cache",
+                event_code="useractivity_cache_task_complete",
+                user_id=user_id,
+                campaign_id=campaign_id,
+                activity_type=attr_name,
+            )
         finally:
             # release
             cache.delete(lock_key)
 
     except Exception as e:
         if self.request.retries >= self.max_retries:
+            structured_logger.warning(
+                "Could not acquire cache lock",
+                event_code="useractivity_cache_lock_failed",
+                reason="Another task is holding the lock",
+                reason_code="lock_unavailable",
+                user_id=user_id,
+                campaign_id=campaign_id,
+                activity_type=attr_name,
+            )
+            structured_logger.exception(
+                "Failed to update user activity cache after retries.",
+                event_code="useractivity_cache_task_failed",
+                reason="Max retries reached while trying to acquire lock.",
+                reason_code="max_retries_exceeded",
+                user_id=user_id,
+                campaign_id=campaign_id,
+                activity_type=attr_name,
+            )
             subject = "Task update_useractivity_cache failed: cache is locked."
             message_body = """%s
                             user: %s
@@ -1147,8 +1217,17 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
 def update_userprofileactivity_from_cache(self):
+    structured_logger.info(
+        "Starting update_userprofileactivity_from_cache task",
+        event_code="starting_update_userprofileactivity_from_cache_task",
+    )
     for campaign in Campaign.objects.all():
         key = f"userprofileactivity_{campaign.pk}"
+        structured_logger.debug(
+            "Read key",
+            event_code="update_userprofileactivity_from_cache_key_read",
+            key=key,
+        )
         updates_by_user = cache.get(key)
         if updates_by_user is not None:
             cache.delete(key)
@@ -1160,6 +1239,17 @@ def update_userprofileactivity_from_cache(self):
                 update_userprofileactivity_table(
                     user, campaign.id, "review_count", updates_by_user[user_id][1]
                 )
+                structured_logger.debug(
+                    "Updated activity counts for user",
+                    event_code="update_userprofileactivity_from_cache_database_write",
+                    user=user_id,
+                )
+        else:
+            structured_logger.debug(
+                "Cache contained no updates for key. Skipping",
+                event_code="update_userprofileactivity_from_cache_no_updates",
+                key=key,
+            )
 
 
 @celery_app.task(bind=True, ignore_result=True)
@@ -1605,7 +1695,7 @@ def renew_next_asset_cache(self):
 def populate_asset_status_visualization_cache(self):
     """
     Queries live Asset objects for all ACTIVE campaigns and builds two datasets:
-        0. Both include:
+        Both include:
             - `status_labels`: [
                     "Not Started",
                     "In Progress",
@@ -1613,7 +1703,7 @@ def populate_asset_status_visualization_cache(self):
                     "Completed"
                 ]
 
-        1. "asset-status-overview" - the overview data, containing:
+        "asset-status-overview" - the overview data, containing:
             - `total_counts`:  [
                     count_not_started,
                     count_in_progress,
@@ -1621,7 +1711,7 @@ def populate_asset_status_visualization_cache(self):
                     count_completed
                 ]
 
-        2. "asset-status-by-campaign" - the per-campaign data, containing:
+        "asset-status-by-campaign" - the per-campaign data, containing:
             - `campaign_names`:       [ "Campaign A", "Campaign B", … ]
             - `per_campaign_counts`:  {
                 "not_started": [count_for_A, count_for_B, …],
@@ -1634,7 +1724,9 @@ def populate_asset_status_visualization_cache(self):
     """
     visualization_cache = caches["visualization_cache"]
 
-    campaigns = Campaign.objects.active().order_by("ordering", "title")
+    campaigns = (
+        Campaign.objects.published().listed().active().order_by("ordering", "title")
+    )
 
     campaign_ids = [campaign.id for campaign in campaigns]
     campaign_titles = [campaign.title for campaign in campaigns]
@@ -1666,9 +1758,44 @@ def populate_asset_status_visualization_cache(self):
         for status in status_keys:
             per_campaign_counts[status].append(per_lookup[campaign_id].get(status, 0))
 
+    # Generate CSV for asset-status-overview
+    overview_csv = StringIO()
+    overview_writer = csv.writer(overview_csv)
+
+    overview_writer.writerow(["Status", "Count"])
+    for label, count in zip(status_labels, total_counts, strict=True):
+        overview_writer.writerow([label, count])
+
+    overview_csv_content = overview_csv.getvalue()
+    overview_csv_path = "visualization_exports/page-status-active-campaigns.csv"
+    VISUALIZATION_STORAGE.save(overview_csv_path, ContentFile(overview_csv_content))
+    overview_csv_url = VISUALIZATION_STORAGE.url(overview_csv_path)
+
+    # Generate CSV for asset-status-by-campaign
+    by_campaign_csv = StringIO()
+    by_campaign_writer = csv.writer(by_campaign_csv)
+
+    by_campaign_writer.writerow(["Campaign"] + status_labels)
+    for campaign_name, counts_per_campaign in zip(
+        campaign_titles,
+        zip(*[per_campaign_counts[key] for key in status_keys], strict=True),
+        strict=True,
+    ):
+        by_campaign_writer.writerow([campaign_name] + list(counts_per_campaign))
+
+    by_campaign_csv_content = by_campaign_csv.getvalue()
+    by_campaign_csv_path = (
+        "visualization_exports/page-status-by-campaign-active-campaigns.csv"
+    )
+    VISUALIZATION_STORAGE.save(
+        by_campaign_csv_path, ContentFile(by_campaign_csv_content)
+    )
+    by_campaign_csv_url = VISUALIZATION_STORAGE.url(by_campaign_csv_path)
+
     overview_payload = {
         "status_labels": status_labels,
         "total_counts": total_counts,
+        "csv_url": overview_csv_url,
     }
     visualization_cache.set("asset-status-overview", overview_payload, None)
 
@@ -1676,6 +1803,7 @@ def populate_asset_status_visualization_cache(self):
         "status_labels": status_labels,
         "campaign_names": campaign_titles,
         "per_campaign_counts": per_campaign_counts,
+        "csv_url": by_campaign_csv_url,
     }
     visualization_cache.set("asset-status-by-campaign", by_campaign_payload, None)
 
@@ -1683,75 +1811,208 @@ def populate_asset_status_visualization_cache(self):
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
 def populate_daily_activity_visualization_cache(self):
-    data = {}
-    # Fetch the seven distinct report‐dates for active campaigns,
-    # starting seven days back to make sure we have full data
-    last_seven_dates = SiteReport.objects.filter(
-        campaign__status=Campaign.Status.ACTIVE
-    ).dates("created_on", "day", order="DESC")[:7]
-    last_seven_dates = sorted(last_seven_dates)
+    """
+    Queries total SiteReport objects for the past 28 days and builds a dataset.
 
-    # Convert to "YYYY-MM-DD" strings for the x-axis
-    date_strings = [d.strftime("%Y-%m-%d") for d in last_seven_dates]
-
-    active_campaigns = list(Campaign.objects.active())
+    The dataset contains:
+        - `labels`: [ "YYYY-MM-DD", ..., ] (28 dates)
+        - `transcription_datasets`: [
+              {
+                  "label": "Transcriptions",
+                  "data": [ daily_total, daily_total, ... ],
+              },
+              {
+                  "label": "Reviews",
+                  "data": [ daily_total, daily_total, ... ],
+              },
+          ]
+        - `csv_url`: URL to download a CSV of the data
+    """
+    yesterday = timezone.now().date() - timedelta(days=1)
+    start_date = yesterday - timedelta(days=27)
+    date_range = [start_date + timedelta(days=i) for i in range(28)]
+    date_strings = [d.strftime("%Y-%m-%d") for d in date_range]
 
     reports = SiteReport.objects.filter(
-        campaign__in=active_campaigns, created_on__date__in=last_seven_dates
-    ).select_related("campaign")
+        report_name=SiteReport.ReportName.TOTAL,
+        created_on__date__in=date_range,
+    )
 
-    # Create a lookup dict to make retrieving the data we need easier
-    report_lookup = {
-        (report.campaign_id, report.created_on.date()): report for report in reports
+    report_lookup = {report.created_on.date(): report for report in reports}
+
+    # Find the most recent SiteReport BEFORE the first of our dates, if any
+    prev_report = (
+        SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.TOTAL,
+            created_on__date__lt=start_date,
+        )
+        .order_by("-created_on")
+        .first()
+    )
+    prev_cumulative = prev_report.transcriptions_saved if prev_report else 0
+    running_prev = prev_cumulative
+
+    transcriptions = []
+    reviews = []
+
+    for report_date in date_range:
+        sitereport = report_lookup.get(report_date)
+        if sitereport:
+            cumulative = sitereport.transcriptions_saved or 0
+            daily_saved = cumulative - running_prev
+            if daily_saved < 0:
+                daily_saved = 0
+            running_prev = cumulative
+            daily_review = sitereport.daily_review_actions or 0
+        else:
+            daily_saved = 0
+            daily_review = 0
+
+        transcriptions.append(daily_saved)
+        reviews.append(daily_review)
+
+    data = {
+        "labels": date_strings,
+        "transcription_datasets": [
+            {"label": "Transcriptions", "data": transcriptions},
+            {"label": "Reviews", "data": reviews},
+        ],
     }
 
-    transcription_datasets = []
-    for campaign in active_campaigns:
-        # 1) Find the most recent SiteReport BEFORE our first date, if any
-        first_date = last_seven_dates[0]
-        prev_sitereport = (
-            SiteReport.objects.filter(
-                campaign=campaign, created_on__date__lt=first_date
-            )
-            .order_by("-created_on")
-            .first()
-        )
-        prev_cumulative = prev_sitereport.transcriptions_saved if prev_sitereport else 0
+    # Write CSV
+    csv_output = StringIO()
+    writer = csv.writer(csv_output)
+    writer.writerow(["Date", "Transcriptions", "Reviews"])
+    for i in range(28):
+        writer.writerow([date_strings[i], transcriptions[i], reviews[i]])
 
-        campaign_row = []
-        running_prev = prev_cumulative
+    csv_content = csv_output.getvalue()
+    csv_path = "visualization_exports/daily-transcription-activity-last-28-days.csv"
+    VISUALIZATION_STORAGE.save(csv_path, ContentFile(csv_content))
+    data["csv_url"] = VISUALIZATION_STORAGE.url(csv_path)
 
-        for report_date in last_seven_dates:
-            sitereport = report_lookup.get((campaign.id, report_date))
-            if sitereport:
-                cumulative = sitereport.transcriptions_saved or 0
-                # daily_transcriptions_saved = difference between today and yesterday
-                daily_saved = cumulative - running_prev
-                # clamp at 0 if something odd happened
-                if daily_saved < 0:
-                    daily_saved = 0
-                running_prev = cumulative
-                # We don't need to do anything special with these
-                # since review actions are already daily
-                daily_review = sitereport.daily_review_actions or 0
-                campaign_row.append(daily_saved + daily_review)
-            else:
-                # no report for that date
-                campaign_row.append(0)
-
-        transcription_datasets.append(
-            {
-                "label": campaign.title,
-                "data": campaign_row,
-            }
-        )
-
-    data.update(
-        {
-            "labels": date_strings,
-            "transcription_datasets": transcription_datasets,
-        }
-    )
     caches["visualization_cache"].set(
-        "daily-transcription-activity-by-campaign", data, None
+        "daily-transcription-activity-last-28-days", data, None
     )
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task
+def fetch_and_cache_blog_images(self):
+    for item in fetch_blog_posts():
+        link = item.find("link")
+        if link is not None:
+            extract_og_image(link.text)
+
+
+# TODO: remove download_item_thumbnail_task once `item.thumbnail_url` is removed
+
+
+@celery_app.task(
+    bind=True,
+    autoretry_for=(requests.RequestException,),
+    retry_backoff=5,
+    retry_kwargs={"max_retries": 5, "countdown": 5},
+)
+def download_item_thumbnail_task(
+    self,
+    item_id: int,
+    force: bool = False,
+) -> str:
+    """
+    Fetch an Item and ensure its thumbnail_image is populated.
+
+    The Item's `thumbnail_url` field is used as the source of the download.
+
+    Args:
+        item_id: Primary key of the Item to process.
+        force: Overwrite an existing thumbnail if True.
+
+    Returns:
+        Storage path of the saved image, or a skip message.
+
+    Raises:
+        ValueError: If `Item.thumbnail_url` is unavailable.
+        requests.RequestException: Network errors (auto-retried).
+    """
+    from importer.tasks.items import download_and_set_item_thumbnail
+
+    with transaction.atomic():
+        item = (
+            Item.objects.select_for_update(of=("self",))
+            .only("id", "thumbnail_url", "thumbnail_image", "item_id")
+            .get(pk=item_id)
+        )
+
+    src_url = item.thumbnail_url
+    if not src_url:
+        msg = "No thumbnail URL available."
+        logger.info("download_item_thumbnail_task: %s item_id=%s", msg, item_id)
+        return msg
+
+    return download_and_set_item_thumbnail(item, src_url, force=force)
+
+
+# TODO: remove download_missing_thumbnails_task once `item.thumbnail_url` is removed
+
+
+@celery_app.task(bind=True)
+def download_missing_thumbnails_task(
+    self,
+    project_id: Optional[int] = None,
+    batch_size: int = 10,
+    limit: Optional[int] = None,
+    force: bool = False,
+) -> int:
+    """
+    Spawn per-item download tasks for items missing thumbnails in chunks.
+
+    This finds Items that have a non-empty thumbnail_url but no stored
+    thumbnail_image. It then executes per-item tasks in chunks of `batch_size`,
+    waiting for each chunk to finish before starting the next.
+
+    Args:
+        project_id: Optional project filter.
+        batch_size: Number of parallel tasks per wave.
+        limit: Optional cap on total items processed.
+        force: Overwrite existing thumbnails if true.
+
+    Returns:
+        Count of items scheduled/processed.
+    """
+    qs = Item.objects.all()
+
+    if project_id is not None:
+        qs = qs.filter(project_id=project_id)
+
+    qs = qs.filter(
+        Q(thumbnail_url__isnull=False)
+        & ~Q(thumbnail_url="")
+        & (Q(thumbnail_image__isnull=True) | Q(thumbnail_image=""))
+    ).order_by("pk")
+
+    if limit is not None:
+        qs = qs[:limit]
+
+    ids = list(qs.values_list("pk", flat=True))
+    total = len(ids)
+    if total == 0:
+        logger.info("download_missing_thumbnails_task: nothing to do.")
+        return 0
+
+    # Process in waves of `batch_size`, waiting between waves.
+    for i in range(0, total, batch_size):
+        chunk = ids[i : i + batch_size]
+        task_group = group(
+            download_item_thumbnail_task.s(item_id, force=force) for item_id in chunk
+        )
+        result = task_group.apply_async()
+        # Block this task until the chunk finishes; then schedule next.
+        result.get(disable_sync_subtasks=False)
+
+    logger.info(
+        "download_missing_thumbnails_task: processed %s items in chunks of %s",
+        total,
+        batch_size,
+    )
+    return total

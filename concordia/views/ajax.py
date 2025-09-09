@@ -36,10 +36,11 @@ from concordia.utils import (
     get_anonymous_user,
     get_or_create_reservation_token,
 )
+from concordia.utils.constants import MESSAGE_LEVEL_NAMES, URL_REGEX
 from configuration.utils import configuration_value
+from exporter.utils import remove_unacceptable_characters
 
 from .decorators import reserve_rate, validate_anonymous_user
-from .utils import MESSAGE_LEVEL_NAMES, URL_REGEX
 
 logger = logging.getLogger(__name__)
 structured_logger = ConcordiaLogger.get_logger(__name__)
@@ -633,14 +634,16 @@ def save_transcription(
     """
     Save a transcription draft for a given asset.
 
-    Validates the transcription text for disallowed content (e.g., URLs) and
-    checks for supersession rules. If valid, creates and saves a new transcription
-    associated with the current or anonymous user.
+    Validates the transcription text for disallowed content (e.g., URLs).
+    Non-printable characters are automatically removed before saving,
+    using the shared exporter sanitization utilities. The view also checks
+    for supersession rules. If valid, it creates and saves a new
+    transcription associated with the current or anonymous user.
 
     Request Parameters:
         - `text` (str): The transcription text.
-        - `supersedes` (int or str, optional): The ID of the transcription being
-          superseded. Example: `"123"`
+        - `supersedes` (int or str, optional): The ID of the transcription
+          being superseded. Example: `"123"`
 
     Returns:
         response (JsonResponse): A dictionary describing the saved transcription
@@ -670,6 +673,7 @@ def save_transcription(
             "id": 125,
             "sent": 1716295310.743182,
             "submissionUrl": "/transcriptions/125/submit/",
+            "text" : "Transcription text\r\nSecond line",
             "asset": {
                 "id": 456,
                 "status": "in_progress",
@@ -695,9 +699,10 @@ def save_transcription(
         asset=asset,
     )
 
-    # Check whether this transcription text contains any URLs
-    # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
+
+    # Check whether this transcription text contains any URLs.
+    # If so, ask the user to correct the transcription by removing the URLs.
     url_match = re.search(URL_REGEX, transcription_text)
     if url_match:
         structured_logger.warning(
@@ -711,10 +716,16 @@ def save_transcription(
         return JsonResponse(
             {
                 "error": "It looks like your text contains URLs. "
-                "Please remove the URLs and try again."
+                "Please remove the URLs and try again.",
+                "error-code": "url_detected",
             },
             status=400,
         )
+
+    # Sanitize the text by removing any unacceptable (non-printable) characters.
+    # This leverages the shared exporter whitelist and logic so behavior remains
+    # consistent across validation and export paths.
+    transcription_text = remove_unacceptable_characters(transcription_text)
 
     supersedes_pk = request.POST.get("supersedes")
     superseded = get_transcription_superseded(asset, supersedes_pk)
@@ -757,6 +768,7 @@ def save_transcription(
             "id": transcription.pk,
             "sent": time(),
             "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,

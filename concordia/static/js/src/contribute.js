@@ -148,19 +148,38 @@ function setupPage() {
         .on('change', function () {
             var $textarea = $transcriptionEditor.find('textarea');
             if (this.checked) {
+                const nothingToTranscribeElement = document.getElementById(
+                    'nothing-to-transcribe-modal',
+                );
+                const nothingToTranscribeModal =
+                    Modal.getInstance(nothingToTranscribeElement) ||
+                    new Modal(nothingToTranscribeElement);
+                var nothingToTranscribeTitle =
+                    nothingToTranscribeElement.querySelector('.modal-title');
+                var nothingToTranscribeBody =
+                    nothingToTranscribeElement.querySelector('.modal-body');
                 if ($textarea.val()) {
-                    if (
-                        confirm(
-                            'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?',
-                        )
-                    ) {
-                        $textarea.val('');
-                    } else {
-                        this.checked = false;
-                    }
-                } else if (!confirm('Are you sure?')) {
-                    this.checked = false;
+                    nothingToTranscribeTitle.textContent =
+                        'Text will be deleted';
+                    nothingToTranscribeBody.innerHTML =
+                        '<p>Text in the transcription box is removed when “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
+                } else {
+                    nothingToTranscribeTitle.textContent =
+                        'Nothing to transcribe';
+                    nothingToTranscribeBody.innerHTML = '<p>Are you sure?</p>';
                 }
+                nothingToTranscribeModal.show();
+
+                const okButton = document.getElementById('confirmDiscard');
+                okButton.addEventListener('click', function () {
+                    $textarea.val('');
+                    nothingToTranscribeModal.hide();
+                });
+                const cancelButton = document.getElementById('cancelDiscard');
+                cancelButton.addEventListener('click', function () {
+                    $('#nothing-to-transcribe').prop('checked', false);
+                    nothingToTranscribeModal.hide();
+                });
             }
             $transcriptionEditor.trigger('update-ui-state');
         });
@@ -305,6 +324,9 @@ function setupPage() {
             $transcriptionEditor
                 .find('input[name="supersedes"]')
                 .val(responseData.id);
+            $transcriptionEditor
+                .find('textarea[name="text"]')
+                .val(responseData.text);
             $transcriptionEditor.data('submitUrl', responseData.submissionUrl);
             $ocrForm.find('input[name="supersedes"]').val(responseData.id);
             $('#transcription-status-display')

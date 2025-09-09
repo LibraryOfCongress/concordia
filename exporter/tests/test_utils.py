@@ -4,6 +4,7 @@ from exporter.exceptions import UnacceptableCharacterError
 from exporter.utils import (
     find_unacceptable_characters,
     is_acceptable_character,
+    remove_unacceptable_characters,
     validate_text_for_export,
 )
 
@@ -45,3 +46,49 @@ class UtilsValidationTests(TestCase):
             validate_text_for_export(bad)
         err = cm.exception
         self.assertEqual(err.violations, [(1, 4, "\u200b")])
+
+    def test_remove_unacceptable_characters_removes_disallowed_chars(self):
+        # Mix of unacceptable characters across positions.
+        sample = "\x00Start\u200bMiddleEnd\x1f"
+        cleaned = remove_unacceptable_characters(sample)
+        self.assertEqual(cleaned, "StartMiddleEnd")
+
+    def test_remove_unacceptable_characters_keeps_whitelisted_chars(self):
+        # Ensure whitelist is honored: \t, NBSP, ideographic space, em space.
+        sample = "A\tB\xa0C\u3000D\u2003E"
+        cleaned = remove_unacceptable_characters(sample)
+        self.assertEqual(cleaned, sample)
+
+    def test_remove_unacceptable_characters_preserves_newlines_and_crlf(self):
+        # Preserve exact newline forms while removing bad chars within lines.
+        sample = "one\r\ntwo\nthree\rfour"
+        # Insert a zero-width space in "two" and a NUL at end of "three".
+        sample_with_bad = "one\r\nt\u200bwo\nthree\x00\rfour"
+        cleaned = remove_unacceptable_characters(sample_with_bad)
+        self.assertEqual(cleaned, sample)
+
+    def test_remove_unacceptable_characters_noop_on_clean_text(self):
+        clean = "Line 1\nLine 2\tTabbed\u3000Ideographic\u2003Em"
+        cleaned = remove_unacceptable_characters(clean)
+        self.assertEqual(cleaned, clean)
+
+    def test_remove_unacceptable_characters_handles_multiple_lines(self):
+        # Multiple lines with several unacceptable chars per line.
+        sample = (
+            "ok line\n"
+            "bad\x00line\x00with\x00many\n"
+            "zero\u200bwidth\u200bspaces\n"
+            "\x00\x00start and end\u200b"
+        )
+        cleaned = remove_unacceptable_characters(sample)
+        self.assertEqual(
+            cleaned, "ok line\n" "badlinewithmany\n" "zerowidthspaces\n" "start and end"
+        )
+
+    def test_remove_unacceptable_characters_preserves_carriage_return_alone(self):
+        # Some inputs may include bare '\r' (classic Mac, or copy/paste artifacts).
+        sample = "a\rb\rc"
+        # Add disallowed chars around to ensure we only drop them, not '\r'.
+        sample_with_bad = "a\x00\rb\u200b\rc\x1f"
+        cleaned = remove_unacceptable_characters(sample_with_bad)
+        self.assertEqual(cleaned, sample)

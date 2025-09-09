@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block head_content %}
+    <script id="viewer-data"
+            data-prefix-url="{% static 'openseadragon/build/openseadragon/images/' %}"
+            data-contact-url="https://ask.loc.gov/crowd"
+    ></script>
+    {% include "fragments/import-map.html" %}
+{% endblock %}
+
 {% block title %}React Test Page{% endblock title %}
 
 {% block main_content %}

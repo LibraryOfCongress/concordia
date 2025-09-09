@@ -14,6 +14,11 @@ LOGGING["loggers"] = {
     "concordia": {"handlers": ["file", "stream"], "level": "DEBUG"},
     "django.utils.autoreload": {"level": "INFO"},
     "django.template": {"level": "INFO"},
+    "aws_xray_sdk": {
+        "handlers": ["file", "stream"],
+        "level": "DEBUG",
+        "propagate": True,
+    },
     "structlog": {
         "handlers": ["structlog_file", "structlog_console"],
         "level": "INFO",
@@ -64,3 +69,58 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
+
+# X-Ray configuration for local development
+if os.environ.get("AWS_XRAY_SDK_ENABLED", "false").lower() == "true":
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    logger.info("ECS X-Ray auto-instrumentation starting")
+
+    # Add X-Ray to INSTALLED_APPS
+    INSTALLED_APPS = INSTALLED_APPS + ["aws_xray_sdk.ext.django"]
+
+    # Add middleware - MUST be first in the list
+    MIDDLEWARE = ["aws_xray_sdk.ext.django.middleware.XRayMiddleware"] + MIDDLEWARE
+
+    logger.info("ECS X-Ray auto-instrumentation completed")
+    logger.info("X-Ray middleware added at position 0: %s", MIDDLEWARE[0])
+    logger.info("Current MIDDLEWARE[0]: %s", MIDDLEWARE[0])
+
+    XRAY_RECORDER = {
+        "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
+            "AWS_XRAY_DAEMON_ADDRESS", "127.0.0.1:2000"
+        ),
+        "AUTO_INSTRUMENT": True,
+        "AWS_XRAY_CONTEXT_MISSING": os.environ.get(
+            "AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR"
+        ),
+        "PLUGINS": (),
+        "AWS_XRAY_TRACING_NAME": os.environ.get(
+            "AWS_XRAY_TRACING_NAME",
+            os.environ.get("CONCORDIA_ENVIRONMENT", "development"),
+        ),
+        "PATCH_MODULES": ["boto3", "botocore", "requests", "httplib", "psycopg2"],
+        "SAMPLING": False,
+        "IGNORE_MODULE_PATTERNS": [
+            r"^debug_toolbar\.",
+            r"^django\.contrib\.admin\.views\.decorators\.cache",
+            r"^django\.contrib\.admin\.options",
+            r"^django\.contrib\.admin\.options\.ModelAdmin",
+            r"^django\.contrib\.admin\.options\.InlineModelAdmin",
+            r"^django\.contrib\.admin\.options\.BaseModelAdmin",
+            r"^django\.contrib\.admin\.options\.ModelAdminMixin",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminMixin",
+            r"^django\.contrib\.admin\.options\.ModelAdminBase",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminBase",
+            r"^django\.contrib\.admin\.options\.ModelAdminMixinBase",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminMixinBase",
+            r"^django\.contrib\.admin\.options\.ModelAdminDecorator",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminDecorator",
+            r"^django\.contrib\.admin\.options\.ModelAdminDecoratorMixin",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorMixin",
+            r"^django\.contrib\.admin\.options\.ModelAdminDecoratorBase",
+            r"^django\.contrib\.admin\.options\.InlineModelAdminDecoratorBase",
+        ],
+    }

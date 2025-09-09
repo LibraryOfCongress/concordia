@@ -349,5 +349,5 @@ if settings.DEBUG:
             TemplateView.as_view(template_name="transcriptions/transcription.html"),
             name="transcription",
         ),
-        path("api/", concordia_api.urls),
+        path("api/", concordia_api.urls, name="api"),
     )

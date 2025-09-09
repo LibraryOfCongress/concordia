@@ -441,7 +441,7 @@ class TopicProjectInline(admin.TabularInline):
     form = ProjectTopicInlineForm
     extra = 1
     autocomplete_fields = ["project"]
-    fields = ["project", "url_filter"]
+    fields = ["project", "url_filter", "ordering"]
     fk_name = "topic"
 
 

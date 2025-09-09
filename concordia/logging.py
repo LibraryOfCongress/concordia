@@ -163,7 +163,7 @@ class ConcordiaLogger:
     - `transcription` -> `transcription_id`
     - `campaign` -> `campaign_slug`
     - `item` -> `item_id`
-    - `topic` -> `topic_id`
+    - `topic` -> `topic_slug`
 
     If these objects are passed directly (e.g., as `user=request.user`), their relevant
     fields will be included automatically in the log entry.
@@ -361,6 +361,31 @@ class ConcordiaLogger:
             event_code=event_code,
             reason=reason,
             reason_code=reason_code,
+            **kwargs,
+        )
+
+    def exception(
+        self,
+        message: str,
+        *,
+        event_code: str,
+        reason: str,
+        reason_code: str,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Emit an error-level structured log with exception info.
+
+        This is equivalent to calling `.error(..., exc_info=True)` and should be used
+        within an exception handler to capture tracebacks.
+        """
+        self.log(
+            "error",
+            message,
+            event_code=event_code,
+            reason=reason,
+            reason_code=reason_code,
+            exc_info=True,
             **kwargs,
         )
 

@@ -390,14 +390,14 @@ class SignalHandlersTest(CreateTestUsers, TestCase):
         self.assertEqual(mock_set.call_count, 1)
         expected_key = f"userprofileactivity_{campaign.pk}"
         expected_value = {user.id: (1, 0)}
-        mock_set.assert_called_with(expected_key, expected_value)
+        mock_set.assert_called_with(expected_key, expected_value, timeout=None)
 
         reviewed_by = self.create_test_user(username="testuser2")
         mock_get.return_value = {}
         _update_useractivity_cache(reviewed_by.id, campaign.id, "review")
         self.assertEqual(mock_set.call_count, 2)
         expected_value = {reviewed_by.id: (0, 1)}
-        mock_set.assert_called_with(expected_key, expected_value)
+        mock_set.assert_called_with(expected_key, expected_value, timeout=None)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
