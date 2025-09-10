@@ -1605,6 +1605,83 @@ class CarouselSlide(models.Model):
         return f"CarouselSlide: {self.headline}"
 
 
+class SiteReportManager(models.Manager):
+    """
+    Manager providing series-aware helpers for SiteReport.
+
+    A "series" is the set of SiteReport rows that belong to the same logical
+    reporting stream:
+
+      - Site-wide TOTAL:          report_name=TOTAL, campaign=None, topic=None
+      - Site-wide RETIRED_TOTAL:  report_name=RETIRED_TOTAL
+      - Per-campaign:             campaign=<campaign>, topic=None
+      - Per-topic:                topic=<topic>, campaign=None
+
+    These helpers avoid duplicating series filtering logic in tasks.
+    """
+
+    def _series_filter(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+    ) -> Q:
+        """
+        Build a Q filter for a single SiteReport series based on the inputs.
+
+        Args:
+            report_name: One of the SiteReport.ReportName values for site-wide
+                series (TOTAL, RETIRED_TOTAL). Ignored for per-campaign/topic.
+            campaign: Campaign instance for per-campaign series.
+            topic: Topic instance for per-topic series.
+
+        Returns:
+            Q: A Django Q object representing the series filter.
+        """
+        if campaign is not None:
+            return Q(campaign=campaign, topic__isnull=True)
+        if topic is not None:
+            return Q(topic=topic, campaign__isnull=True)
+        if report_name == SiteReport.ReportName.TOTAL:
+            return Q(
+                report_name=SiteReport.ReportName.TOTAL,
+                campaign__isnull=True,
+                topic__isnull=True,
+            )
+        if report_name == SiteReport.ReportName.RETIRED_TOTAL:
+            return Q(report_name=SiteReport.ReportName.RETIRED_TOTAL)
+        # Fallback: no rows (prevents accidental wide queries)
+        return Q(pk__in=[])  # pragma: no cover
+
+    def previous_in_series(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+        before: Optional[datetime.datetime] = None,
+    ) -> Optional["SiteReport"]:
+        """
+        Return the latest SiteReport in the same series strictly before 'before'.
+
+        Args:
+            report_name: Series selector for site-wide reports (TOTAL/RETIRED_TOTAL).
+            campaign: Series selector for per-campaign reports.
+            topic: Series selector for per-topic reports.
+            before: A timezone-aware datetime; defaults to now() if omitted.
+
+        Returns:
+            SiteReport or None: The most recent prior report in the series.
+        """
+        if before is None:
+            before = timezone.now()
+        q = self._series_filter(report_name=report_name, campaign=campaign, topic=topic)
+        return (
+            self.filter(q, created_on__lt=before).order_by("-created_on", "-pk").first()
+        )
+
+
 class SiteReport(models.Model):
     class ReportName(models.TextChoices):
         TOTAL = "Active and completed campaigns", "Active and completed campaigns"
@@ -1625,6 +1702,7 @@ class SiteReport(models.Model):
     assets_waiting_review = models.IntegerField(blank=True, null=True)
     assets_completed = models.IntegerField(blank=True, null=True)
     assets_unpublished = models.IntegerField(blank=True, null=True)
+    assets_started = models.IntegerField(blank=True, null=True)
     items_published = models.IntegerField(blank=True, null=True)
     items_unpublished = models.IntegerField(blank=True, null=True)
     projects_published = models.IntegerField(blank=True, null=True)
@@ -1659,6 +1737,7 @@ class SiteReport(models.Model):
         "assets_waiting_review",
         "assets_completed",
         "assets_unpublished",
+        "assets_started",
         "items_published",
         "items_unpublished",
         "projects_published",
@@ -1675,6 +1754,45 @@ class SiteReport(models.Model):
         "registered_contributors",
         "daily_active_users",
     ]
+
+    @staticmethod
+    def calculate_assets_started(
+        *,
+        previous_assets_not_started: Optional[int],
+        previous_assets_published: Optional[int],
+        current_assets_not_started: Optional[int],
+        current_assets_published: Optional[int],
+    ) -> int:
+        """
+        Calculate the daily "assets started" value between two reports.
+
+        Let:
+            ns_prev = previous_assets_not_started
+            ns_cur  = current_assets_not_started
+            p_prev  = previous_assets_published
+            p_cur   = current_assets_published
+            new_published = max(0, P_cur - P_prev)
+
+        Then:
+            assets_started = max(0, (ns_prev - ns_cur) + new_published)
+
+        Explanation:
+            New assets published during the period increase the pool of
+            "not started" assets and can mask true starts if you only use
+            ns_prev - ns_cur. Adding new_published compensates for newly
+            published assets so the result reflects actual user
+            starts (work that moved out of "not started").
+
+        All None inputs are treated as zero. The final result is floored
+        at zero to avoid negative values that can arise from administrative
+        actions such as assets being deleted.
+        """
+        ns_prev = int(previous_assets_not_started or 0)
+        ns_cur = int(current_assets_not_started or 0)
+        p_prev = int(previous_assets_published or 0)
+        p_cur = int(current_assets_published or 0)
+        new_published = max(0, p_cur - p_prev)
+        return max(0, (ns_prev - ns_cur) + new_published)
 
 
 class UserProfileActivity(models.Model):
