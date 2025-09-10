@@ -1,12 +1,13 @@
 import csv
 import datetime
 import os.path
+import time
 from datetime import timedelta
 from io import StringIO
 from itertools import chain
 from logging import getLogger
 from tempfile import NamedTemporaryFile
-from typing import Optional
+from typing import Iterable, Optional
 
 import boto3
 import requests
@@ -174,7 +175,7 @@ def _daily_active_users():
 
 @celery_app.task
 def site_report():
-    structured_logger.info(
+    structured_logger.debug(
         "Starting site report generation task.",
         event_code="site_report_task_start",
     )
@@ -220,6 +221,16 @@ def site_report():
 
     distinct_tag_count = Tag.objects.all().count()
 
+    previous = SiteReport.objects.previous_in_series(
+        report_name=SiteReport.ReportName.TOTAL, before=timezone.now()
+    )
+    assets_started = SiteReport.calculate_assets_started(
+        previous_assets_not_started=getattr(previous, "assets_not_started", 0),
+        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_not_started=report["assets_not_started"],
+        current_assets_published=assets_published,
+    )
+
     site_report = SiteReport()
     site_report.report_name = SiteReport.ReportName.TOTAL
     site_report.assets_total = assets_total
@@ -229,6 +240,7 @@ def site_report():
     site_report.assets_waiting_review = report["assets_submitted"]
     site_report.assets_completed = report["assets_completed"]
     site_report.assets_unpublished = assets_unpublished
+    site_report.assets_started = assets_started
     site_report.items_published = items_published
     site_report.items_unpublished = items_unpublished
     site_report.projects_published = projects_published
@@ -244,12 +256,13 @@ def site_report():
     site_report.users_activated = users_activated
     site_report.daily_active_users = _daily_active_users()
 
-    structured_logger.info(
+    structured_logger.debug(
         "Site-wide counts calculated for report generation.",
         event_code="site_report_counts_calculated",
         assets_total=assets_total,
         assets_published=assets_published,
         assets_unpublished=assets_unpublished,
+        assets_started=assets_started,
         items_published=items_published,
         items_unpublished=items_unpublished,
         projects_published=projects_published,
@@ -268,7 +281,7 @@ def site_report():
 
     site_report.save()
 
-    structured_logger.info(
+    structured_logger.debug(
         "Site-wide report saved successfully.",
         event_code="site_report_saved",
         site_report_id=site_report.id,
@@ -276,45 +289,45 @@ def site_report():
     )
 
     campaigns = Campaign.objects.exclude(status=Campaign.Status.RETIRED)
-    structured_logger.info(
+    structured_logger.debug(
         "Generating campaign reports.",
         event_code="campaign_reports_generation_start",
         campaign_count=campaigns.count(),
     )
     for campaign in campaigns:
         campaign_report(campaign)
-    structured_logger.info(
+    structured_logger.debug(
         "Campaign reports generation completed.",
         event_code="campaign_reports_generation_complete",
     )
 
     topics = Topic.objects.all()
-    structured_logger.info(
+    structured_logger.debug(
         "Generating topic reports.",
         event_code="topic_reports_generation_start",
         topic_count=topics.count(),
     )
     for topic in topics:
         topic_report(topic)
-    structured_logger.info(
+    structured_logger.debug(
         "Topic reports generation completed.",
         event_code="topic_reports_generation_complete",
     )
 
     retired_total_report()
-    structured_logger.info(
+    structured_logger.debug(
         "Retired total report generation completed.",
         event_code="retired_total_report_complete",
     )
 
-    structured_logger.info(
+    structured_logger.debug(
         "Site report generation task completed successfully.",
         event_code="site_report_task_complete",
     )
 
 
 def topic_report(topic):
-    structured_logger.info(
+    structured_logger.debug(
         "Starting topic report generation.",
         event_code="topic_report_generation_start",
         topic_slug=topic,
@@ -385,13 +398,22 @@ def topic_report(topic):
 
     distinct_tag_count = len(distinct_tag_list)
 
-    structured_logger.info(
+    previous = SiteReport.objects.previous_in_series(topic=topic, before=timezone.now())
+    assets_started = SiteReport.calculate_assets_started(
+        previous_assets_not_started=getattr(previous, "assets_not_started", 0),
+        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_not_started=report["assets_not_started"],
+        current_assets_published=assets_published,
+    )
+
+    structured_logger.debug(
         "Topic counts calculated for report generation.",
         event_code="topic_report_counts_calculated",
         topic=topic,
         assets_total=assets_total,
         assets_published=assets_published,
         assets_unpublished=assets_unpublished,
+        assets_started=assets_started,
         items_published=items_published,
         items_unpublished=items_unpublished,
         projects_published=projects_published,
@@ -420,8 +442,9 @@ def topic_report(topic):
     site_report.daily_review_actions = daily_review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
+    site_report.assets_started = assets_started
     site_report.save()
-    structured_logger.info(
+    structured_logger.debug(
         "Topic report saved successfully.",
         event_code="topic_report_saved",
         topic=topic,
@@ -431,7 +454,7 @@ def topic_report(topic):
 
 
 def campaign_report(campaign):
-    structured_logger.info(
+    structured_logger.debug(
         "Starting campaign report generation.",
         event_code="campaign_report_generation_start",
         campaign=campaign,
@@ -525,13 +548,24 @@ def campaign_report(campaign):
     }
     registered_contributor_count = len(user_ids)
 
-    structured_logger.info(
+    previous = SiteReport.objects.previous_in_series(
+        campaign=campaign, before=timezone.now()
+    )
+    assets_started = SiteReport.calculate_assets_started(
+        previous_assets_not_started=getattr(previous, "assets_not_started", 0),
+        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_not_started=report["assets_not_started"],
+        current_assets_published=assets_published,
+    )
+
+    structured_logger.debug(
         "Campaign counts calculated for report generation.",
         event_code="campaign_report_counts_calculated",
         campaign=campaign,
         assets_total=assets_total,
         assets_published=assets_published,
         assets_unpublished=assets_unpublished,
+        assets_started=assets_started,
         items_published=items_published,
         items_unpublished=items_unpublished,
         projects_published=projects_published,
@@ -562,8 +596,9 @@ def campaign_report(campaign):
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
+    site_report.assets_started = assets_started
     site_report.save()
-    structured_logger.info(
+    structured_logger.debug(
         "Campaign report saved successfully.",
         event_code="campaign_report_saved",
         campaign=campaign,
@@ -573,7 +608,7 @@ def campaign_report(campaign):
 
 
 def retired_total_report():
-    structured_logger.info(
+    structured_logger.debug(
         "Starting retired total report generation.",
         event_code="retired_total_report_generation_start",
     )
@@ -583,7 +618,7 @@ def retired_total_report():
         .distinct("campaign_id")
     )
     site_report_count = site_reports.count()
-    structured_logger.info(
+    structured_logger.debug(
         "Fetched site reports for retired campaigns aggregation.",
         event_code="retired_total_reports_fetched",
         report_count=site_report_count,
@@ -623,13 +658,247 @@ def retired_total_report():
                 ]
             ),
         )
+
+    # compute assets_started for RETIRED_TOTAL based on prior retired-total reports
+    # This is done different than the fields above because it isn't simply a sum of
+    # the component reports.
+    previous = SiteReport.objects.previous_in_series(
+        report_name=SiteReport.ReportName.RETIRED_TOTAL, before=timezone.now()
+    )
+    assets_started = SiteReport.calculate_assets_started(
+        previous_assets_not_started=getattr(previous, "assets_not_started", 0),
+        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_not_started=total_site_report.assets_not_started,
+        current_assets_published=total_site_report.assets_published,
+    )
+
+    total_site_report.assets_started = assets_started
     total_site_report.save()
-    structured_logger.info(
+    structured_logger.debug(
         "Retired total report saved successfully.",
         event_code="retired_total_report_saved",
         site_report_id=total_site_report.id,
         created_on=total_site_report.created_on.isoformat(),
     )
+
+
+@celery_app.task(bind=True, ignore_result=True)
+@locked_task(lock_by_args=False)
+def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -> int:
+    """
+    Compute and persist `assets_started` for all existing SiteReport rows.
+
+    This is a temporary job for backfilling missing information in SiteReports.
+    It should be removed in the next release after it goes live and has been run.
+
+    Series processed:
+      - Site-wide TOTAL                (report_name=TOTAL)
+      - Site-wide RETIRED_TOTAL        (report_name=RETIRED_TOTAL)
+      - Per-campaign                   (campaign is not null)
+      - Per-topic                      (topic is not null)
+
+    Rules:
+      - The first "snapshot" in each series assumes assets_started = 0 (this
+        represents when the site launched or at least the time before the
+        first site report, when we have no data).
+      - If there are gaps in days, the previous value is simply the most
+        recent prior report in that series.
+      - All results are floored at 0, since negative numbers are not actually
+        possible in reality—the cause would be data removal, which we do not
+        want to treat as negative activity in these reports.
+
+    Resumability:
+      - By default, rows that already have a non-null `assets_started` are
+        skipped (`skip_existing=True`), so the task can be re-run to resume
+        where it left off.
+      - If you need to recompute all rows (for example, after changing the
+        formula), call with `skip_existing=False`.
+
+    Progress visibility:
+      - Emits heartbeat logs while scanning long series so it does not appear
+        idle when no rows need updates.
+    """
+
+    structured_logger.info(
+        "Starting backfill for assets_started across all series.",
+        event_code="assets_started_backfill_start",
+        skip_existing=skip_existing,
+        task_id=getattr(self.request, "id", None),
+    )
+
+    # Heartbeat / streaming tuning
+    HEARTBEAT_EVERY_ROWS = 1000
+    HEARTBEAT_EVERY_SECONDS = 10.0
+    ITERATOR_CHUNK_SIZE = 2000
+
+    updated_count = 0
+
+    def process_series_queryset(
+        qs: Iterable[SiteReport],
+        *,
+        series_label: str,
+    ) -> int:
+        """
+        Walk a single series in chronological order, computing/saving
+        `assets_started`. Logs each saved row at info level with context,
+        and emits heartbeat logs even when no rows change.
+        """
+        changed = 0
+        scanned = 0
+        previous: Optional[SiteReport] = None
+
+        series_start_t = time.monotonic()
+        last_hb_t = series_start_t
+        last_hb_rows = 0
+
+        structured_logger.info(
+            "Starting series scan.",
+            event_code="assets_started_backfill_series_start",
+            series=series_label,
+        )
+
+        for current in qs.iterator(chunk_size=ITERATOR_CHUNK_SIZE):
+            scanned += 1
+
+            if previous is None:
+                calculated = 0
+            else:
+                calculated = SiteReport.calculate_assets_started(
+                    previous_assets_not_started=previous.assets_not_started,
+                    previous_assets_published=previous.assets_published,
+                    current_assets_not_started=current.assets_not_started,
+                    current_assets_published=current.assets_published,
+                )
+
+            # Resume behavior: optionally skip already-populated rows.
+            if skip_existing and current.assets_started is not None:
+                previous = current
+                # Heartbeat while scanning even if we do not save
+                now_t = time.monotonic()
+                if (
+                    scanned - last_hb_rows >= HEARTBEAT_EVERY_ROWS
+                    or (now_t - last_hb_t) >= HEARTBEAT_EVERY_SECONDS
+                ):
+                    structured_logger.info(
+                        "Scanning series...",
+                        event_code="assets_started_backfill_series_heartbeat",
+                        series=series_label,
+                        scanned_rows=scanned,
+                        updated_rows=changed,
+                        last_seen_site_report_id=current.id,
+                    )
+                    last_hb_rows = scanned
+                    last_hb_t = now_t
+                continue
+
+            if current.assets_started != calculated:
+                current.assets_started = calculated
+                current.save(update_fields=["assets_started"])
+                changed += 1
+
+                # Per-row progress log for monitoring while the one-off task runs.
+                structured_logger.info(
+                    "Backfilled assets_started for SiteReport.",
+                    event_code="assets_started_backfill_row",
+                    site_report_id=current.id,
+                    created_on=current.created_on.isoformat(),
+                    series=series_label,
+                    assets_started=calculated,
+                    previous_site_report_id=(previous.id if previous else None),
+                    campaign_id=current.campaign_id,
+                    topic_id=current.topic_id,
+                )
+
+            previous = current
+
+            # Heartbeat while scanning
+            now_t = time.monotonic()
+            if (
+                scanned - last_hb_rows >= HEARTBEAT_EVERY_ROWS
+                or (now_t - last_hb_t) >= HEARTBEAT_EVERY_SECONDS
+            ):
+                structured_logger.info(
+                    "Scanning series...",
+                    event_code="assets_started_backfill_series_heartbeat",
+                    series=series_label,
+                    scanned_rows=scanned,
+                    updated_rows=changed,
+                    last_seen_site_report_id=current.id,
+                )
+                last_hb_rows = scanned
+                last_hb_t = now_t
+
+        structured_logger.info(
+            "Finished series scan.",
+            event_code="assets_started_backfill_series_done",
+            series=series_label,
+            scanned_rows=scanned,
+            updated_rows=changed,
+            elapsed_seconds=round(time.monotonic() - series_start_t, 3),
+        )
+        return changed
+
+    # Site-wide TOTAL
+    if SiteReport.objects.filter(
+        report_name=SiteReport.ReportName.TOTAL,
+        campaign__isnull=True,
+        topic__isnull=True,
+        assets_started__isnull=True,
+    ).exists():
+        total_qs = SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.TOTAL,
+            campaign__isnull=True,
+            topic__isnull=True,
+        ).order_by("created_on", "pk")
+        updated_count += process_series_queryset(total_qs, series_label="TOTAL")
+
+    # Site-wide RETIRED_TOTAL
+    if SiteReport.objects.filter(
+        report_name=SiteReport.ReportName.RETIRED_TOTAL,
+        assets_started__isnull=True,
+    ).exists():
+        retired_total_qs = SiteReport.objects.filter(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL
+        ).order_by("created_on", "pk")
+        updated_count += process_series_queryset(
+            retired_total_qs, series_label="RETIRED_TOTAL"
+        )
+
+    # Per-campaign (includes retired campaigns; their historical reports remain)
+    campaign_ids = (
+        SiteReport.objects.filter(campaign__isnull=False, assets_started__isnull=True)
+        .values_list("campaign_id", flat=True)
+        .distinct()
+    )
+    for campaign_id in campaign_ids.iterator():
+        campaign_series = SiteReport.objects.filter(campaign_id=campaign_id).order_by(
+            "created_on", "pk"
+        )
+        updated_count += process_series_queryset(
+            campaign_series, series_label=f"CAMPAIGN:{campaign_id}"
+        )
+
+    # Per-topic
+    topic_ids = (
+        SiteReport.objects.filter(topic__isnull=False, assets_started__isnull=True)
+        .values_list("topic_id", flat=True)
+        .distinct()
+    )
+    for topic_id in topic_ids.iterator():
+        topic_series = SiteReport.objects.filter(topic_id=topic_id).order_by(
+            "created_on", "pk"
+        )
+        updated_count += process_series_queryset(
+            topic_series, series_label=f"TOPIC:{topic_id}"
+        )
+
+    structured_logger.info(
+        "Completed backfill for assets_started.",
+        event_code="assets_started_backfill_complete",
+        updated_rows=updated_count,
+        task_id=getattr(self.request, "id", None),
+    )
+    return updated_count
 
 
 @celery_app.task

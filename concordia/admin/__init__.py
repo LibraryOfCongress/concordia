@@ -967,9 +967,19 @@ class SimplePageAdmin(admin.ModelAdmin):
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "report_type")
-    readonly_fields = ("created_on", "report_type")
+    readonly_fields = (
+        "created_on",
+        "report_type",
+        "previous_in_series_link",
+        "next_in_series_link",
+        "report_json",
+    )
     fieldsets = (
         ("Summary", {"fields": ("created_on", "report_type")}),
+        (
+            "Navigation within series",
+            {"fields": ("previous_in_series_link", "next_in_series_link")},
+        ),
         (
             "Data",
             {
@@ -984,6 +994,7 @@ class SiteReportAdmin(admin.ModelAdmin):
                     "assets_waiting_review",
                     "assets_completed",
                     "assets_unpublished",
+                    "assets_started",
                     "items_published",
                     "items_unpublished",
                     "projects_published",
@@ -1002,6 +1013,7 @@ class SiteReportAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        ("Debug", {"fields": ("report_json",)}),
     )
 
     list_filter = (
@@ -1021,6 +1033,40 @@ class SiteReportAdmin(admin.ModelAdmin):
             return f"Topic: {obj.topic}"
         else:
             return f"SiteReport: <{obj.id}>"
+
+    @admin.display(description="SiteReport as JSON")
+    def report_json(self, obj: "SiteReport"):
+        """
+        Pretty-printed JSON of this SiteReport for debugging.
+        """
+        return format_html(
+            "<pre style='white-space:pre-wrap;word-break:break-word;margin:0'>{}</pre>",
+            obj.to_debug_json(),
+        )
+
+    @admin.display(description="Previous in series")
+    def previous_in_series_link(self, obj: "SiteReport"):
+        prev_obj = obj.previous_in_series()
+        if not prev_obj:
+            return "—"
+        url = reverse(
+            f"admin:{prev_obj._meta.app_label}_{prev_obj._meta.model_name}_change",
+            args=[prev_obj.pk],
+        )
+        label = f"{prev_obj.created_on:%Y-%m-%d %H:%M:%S} (id {prev_obj.pk})"
+        return format_html('<a href="{}">{}</a>', url, label)
+
+    @admin.display(description="Next in series")
+    def next_in_series_link(self, obj: "SiteReport"):
+        next_obj = obj.next_in_series()
+        if not next_obj:
+            return "—"
+        url = reverse(
+            f"admin:{next_obj._meta.app_label}_{next_obj._meta.model_name}_change",
+            args=[next_obj.pk],
+        )
+        label = f"{next_obj.created_on:%Y-%m-%d %H:%M:%S} (id {next_obj.pk})"
+        return format_html('<a href="{}">{}</a>', url, label)
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(

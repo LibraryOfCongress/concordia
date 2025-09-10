@@ -1,6 +1,7 @@
 from __future__ import annotations  # Necessary until Python 3.12
 
 import datetime
+import json
 import os.path
 import time
 import uuid
@@ -16,6 +17,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import (
@@ -1681,6 +1683,48 @@ class SiteReportManager(models.Manager):
             self.filter(q, created_on__lt=before).order_by("-created_on", "-pk").first()
         )
 
+    def series_filter_for_instance(self, instance: "SiteReport") -> Q:
+        """
+        Build a Q filter that selects the same logical 'series' as the given
+        SiteReport instance (site-wide TOTAL, RETIRED_TOTAL,
+        per-campaign, or per-topic).
+        """
+        if instance.campaign_id is not None:
+            return Q(campaign=instance.campaign, topic__isnull=True)
+        if instance.topic_id is not None:
+            return Q(topic=instance.topic, campaign__isnull=True)
+        if instance.report_name == SiteReport.ReportName.TOTAL:
+            return Q(
+                report_name=SiteReport.ReportName.TOTAL,
+                campaign__isnull=True,
+                topic__isnull=True,
+            )
+        if instance.report_name == SiteReport.ReportName.RETIRED_TOTAL:
+            return Q(report_name=SiteReport.ReportName.RETIRED_TOTAL)
+        return Q(pk__in=[])
+
+    def previous_for_instance(self, instance: "SiteReport") -> "SiteReport | None":
+        """
+        Return the previous SiteReport within the same series (strictly earlier).
+        """
+        q = self.series_filter_for_instance(instance)
+        return (
+            self.filter(q, created_on__lt=instance.created_on)
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+
+    def next_for_instance(self, instance: "SiteReport") -> "SiteReport | None":
+        """
+        Return the next SiteReport within the same series (strictly later).
+        """
+        q = self.series_filter_for_instance(instance)
+        return (
+            self.filter(q, created_on__gt=instance.created_on)
+            .order_by("created_on", "pk")
+            .first()
+        )
+
 
 class SiteReport(models.Model):
     class ReportName(models.TextChoices):
@@ -1718,6 +1762,8 @@ class SiteReport(models.Model):
     users_activated = models.IntegerField(blank=True, null=True)
     registered_contributors = models.IntegerField(blank=True, null=True)
     daily_active_users = models.IntegerField(blank=True, null=True)
+
+    objects = SiteReportManager()
 
     class Meta:
         ordering = ("-created_on",)
@@ -1793,6 +1839,86 @@ class SiteReport(models.Model):
         p_cur = int(current_assets_published or 0)
         new_published = max(0, p_cur - p_prev)
         return max(0, (ns_prev - ns_cur) + new_published)
+
+    def previous_in_series(self) -> "SiteReport | None":
+        """
+        Return the previous SiteReport within this object's series.
+        """
+        return SiteReport.objects.previous_for_instance(self)
+
+    def next_in_series(self) -> "SiteReport | None":
+        """
+        Return the next SiteReport within this object's series.
+        """
+        return SiteReport.objects.next_for_instance(self)
+
+    def to_debug_dict(self) -> dict:
+        """
+        Return a JSON-serializable dictionary of this site report suitable for
+        copy/paste debugging. Includes core identifiers, related object info
+        (if available), and all numeric counters.
+
+        Related objects are expanded into small dicts with common attributes
+        when present (id, title, slug, status). Missing attributes are omitted.
+        """
+        data: dict = {
+            "id": self.id,
+            "created_on": self.created_on,
+            "report_name": self.report_name,
+        }
+
+        if self.campaign_id:
+            campaign_info = {"id": self.campaign_id}
+            for attr in ("title", "slug", "status"):
+                value = getattr(self.campaign, attr, None)
+                if value is not None:
+                    campaign_info[attr] = value
+            data["campaign"] = campaign_info
+
+        if self.topic_id:
+            topic_info = {"id": self.topic_id}
+            for attr in ("title", "slug"):
+                value = getattr(self.topic, attr, None)
+                if value is not None:
+                    topic_info[attr] = value
+            data["topic"] = topic_info
+
+        # Numeric counters (explicit list to keep ordering predictable)
+        counters = {
+            "assets_total": self.assets_total,
+            "assets_published": self.assets_published,
+            "assets_not_started": self.assets_not_started,
+            "assets_in_progress": self.assets_in_progress,
+            "assets_waiting_review": self.assets_waiting_review,
+            "assets_completed": self.assets_completed,
+            "assets_unpublished": self.assets_unpublished,
+            "assets_started": self.assets_started,
+            "items_published": self.items_published,
+            "items_unpublished": self.items_unpublished,
+            "projects_published": self.projects_published,
+            "projects_unpublished": self.projects_unpublished,
+            "anonymous_transcriptions": self.anonymous_transcriptions,
+            "transcriptions_saved": self.transcriptions_saved,
+            "daily_review_actions": self.daily_review_actions,
+            "distinct_tags": self.distinct_tags,
+            "tag_uses": self.tag_uses,
+            "campaigns_published": self.campaigns_published,
+            "campaigns_unpublished": self.campaigns_unpublished,
+            "users_registered": self.users_registered,
+            "users_activated": self.users_activated,
+            "registered_contributors": self.registered_contributors,
+            "daily_active_users": self.daily_active_users,
+        }
+        data["counters"] = counters
+        return data
+
+    def to_debug_json(self) -> str:
+        """
+        Return a pretty-printed JSON string of `to_debug_dict()` with ISO datetimes.
+        """
+        return json.dumps(
+            self.to_debug_dict(), cls=DjangoJSONEncoder, indent=2, sort_keys=True
+        )
 
 
 class UserProfileActivity(models.Model):
