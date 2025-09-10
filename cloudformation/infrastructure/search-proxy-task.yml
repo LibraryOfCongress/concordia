@@ -163,6 +163,6 @@ Resources:
                               - Ref: EnvName
             TaskDefinition: !Ref DashboardTask
             LoadBalancers:
-                - ContainerName: 'searchproxy'
+                - ContainerName: 'sigv4proxy'
                   ContainerPort: 80
                   TargetGroupArn: !Ref DashboardTargetGroup
