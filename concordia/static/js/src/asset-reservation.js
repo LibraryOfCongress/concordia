@@ -1,8 +1,6 @@
-/* global displayHtmlMessage */
-
 import $ from 'jquery';
 import {Modal} from 'bootstrap';
-import {buildErrorMessage, displayMessage} from './base.js';
+import {buildErrorMessage, displayHtmlMessage, displayMessage} from './base.js';
 import * as Sentry from '@sentry/browser';
 
 const assetReservationElement = document.getElementById(

@@ -1,4 +1,4 @@
-/* global $ */
+import $ from 'jquery';
 import {Carousel} from 'bootstrap';
 
 document.addEventListener('DOMContentLoaded', () => {
