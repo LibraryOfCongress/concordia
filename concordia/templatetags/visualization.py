@@ -1,7 +1,6 @@
 # concordia/templatetags/visualization_tags.py
 
 from django import template
-from django.templatetags.static import static
 from django.utils.html import escape, format_html, format_html_join
 
 register = template.Library()
@@ -22,10 +21,6 @@ def concordia_visualization(name, **attrs):
             <section>
                 <canvas id="daily-activity"></canvas>
             </section>
-            <script
-                type="module"
-                src="{% static 'js/visualizations/daily-activity.js' %}"
-            ></script>
         </div>
 
     Args:
@@ -73,9 +68,5 @@ def concordia_visualization(name, **attrs):
         name,
     )
 
-    # Build the <script> tag, pointing at /static/js/visualizations/{name}.js
-    script_src = static(f"js/visualizations/{name}.js")
-    script_html = format_html('<script type="module" src="{}"></script>', script_src)
-
     # Because we used format_html, this is already safe.
-    return canvas_html + script_html
+    return canvas_html
