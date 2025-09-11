@@ -570,16 +570,18 @@ class SiteReportAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
         content = self.get_streaming_content(response).split(b"\r\n")
         self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+
         test_data = [
             b"created on,report name,campaign__title,topic__title,assets total,"
             + b"assets published,assets not started,assets in progress,"
             + b"assets waiting review,assets completed,assets unpublished,"
-            + b"items published,items unpublished,projects published,"
+            + b"assets started,items published,items unpublished,projects published,"
             + b"projects unpublished,anonymous transcriptions,transcriptions saved,"
             + b"daily review actions,distinct tags,tag uses,campaigns published,"
             + b"campaigns unpublished,users registered,users activated,"
             + b"registered contributors,daily active users",
-            b"%s,,,,,,,,,,,,,,,,,,,,,,,,," % str.encode(self.mocked_datetime_formatted),
+            b"%s,,,,,,,,,,,,,,,,,,,,,,,,,,"
+            % str.encode(self.mocked_datetime_formatted),
             b"",
         ]
         self.assertEqual(content, test_data)

@@ -97,12 +97,13 @@ class TestFunctionBasedViews(CreateTestUsers, TestCase, StreamingTestMixin):
         test_data = [
             b"Date,report name,Campaign,topic__title,assets total,assets published,"
             b"assets not started,assets in progress,assets waiting review,"
-            b"assets completed,assets unpublished,items published,items unpublished,"
-            b"projects published,projects unpublished,anonymous transcriptions,"
-            b"transcriptions saved,daily review actions,distinct tags,tag uses,"
-            b"campaigns published,campaigns unpublished,users registered,"
-            b"users activated,registered contributors,daily active users",
-            b"%s,,,,,,,,,,,,,,,,,,,,,,,,," % str.encode(mocked_datetime_formatted),
+            b"assets completed,assets unpublished,assets started,items published,"
+            b"items unpublished,projects published,projects unpublished,"
+            b"anonymous transcriptions,transcriptions saved,daily review actions,"
+            b"distinct tags,tag uses,campaigns published,campaigns unpublished,"
+            b"users registered,users activated,registered contributors,"
+            b"daily active users",
+            b"%s,,,,,,,,,,,,,,,,,,,,,,,,,," % str.encode(mocked_datetime_formatted),
             b"",
         ]
         self.assertEqual(content, test_data)
@@ -117,12 +118,13 @@ class TestFunctionBasedViews(CreateTestUsers, TestCase, StreamingTestMixin):
         test_data = [
             b"Date,report name,Campaign,topic__title,assets total,assets published,"
             b"assets not started,assets in progress,assets waiting review,"
-            b"assets completed,assets unpublished,items published,items unpublished,"
-            b"projects published,projects unpublished,anonymous transcriptions,"
-            b"transcriptions saved,daily review actions,distinct tags,tag uses,"
-            b"campaigns published,campaigns unpublished,users registered,"
-            b"users activated,registered contributors,daily active users",
-            b",RETIRED TOTAL,,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+            b"assets completed,assets unpublished,assets started,items published,"
+            b"items unpublished,projects published,projects unpublished,"
+            b"anonymous transcriptions,transcriptions saved,daily review actions,"
+            b"distinct tags,tag uses,campaigns published,campaigns unpublished,"
+            b"users registered,users activated,registered contributors,"
+            b"daily active users",
+            b",RETIRED TOTAL,,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
             b"",
         ]
         self.assertEqual(content, test_data)
