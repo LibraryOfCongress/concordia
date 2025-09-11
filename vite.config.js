@@ -6,26 +6,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-    // root: '.',
     base: '/static/',
     build: {
-        outDir: 'static',
+        outDir: 'concordia/static', // where the compiled files go
         emptyOutDir: false,
         rollupOptions: {
-            // input: path.resolve(__dirname, 'concordia/static/js/src/main.js'),
             output: {
                 entryFileNames: 'bundle.js',
-                // chunkFileNames: '[name].js';
-                assetFileNames: ({name}) =>
-                    name && name.endsWith('.css')
-                        ? 'css/bundle.css'
-                        : '[name][extname]',
+                assetFileNames: 'bundle.[ext]',
             },
         },
     },
     resolve: {
         alias: {
-            // '@js': path.resolve(__dirname, 'concordia/static/js/src'),
             '@scss': path.resolve(__dirname, 'concordia/static/scss'),
         },
     },
