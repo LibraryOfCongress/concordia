@@ -1,7 +1,7 @@
-/* global jQuery */
+import $ from 'jquery';
 
 function getPages(queryString = window.location.search) {
-    jQuery.ajax({
+    $.ajax({
         type: 'GET',
         url: '/account/get_pages/' + queryString,
         dataType: 'json',
@@ -9,11 +9,11 @@ function getPages(queryString = window.location.search) {
             var recentPages = document.createElement('div');
             recentPages.setAttribute('class', 'col-md');
             recentPages.innerHTML = data.content;
-            jQuery('#recent-pages').html(recentPages);
+            $('#recent-pages').html(recentPages);
         },
     });
 }
 
-jQuery('#recent-tab').on('click', function () {
+$('#recent-tab').on('click', function () {
     getPages();
 });

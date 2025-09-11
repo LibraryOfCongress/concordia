@@ -1,6 +1,4 @@
-/* global */
-/* exported filterAssets */
-function filterAssets(filterAssets, url) {
+export function filterAssets(filterAssets, url) {
     var button;
     if (filterAssets) {
         button = document.getElementById('show-all');
