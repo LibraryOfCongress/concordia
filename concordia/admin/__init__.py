@@ -1,4 +1,6 @@
+import io
 import logging
+import zipfile
 
 from django.contrib import admin, messages
 from django.contrib.admin.models import CHANGE, LogEntry
@@ -7,7 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
 from django.template.response import TemplateResponse
@@ -1319,6 +1321,7 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
         "fiscal_year",
         "fiscal_quarter",
         "month",
+        "download_csv_link",
     )
 
     list_display = (
@@ -1341,7 +1344,7 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (
-            "Period details",
+            "Report details",
             {
                 "description": (
                     "These fields describe which period this report covers and "
@@ -1356,11 +1359,12 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
                     "month",
                     "created_on",
                     "updated_on",
+                    "download_csv_link",
                 ),
             },
         ),
         (
-            "Manual Web/Comms (editable)",
+            "Manual Fields (editable)",
             {
                 "description": (
                     "You can type values here if you track them outside of "
@@ -1405,3 +1409,62 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    @admin.display(description="Download CSV")
+    def download_csv_link(self, obj: "KeyMetricsReport"):
+        """
+        Provide a link to download this report as a CSV file.
+        """
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_download_csv",
+            args=[obj.pk],
+        )
+        return format_html('<a class="button" href="{}">Download CSV</a>', url)
+
+    def get_urls(self):
+        """
+        Register a custom admin view to serve the CSV for an object.
+        """
+        urls = super().get_urls()
+        opts = self.model._meta
+        custom_urls = [
+            path(
+                "<path:object_id>/download_csv/",
+                self.admin_site.admin_view(self.download_csv_view),
+                name=f"{opts.app_label}_{opts.model_name}_download_csv",
+            ),
+        ]
+        return custom_urls + urls
+
+    def download_csv_view(self, request, object_id: str):
+        """
+        Serve the CSV for a single KeyMetricsReport instance.
+        """
+        obj = self.get_object(request, object_id)
+        if obj is None:
+            raise Http404("Report not found.")
+        csv_bytes = obj.render_csv()
+        response = HttpResponse(csv_bytes, content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{obj.csv_filename()}"'
+        return response
+
+    @admin.action(description="Download CSVs of selected reports as a ZIP")
+    def download_selected_as_zip(self, request, queryset):
+        """
+        Stream a ZIP file containing one CSV per selected report.
+        """
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(
+            memory_file, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zf:
+            for report in queryset.order_by("period_start", "period_type"):
+                zf.writestr(report.csv_filename(), report.render_csv())
+        memory_file.seek(0)
+
+        response = HttpResponse(memory_file.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = (
+            'attachment; filename="key_metrics_reports.zip"'
+        )
+        return response
+
+    actions = ("download_selected_as_zip",)

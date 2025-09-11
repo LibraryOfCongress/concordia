@@ -1,6 +1,9 @@
 from __future__ import annotations  # Necessary until Python 3.12
 
+import calendar
+import csv
 import datetime
+import io
 import json
 import os.path
 import time
@@ -2065,6 +2068,74 @@ class KeyMetricsReport(models.Model):
         unique_together = (("period_type", "period_start", "period_end"),)
         ordering = ("period_start", "period_end", "period_type")
 
+    CSV_METRIC_COLUMNS: tuple[tuple[str, str], ...] = (
+        # Derived metrics (from SiteReport)
+        ("assets_published", "Assets published"),
+        ("assets_started", "Assets started"),
+        ("assets_completed", "Assets completed"),
+        ("users_activated", "User accounts activated"),
+        ("anonymous_transcriptions", "Anonymous transcriptions"),
+        ("transcriptions_saved", "Transcriptions saved"),
+        ("tag_uses", "Tag uses"),
+        # Manual metrics
+        ("crowd_emails_and_libanswers_sent", "Crowd emails & LibAnswers sent"),
+        ("crowd_visits", "Crowd.loc.gov visits"),
+        ("crowd_page_views", "Crowd.loc.gov page views"),
+        ("crowd_unique_visitors", "Crowd.loc.gov unique visitors"),
+        ("avg_visit_seconds", "Avg. crowd.loc.gov visit (in seconds)"),
+        ("transcriptions_added_to_loc_gov", "Transcriptions added to loc.gov"),
+        ("datasets_added_to_loc_gov", "Datasets added to loc.gov"),
+    )
+
+    MANUAL_FIELDS: tuple[str, ...] = (
+        "crowd_emails_and_libanswers_sent",
+        "crowd_visits",
+        "crowd_page_views",
+        "crowd_unique_visitors",
+        "avg_visit_seconds",
+        "transcriptions_added_to_loc_gov",
+        "datasets_added_to_loc_gov",
+    )
+
+    CALCULATED_FIELDS: tuple[str, ...] = (
+        "assets_published",
+        "assets_started",
+        "assets_completed",
+        "users_activated",
+        "anonymous_transcriptions",
+        "transcriptions_saved",
+        "tag_uses",
+    )
+
+    def __str__(self) -> str:
+        """
+        Human-friendly name for the report:
+          - Fiscal year: "FY2024 Report"
+          - Quarter:     "FY2023 Q2 Report"
+          - Monthly:     "FY2022M06 Report (June 2022)"
+        """
+        if self.period_type == self.PeriodType.FISCAL_YEAR:
+            return f"FY{self.fiscal_year} Report"
+
+        if self.period_type == self.PeriodType.QUARTERLY and self.fiscal_quarter:
+            return f"FY{self.fiscal_year} Q{self.fiscal_quarter} Report"
+
+        if self.period_type == self.PeriodType.MONTHLY and self.month:
+            # Calendar year for this month within the fiscal year
+            calendar_year = (
+                self.fiscal_year - 1 if self.month >= 10 else self.fiscal_year
+            )
+            month_name = calendar.month_name[self.month]
+            return (
+                f"FY{self.fiscal_year}M{self.month:02d} Report "
+                f"({month_name} {calendar_year})"
+            )
+
+        # Fallback if fields are incomplete
+        return (
+            f"KeyMetricsReport {self.period_type} {self.period_start}–{self.period_end}"
+        )
+
     @staticmethod
     def get_fiscal_year_for_date(d: datetime.date) -> int:
         """Fiscal year runs Oct 1-Sep 30."""
@@ -2423,6 +2494,354 @@ class KeyMetricsReport(models.Model):
         obj.month = None
         obj.save()
         return obj
+
+    def csv_filename(self) -> str:
+        """
+        Build a descriptive filename for this report CSV.
+        """
+        if self.period_type == self.PeriodType.MONTHLY:
+            return (
+                f"key_metrics_monthly_fy{self.fiscal_year}_"
+                f"m{self.month:02d}_{self.period_start}_{self.period_end}.csv"
+            )
+        if self.period_type == self.PeriodType.QUARTERLY:
+            return (
+                f"key_metrics_quarterly_fy{self.fiscal_year}_"
+                f"q{self.fiscal_quarter}_{self.period_start}_{self.period_end}.csv"
+            )
+        # FISCAL_YEAR
+        return (
+            f"key_metrics_fiscal_year_fy{self.fiscal_year}_"
+            f"{self.period_start}_{self.period_end}.csv"
+        )
+
+    def _format_value_for_csv(self, field_name: str, value) -> str | int | float:
+        """
+        Convert model values to CSV-friendly outputs.
+
+        Rules:
+          - Calculated numeric fields: default to 0 if NULL.
+          - Manual fields: default to empty string if NULL.
+          - avg_visit_seconds (Decimal) renders as a string with up to 2 decimals;
+            empty string if NULL.
+        """
+        if field_name in self.MANUAL_FIELDS:
+            if value is None:
+                return ""
+            if field_name == "avg_visit_seconds":
+                if isinstance(value, Decimal):
+                    quantized = value.quantize(Decimal("0.01"))
+                    return f"{quantized}"
+                return f"{value}"
+            return int(value)
+        if field_name in self.CALCULATED_FIELDS:
+            return int(value or 0)
+        # Should not be reached (we only export metrics), but be safe.
+        return "" if value is None else value
+
+    def _calendar_year_for_month_in_fy(self, month: int, fiscal_year: int) -> int:
+        """
+        Given a fiscal year and a month number (1..12) interpreted in FY context,
+        return the calendar year for that month label.
+        """
+        return fiscal_year - 1 if 10 <= month <= 12 else fiscal_year
+
+    def _fy_abbrev(self, fiscal_year: int) -> str:
+        """
+        Return 'FY##' two-digit abbreviation for a fiscal year number.
+        Example: 2024 -> 'FY24'.
+        """
+        return f"FY{fiscal_year % 100:02d}"
+
+    def _month_label(self, fiscal_year: int, month: int) -> str:
+        """
+        Return the month name only (e.g., 'June').
+        """
+        return calendar.month_name[month]
+
+    def _format_cell(self, field_name: str, value):
+        """
+        Format a single cell for CSV using the existing per-field rules.
+        """
+        return self._format_value_for_csv(field_name, value)
+
+    def _csv_matrix_monthly(self) -> tuple[list[str], list[list[str | int | float]]]:
+        """
+        MONTHLY CSV:
+          Headers: ['Metric', '<Month>']  (month name only)
+          Rows: one per metric.
+        """
+        headers = ["Metric", self._month_label(self.fiscal_year, int(self.month))]
+
+        rows: list[list[str | int | float]] = []
+        for field_name, label in self.CSV_METRIC_COLUMNS:
+            value = getattr(self, field_name)
+            rows.append([label, self._format_cell(field_name, value)])
+        return headers, rows
+
+    def _quarter_month_specs(self) -> list[tuple[int, int]]:
+        """
+        Return [(year, month), ...] for months in this object's quarter (FY context).
+        """
+        fy = int(self.fiscal_year)
+        fq = int(self.fiscal_quarter)
+        if fq == 1:
+            return [(fy - 1, 10), (fy - 1, 11), (fy - 1, 12)]
+        if fq == 2:
+            return [(fy, 1), (fy, 2), (fy, 3)]
+        if fq == 3:
+            return [(fy, 4), (fy, 5), (fy, 6)]
+        return [(fy, 7), (fy, 8), (fy, 9)]
+
+    def _csv_matrix_quarterly(self) -> tuple[list[str], list[list[str | int | float]]]:
+        """
+        QUARTERLY CSV:
+          Headers:
+            ['Metric', '<M1>', '<M2>', '<M3>', 'FY## Q# totals', 'FY## Lifetime totals']
+            - Month columns include only months that have MONTHLY rows.
+            - Month labels are month names only ('June', 'September', ...).
+          Lifetime for a quarter:
+            sum(all prior fiscal-year reports) + sum(quarters in current FY with
+            quarter < current quarter). (Manual fields: blank if all inputs blank.)
+        """
+
+        # Which months exist for this quarter?
+        specs = self._quarter_month_specs()
+        months_in_quarter = [m for (_y, m) in specs]
+        monthly_rows = (
+            KeyMetricsReport.objects.filter(
+                period_type=self.PeriodType.MONTHLY,
+                fiscal_year=self.fiscal_year,
+                month__in=months_in_quarter,
+            )
+            .only("fiscal_year", "month", *[f for f, _ in self.CSV_METRIC_COLUMNS])
+            .order_by("month")
+        )
+        month_map: dict[int, KeyMetricsReport] = {r.month: r for r in monthly_rows}
+        present_months = [m for m in months_in_quarter if m in month_map]
+        month_headers = [self._month_label(self.fiscal_year, m) for m in present_months]
+
+        fy_abbrev = self._fy_abbrev(self.fiscal_year)
+        quarter_totals_label = f"{fy_abbrev} Q{int(self.fiscal_quarter)} totals"
+        lifetime_totals_label = f"{fy_abbrev} Lifetime totals"
+
+        headers = [
+            "Metric",
+            *month_headers,
+            quarter_totals_label,
+            lifetime_totals_label,
+        ]
+
+        # Pre-fetch prior FY rows and prior quarters in current FY for lifetime calc
+        prior_fy_rows = KeyMetricsReport.objects.filter(
+            period_type=self.PeriodType.FISCAL_YEAR,
+            fiscal_year__lt=self.fiscal_year,
+        ).only(*[f for f, _ in self.CSV_METRIC_COLUMNS])
+
+        prior_quarter_rows = KeyMetricsReport.objects.filter(
+            period_type=self.PeriodType.QUARTERLY,
+            fiscal_year=self.fiscal_year,
+            fiscal_quarter__lt=self.fiscal_quarter,
+        ).only(*[f for f, _ in self.CSV_METRIC_COLUMNS])
+
+        rows: list[list[str | int | float]] = []
+        for field_name, label in self.CSV_METRIC_COLUMNS:
+            # Month cells
+            per_month_values: list[str | int | float] = []
+            quarter_numeric_sum = 0
+            saw_manual_value_in_quarter = False
+
+            for m in present_months:
+                mv = getattr(month_map[m], field_name, None)
+                cell = self._format_cell(field_name, mv)
+                per_month_values.append(cell)
+
+                if field_name in self.CALCULATED_FIELDS:
+                    quarter_numeric_sum += int(mv or 0)
+                else:
+                    if mv is not None:
+                        saw_manual_value_in_quarter = True
+                        quarter_numeric_sum += int(mv)
+
+            if field_name in self.CALCULATED_FIELDS:
+                quarter_total_cell: str | int = int(quarter_numeric_sum)
+            else:
+                quarter_total_cell = (
+                    int(quarter_numeric_sum) if saw_manual_value_in_quarter else ""
+                )
+
+            # Lifetime = prior FY totals + prior quarters this FY
+            lifetime_numeric_sum = 0
+            saw_manual_value_lifetime = False
+
+            # Prior FY rows
+            for fy_row in prior_fy_rows:
+                v = getattr(fy_row, field_name, None)
+                if field_name in self.CALCULATED_FIELDS:
+                    lifetime_numeric_sum += int(v or 0)
+                else:
+                    if v is not None:
+                        saw_manual_value_lifetime = True
+                        lifetime_numeric_sum += int(v)
+
+            # Prior quarters in current FY
+            for q_row in prior_quarter_rows:
+                v = getattr(q_row, field_name, None)
+                if field_name in self.CALCULATED_FIELDS:
+                    lifetime_numeric_sum += int(v or 0)
+                else:
+                    if v is not None:
+                        saw_manual_value_lifetime = True
+                        lifetime_numeric_sum += int(v)
+
+            if field_name in self.CALCULATED_FIELDS:
+                lifetime_total_cell: str | int = int(lifetime_numeric_sum)
+            else:
+                lifetime_total_cell = (
+                    int(lifetime_numeric_sum) if saw_manual_value_lifetime else ""
+                )
+
+            rows.append(
+                [label, *per_month_values, quarter_total_cell, lifetime_total_cell]
+            )
+
+        return headers, rows
+
+    def _csv_matrix_fiscal_year(
+        self,
+    ) -> tuple[list[str], list[list[str | int | float]]]:
+        """
+        FISCAL_YEAR CSV:
+          Headers:
+            ['Metric',
+             'FY## Q1 totals' (if Q1 present),
+             'Q2 totals' (if present),
+             'Q3 totals' (if present),
+             'Q4 totals' (if present),
+             'FY## totals',
+             'FY## Lifetime totals']
+          Lifetime for a fiscal year:
+            sum of all FY rows up to and including this FY (manual: blank if all
+            inputs blank).
+        """
+
+        # Quarter rows present in this FY
+        quarter_rows = (
+            KeyMetricsReport.objects.filter(
+                period_type=self.PeriodType.QUARTERLY,
+                fiscal_year=self.fiscal_year,
+            )
+            .only("fiscal_quarter", *[f for f, _ in self.CSV_METRIC_COLUMNS])
+            .order_by("fiscal_quarter")
+        )
+        quarter_map: dict[int, KeyMetricsReport] = {
+            r.fiscal_quarter: r for r in quarter_rows
+        }
+        present_quarters = [q for q in (1, 2, 3, 4) if q in quarter_map]
+
+        # Build quarter headers per spec
+        headers = ["Metric"]
+        if 1 in present_quarters:
+            headers.append(f"{self._fy_abbrev(self.fiscal_year)} Q1 totals")
+        for quarter_number in (2, 3, 4):
+            if quarter_number in present_quarters:
+                headers.append(f"Q{quarter_number} totals")
+
+        fiscal_year_abbrev = self._fy_abbrev(self.fiscal_year)
+        headers.extend(
+            [f"{fiscal_year_abbrev} totals", f"{fiscal_year_abbrev} Lifetime totals"]
+        )
+
+        # Order quarters to match headers
+        header_quarter_order: list[int] = []
+        if 1 in present_quarters:
+            header_quarter_order.append(1)
+        for quarter_number in (2, 3, 4):
+            if quarter_number in present_quarters:
+                header_quarter_order.append(quarter_number)
+
+        # Lifetime basis: all FY rows <= this FY
+        lifetime_fy_rows = KeyMetricsReport.objects.filter(
+            period_type=self.PeriodType.FISCAL_YEAR,
+            fiscal_year__lte=self.fiscal_year,
+        ).only(*[f for f, _ in self.CSV_METRIC_COLUMNS])
+
+        rows: list[list[str | int | float]] = []
+        for field_name, label in self.CSV_METRIC_COLUMNS:
+            per_quarter_values: list[str | int | float] = []
+            year_numeric_sum = 0
+            saw_manual_value_in_year = False
+
+            for q in header_quarter_order:
+                q_value = getattr(quarter_map[q], field_name, None)
+                cell = self._format_cell(field_name, q_value)
+                per_quarter_values.append(cell)
+
+                if field_name in self.CALCULATED_FIELDS:
+                    year_numeric_sum += int(q_value or 0)
+                else:
+                    if q_value is not None:
+                        saw_manual_value_in_year = True
+                        year_numeric_sum += int(q_value)
+
+            if field_name in self.CALCULATED_FIELDS:
+                year_total_cell: str | int = int(year_numeric_sum)
+            else:
+                year_total_cell = (
+                    int(year_numeric_sum) if saw_manual_value_in_year else ""
+                )
+
+            # Lifetime across FY rows <= current FY
+            lifetime_numeric_sum = 0
+            saw_manual_value_in_lifetime = False
+            for fy_row in lifetime_fy_rows:
+                v = getattr(fy_row, field_name, None)
+                if field_name in self.CALCULATED_FIELDS:
+                    lifetime_numeric_sum += int(v or 0)
+                else:
+                    if v is not None:
+                        saw_manual_value_in_lifetime = True
+                        lifetime_numeric_sum += int(v)
+
+            if field_name in self.CALCULATED_FIELDS:
+                lifetime_total_cell: str | int = int(lifetime_numeric_sum)
+            else:
+                lifetime_total_cell = (
+                    int(lifetime_numeric_sum) if saw_manual_value_in_lifetime else ""
+                )
+
+            rows.append(
+                [label, *per_quarter_values, year_total_cell, lifetime_total_cell]
+            )
+
+        return headers, rows
+
+    def render_csv(self) -> bytes:
+        """
+        Render this report as a CSV pivot:
+
+          - Rows: metrics (CSV_METRIC_COLUMNS order).
+
+          - Columns:
+              * MONTHLY:     Metric | <Month>
+              * QUARTERLY:   Metric | months present | FY## Q# totals
+                             | FY## Lifetime totals
+              * FISCAL_YEAR: Metric | ('FY## Q1 totals' if present) | Q2 totals
+                             | Q3 totals | Q4 totals | FY## totals
+                             | FY## Lifetime totals
+        """
+        if self.period_type == self.PeriodType.MONTHLY:
+            headers, rows = self._csv_matrix_monthly()
+        elif self.period_type == self.PeriodType.QUARTERLY:
+            headers, rows = self._csv_matrix_quarterly()
+        else:
+            headers, rows = self._csv_matrix_fiscal_year()
+
+        buffer = io.StringIO(newline="")
+        writer = csv.writer(buffer)
+        writer.writerow(headers)
+        writer.writerows(rows)
+        return buffer.getvalue().encode("utf-8")
 
 
 class UserProfileActivity(models.Model):
