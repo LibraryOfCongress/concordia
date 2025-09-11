@@ -1,5 +1,3 @@
-/* global */
-
 import $ from 'jquery';
 
 var storage = window.localStorage;
