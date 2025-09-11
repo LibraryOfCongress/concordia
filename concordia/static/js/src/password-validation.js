@@ -1,6 +1,6 @@
-/* global jQuery */
+import $ from 'jquery';
 
-(function ($) {
+$(function () {
     var requirements = [
         {
             id: 'pw-length',
@@ -38,18 +38,18 @@
         .addClass('list-unstyled')
         .empty();
 
-    requirements.forEach(function (request) {
+    for (const request of requirements) {
         $('<li>')
             .attr('id', request.id)
             .text(request.text)
             .appendTo($requirementsList);
-    });
+    }
 
     $password1.on('input change', function () {
         var currentValue = this.value;
         var validity = true;
 
-        requirements.forEach(function (request) {
+        for (const request of requirements) {
             var li = document.getElementById(request.id);
 
             if (request.test(currentValue)) {
@@ -58,7 +58,7 @@
                 li.className = 'text-warning';
                 validity = false;
             }
-        });
+        }
 
         if (validity) {
             this.removeAttribute('aria-invalid');
@@ -70,4 +70,4 @@
             );
         }
     });
-})(jQuery);
+});

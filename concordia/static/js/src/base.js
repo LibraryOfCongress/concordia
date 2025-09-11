@@ -1,10 +1,8 @@
-/* global Sentry */
-/* exported displayHtmlMessage */
-
 import Cookies from 'js-cookie';
 import $ from 'jquery';
 import screenfull from 'screenfull';
 import {Popover} from 'bootstrap';
+import * as Sentry from '@sentry/browser';
 
 (function () {
     /*
@@ -54,7 +52,7 @@ export function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errorMessage;
 }
 
-function displayHtmlMessage(level, message, uniqueId) {
+export function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
@@ -309,7 +307,7 @@ $copyUrlButton.on('click', function (event) {
             .tooltip('show')
             .on('shown.bs.tooltip', hideTooltipCallback);
     } catch (error) {
-        if (typeof Sentry != 'undefined') {
+        if (Sentry !== 'undefined') {
             Sentry.captureException(error);
         }
 
