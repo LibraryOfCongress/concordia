@@ -1,5 +1,5 @@
 import Chart from 'chart.js/auto';
-import {renderEmptyChart, renderErrorOverlay} from 'visualization-errors';
+import {renderEmptyChart, renderErrorOverlay} from './visualization-errors.js';
 import {generateAccessibleColors} from './accessible-colors.js';
 
 const defaultAspectRatios = {

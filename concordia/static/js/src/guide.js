@@ -1,7 +1,8 @@
-/* global trackUIInteraction */
+/* global */
 
 import $ from 'jquery';
 import {Carousel} from 'bootstrap';
+import {trackUIInteraction} from './base.js';
 
 function openOffcanvas() {
     let guide = document.getElementById('guide-sidebar');

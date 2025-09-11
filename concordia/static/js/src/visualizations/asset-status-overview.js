@@ -1,4 +1,4 @@
-import {ConcordiaVisualization} from 'concordia-visualization';
+import {ConcordiaVisualization} from '../modules/concordia-visualization.js';
 
 const colors = ['#FFFFFF', '#002347', '#E0F6FF', '#257DB1'];
 
