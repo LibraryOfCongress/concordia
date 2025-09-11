@@ -5,6 +5,7 @@ import json
 import os.path
 import time
 import uuid
+from decimal import Decimal
 from itertools import chain
 from logging import getLogger
 from typing import Optional, Tuple, Union
@@ -21,12 +22,14 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import (
+    Avg,
     Case,
     Count,
     ExpressionWrapper,
     F,
     JSONField,
     Q,
+    Sum,
     Value,
     When,
 )
@@ -1725,6 +1728,66 @@ class SiteReportManager(models.Manager):
             .first()
         )
 
+    def last_on_or_before_date_for_series(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+        on_or_before_date: datetime.date,
+    ) -> Optional["SiteReport"]:
+        """
+        Return the latest SiteReport within the series with
+        created_on.date() <= on_or_before_date.
+        """
+        q = self._series_filter(report_name=report_name, campaign=campaign, topic=topic)
+        return (
+            self.filter(q, created_on__date__lte=on_or_before_date)
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+
+    def first_on_or_after_date_for_series(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+        on_or_after_date: datetime.date,
+        on_or_before_date: Optional[datetime.date] = None,
+    ) -> Optional["SiteReport"]:
+        """
+        Return the earliest SiteReport within the series with
+        created_on.date() >= on_or_after_date (and optionally
+        <= on_or_before_date).
+        """
+        q = self._series_filter(report_name=report_name, campaign=campaign, topic=topic)
+        filters = {"created_on__date__gte": on_or_after_date}
+        if on_or_before_date is not None:
+            filters["created_on__date__lte"] = on_or_before_date
+        return self.filter(q, **filters).order_by("created_on", "pk").first()
+
+    def sum_assets_started_for_series_between_dates(
+        self,
+        *,
+        report_name: str,
+        start_date: datetime.date,
+        end_date: datetime.date,
+    ) -> int:
+        """
+        Sum `assets_started` for a site-wide series
+        (TOTAL or RETIRED_TOTAL) inclusive of both dates.
+        Treat NULLs as zeros.
+        """
+        agg = self.filter(
+            report_name=report_name,
+            campaign__isnull=True,
+            topic__isnull=True,
+            created_on__date__gte=start_date,
+            created_on__date__lte=end_date,
+        ).aggregate(total=Sum("assets_started"))
+        return int(agg["total"] or 0)
+
 
 class SiteReport(models.Model):
     class ReportName(models.TextChoices):
@@ -1919,6 +1982,438 @@ class SiteReport(models.Model):
         return json.dumps(
             self.to_debug_dict(), cls=DjangoJSONEncoder, indent=2, sort_keys=True
         )
+
+
+class KeyMetricsReport(models.Model):
+    """
+    Site-wide Key Metrics report persisted for three period types:
+    - MONTHLY: per calendar month (with special handling for the very first month)
+    - QUARTERLY: fiscal quarter rollup (Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep)
+    - FISCAL_YEAR: fiscal year rollup (Oct 1 - Sep 30)
+
+    Monthly numbers are computed from SiteReport as follows:
+
+      - For cumulative counters (e.g., assets_published, assets_completed,
+        transcriptions_saved, users_activated, anonymous_transcriptions,
+        tag_uses): the monthly value is the non-negative difference between the
+        combined site-wide TOTAL + RETIRED_TOTAL values at the end of the month
+        and the baseline snapshot. Baseline is the latest snapshot strictly before
+        the first day of the month; if none exists, baseline is the first snapshot
+        within the month (yielding the delta within that month).
+
+      - For assets_started: the monthly value is the sum of the daily
+        `assets_started` field across the month for the TOTAL and RETIRED_TOTAL
+        site-wide series.
+
+    Quarterly and fiscal-year numbers are rollups from the monthly rows:
+      - For count metrics: sum of the months in the period.
+      - For avg_visit_seconds: arithmetic mean of the months that have a value.
+        (If no month has a value, the rollup is NULL.)
+
+    Manual fields are stored here too so CMs can edit them in the admin
+    and have them included when exporting CSVs. If unset they remain NULL and
+    are rendered as empty strings in exports. Manual fields only roll up if
+    at least one of the rolled up reports' value is not NULL, so manual values
+    in "higher" reports won't be set to NULL if none of the "lower" reports have
+    values (so the values can just be set in quarterly and/or yearly reports,
+    rather than having to be set monthly).
+    """
+
+    class PeriodType(models.TextChoices):
+        MONTHLY = "MONTHLY", "Monthly"
+        QUARTERLY = "QUARTERLY", "Quarterly"
+        FISCAL_YEAR = "FISCAL_YEAR", "Fiscal year"
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    period_type = models.CharField(max_length=20, choices=PeriodType.choices)
+    period_start = models.DateField()  # inclusive
+    period_end = models.DateField()  # inclusive
+
+    fiscal_year = models.IntegerField()
+    fiscal_quarter = models.IntegerField(blank=True, null=True)  # 1..4 for quarters
+    month = models.IntegerField(blank=True, null=True)  # 1..12 for monthly
+
+    # Derived from SiteReport metrics
+    assets_published = models.IntegerField(blank=True, null=True)
+    assets_started = models.IntegerField(blank=True, null=True)
+    assets_completed = models.IntegerField(blank=True, null=True)
+    users_activated = models.IntegerField(blank=True, null=True)
+    anonymous_transcriptions = models.IntegerField(blank=True, null=True)
+    transcriptions_saved = models.IntegerField(blank=True, null=True)
+    tag_uses = models.IntegerField(blank=True, null=True)
+
+    # Manual metrics
+    crowd_emails_and_libanswers_sent = models.IntegerField(blank=True, null=True)
+    crowd_visits = models.IntegerField(blank=True, null=True)
+    crowd_page_views = models.IntegerField(blank=True, null=True)
+    crowd_unique_visitors = models.IntegerField(blank=True, null=True)
+    avg_visit_seconds = models.DecimalField(
+        max_digits=8, decimal_places=2, blank=True, null=True
+    )
+    transcriptions_added_to_loc_gov = models.IntegerField(blank=True, null=True)
+    datasets_added_to_loc_gov = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["period_type", "period_start", "period_end"]),
+            models.Index(fields=["period_type", "fiscal_year"]),
+            models.Index(fields=["period_type", "fiscal_year", "fiscal_quarter"]),
+            models.Index(fields=["period_type", "fiscal_year", "month"]),
+        ]
+        unique_together = (("period_type", "period_start", "period_end"),)
+        ordering = ("period_start", "period_end", "period_type")
+
+    @staticmethod
+    def get_fiscal_year_for_date(d: datetime.date) -> int:
+        """Fiscal year runs Oct 1-Sep 30."""
+        return d.year + 1 if d.month >= 10 else d.year
+
+    @staticmethod
+    def get_fiscal_quarter_for_date(d: datetime.date) -> int:
+        """Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep."""
+        if 10 <= d.month <= 12:
+            return 1
+        if 1 <= d.month <= 3:
+            return 2
+        if 4 <= d.month <= 6:
+            return 3
+        return 4
+
+    @staticmethod
+    def month_bounds(d: datetime.date) -> tuple[datetime.date, datetime.date]:
+        """Return (first_day, last_day) for the month containing d, in local time."""
+        first = d.replace(day=1)
+        if first.month == 12:
+            next_month_first = first.replace(year=first.year + 1, month=1, day=1)
+        else:
+            next_month_first = first.replace(month=first.month + 1, day=1)
+        last = next_month_first - datetime.timedelta(days=1)
+        return first, last
+
+    @classmethod
+    def _monthly_from_sitereports(
+        cls, *, month_start: datetime.date, month_end: datetime.date
+    ) -> dict[str, int | Decimal | None]:
+        """
+        Compute monthly site-wide metrics from SiteReport for the month defined by
+        [month_start, month_end].
+
+        Snapshot-delta metrics are computed as the non-negative difference between:
+          (total_eom + retired_eom) and (total_baseline + retired_baseline),
+        where baseline is the latest snapshot strictly before month_start; if none,
+        baseline is the first snapshot within the month.
+
+        assets_started is computed as the sum of daily `assets_started` across the
+        month for TOTAL + RETIRED_TOTAL.
+
+        Returns a dict keyed by model field names.
+        """
+        # Identify the current (EOM) snapshots by series
+        total_eom = SiteReport.objects.last_on_or_before_date_for_series(
+            report_name=SiteReport.ReportName.TOTAL,
+            on_or_before_date=month_end,
+        )
+        retired_eom = SiteReport.objects.last_on_or_before_date_for_series(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL,
+            on_or_before_date=month_end,
+        )
+
+        # If there is literally no snapshot by month_end for both series,
+        # we cannot produce a month.
+        if total_eom is None and retired_eom is None:
+            return {}
+
+        # Find baselines (strictly before the month start). If missing, fall back
+        # to the first snapshot within the month.
+        total_baseline = SiteReport.objects.previous_in_series(
+            report_name=SiteReport.ReportName.TOTAL,
+            before=datetime.datetime.combine(
+                month_start, datetime.time.min, tzinfo=timezone.get_current_timezone()
+            ),
+        )
+        if total_baseline is None and total_eom is not None:
+            total_baseline = SiteReport.objects.first_on_or_after_date_for_series(
+                report_name=SiteReport.ReportName.TOTAL,
+                on_or_after_date=month_start,
+                on_or_before_date=month_end,
+            )
+
+        retired_baseline = SiteReport.objects.previous_in_series(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL,
+            before=datetime.datetime.combine(
+                month_start, datetime.time.min, tzinfo=timezone.get_current_timezone()
+            ),
+        )
+        if retired_baseline is None and retired_eom is not None:
+            retired_baseline = SiteReport.objects.first_on_or_after_date_for_series(
+                report_name=SiteReport.ReportName.RETIRED_TOTAL,
+                on_or_after_date=month_start,
+                on_or_before_date=month_end,
+            )
+
+        def val(obj: Optional[SiteReport], field: str) -> int:
+            return int(getattr(obj, field) or 0)
+
+        def delta(field: str) -> int:
+            cur_total = val(total_eom, field) + val(retired_eom, field)
+            base_total = val(total_baseline, field) + val(retired_baseline, field)
+            return max(0, cur_total - base_total)
+
+        # Snapshot-delta fields
+        assets_published = delta("assets_published")
+        assets_completed = delta("assets_completed")
+        users_activated = delta("users_activated")
+        anonymous_transcriptions = delta("anonymous_transcriptions")
+        transcriptions_saved = delta("transcriptions_saved")
+        tag_uses = delta("tag_uses")
+
+        # assets_started is the sum across the month for TOTAL and RETIRED_TOTAL
+        total_started = SiteReport.objects.sum_assets_started_for_series_between_dates(
+            report_name=SiteReport.ReportName.TOTAL,
+            start_date=month_start,
+            end_date=month_end,
+        )
+        retired_started = (
+            SiteReport.objects.sum_assets_started_for_series_between_dates(
+                report_name=SiteReport.ReportName.RETIRED_TOTAL,
+                start_date=month_start,
+                end_date=month_end,
+            )
+        )
+        assets_started = int(total_started + retired_started)
+
+        return {
+            "assets_published": assets_published,
+            "assets_started": assets_started,
+            "assets_completed": assets_completed,
+            "users_activated": users_activated,
+            "anonymous_transcriptions": anonymous_transcriptions,
+            "transcriptions_saved": transcriptions_saved,
+            "tag_uses": tag_uses,
+        }
+
+    @classmethod
+    def upsert_month(cls, *, year: int, month: int) -> Optional["KeyMetricsReport"]:
+        """
+        Create or update the MONTHLY report for the given (year, month).
+
+        Returns the saved instance, or None if the month cannot be computed
+        (no end-of-month snapshots exist in either series).
+        """
+        month_start = datetime.date(year, month, 1)
+        _, month_end = cls.month_bounds(month_start)
+
+        values = cls._monthly_from_sitereports(
+            month_start=month_start, month_end=month_end
+        )
+        if not values:
+            return None  # Nothing computable for this month.
+
+        fiscal_year = cls.get_fiscal_year_for_date(month_end)
+        obj, _ = cls.objects.get_or_create(
+            period_type=cls.PeriodType.MONTHLY,
+            period_start=month_start,
+            period_end=month_end,
+            defaults={
+                "fiscal_year": fiscal_year,
+                "fiscal_quarter": cls.get_fiscal_quarter_for_date(month_end),
+                "month": month,
+            },
+        )
+        # Update derived fields; keep manual fields as-is.
+        for key, value in values.items():
+            setattr(obj, key, value)
+        obj.fiscal_year = fiscal_year
+        obj.fiscal_quarter = cls.get_fiscal_quarter_for_date(month_end)
+        obj.month = month
+        obj.save()
+        return obj
+
+    @classmethod
+    def upsert_quarter(
+        cls, *, fiscal_year: int, fiscal_quarter: int
+    ) -> Optional["KeyMetricsReport"]:
+        """
+        Create or update the QUARTERLY report by rolling up existing monthly rows.
+        Returns None if any month in the quarter is missing (we require three months).
+        """
+        if fiscal_quarter not in (1, 2, 3, 4):
+            raise ValueError("fiscal_quarter must be 1..4")
+
+        # Determine the calendar months for the fiscal quarter
+        if fiscal_quarter == 1:
+            months = [
+                (fiscal_year - 1, 10),
+                (fiscal_year - 1, 11),
+                (fiscal_year - 1, 12),
+            ]
+        elif fiscal_quarter == 2:
+            months = [(fiscal_year, 1), (fiscal_year, 2), (fiscal_year, 3)]
+        elif fiscal_quarter == 3:
+            months = [(fiscal_year, 4), (fiscal_year, 5), (fiscal_year, 6)]
+        else:
+            months = [(fiscal_year, 7), (fiscal_year, 8), (fiscal_year, 9)]
+
+        monthly_qs = cls.objects.filter(
+            period_type=cls.PeriodType.MONTHLY,
+            fiscal_year=fiscal_year,
+            month__in=[m for (_, m) in months],
+        )
+        if monthly_qs.count() != 3:
+            return None
+
+        # Aggregate sums; for avg_visit_seconds, average of present values.
+        sums = monthly_qs.aggregate(
+            # Derived (always recompute)
+            assets_published=Sum("assets_published"),
+            assets_started=Sum("assets_started"),
+            assets_completed=Sum("assets_completed"),
+            users_activated=Sum("users_activated"),
+            anonymous_transcriptions=Sum("anonymous_transcriptions"),
+            transcriptions_saved=Sum("transcriptions_saved"),
+            tag_uses=Sum("tag_uses"),
+            # Manual (only set if aggregate is not None)
+            crowd_emails_and_libanswers_sent=Sum("crowd_emails_and_libanswers_sent"),
+            crowd_visits=Sum("crowd_visits"),
+            crowd_page_views=Sum("crowd_page_views"),
+            crowd_unique_visitors=Sum("crowd_unique_visitors"),
+            transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
+            datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
+        )
+        avg_series = monthly_qs.exclude(avg_visit_seconds__isnull=True).aggregate(
+            avg=Avg("avg_visit_seconds")
+        )
+        avg_visit_seconds = avg_series["avg"]
+
+        # Period bounds
+        start = datetime.date(months[0][0], months[0][1], 1)
+        _, end = cls.month_bounds(datetime.date(months[-1][0], months[-1][1], 1))
+
+        obj, _ = cls.objects.get_or_create(
+            period_type=cls.PeriodType.QUARTERLY,
+            period_start=start,
+            period_end=end,
+            defaults={
+                "fiscal_year": fiscal_year,
+                "fiscal_quarter": fiscal_quarter,
+            },
+        )
+
+        # Always recompute and set the derived metrics
+        derived_fields = (
+            "assets_published",
+            "assets_started",
+            "assets_completed",
+            "users_activated",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "tag_uses",
+        )
+        for field in derived_fields:
+            setattr(obj, field, int(sums[field] or 0))
+
+        # Only update manual rollups if we actually have data in the monthly rows
+        manual_fields = (
+            "crowd_emails_and_libanswers_sent",
+            "crowd_visits",
+            "crowd_page_views",
+            "crowd_unique_visitors",
+            "transcriptions_added_to_loc_gov",
+            "datasets_added_to_loc_gov",
+        )
+        for field in manual_fields:
+            if sums[field] is not None:  # at least one month had a value
+                setattr(obj, field, int(sums[field]))
+
+        # For average: only overwrite if we have any monthly values
+        if avg_visit_seconds is not None:
+            obj.avg_visit_seconds = avg_visit_seconds
+
+        obj.fiscal_year = fiscal_year
+        obj.fiscal_quarter = fiscal_quarter
+        obj.month = None
+        obj.save()
+        return obj
+
+    @classmethod
+    def upsert_fiscal_year(cls, *, fiscal_year: int) -> Optional["KeyMetricsReport"]:
+        """
+        Create or update the FISCAL_YEAR report by rolling up monthly rows for that FY.
+        Returns None if no monthly rows exist for the FY.
+        """
+        monthly_qs = cls.objects.filter(
+            period_type=cls.PeriodType.MONTHLY, fiscal_year=fiscal_year
+        )
+        if not monthly_qs.exists():
+            return None
+
+        sums = monthly_qs.aggregate(
+            # Derived (always recompute)
+            assets_published=Sum("assets_published"),
+            assets_started=Sum("assets_started"),
+            assets_completed=Sum("assets_completed"),
+            users_activated=Sum("users_activated"),
+            anonymous_transcriptions=Sum("anonymous_transcriptions"),
+            transcriptions_saved=Sum("transcriptions_saved"),
+            tag_uses=Sum("tag_uses"),
+            # Manual (only set if aggregate is not None)
+            crowd_emails_and_libanswers_sent=Sum("crowd_emails_and_libanswers_sent"),
+            crowd_visits=Sum("crowd_visits"),
+            crowd_page_views=Sum("crowd_page_views"),
+            crowd_unique_visitors=Sum("crowd_unique_visitors"),
+            transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
+            datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
+        )
+        avg_series = monthly_qs.exclude(avg_visit_seconds__isnull=True).aggregate(
+            avg=Avg("avg_visit_seconds")
+        )
+        avg_visit_seconds = avg_series["avg"]
+
+        # FY period bounds: Oct 1 .. Sep 30
+        start = datetime.date(fiscal_year - 1, 10, 1)
+        end = datetime.date(fiscal_year, 9, 30)
+
+        obj, _ = cls.objects.get_or_create(
+            period_type=cls.PeriodType.FISCAL_YEAR,
+            period_start=start,
+            period_end=end,
+            defaults={"fiscal_year": fiscal_year},
+        )
+
+        derived_fields = (
+            "assets_published",
+            "assets_started",
+            "assets_completed",
+            "users_activated",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "tag_uses",
+        )
+        for field in derived_fields:
+            setattr(obj, field, int(sums[field] or 0))
+
+        manual_fields = (
+            "crowd_emails_and_libanswers_sent",
+            "crowd_visits",
+            "crowd_page_views",
+            "crowd_unique_visitors",
+            "transcriptions_added_to_loc_gov",
+            "datasets_added_to_loc_gov",
+        )
+        for field in manual_fields:
+            if sums[field] is not None:
+                setattr(obj, field, int(sums[field]))
+
+        if avg_visit_seconds is not None:
+            obj.avg_visit_seconds = avg_visit_seconds
+
+        obj.fiscal_year = fiscal_year
+        obj.fiscal_quarter = None
+        obj.month = None
+        obj.save()
+        return obj
 
 
 class UserProfileActivity(models.Model):
