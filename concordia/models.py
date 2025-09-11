@@ -2154,7 +2154,13 @@ class KeyMetricsReport(models.Model):
             )
 
         def val(obj: Optional[SiteReport], field: str) -> int:
-            return int(getattr(obj, field) or 0)
+            """
+            Safely extract an integer field from a SiteReport;
+            treat missing obj/field as 0.
+            """
+            if obj is None:
+                return 0
+            return int(getattr(obj, field, 0) or 0)
 
         def delta(field: str) -> int:
             cur_total = val(total_eom, field) + val(retired_eom, field)
@@ -2231,41 +2237,45 @@ class KeyMetricsReport(models.Model):
         obj.save()
         return obj
 
+    # models.py — replace KeyMetricsReport.upsert_quarter with this version
+
     @classmethod
     def upsert_quarter(
         cls, *, fiscal_year: int, fiscal_quarter: int
     ) -> Optional["KeyMetricsReport"]:
         """
         Create or update the QUARTERLY report by rolling up existing monthly rows.
-        Returns None if any month in the quarter is missing (we require three months).
+        If no monthly rows exist for the quarter, returns None.
+
+        We sum all monthly rows present in the quarter; partial quarters are allowed
+        (e.g., at the very beginning of history).
         """
         if fiscal_quarter not in (1, 2, 3, 4):
             raise ValueError("fiscal_quarter must be 1..4")
 
         # Determine the calendar months for the fiscal quarter
         if fiscal_quarter == 1:
-            months = [
+            month_specs = [
                 (fiscal_year - 1, 10),
                 (fiscal_year - 1, 11),
                 (fiscal_year - 1, 12),
             ]
         elif fiscal_quarter == 2:
-            months = [(fiscal_year, 1), (fiscal_year, 2), (fiscal_year, 3)]
+            month_specs = [(fiscal_year, 1), (fiscal_year, 2), (fiscal_year, 3)]
         elif fiscal_quarter == 3:
-            months = [(fiscal_year, 4), (fiscal_year, 5), (fiscal_year, 6)]
+            month_specs = [(fiscal_year, 4), (fiscal_year, 5), (fiscal_year, 6)]
         else:
-            months = [(fiscal_year, 7), (fiscal_year, 8), (fiscal_year, 9)]
+            month_specs = [(fiscal_year, 7), (fiscal_year, 8), (fiscal_year, 9)]
 
-        monthly_qs = cls.objects.filter(
+        monthly_queryset = cls.objects.filter(
             period_type=cls.PeriodType.MONTHLY,
             fiscal_year=fiscal_year,
-            month__in=[m for (_, m) in months],
+            month__in=[m for (_, m) in month_specs],
         )
-        if monthly_qs.count() != 3:
+        if not monthly_queryset.exists():
             return None
 
-        # Aggregate sums; for avg_visit_seconds, average of present values.
-        sums = monthly_qs.aggregate(
+        rollup_sums = monthly_queryset.aggregate(
             # Derived (always recompute)
             assets_published=Sum("assets_published"),
             assets_started=Sum("assets_started"),
@@ -2282,26 +2292,27 @@ class KeyMetricsReport(models.Model):
             transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
             datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
         )
-        avg_series = monthly_qs.exclude(avg_visit_seconds__isnull=True).aggregate(
+        avg_series = monthly_queryset.exclude(avg_visit_seconds__isnull=True).aggregate(
             avg=Avg("avg_visit_seconds")
         )
-        avg_visit_seconds = avg_series["avg"]
+        average_visit_seconds = avg_series["avg"]
 
-        # Period bounds
-        start = datetime.date(months[0][0], months[0][1], 1)
-        _, end = cls.month_bounds(datetime.date(months[-1][0], months[-1][1], 1))
+        # Quarter bounds (full quarter)
+        quarter_start = datetime.date(month_specs[0][0], month_specs[0][1], 1)
+        _, quarter_end = cls.month_bounds(
+            datetime.date(month_specs[-1][0], month_specs[-1][1], 1)
+        )
 
-        obj, _ = cls.objects.get_or_create(
+        report, _ = cls.objects.get_or_create(
             period_type=cls.PeriodType.QUARTERLY,
-            period_start=start,
-            period_end=end,
+            period_start=quarter_start,
+            period_end=quarter_end,
             defaults={
                 "fiscal_year": fiscal_year,
                 "fiscal_quarter": fiscal_quarter,
             },
         )
 
-        # Always recompute and set the derived metrics
         derived_fields = (
             "assets_published",
             "assets_started",
@@ -2311,10 +2322,9 @@ class KeyMetricsReport(models.Model):
             "transcriptions_saved",
             "tag_uses",
         )
-        for field in derived_fields:
-            setattr(obj, field, int(sums[field] or 0))
+        for field_name in derived_fields:
+            setattr(report, field_name, int(rollup_sums[field_name] or 0))
 
-        # Only update manual rollups if we actually have data in the monthly rows
         manual_fields = (
             "crowd_emails_and_libanswers_sent",
             "crowd_visits",
@@ -2323,19 +2333,18 @@ class KeyMetricsReport(models.Model):
             "transcriptions_added_to_loc_gov",
             "datasets_added_to_loc_gov",
         )
-        for field in manual_fields:
-            if sums[field] is not None:  # at least one month had a value
-                setattr(obj, field, int(sums[field]))
+        for field_name in manual_fields:
+            if rollup_sums[field_name] is not None:
+                setattr(report, field_name, int(rollup_sums[field_name]))
 
-        # For average: only overwrite if we have any monthly values
-        if avg_visit_seconds is not None:
-            obj.avg_visit_seconds = avg_visit_seconds
+        if average_visit_seconds is not None:
+            report.avg_visit_seconds = average_visit_seconds
 
-        obj.fiscal_year = fiscal_year
-        obj.fiscal_quarter = fiscal_quarter
-        obj.month = None
-        obj.save()
-        return obj
+        report.fiscal_year = fiscal_year
+        report.fiscal_quarter = fiscal_quarter
+        report.month = None
+        report.save()
+        return report
 
     @classmethod
     def upsert_fiscal_year(cls, *, fiscal_year: int) -> Optional["KeyMetricsReport"]:

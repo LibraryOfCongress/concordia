@@ -33,6 +33,7 @@ from ..models import (
     CarouselSlide,
     Guide,
     Item,
+    KeyMetricsReport,
     NextReviewableCampaignAsset,
     NextReviewableTopicAsset,
     NextTranscribableCampaignAsset,
@@ -101,6 +102,7 @@ from .forms import (
     CardAdminForm,
     GuideAdminForm,
     ItemAdminForm,
+    KeyMetricsReportAdminForm,
     ProjectAdminForm,
     ProjectTopicInlineForm,
     TopicAdminForm,
@@ -1302,3 +1304,104 @@ class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
         "created_on",
     )
     ordering = ("-created_on",)
+
+
+@admin.register(KeyMetricsReport)
+class KeyMetricsReportAdmin(admin.ModelAdmin):
+    form = KeyMetricsReportAdminForm
+
+    readonly_fields = (
+        "created_on",
+        "updated_on",
+        "period_type",
+        "period_start",
+        "period_end",
+        "fiscal_year",
+        "fiscal_quarter",
+        "month",
+    )
+
+    list_display = (
+        "period_type",
+        "fiscal_year",
+        "fiscal_quarter",
+        "month",
+        "period_start",
+        "period_end",
+        "updated_on",
+    )
+    list_filter = (
+        "period_type",
+        "fiscal_year",
+        "fiscal_quarter",
+        "month",
+    )
+    search_fields = ("period_type",)
+    ordering = ("-period_start", "-period_end", "period_type")
+
+    fieldsets = (
+        (
+            "Period details",
+            {
+                "description": (
+                    "These fields describe which period this report covers and "
+                    "when it was last updated. They cannot be edited here."
+                ),
+                "fields": (
+                    "period_type",
+                    "period_start",
+                    "period_end",
+                    "fiscal_year",
+                    "fiscal_quarter",
+                    "month",
+                    "created_on",
+                    "updated_on",
+                ),
+            },
+        ),
+        (
+            "Manual Web/Comms (editable)",
+            {
+                "description": (
+                    "You can type values here if you track them outside of "
+                    "Concordia. Blank values are not included in quarterly or "
+                    "fiscal-year totals. If you later add values for the "
+                    "underlying months, those totals may update the quarterly "
+                    "and fiscal-year reports when reports are rebuilt."
+                ),
+                "fields": (
+                    "crowd_emails_and_libanswers_sent",
+                    "crowd_visits",
+                    "crowd_page_views",
+                    "crowd_unique_visitors",
+                    "avg_visit_seconds",
+                    "transcriptions_added_to_loc_gov",
+                    "datasets_added_to_loc_gov",
+                ),
+            },
+        ),
+        (
+            "Calculated metrics (editable, may be overwritten)",
+            {
+                "description": (
+                    "These numbers are usually calculated from Site Reports. "
+                    "You can edit them here if needed, but they may be "
+                    "overwritten when reports are rebuilt. Monthly reports can "
+                    "be recomputed when new daily Site Reports arrive. "
+                    "Quarterly reports can be recomputed when any monthly "
+                    "report in the quarter is updated. Fiscal-year reports can "
+                    "be recomputed when any quarterly report in the year is "
+                    "updated."
+                ),
+                "fields": (
+                    "assets_published",
+                    "assets_started",
+                    "assets_completed",
+                    "users_activated",
+                    "anonymous_transcriptions",
+                    "transcriptions_saved",
+                    "tag_uses",
+                ),
+            },
+        ),
+    )
