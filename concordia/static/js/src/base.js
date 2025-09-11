@@ -1,5 +1,5 @@
 /* global Sentry */
-/* exported displayHtmlMessage trackUIInteraction */
+/* exported displayHtmlMessage */
 
 import Cookies from 'js-cookie';
 import $ from 'jquery';
@@ -341,7 +341,7 @@ $twitterShareButton.on('click', function () {
 });
 
 // eslint-disable-next-line no-unused-vars
-function trackUIInteraction(element, category, action, label) {
+export function trackUIInteraction(element, category, action, label) {
     if ('loc_ux_tracking' in window) {
         let loc_ux_tracking = window['loc_ux_tracking'];
         let data = [element, category, action, label];

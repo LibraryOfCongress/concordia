@@ -1,6 +1,6 @@
-/* global jQuery */
+import $ from 'jquery';
 
-jQuery(function ($) {
+$(function () {
     $('.toggle-blog-posts').click(function (event) {
         $('.accordion-icon', event.delegateTarget).toggleClass(
             'fa-plus-square fa-minus-square',

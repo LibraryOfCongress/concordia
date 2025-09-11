@@ -282,8 +282,6 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
             window.STATIC_URL = "{% get_static_prefix %}";
         </script>
 
-        {% include "fragments/common-scripts.html" %}
-
         {% block body_scripts %}{% endblock body_scripts %}
 
         <script type="text/javascript">
