@@ -1,4 +1,6 @@
+import io
 import logging
+import zipfile
 
 from django.contrib import admin, messages
 from django.contrib.admin.models import CHANGE, LogEntry
@@ -7,7 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
 from django.template.response import TemplateResponse
@@ -33,6 +35,7 @@ from ..models import (
     CarouselSlide,
     Guide,
     Item,
+    KeyMetricsReport,
     NextReviewableCampaignAsset,
     NextReviewableTopicAsset,
     NextTranscribableCampaignAsset,
@@ -101,6 +104,7 @@ from .forms import (
     CardAdminForm,
     GuideAdminForm,
     ItemAdminForm,
+    KeyMetricsReportAdminForm,
     ProjectAdminForm,
     ProjectTopicInlineForm,
     TopicAdminForm,
@@ -967,9 +971,19 @@ class SimplePageAdmin(admin.ModelAdmin):
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "report_type")
-    readonly_fields = ("created_on", "report_type")
+    readonly_fields = (
+        "created_on",
+        "report_type",
+        "previous_in_series_link",
+        "next_in_series_link",
+        "report_json",
+    )
     fieldsets = (
         ("Summary", {"fields": ("created_on", "report_type")}),
+        (
+            "Navigation within series",
+            {"fields": ("previous_in_series_link", "next_in_series_link")},
+        ),
         (
             "Data",
             {
@@ -984,6 +998,7 @@ class SiteReportAdmin(admin.ModelAdmin):
                     "assets_waiting_review",
                     "assets_completed",
                     "assets_unpublished",
+                    "assets_started",
                     "items_published",
                     "items_unpublished",
                     "projects_published",
@@ -1002,6 +1017,7 @@ class SiteReportAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        ("Debug", {"fields": ("report_json",)}),
     )
 
     list_filter = (
@@ -1021,6 +1037,40 @@ class SiteReportAdmin(admin.ModelAdmin):
             return f"Topic: {obj.topic}"
         else:
             return f"SiteReport: <{obj.id}>"
+
+    @admin.display(description="SiteReport as JSON")
+    def report_json(self, obj: "SiteReport"):
+        """
+        Pretty-printed JSON of this SiteReport for debugging.
+        """
+        return format_html(
+            "<pre style='white-space:pre-wrap;word-break:break-word;margin:0'>{}</pre>",
+            obj.to_debug_json(),
+        )
+
+    @admin.display(description="Previous in series")
+    def previous_in_series_link(self, obj: "SiteReport"):
+        prev_obj = obj.previous_in_series()
+        if not prev_obj:
+            return "—"
+        url = reverse(
+            f"admin:{prev_obj._meta.app_label}_{prev_obj._meta.model_name}_change",
+            args=[prev_obj.pk],
+        )
+        label = f"{prev_obj.created_on:%Y-%m-%d %H:%M:%S} (id {prev_obj.pk})"
+        return format_html('<a href="{}">{}</a>', url, label)
+
+    @admin.display(description="Next in series")
+    def next_in_series_link(self, obj: "SiteReport"):
+        next_obj = obj.next_in_series()
+        if not next_obj:
+            return "—"
+        url = reverse(
+            f"admin:{next_obj._meta.app_label}_{next_obj._meta.model_name}_change",
+            args=[next_obj.pk],
+        )
+        label = f"{next_obj.created_on:%Y-%m-%d %H:%M:%S} (id {next_obj.pk})"
+        return format_html('<a href="{}">{}</a>', url, label)
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
@@ -1256,3 +1306,165 @@ class NextReviewableTopicAssetAdmin(admin.ModelAdmin):
         "created_on",
     )
     ordering = ("-created_on",)
+
+
+@admin.register(KeyMetricsReport)
+class KeyMetricsReportAdmin(admin.ModelAdmin):
+    form = KeyMetricsReportAdminForm
+
+    readonly_fields = (
+        "created_on",
+        "updated_on",
+        "period_type",
+        "period_start",
+        "period_end",
+        "fiscal_year",
+        "fiscal_quarter",
+        "month",
+        "download_csv_link",
+    )
+
+    list_display = (
+        "period_type",
+        "fiscal_year",
+        "fiscal_quarter",
+        "month",
+        "period_start",
+        "period_end",
+        "updated_on",
+    )
+    list_filter = (
+        "period_type",
+        "fiscal_year",
+        "fiscal_quarter",
+        "month",
+    )
+    search_fields = ("period_type",)
+    ordering = ("-period_start", "-period_end", "period_type")
+
+    fieldsets = (
+        (
+            "Report details",
+            {
+                "description": (
+                    "These fields describe which period this report covers and "
+                    "when it was last updated. They cannot be edited here."
+                ),
+                "fields": (
+                    "period_type",
+                    "period_start",
+                    "period_end",
+                    "fiscal_year",
+                    "fiscal_quarter",
+                    "month",
+                    "created_on",
+                    "updated_on",
+                    "download_csv_link",
+                ),
+            },
+        ),
+        (
+            "Manual Fields (editable)",
+            {
+                "description": (
+                    "You can type values here if you track them outside of "
+                    "Concordia. Blank values are not included in quarterly or "
+                    "fiscal-year totals. If you later add values for the "
+                    "underlying months, those totals may update the quarterly "
+                    "and fiscal-year reports when reports are rebuilt."
+                ),
+                "fields": (
+                    "crowd_emails_and_libanswers_sent",
+                    "crowd_visits",
+                    "crowd_page_views",
+                    "crowd_unique_visitors",
+                    "avg_visit_seconds",
+                    "transcriptions_added_to_loc_gov",
+                    "datasets_added_to_loc_gov",
+                ),
+            },
+        ),
+        (
+            "Calculated metrics (editable, may be overwritten)",
+            {
+                "description": (
+                    "These numbers are usually calculated from Site Reports. "
+                    "You can edit them here if needed, but they may be "
+                    "overwritten when reports are rebuilt. Monthly reports can "
+                    "be recomputed when new daily Site Reports arrive. "
+                    "Quarterly reports can be recomputed when any monthly "
+                    "report in the quarter is updated. Fiscal-year reports can "
+                    "be recomputed when any quarterly report in the year is "
+                    "updated."
+                ),
+                "fields": (
+                    "assets_published",
+                    "assets_started",
+                    "assets_completed",
+                    "users_activated",
+                    "anonymous_transcriptions",
+                    "transcriptions_saved",
+                    "tag_uses",
+                ),
+            },
+        ),
+    )
+
+    @admin.display(description="Download CSV")
+    def download_csv_link(self, obj: "KeyMetricsReport"):
+        """
+        Provide a link to download this report as a CSV file.
+        """
+        url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_download_csv",
+            args=[obj.pk],
+        )
+        return format_html('<a class="button" href="{}">Download CSV</a>', url)
+
+    def get_urls(self):
+        """
+        Register a custom admin view to serve the CSV for an object.
+        """
+        urls = super().get_urls()
+        opts = self.model._meta
+        custom_urls = [
+            path(
+                "<path:object_id>/download_csv/",
+                self.admin_site.admin_view(self.download_csv_view),
+                name=f"{opts.app_label}_{opts.model_name}_download_csv",
+            ),
+        ]
+        return custom_urls + urls
+
+    def download_csv_view(self, request, object_id: str):
+        """
+        Serve the CSV for a single KeyMetricsReport instance.
+        """
+        obj = self.get_object(request, object_id)
+        if obj is None:
+            raise Http404("Report not found.")
+        csv_bytes = obj.render_csv()
+        response = HttpResponse(csv_bytes, content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{obj.csv_filename()}"'
+        return response
+
+    @admin.action(description="Download CSVs of selected reports as a ZIP")
+    def download_selected_as_zip(self, request, queryset):
+        """
+        Stream a ZIP file containing one CSV per selected report.
+        """
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(
+            memory_file, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zf:
+            for report in queryset.order_by("period_start", "period_type"):
+                zf.writestr(report.csv_filename(), report.render_csv())
+        memory_file.seek(0)
+
+        response = HttpResponse(memory_file.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = (
+            'attachment; filename="key_metrics_reports.zip"'
+        )
+        return response
+
+    actions = ("download_selected_as_zip",)

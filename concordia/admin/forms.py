@@ -8,6 +8,7 @@ from ..models import (
     Card,
     Guide,
     Item,
+    KeyMetricsReport,
     Project,
     ProjectTopic,
     Topic,
@@ -198,3 +199,90 @@ class AssetStatusActionForm(forms.Form):
             choices.append((action_name, action_label))
 
         self.fields["action"].choices = choices
+
+
+class KeyMetricsReportAdminForm(forms.ModelForm):
+    """
+    Admin form for KeyMetricsReport.
+
+    Keeps all manual and calculated fields editable, while period metadata
+    remains read-only via the ModelAdmin.
+    """
+
+    class Meta:
+        model = KeyMetricsReport
+        fields = "__all__"
+        help_texts = {
+            # Manual fields
+            "crowd_emails_and_libanswers_sent": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
+            "crowd_visits": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
+            "crowd_page_views": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
+            "crowd_unique_visitors": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
+            "avg_visit_seconds": (
+                "Optional average visit length in seconds. "
+                "If blank, no average is used for quarterly or fiscal-year "
+                "rollups."
+            ),
+            "transcriptions_added_to_loc_gov": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
+            "datasets_added_to_loc_gov": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
+            # Calculated fields (still editable)
+            "assets_published": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+            "assets_started": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+            "assets_completed": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+            "users_activated": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+            "anonymous_transcriptions": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+            "transcriptions_saved": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+            "tag_uses": (
+                "Usually calculated from Site Reports. "
+                "If you edit this, it may be overwritten when reports are "
+                "rebuilt."
+            ),
+        }
