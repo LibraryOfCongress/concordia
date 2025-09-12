@@ -3,15 +3,6 @@
 
 {% block title %}{{ title }}{% endblock title %}
 
-{% block head_content %}
-    {{ block.super }}
-    {% if debug %}
-        <script type="module" src="http://localhost:5173/static/src/static-page.js"></script>
-    {% else %}
-        <script type="module" src="{% static 'js/static-page.js' %}"></script>
-    {% endif %}
-{% endblock head_content %}
-
 {% block breadcrumbs %}
     {% for link, title in breadcrumbs %}
         {% if forloop.last %}
