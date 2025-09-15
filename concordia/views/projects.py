@@ -137,8 +137,6 @@ class ProjectDetailView(APIListView):
             - `in_progress_assets` (int): Count of in-progress assets.
             - `not_started_assets` (int): Count of not-started assets.
             - `submitted_assets` (int): Count of submitted assets.
-            - `undo_available`/`redo_available` (bool | absent): Not included
-              here; listed for parity with other views.
             - Progress statistics on each item are added in-place by
               `annotate_children_with_progress_stats`.
 
