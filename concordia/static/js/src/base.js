@@ -1,5 +1,8 @@
-/* global $ Cookies screenfull Sentry */
-/* exported displayMessage displayHtmlMessage buildErrorMessage trackUIInteraction */
+import Cookies from 'js-cookie';
+import $ from 'jquery';
+import screenfull from 'screenfull';
+import {Popover} from 'bootstrap';
+import * as Sentry from '@sentry/browser';
 
 (function () {
     /*
@@ -27,12 +30,17 @@
     });
 })();
 
-$(function () {
-    $('[data-toggle="popover"]').popover();
+document.addEventListener('DOMContentLoaded', () => {
+    const popoverTriggerList = document.querySelectorAll(
+        '[data-bs-toggle="popover"]',
+    );
+    for (const popoverTriggerElement of popoverTriggerList) {
+        new Popover(popoverTriggerElement);
+    }
 });
 
 // eslint-disable-next-line no-unused-vars
-function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+export function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errorMessage;
     // eslint-disable-next-line unicorn/prefer-ternary
@@ -44,7 +52,7 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errorMessage;
 }
 
-function displayHtmlMessage(level, message, uniqueId) {
+export function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
@@ -88,7 +96,7 @@ function displayHtmlMessage(level, message, uniqueId) {
     return $newMessage;
 }
 
-function displayMessage(level, message, uniqueId) {
+export function displayMessage(level, message, uniqueId) {
     return displayHtmlMessage(
         level,
         document.createTextNode(message),
@@ -242,6 +250,8 @@ function debounce(function_, timeout = 300) {
     };
 }
 
+export {debounce};
+
 /* Social share stuff */
 
 var hideTooltip = function (tooltipButton) {
@@ -297,7 +307,7 @@ $copyUrlButton.on('click', function (event) {
             .tooltip('show')
             .on('shown.bs.tooltip', hideTooltipCallback);
     } catch (error) {
-        if (typeof Sentry != 'undefined') {
+        if (Sentry !== 'undefined') {
             Sentry.captureException(error);
         }
 
@@ -329,7 +339,7 @@ $twitterShareButton.on('click', function () {
 });
 
 // eslint-disable-next-line no-unused-vars
-function trackUIInteraction(element, category, action, label) {
+export function trackUIInteraction(element, category, action, label) {
     if ('loc_ux_tracking' in window) {
         let loc_ux_tracking = window['loc_ux_tracking'];
         let data = [element, category, action, label];

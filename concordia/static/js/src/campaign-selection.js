@@ -1,6 +1,6 @@
-/* global jQuery */
+import $ from 'jquery';
 
-(function ($) {
+$(function () {
     const queryString = window.location.search;
     const urlParameters = new URLSearchParams(queryString);
 
@@ -19,4 +19,4 @@
             $('.' + this.id).fadeIn('slow');
         } else $('.' + this.id).fadeOut('slow');
     });
-})(jQuery);
+});

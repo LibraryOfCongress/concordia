@@ -1,6 +1,7 @@
-/* global $ trackUIInteraction */
+import $ from 'jquery';
 
 import {setTutorialHeight} from './modules/quick-tips.js';
+import {trackUIInteraction} from './base.js';
 
 $('#tutorial-popup').on('shown.bs.modal', function () {
     setTutorialHeight();

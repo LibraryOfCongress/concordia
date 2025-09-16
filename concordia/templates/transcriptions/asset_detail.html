@@ -32,18 +32,13 @@
             data-contact-url="https://ask.loc.gov/crowd"
     ></script>
 
-    {% include "fragments/import-map.html" %}
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
     {% if anonymous_user_validation_required %}
         <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
     {% endif %}
 
-    <script type="module" src="{% static 'js/contribute.js' %}"></script>
-    <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
-    <script type="module" src="{% static 'js/guide.js' %}"></script>
-    <script type="module" src="{% static 'js/quick-tips-setup.js' %}"></script>
-    <script type="module" src="{% static 'js/ocr.js' %}"></script>
+    {{ block.super }}
 {% endblock head_content %}
 
 {% block breadcrumbs %}
