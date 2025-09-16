@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7c960528f27ad5202060fde0008a4f2e5be5d9e9ce197952bad0fd6a9d9745b9"
+            "sha256": "9f4234f14984ba9f19326fc9651a00339de70e4b545f96b557e3ca2023620317"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -2309,12 +2309,12 @@
         },
         "setuptools-scm": {
             "hashes": [
-                "sha256:136e2b1d393d709d2bcf26f275b8dec06c48b811154167b0fd6bb002aad17d6d",
-                "sha256:a18396a1bc0219c974d1a74612b11f9dce0d5bd8b1dc55c65f6ac7fd609e8c28"
+                "sha256:6662c9b9497b6c9bf13bead9d7a9084756f68238302c5ed089fb4dbd29d102d7",
+                "sha256:c551ef54e2270727ee17067881c9687ca2aedf179fa5b8f3fab9e8d73bdc421f"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==8.2.0"
+            "version": "==9.2.0"
         },
         "shellingham": {
             "hashes": [
