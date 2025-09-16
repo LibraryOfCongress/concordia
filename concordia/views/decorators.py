@@ -9,8 +9,11 @@ from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.vary import vary_on_headers
 
 from concordia.forms import TurnstileForm
+from concordia.logging import ConcordiaLogger
 from configuration.utils import configuration_value
 from configuration.validation import validate_rate
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 def default_cache_control(view_function: Callable) -> Callable:
@@ -154,5 +157,16 @@ def next_asset_rate(group: str, request: HttpRequest) -> str | None:
     try:
         rate_limit = configuration_value("next_asset_rate_limit")
         return validate_rate(rate_limit)
-    except (ObjectDoesNotExist, ValidationError):
+    except (ObjectDoesNotExist, ValidationError) as exc:
+        structured_logger.warning(
+            "Falling back to default next-asset rate limit.",
+            event_code="next_asset_rate_config_fallback",
+            reason="Could not load or validate configured rate limit",
+            reason_code="config_missing_or_invalid",
+            group=group,
+            default_rate="4/m",
+            user=request.user,
+            error_type=exc.__class__.__name__,
+            error=str(exc),
+        )
         return "4/m"
