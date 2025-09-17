@@ -4,7 +4,7 @@ import string
 import time
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlencode, urljoin, urlparse
 
 from gevent import sleep
 from locust import HttpUser, between, task
@@ -13,7 +13,9 @@ HOMEPAGE_PATH = "/"
 NEXT_ASSET_PATH = "/next-transcribable-asset/"
 AJAX_STATUS_PATH = "/account/ajax-status/"
 AJAX_MSG_PATH = "/account/ajax-messages/"
+LOGIN_PATH = "/account/login/"
 CSRF_COOKIE_NAME = "csrftoken"
+SESSION_COOKIE_NAME = "sessionid"
 CSRF_SEED_PATH = HOMEPAGE_PATH  # Backup if CSRF cookie is missing
 POST_FIELD_NAME = "text"
 POST_MIN_CHARS = 10
@@ -21,6 +23,13 @@ POST_MAX_CHARS = 200
 SAME_PAGE_REPEAT_PROB = 0.75  # 75% do another POST+GET on same asset
 REDIRECT_RETRIES = 3  # how many times to retry the redirect
 REDIRECT_BACKOFF = 0.25  # seconds; linear backoff per attempt
+
+TEST_USER_PREFIX = "locusttest"
+TEST_USER_DOMAIN = "example.test"
+TEST_USER_COUNT = 10_000
+TEST_USER_PASSWORD = "locustpass123"  # nosec B105
+LOGIN_BAD_PASSWORD_PROB = 0.10
+LOGIN_MAX_ATTEMPTS = 5
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +85,7 @@ class _AssetPageParser(HTMLParser):
                 self.in_transcription_form = True
                 action = a.get("action")
                 if action is not None:
-                    # Resolve relative to the *page URL*; empty means "same page".
+                    # Resolve relative to the page URL; empty means same page
                     resolved = (
                         self.base_url
                         if action.strip() == ""
@@ -105,30 +114,30 @@ def _random_text(min_len=10, max_len=200) -> str:
     return " ".join(s.split())
 
 
-class AnonUser(HttpUser):
+###
+# base browsing user (abstract)
+###
+
+
+class BaseBrowsingUser(HttpUser):
     """
-    Anonymous user:
-      - one-time: GET homepage, fetch local scripts/styles (with AJAX calls).
-      - loop: visit /next-transcribable-asset/ (redirect), ensure CSRF, POST text,
-              then GET same page; 75% chance do another POST+GET on the same page,
-              else go back to /next-transcribable-asset/ for a new target.
+    Shared browse/post behavior. Subclasses provide their own on_start.
     """
 
+    abstract = True
     wait_time = between(3.0, 8.0)
-    current_target_path: str | None = None
 
-    # Parsed state for the current asset page
+    current_target_path: str | None = None
     current_form_action_path: str | None = None
     current_supersedes: str | None = None
     current_reserve_path: str | None = None
 
-    # Guard so only the first failure dumps/quits the whole test
     _fatal_already_triggered = False
 
     def _fatal_dump_and_quit(self, page_url: str, html: str) -> None:
-        if AnonUser._fatal_already_triggered:
+        if self.__class__._fatal_already_triggered:
             return
-        AnonUser._fatal_already_triggered = True
+        self.__class__._fatal_already_triggered = True
 
         ts = int(time.time())
         out = Path(f"asset_parse_failure_{ts}.html").resolve()
@@ -144,22 +153,20 @@ class AnonUser(HttpUser):
                 "FATAL: failed to write HTML dump (%s). Page URL=%s", e, page_url
             )
 
-        # Stop the whole test run
         try:
             self.environment.runner.quit()
         except Exception as e:
             logger.error("Error calling runner.quit(): %s", e)
 
     def _after_request_ajax(self):
-        # fires two AJAX calls after each *page* GET
+        # fires two AJAX calls after each page GET
         # to simulate normal page load
         # do NOT wrap these (prevents recursion)
         self.client.get(AJAX_STATUS_PATH, name="AJAX status")
         self.client.get(AJAX_MSG_PATH, name="AJAX messaging")
 
     def _get(self, path_or_url: str, *, page: bool = True, **kwargs):
-        # If page=True, treat as a full page load and then trigger AJAX;
-        # if page=False, it's a resource/redirect fetch and we skip AJAX.
+        # If page=True, treat as a full page load and then trigger AJAX
         r = self.client.get(path_or_url, **kwargs)
         if page:
             self._after_request_ajax()
@@ -167,12 +174,9 @@ class AnonUser(HttpUser):
 
     def _post(self, path_or_url: str, **kwargs):
         # POSTs should not trigger the AJAX-after-page behavior here
-        # (the subsequent page GET will do that).
-        r = self.client.post(path_or_url, **kwargs)
-        return r
+        return self.client.post(path_or_url, **kwargs)
 
-    def on_start(self):
-        # one-time homepage + scripts/stylesheets
+    def _load_homepage_and_resources(self, *, name_suffix: str = ""):
         base = self.environment.host.rstrip("/")
         r_home = self._get(HOMEPAGE_PATH, page=True)
 
@@ -183,25 +187,22 @@ class AnonUser(HttpUser):
             parser.resources = []
 
         for res_url in parser.resources:
-            # Group resources nicely in stats
-            self._get(res_url, name="resource " + urlparse(res_url).path, page=False)
+            label = "resource " + urlparse(res_url).path
+            if name_suffix:
+                label = f"{label} {name_suffix}"
+            self._get(res_url, name=label, page=False)
 
     def _parse_asset_page_and_reserve(self, target_path: str) -> None:
-        """GET the asset page, parse details, then POST a reservation."""
         base = self.environment.host.rstrip("/")
-        # Load the page (sets/refreshes CSRF and triggers AJAX)
         r = self._get(target_path, name="target page", page=True)
 
-        # Parse form action, supersedes and reservation URL using full page URL as base
         parser = _AssetPageParser(base_url=r.url)
         try:
             parser.feed(r.text or "")
         except Exception:
-            # If parsing itself fails, also dump & quit
             self._fatal_dump_and_quit(r.url, r.text or "")
             return
 
-        # Normalize to paths (preserve query string if present) for nicer stats
         if parser.form_action:
             fa = urlparse(parser.form_action)
             self.current_form_action_path = fa.path + (
@@ -218,14 +219,10 @@ class AnonUser(HttpUser):
         else:
             self.current_reserve_path = None
 
-        # If we failed to find the transcription form/action, dump HTML and end the test
-        # This means something is wrong on the server or network, so the test isn't
-        # going to have anything useful
         if not self.current_form_action_path:
             self._fatal_dump_and_quit(r.url, r.text or "")
             return
 
-        # After each asset page GET, POST a reservation if we have a URL
         if self.current_reserve_path:
             csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME)
             referer = urljoin(base + "/", target_path.lstrip("/"))
@@ -240,43 +237,30 @@ class AnonUser(HttpUser):
             return None
         csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME)
         if not csrftoken:
-            # Most pages set/refresh CSRF on GET
-            # NOTE: this will also parse the asset page (and reserve if URL present).
             self._parse_asset_page_and_reserve(target_path)
             csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME)
         if not csrftoken and CSRF_SEED_PATH:
-            # Get CSRF from 'seed' page, then re-load and parse the asset page
             self._get(CSRF_SEED_PATH, name="csrf seed", page=True)
             self._parse_asset_page_and_reserve(target_path)
             csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME)
         return csrftoken
 
     def _follow_next_asset(self) -> str | None:
-        """
-        Follow redirect to a random asset with retries.
-        Returns the target path or None if all retries fail.
-        We DO NOT trigger the AJAX-after-page behavior here (not a full page load).
-        """
         for attempt in range(1, REDIRECT_RETRIES + 1):
             with self.client.get(
                 NEXT_ASSET_PATH,
                 name="next asset (redirect)",
-                catch_response=True,  # so we can mark failures without raising
+                catch_response=True,
             ) as resp:
-                # Treat 2xx/3xx as success
                 if 200 <= resp.status_code < 400:
                     return urlparse(resp.url).path or "/"
-
-                # Mark the attempt as failed, then back off and retry
                 msg = (
                     f"redirect failed (status={resp.status_code}) "
                     f"attempt={attempt}/{REDIRECT_RETRIES}"
                 )
                 resp.failure(msg)
                 logger.warning("next asset retry: %s", msg)
-
             sleep(REDIRECT_BACKOFF * attempt)
-
         logger.error("next asset: all %d retries failed", REDIRECT_RETRIES)
         return None
 
@@ -285,10 +269,8 @@ class AnonUser(HttpUser):
     ):
         if not target_path:
             return
-
         base = self.environment.host.rstrip("/")
         referer = urljoin(base + "/", target_path.lstrip("/"))
-
         post_path = self.current_form_action_path
         if not post_path:
             return
@@ -299,29 +281,23 @@ class AnonUser(HttpUser):
 
         self._post(
             post_path,
-            data=data,  # switch to json=... if your endpoint expects JSON
+            data=data,
             headers={"X-CSRFToken": csrftoken, "Referer": referer},
             name=f"{name_prefix} POST",
         )
-
-        # GET the same page again; this simulates what the JavaScript
-        # does after a POST to the form. This also re-parses and reserves.
         self._parse_asset_page_and_reserve(target_path)
 
-    # ---- main repeating task -------------------------------------------------
     @task
     def browse_and_submit(self):
-        # Always ensure we have a target first
         if not self.current_target_path:
             new_path = self._follow_next_asset()
             if new_path is None:
-                return  # no target this tick; try again next tick
+                return
             self.current_target_path = new_path
             self.current_form_action_path = None
             self.current_supersedes = None
             self.current_reserve_path = None
         else:
-            # 25% branch to get a new asset
             if random.random() >= SAME_PAGE_REPEAT_PROB:
                 new_path = self._follow_next_asset()
                 if new_path is None:
@@ -331,20 +307,16 @@ class AnonUser(HttpUser):
                 self.current_supersedes = None
                 self.current_reserve_path = None
 
-        # Ensure CSRF is present before writing (also loads/parses page and reserves)
         csrftoken = self._ensure_csrf(self.current_target_path)
         if not csrftoken:
-            # If we truly can't get CSRF, at least fetch target and bail this tick
             if self.current_target_path:
                 self._get(
                     self.current_target_path, name="target page (no CSRF)", page=True
                 )
             return
 
-        # First POST + GET on the current page (uses parsed action + supersedes)
         self._post_then_get_same_page(self.current_target_path, csrftoken, "target")
 
-        # 75% chance: immediately do another POST + GET on the same page
         if random.random() < SAME_PAGE_REPEAT_PROB:
             csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME) or self._ensure_csrf(
                 self.current_target_path
@@ -353,3 +325,108 @@ class AnonUser(HttpUser):
                 self._post_then_get_same_page(
                     self.current_target_path, csrftoken, "target (repeat)"
                 )
+
+
+###
+# anonymous user
+###
+
+
+class AnonUser(BaseBrowsingUser):
+    """
+    Anonymous user flow:
+      - one-time: GET homepage and fetch local scripts/styles (with AJAX calls)
+      - loop: same as BaseBrowsingUser
+    """
+
+    def on_start(self):
+        self._load_homepage_and_resources()
+
+
+###
+# authenticated user
+###
+
+
+class AuthUser(BaseBrowsingUser):
+    """
+    Authenticated user flow:
+      - GET homepage
+      - Visit /account/login/?next=/, attempt login by username or email
+        with a 10% chance per attempt to submit an incorrect password,
+        retrying up to 5 times
+      - After success (or failure), GET homepage again and load resources
+      - Loop behavior same as BaseBrowsingUser
+    """
+
+    chosen_username: str | None = None
+    chosen_email: str | None = None
+
+    def _pick_fixture_user(self):
+        idx = random.randint(1, TEST_USER_COUNT)
+        uname = f"{TEST_USER_PREFIX}{idx:05d}"
+        email = f"{uname}@{TEST_USER_DOMAIN}"
+        self.chosen_username = uname
+        self.chosen_email = email
+
+    def _login_once(self, login_url: str, referer: str) -> bool:
+        csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME) or ""
+        if not csrftoken:
+            self._get(login_url, name="login page", page=True)
+            csrftoken = self.client.cookies.get(CSRF_COOKIE_NAME) or ""
+
+        assert self.chosen_username and self.chosen_email
+        ident = self.chosen_username if random.random() < 0.5 else self.chosen_email
+
+        wrong = random.random() < LOGIN_BAD_PASSWORD_PROB
+        password = TEST_USER_PASSWORD if not wrong else TEST_USER_PASSWORD + "x"
+
+        form = {
+            "username": ident,
+            "password": password,
+            "csrfmiddlewaretoken": csrftoken,
+            "next": "/",
+        }
+
+        self._post(
+            login_url,
+            data=form,
+            headers={"X-CSRFToken": csrftoken, "Referer": referer},
+            name="login POST",
+        )
+
+        has_session = bool(self.client.cookies.get(SESSION_COOKIE_NAME))
+        if has_session:
+            return True
+
+        self._get("/", name="post-login home probe", page=True)
+        has_session = bool(self.client.cookies.get(SESSION_COOKIE_NAME))
+        return has_session
+
+    def on_start(self):
+        self._get(HOMEPAGE_PATH, page=True)
+
+        self._pick_fixture_user()
+        query = urlencode({"next": "/"})
+        login_url = f"{LOGIN_PATH}?{query}"
+        base = self.environment.host.rstrip("/")
+        referer = urljoin(base + "/", LOGIN_PATH.lstrip("/"))
+
+        self._get(login_url, name="login page", page=True)
+
+        success = False
+        for _ in range(LOGIN_MAX_ATTEMPTS):
+            if self._login_once(login_url, referer):
+                success = True
+                break
+            self._get(login_url, name="login page (retry)", page=True)
+
+        if not success:
+            logger.error(
+                "AuthUser failed to authenticate after %d attempts (user=%s / %s)",
+                LOGIN_MAX_ATTEMPTS,
+                self.chosen_username,
+                self.chosen_email,
+            )
+
+        self._load_homepage_and_resources(name_suffix="(authed)")
