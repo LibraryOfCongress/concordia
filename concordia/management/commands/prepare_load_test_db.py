@@ -110,10 +110,9 @@ def _switch_process_db(alias: str, new_name: str):
 def _suppress_all_django_signals(active: bool):
     """
     Monkey-patch Django's Signal dispatch to no-op while active is True.
-    This suppresses *all* signals (model and custom) during fixture loading.
+    This suppresses all signals (model and custom) during fixture loading.
     """
     if not active:
-        # No suppression requested
         yield
         return
 
@@ -161,7 +160,10 @@ class Command(BaseCommand):
             help="Drop existing DB first, then create.",
         )
         p.add_argument(
-            "--fixtures", required=True, nargs="+", help="Fixture file(s) to load."
+            "--fixtures",
+            nargs="+",
+            default=["loadtest_fixture.json"],
+            help=("Fixture file(s) to load. " "Defaults to loadtest_fixture.json."),
         )
         p.add_argument(
             "--drop-after",
