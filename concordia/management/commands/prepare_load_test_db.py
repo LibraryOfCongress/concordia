@@ -1,6 +1,7 @@
 # ruff: noqa: ERA001 A003
 # bandit:skip-file
 
+from contextlib import contextmanager
 from pathlib import Path
 
 from django.conf import settings
@@ -105,6 +106,37 @@ def _switch_process_db(alias: str, new_name: str):
     connections.close_all()
 
 
+@contextmanager
+def _suppress_all_django_signals(active: bool):
+    """
+    Monkey-patch Django's Signal dispatch to no-op while active is True.
+    This suppresses *all* signals (model and custom) during fixture loading.
+    """
+    if not active:
+        # No suppression requested
+        yield
+        return
+
+    from django.dispatch import dispatcher as _dispatcher
+
+    orig_send = _dispatcher.Signal.send
+    orig_send_robust = _dispatcher.Signal.send_robust
+
+    def _no_send(self, sender, **named):
+        return []
+
+    def _no_send_robust(self, sender, **named):
+        return []
+
+    _dispatcher.Signal.send = _no_send
+    _dispatcher.Signal.send_robust = _no_send_robust
+    try:
+        yield
+    finally:
+        _dispatcher.Signal.send = orig_send
+        _dispatcher.Signal.send_robust = orig_send_robust
+
+
 class Command(BaseCommand):
     help = (
         "Create (or reuse) a PostgreSQL database, switch the process to it, run "
@@ -136,6 +168,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Drop the DB after loading (validation-only).",
         )
+        p.add_argument(
+            "--enable-signals",
+            action="store_true",
+            help="Do NOT suppress Django signals during loaddata (default suppresses).",
+        )
 
     def handle(self, *args, **o):
         alias = o["db_alias"]
@@ -159,12 +196,22 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Switching process to DB {db_name!r}"))
         _switch_process_db(alias, db_name)
 
-        self.stdout.write(self.style.NOTICE("Applying migrations…"))
+        self.stdout.write(self.style.NOTICE("Applying migrations..."))
         call_command("migrate", database=alias, interactive=False, run_syncdb=True)
 
-        self.stdout.write(self.style.NOTICE("Loading fixtures…"))
-        for fp in fixture_paths:
-            call_command("loaddata", str(fp), database=alias)
+        # Suppress signals by default; --enable-signals turns suppression off
+        suppress = not bool(o.get("enable_signals"))
+        if suppress:
+            self.stdout.write(
+                self.style.NOTICE("Suppressing Django signals during loaddata...")
+            )
+        else:
+            self.stdout.write(self.style.NOTICE("Signals ENABLED during loaddata."))
+
+        self.stdout.write(self.style.NOTICE("Loading fixtures..."))
+        with _suppress_all_django_signals(active=suppress):
+            for fp in fixture_paths:
+                call_command("loaddata", str(fp), database=alias)
 
         if o["drop_after"]:
             self.stdout.write(self.style.NOTICE(f"Dropping DB {db_name!r}"))
