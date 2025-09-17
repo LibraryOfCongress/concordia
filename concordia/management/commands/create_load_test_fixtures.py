@@ -13,9 +13,11 @@ from django.core.management import BaseCommand, call_command
 from concordia.models import (
     Asset,
     Campaign,
+    CardFamily,
     Item,
     Project,
     ProjectTopic,
+    ResearchCenter,
     Topic,
     Transcription,
 )
@@ -245,6 +247,24 @@ class Command(BaseCommand):
             id__in=projects_qs.values_list("campaign_id", flat=True).distinct()
         )
 
+        # CardFamilies referenced by the selected Campaigns (FK target)
+        card_families_qs = CardFamily.objects.filter(
+            id__in=campaigns_qs.exclude(card_family__isnull=True)
+            .values_list("card_family_id", flat=True)
+            .distinct()
+        )
+
+        # ResearchCenters referenced by the selected Campaigns (M2M target)
+        rc_through = Campaign.research_centers.through
+        rc_ids = (
+            rc_through.objects.filter(
+                campaign_id__in=campaigns_qs.values_list("id", flat=True)
+            )
+            .values_list("researchcenter_id", flat=True)
+            .distinct()
+        )
+        research_centers_qs = ResearchCenter.objects.filter(id__in=rc_ids)
+
         # Topics linked to those projects
         topics_from_projects_qs = Topic.objects.filter(
             id__in=ProjectTopic.objects.filter(project_id__in=project_ids)
@@ -265,47 +285,60 @@ class Command(BaseCommand):
         # transcriptions + users (anonymize users in-memory)
         trans_qs = Transcription.objects.filter(asset_id__in=asset_ids)
         User = get_user_model()
-        user_ids = set(trans_qs.values_list("user_id", flat=True))
+
+        # Collect users from both author and reviewer fields, dropping Nones
+        author_ids = set(trans_qs.values_list("user_id", flat=True))
+        reviewer_ids = set(trans_qs.values_list("reviewed_by_id", flat=True))
+        user_ids = {uid for uid in (author_ids | reviewer_ids) if uid is not None}
+
         users_qs = User.objects.filter(id__in=user_ids)
 
-        # Make in-memory anonymized copies: we mutate instances but do not save
-        anonymized_users = []
+        # Build anonymized user fixtures explicitly (no M2M)
+        user_app_label = User._meta.app_label
+        user_model_name = User._meta.model_name
+        anonymized_user_fixtures = []
         for u in users_qs:
-            u.username = f"Anonymized {uuid.uuid4()}"
-            if hasattr(u, "first_name"):
-                u.first_name = ""
-            if hasattr(u, "last_name"):
-                u.last_name = ""
-            if hasattr(u, "email"):
-                u.email = f"anon-{uuid.uuid4()}@example.com"
-            if hasattr(u, "is_staff"):
-                u.is_staff = False
-            if hasattr(u, "is_superuser"):
-                u.is_superuser = False
-            if hasattr(u, "is_active"):
-                u.is_active = False
-            try:
-                u.set_unusable_password()
-            except Exception:  # nosec B110
-                pass
-            anonymized_users.append(u)
+            anonymized_user_fixtures.append(
+                {
+                    "model": f"{user_app_label}.{user_model_name}",
+                    "pk": int(u.pk) if u.pk is not None else None,
+                    "fields": {
+                        User.USERNAME_FIELD: f"Anonymized {uuid.uuid4()}",
+                        "email": f"anon-{uuid.uuid4()}@example.com",
+                        "password": "!",
+                        "is_active": False if hasattr(u, "is_active") else False,
+                        "is_staff": False if hasattr(u, "is_staff") else False,
+                        "is_superuser": False if hasattr(u, "is_superuser") else False,
+                        **({"first_name": ""} if hasattr(u, "first_name") else {}),
+                        **({"last_name": ""} if hasattr(u, "last_name") else {}),
+                        # no groups / permissions
+                    },
+                }
+            )
 
         # build test users
         test_user_count = int(o["test_users"])
         test_prefix = o["test_user_prefix"]
         test_pw_hash = make_password(o["test_user_password"])
 
-        # prepare test user fixtures as explicit dicts
-        # (unsaved instances may not serialize well)
-        user_app_label = User._meta.app_label
-        user_model_name = User._meta.model_name
+        # ensure test user PKs cannot collide with anonymized users
+        max_existing_pk = 0
+        if anonymized_user_fixtures:
+            max_existing_pk = max(
+                int(obj["pk"])
+                for obj in anonymized_user_fixtures
+                if obj["pk"] is not None
+            )
+        start_test_pk = max_existing_pk + 10_000
+
         test_user_fixtures = []
         for i in range(1, test_user_count + 1):
             uname = f"{test_prefix}{i:05d}"
             test_user_fixtures.append(
                 {
                     "model": f"{user_app_label}.{user_model_name}",
-                    "pk": None,
+                    "pk": start_test_pk
+                    + i,  # explicit PKs to avoid sequence collisions
                     "fields": {
                         User.USERNAME_FIELD: uname,
                         "password": test_pw_hash,
@@ -317,20 +350,23 @@ class Command(BaseCommand):
                         ),
                         **({"first_name": ""} if hasattr(User, "first_name") else {}),
                         **({"last_name": ""} if hasattr(User, "last_name") else {}),
+                        # no groups / permissions
                     },
                 }
             )
 
         # Serialize everything into one fixture list
         fixture_objs = []
-        # Core
+        # Core, ensure FK/M2M targets appear before dependents
         fixture_objs += _serialize_qs(topics_final_qs.order_by("id"))
+        fixture_objs += _serialize_qs(card_families_qs.order_by("id"))
+        fixture_objs += _serialize_qs(research_centers_qs.order_by("id"))
         fixture_objs += _serialize_qs(campaigns_qs.order_by("id"))
         fixture_objs += _serialize_qs(projects_qs.order_by("id"))
         fixture_objs += _serialize_qs(items_qs.order_by("id"))
         fixture_objs += _serialize_qs(assets_qs.order_by("id"))
         # Users must appear before Transcriptions (FK dependency)
-        fixture_objs += _serialize_list(anonymized_users)
+        fixture_objs += anonymized_user_fixtures
         fixture_objs += test_user_fixtures
         # Transcriptions
         fixture_objs += _serialize_qs(trans_qs.order_by("id"))
@@ -351,7 +387,7 @@ class Command(BaseCommand):
         out_path.write_text(json.dumps(fixture_objs, indent=2), encoding="utf-8")
         self.stdout.write(
             self.style.SUCCESS(
-                f"Wrote fixture with {len(fixture_objs)} objects → {out_path}"
+                f"Wrote fixture with {len(fixture_objs)} objects -> {out_path}"
             )
         )
 
