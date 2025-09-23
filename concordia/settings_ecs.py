@@ -75,6 +75,7 @@ STORAGES = {
         "BACKEND": "concordia.storage_backends.OverwriteS3Boto3Storage",
         "OPTIONS": {
             "querystring_auth": False,
+            "bucket_name": EXPORT_S3_BUCKET_NAME,
         },
     },
 }
