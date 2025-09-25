@@ -1,4 +1,4 @@
-import {ConcordiaVisualization} from 'concordia-visualization';
+import {ConcordiaVisualization} from '../modules/concordia-visualization.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const dailyActivityChart = new ConcordiaVisualization({

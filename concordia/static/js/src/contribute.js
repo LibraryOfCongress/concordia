@@ -1,9 +1,8 @@
-/* global $ displayMessage buildErrorMessage */
-
 import {Modal} from 'bootstrap';
-import {selectLanguage} from 'ocr';
-import {reserveAssetForEditing} from 'asset-reservation';
-import {resetTurnstile} from 'turnstile';
+import {selectLanguage} from './ocr.js';
+import {reserveAssetForEditing} from './asset-reservation.js';
+import $ from 'jquery';
+import {buildErrorMessage, displayMessage} from './base.js';
 
 function lockControls($container) {
     if (!$container) {
@@ -64,6 +63,12 @@ $(document).on('keydown', function (event) {
         return false;
     }
 });
+
+function resetTurnstile() {
+    if (window.turnstile) {
+        window.turnstile.reset('.cf-turnstile');
+    }
+}
 
 function setupPage() {
     $('form.ajax-submission').each(function (index, formElement) {
@@ -151,35 +156,41 @@ function setupPage() {
                 const nothingToTranscribeElement = document.getElementById(
                     'nothing-to-transcribe-modal',
                 );
-                const nothingToTranscribeModal =
-                    Modal.getInstance(nothingToTranscribeElement) ||
-                    new Modal(nothingToTranscribeElement);
-                var nothingToTranscribeTitle =
-                    nothingToTranscribeElement.querySelector('.modal-title');
-                var nothingToTranscribeBody =
-                    nothingToTranscribeElement.querySelector('.modal-body');
-                if ($textarea.val()) {
-                    nothingToTranscribeTitle.textContent =
-                        'Text will be deleted';
-                    nothingToTranscribeBody.innerHTML =
-                        '<p>Text in the transcription box is removed when “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
-                } else {
-                    nothingToTranscribeTitle.textContent =
-                        'Nothing to transcribe';
-                    nothingToTranscribeBody.innerHTML = '<p>Are you sure?</p>';
-                }
-                nothingToTranscribeModal.show();
+                if (nothingToTranscribeElement) {
+                    const nothingToTranscribeModal =
+                        Modal.getInstance(nothingToTranscribeElement) ||
+                        new Modal(nothingToTranscribeElement);
+                    var nothingToTranscribeTitle =
+                        nothingToTranscribeElement.querySelector(
+                            '.modal-title',
+                        );
+                    var nothingToTranscribeBody =
+                        nothingToTranscribeElement.querySelector('.modal-body');
+                    if ($textarea.val()) {
+                        nothingToTranscribeTitle.textContent =
+                            'Text will be deleted';
+                        nothingToTranscribeBody.innerHTML =
+                            '<p>Text in the transcription box is removed when “Nothing to transcribe” is checked. Do you want to discard that text?</p>';
+                    } else {
+                        nothingToTranscribeTitle.textContent =
+                            'Nothing to transcribe';
+                        nothingToTranscribeBody.innerHTML =
+                            '<p>Are you sure?</p>';
+                    }
+                    nothingToTranscribeModal.show();
 
-                const okButton = document.getElementById('confirmDiscard');
-                okButton.addEventListener('click', function () {
-                    $textarea.val('');
-                    nothingToTranscribeModal.hide();
-                });
-                const cancelButton = document.getElementById('cancelDiscard');
-                cancelButton.addEventListener('click', function () {
-                    $('#nothing-to-transcribe').prop('checked', false);
-                    nothingToTranscribeModal.hide();
-                });
+                    const okButton = document.getElementById('confirmDiscard');
+                    okButton.addEventListener('click', function () {
+                        $textarea.val('');
+                        nothingToTranscribeModal.hide();
+                    });
+                    const cancelButton =
+                        document.getElementById('cancelDiscard');
+                    cancelButton.addEventListener('click', function () {
+                        $('#nothing-to-transcribe').prop('checked', false);
+                        nothingToTranscribeModal.hide();
+                    });
+                }
             }
             $transcriptionEditor.trigger('update-ui-state');
         });
@@ -199,17 +210,25 @@ function setupPage() {
     // at all (it's treated as ordinary HTML), so BS controls do not work
     // We try to get Modal.getInstance in case the modal is already initialized
     var errorModalElement = document.getElementById('error-modal');
-    var errorModal =
-        Modal.getInstance(errorModalElement) || new Modal(errorModalElement);
+    if (errorModalElement) {
+        var errorModal =
+            Modal.getInstance(errorModalElement) ||
+            new Modal(errorModalElement);
+    }
     var submissionModalElement = document.getElementById(
         'successful-submission-modal',
     );
-    var submissionModal =
-        Modal.getInstance(submissionModalElement) ||
-        new Modal(submissionModalElement);
+    if (submissionModalElement) {
+        var submissionModal =
+            Modal.getInstance(submissionModalElement) ||
+            new Modal(submissionModalElement);
+    }
     var reviewModalElement = document.getElementById('review-accepted-modal');
-    var reviewModal =
-        Modal.getInstance(reviewModalElement) || new Modal(reviewModalElement);
+    if (reviewModalElement) {
+        var reviewModal =
+            Modal.getInstance(reviewModalElement) ||
+            new Modal(reviewModalElement);
+    }
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -807,12 +826,14 @@ let transcriptionForm = document.getElementById('transcription-editor');
 let ocrForm = document.getElementById('ocr-transcription-form');
 
 let formChanged = false;
-transcriptionForm.addEventListener('change', function () {
-    formChanged = true;
-});
-transcriptionForm.addEventListener('submit', function () {
-    formChanged = false;
-});
+if (transcriptionForm) {
+    transcriptionForm.addEventListener('change', function () {
+        formChanged = true;
+    });
+    transcriptionForm.addEventListener('submit', function () {
+        formChanged = false;
+    });
+}
 if (ocrForm) {
     ocrForm.addEventListener('submit', function () {
         formChanged = false;

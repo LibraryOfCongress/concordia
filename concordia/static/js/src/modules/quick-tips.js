@@ -1,4 +1,4 @@
-/* global $ */
+import $ from 'jquery';
 
 function setTutorialHeight() {
     let $carouselItems = $('#card-carousel .carousel-item');
@@ -19,3 +19,6 @@ function setTutorialHeight() {
 }
 
 export {setTutorialHeight};
+
+// Expose globally so inline HTML can see it
+window.setTutorialHeight = setTutorialHeight;

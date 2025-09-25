@@ -3,11 +3,6 @@
 
 {% block title %}{{ title }}{% endblock title %}
 
-{% block head_content %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/about-accordions.js' %}"></script>
-{% endblock head_content %}
-
 {% block breadcrumbs %}
     {% for link, title in breadcrumbs %}
         {% if forloop.last %}

@@ -4,11 +4,6 @@
 
 {% block title %}Home{% endblock title %}
 
-{% block head_content %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/homepage-carousel.js' %}"></script>
-{% endblock head_content %}
-
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
 
 {% block extra_main_classes %}{% endblock %}
@@ -217,34 +212,3 @@
         </div>
     </div>
 {% endblock main_content %}
-
-{% block body_scripts %}
-    <script type="text/javascript">
-        var storage = window.localStorage;
-        var storageAvailable;
-        try {
-            const x = "__storage_test__";
-            storage.setItem(x, x);
-            storage.removeItem(x);
-            storageAvailable = true;
-        } catch (e) {
-            storageAvailable = false;
-        }
-        if (storageAvailable) {
-            for(var i in storage) {
-                if (i.startsWith("banner-") && $('#' + i).hasClass("alert")) {
-                    $('#' + i).attr("hidden", true);
-                }
-            }
-        }
-        $("#no-interface-banner").click(function(event) {
-            var banner = event.target.parentElement.parentElement;
-            if (banner.hasAttribute('id')) {
-                storage.setItem(banner.id, true);
-                var element = document.getElementById(banner.id);
-                element.classList.remove("d-flex");
-                $(element).attr("hidden", "hidden");
-            }
-        });
-    </script>
-{% endblock body_scripts %}
