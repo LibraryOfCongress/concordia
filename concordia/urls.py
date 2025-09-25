@@ -175,6 +175,7 @@ urlpatterns = [
     path("for-educators/", views.simple_pages.simple_page, name="for-educators"),
     path("for-staff/", views.simple_pages.simple_page, name="for-staff"),
     path("resources/", views.simple_pages.simple_page, name="resources"),
+    path("service/", views.simple_pages.simple_page, name="service"),
     path(
         "latest/",
         RedirectView.as_view(pattern_name="about", permanent=True, query_string=True),
