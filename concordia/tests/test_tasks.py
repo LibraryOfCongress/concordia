@@ -751,6 +751,9 @@ class CleanNextAssetTasksTests(TestCase):
     }
 )
 class VisualizationCacheTasksTests(TestCase):
+    class _UploadFailed(Exception):
+        pass
+
     def setUp(self):
         self.cache = caches["visualization_cache"]
         self.cache.clear()
@@ -789,15 +792,6 @@ class VisualizationCacheTasksTests(TestCase):
         self.assertEqual(overview["status_labels"], expected_labels)
         # Totals: 1 not_started, 1 in_progress, 1 submitted, 1 completed
         self.assertEqual(overview["total_counts"], [1, 1, 1, 1])
-
-        by_cam = self.cache.get("asset-status-by-campaign")
-        self.assertEqual(by_cam["status_labels"], expected_labels)
-        self.assertEqual(by_cam["campaign_names"], ["Alpha", "Beta"])
-        counts = by_cam["per_campaign_counts"]
-        self.assertEqual(counts["not_started"], [1, 0])
-        self.assertEqual(counts["in_progress"], [0, 1])
-        self.assertEqual(counts["submitted"], [0, 1])
-        self.assertEqual(counts["completed"], [0, 1])
 
     def test_populate_daily_activity_visualization_cache(self):
         date1 = (timezone.now() - timedelta(days=2)).date()
@@ -847,7 +841,7 @@ class VisualizationCacheTasksTests(TestCase):
         )
         sr2 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
-            transcriptions_saved=5,  # decreased total, which shouldn't happen
+            transcriptions_saved=5,  # decreased total, which should not happen
             daily_review_actions=0,
         )
         SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
@@ -863,6 +857,215 @@ class VisualizationCacheTasksTests(TestCase):
 
         # Should clamp the second day to 0
         self.assertEqual(trans["data"][-2:], [10, 0])
+
+    def test_asset_status_unchanged_skips_upload_and_cache_update(self):
+        campaign = create_campaign(status=Campaign.Status.ACTIVE, title="Only")
+        project = create_project(campaign=campaign)
+        item = create_item(project=project)
+        create_asset(item=item, transcription_status=TranscriptionStatus.NOT_STARTED)
+        create_asset(
+            item=item, slug="a2", transcription_status=TranscriptionStatus.IN_PROGRESS
+        )
+        create_asset(
+            item=item, slug="a3", transcription_status=TranscriptionStatus.SUBMITTED
+        )
+        create_asset(
+            item=item, slug="a4", transcription_status=TranscriptionStatus.COMPLETED
+        )
+
+        expected_counts = [1, 1, 1, 1]
+
+        existing_payload = {
+            "status_labels": [
+                TranscriptionStatus.CHOICE_MAP[key]
+                for key, _ in TranscriptionStatus.CHOICES
+            ],
+            "total_counts": expected_counts,
+            "csv_url": "https://old.example/asset-status.csv",
+        }
+        self.cache.set("asset-status-overview", existing_payload, None)
+
+        with (
+            mock.patch("concordia.tasks.VISUALIZATION_STORAGE.save") as mock_save,
+            mock.patch("concordia.tasks.structured_logger") as mock_log,
+        ):
+            populate_asset_status_visualization_cache.run()
+
+            mock_save.assert_not_called()
+            # Cache should remain as-is
+            self.assertEqual(self.cache.get("asset-status-overview"), existing_payload)
+            # Logged unchanged
+            self.assertTrue(mock_log.info.called)
+            self.assertEqual(
+                mock_log.info.call_args.kwargs.get("event_code"),
+                "asset_status_vis_unchanged",
+            )
+
+    def test_asset_status_upload_failure_with_prior_url_falls_back(self):
+        campaign = create_campaign(status=Campaign.Status.ACTIVE, title="Only")
+        project = create_project(campaign=campaign)
+        item = create_item(project=project)
+        create_asset(item=item, transcription_status=TranscriptionStatus.NOT_STARTED)
+
+        # Ensure "existing" differs so code takes the non-unchanged path
+        self.cache.set(
+            "asset-status-overview",
+            {
+                "status_labels": [],
+                "total_counts": [0, 0, 0, 0],
+                "csv_url": "https://old.example/asset-status.csv",
+            },
+            None,
+        )
+
+        with (
+            mock.patch(
+                "concordia.tasks.VISUALIZATION_STORAGE.save",
+                side_effect=self._UploadFailed("test exception"),
+            ),
+            mock.patch("concordia.tasks.structured_logger") as mock_log,
+        ):
+            # Should not raise because we have a prior CSV URL to fall back to
+            populate_asset_status_visualization_cache.run()
+
+            updated = self.cache.get("asset-status-overview")
+            # Counts should reflect the new data (1 in NOT_STARTED; others 0)
+            expected = [
+                1 if key == TranscriptionStatus.NOT_STARTED else 0
+                for key, _ in TranscriptionStatus.CHOICES
+            ]
+            self.assertEqual(updated["total_counts"], expected)
+            # URL should remain the old one
+            self.assertEqual(updated["csv_url"], "https://old.example/asset-status.csv")
+
+            # Logged exception with the non-missing-url code
+            self.assertTrue(mock_log.exception.called)
+            self.assertEqual(
+                mock_log.exception.call_args.kwargs.get("event_code"),
+                "asset_status_vis_csv_error",
+            )
+
+    def test_asset_status_upload_failure_without_prior_url_raises(self):
+        campaign = create_campaign(status=Campaign.Status.ACTIVE, title="Only")
+        project = create_project(campaign=campaign)
+        item = create_item(project=project)
+        create_asset(item=item, transcription_status=TranscriptionStatus.NOT_STARTED)
+
+        # No existing cache entry, so no prior URL
+        with (
+            mock.patch(
+                "concordia.tasks.VISUALIZATION_STORAGE.save",
+                side_effect=self._UploadFailed("test exception"),
+            ),
+            mock.patch("concordia.tasks.structured_logger") as mock_log,
+        ):
+            with self.assertRaises(self._UploadFailed):
+                populate_asset_status_visualization_cache.run()
+
+            self.assertTrue(mock_log.exception.called)
+            self.assertEqual(
+                mock_log.exception.call_args.kwargs.get("event_code"),
+                "asset_status_vis_csv_missing_url_error",
+            )
+
+    def test_daily_activity_unchanged_skips_upload_and_cache_update(self):
+        # With no SiteReports, both series are 28 zeros; pre-populate matching cache
+        zeros = [0] * 28
+        existing = {
+            "labels": [],  # labels do not matter for the dedupe
+            "transcription_datasets": [
+                {"label": "Transcriptions", "data": zeros},
+                {"label": "Reviews", "data": zeros},
+            ],
+            "csv_url": "https://old.example/daily.csv",
+        }
+        self.cache.set("daily-transcription-activity-last-28-days", existing, None)
+
+        with (
+            mock.patch("concordia.tasks.VISUALIZATION_STORAGE.save") as mock_save,
+            mock.patch("concordia.tasks.structured_logger") as mock_log,
+        ):
+            populate_daily_activity_visualization_cache.run()
+
+            mock_save.assert_not_called()
+            self.assertEqual(
+                self.cache.get("daily-transcription-activity-last-28-days"), existing
+            )
+            self.assertTrue(mock_log.info.called)
+            self.assertEqual(
+                mock_log.info.call_args.kwargs.get("event_code"),
+                "daily_activity_vis_unchanged",
+            )
+
+    def test_daily_activity_upload_failure_with_prior_url_falls_back(self):
+        # Build reports so new data will not be all zeros (ensures "changed" path)
+        date1 = (timezone.now() - timedelta(days=2)).date()
+        date2 = (timezone.now() - timedelta(days=1)).date()
+        sr1 = SiteReport.objects.create(
+            report_name=SiteReport.ReportName.TOTAL,
+            transcriptions_saved=3,
+            daily_review_actions=1,
+        )
+        sr2 = SiteReport.objects.create(
+            report_name=SiteReport.ReportName.TOTAL,
+            transcriptions_saved=5,
+            daily_review_actions=2,
+        )
+        SiteReport.objects.filter(pk=sr1.pk).update(created_on=date1)
+        SiteReport.objects.filter(pk=sr2.pk).update(created_on=date2)
+
+        # Prior cache with different series and a CSV URL to fall back to
+        self.cache.set(
+            "daily-transcription-activity-last-28-days",
+            {
+                "labels": [],
+                "transcription_datasets": [
+                    {"label": "Transcriptions", "data": [0] * 28},
+                    {"label": "Reviews", "data": [0] * 28},
+                ],
+                "csv_url": "https://old.example/daily.csv",
+            },
+            None,
+        )
+
+        with (
+            mock.patch(
+                "concordia.tasks.VISUALIZATION_STORAGE.save",
+                side_effect=self._UploadFailed("test exception"),
+            ),
+            mock.patch("concordia.tasks.structured_logger") as mock_log,
+        ):
+            # Should not raise because we have a prior CSV URL
+            populate_daily_activity_visualization_cache.run()
+
+            updated = self.cache.get("daily-transcription-activity-last-28-days")
+            self.assertIsNotNone(updated)
+            # Still using the old URL
+            self.assertEqual(updated["csv_url"], "https://old.example/daily.csv")
+            # Logged exception with the non-missing-url code
+            self.assertTrue(mock_log.exception.called)
+            self.assertEqual(
+                mock_log.exception.call_args.kwargs.get("event_code"),
+                "daily_activity_vis_csv_error",
+            )
+
+    def test_daily_activity_upload_failure_without_prior_url_raises(self):
+        # No existing cache entry -> csv_url is None
+        with (
+            mock.patch(
+                "concordia.tasks.VISUALIZATION_STORAGE.save",
+                side_effect=self._UploadFailed("test exception"),
+            ),
+            mock.patch("concordia.tasks.structured_logger") as mock_log,
+        ):
+            with self.assertRaises(self._UploadFailed):
+                populate_daily_activity_visualization_cache.run()
+
+            self.assertTrue(mock_log.exception.called)
+            self.assertEqual(
+                mock_log.exception.call_args.kwargs.get("event_code"),
+                "daily_activity_vis_csv_missing_url_error",
+            )
 
 
 class BackfillAssetsStartedTaskTests(TestCase):

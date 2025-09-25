@@ -2298,118 +2298,121 @@ def renew_next_asset_cache(self):
 @locked_task
 def populate_asset_status_visualization_cache(self):
     """
-    Queries live Asset objects for all ACTIVE campaigns and builds two datasets:
-        Both include:
-            - `status_labels`: [
-                    "Not Started",
-                    "In Progress",
-                    "Needs Review",
-                    "Completed"
-                ]
-
-        "asset-status-overview" - the overview data, containing:
-            - `total_counts`:  [
-                    count_not_started,
-                    count_in_progress,
-                    count_submitted,
-                    count_completed
-                ]
-
-        "asset-status-by-campaign" - the per-campaign data, containing:
-            - `campaign_names`:       [ "Campaign A", "Campaign B", … ]
-            - `per_campaign_counts`:  {
-                "not_started": [count_for_A, count_for_B, …],
-                "in_progress": [ … ],
-                "submitted":   [ … ],
-                "completed":   [ … ],
-            }
-
-    Both go into the "visualization_cache".
+    Queries live Asset objects for all ACTIVE campaigns and builds a dataset:
+        - `status_labels`: [
+                "Not Started",
+                "In Progress",
+                "Needs Review",
+                "Completed"
+          ]
+        - `total_counts`: [
+                count_not_started,
+                count_in_progress,
+                count_submitted,
+                count_completed
+          ]
+        - `csv_url`: URL to download a CSV of the data
     """
     visualization_cache = caches["visualization_cache"]
+    cache_key = "asset-status-overview"
+    csv_path = "visualization_exports/page-status-active-campaigns.csv"
 
-    campaigns = (
-        Campaign.objects.published().listed().active().order_by("ordering", "title")
+    structured_logger.debug(
+        "Starting asset status visualization task.",
+        event_code="asset_status_vis_start",
     )
 
-    campaign_ids = [campaign.id for campaign in campaigns]
-    campaign_titles = [campaign.title for campaign in campaigns]
+    campaign_ids = list(
+        Campaign.objects.published().listed().active().values_list("id", flat=True)
+    )
 
-    status_keys = [key for key, label in TranscriptionStatus.CHOICES]
+    status_keys = [key for key, _ in TranscriptionStatus.CHOICES]
     status_labels = [TranscriptionStatus.CHOICE_MAP[key] for key in status_keys]
 
-    percampaign_qs = (
-        Asset.objects.filter(campaign__in=campaign_ids)
-        .values("campaign_id", "transcription_status")
+    # Aggregate counts across all active campaigns
+    status_counts_qs = (
+        Asset.objects.filter(campaign_id__in=campaign_ids)
+        .values("transcription_status")
         .annotate(cnt=Count("id"))
     )
+    counts_map = {row["transcription_status"]: row["cnt"] for row in status_counts_qs}
+    total_counts = [counts_map.get(status, 0) for status in status_keys]
 
-    per_lookup = {idx: {} for idx in campaign_ids}
-    for entry in percampaign_qs:
-        campaign_id = entry["campaign_id"]
-        status = entry["transcription_status"]
-        per_lookup[campaign_id][status] = entry["cnt"]
+    structured_logger.debug(
+        "Aggregated asset counts by status.",
+        event_code="asset_status_vis_counts",
+        active_campaign_count=len(campaign_ids),
+        total_counts=total_counts,
+    )
 
-    total_counts = []
-    for status in status_keys:
-        total = sum(
-            per_lookup[campaign_id].get(status, 0) for campaign_id in campaign_ids
+    # If data unchanged, skip CSV + cache update
+    existing = visualization_cache.get(cache_key)
+    if isinstance(existing, dict) and existing.get("total_counts") == total_counts:
+        structured_logger.info(
+            "Asset status data unchanged; skipping CSV and cache update.",
+            event_code="asset_status_vis_unchanged",
+            total_counts=total_counts,
         )
-        total_counts.append(total)
+        return
+    elif isinstance(existing, dict):
+        # We want the existing URL in case the upload fails later
+        overview_csv_url = existing.get("csv_url")
+    else:
+        overview_csv_url = None
 
-    per_campaign_counts = {key: [] for key in status_keys}
-    for campaign_id in campaign_ids:
-        for status in status_keys:
-            per_campaign_counts[status].append(per_lookup[campaign_id].get(status, 0))
-
-    # Generate CSV for asset-status-overview
-    overview_csv = StringIO()
+    overview_csv = StringIO(newline="")
     overview_writer = csv.writer(overview_csv)
-
     overview_writer.writerow(["Status", "Count"])
     for label, count in zip(status_labels, total_counts, strict=True):
         overview_writer.writerow([label, count])
-
     overview_csv_content = overview_csv.getvalue()
-    overview_csv_path = "visualization_exports/page-status-active-campaigns.csv"
-    VISUALIZATION_STORAGE.save(overview_csv_path, ContentFile(overview_csv_content))
-    overview_csv_url = VISUALIZATION_STORAGE.url(overview_csv_path)
 
-    # Generate CSV for asset-status-by-campaign
-    by_campaign_csv = StringIO()
-    by_campaign_writer = csv.writer(by_campaign_csv)
+    try:
+        VISUALIZATION_STORAGE.save(csv_path, ContentFile(overview_csv_content))
+        overview_csv_url = VISUALIZATION_STORAGE.url(csv_path)
+        structured_logger.debug(
+            "CSV saved for asset status visualization.",
+            event_code="asset_status_vis_csv_saved",
+            csv_path=csv_path,
+            byte_length=len(overview_csv_content.encode("utf-8")),
+            csv_url=overview_csv_url,
+        )
+    except Exception:
+        if overview_csv_url is None:
+            structured_logger.exception(
+                (
+                    "CSV upload failed for asset status visualization and "
+                    "no existing CSV URL could be determined"
+                ),
+                event_code="asset_status_vis_csv_missing_url_error",
+                csv_path=csv_path,
+            )
+            raise
+        structured_logger.exception(
+            "CSV upload failed for asset status visualization.",
+            event_code="asset_status_vis_csv_error",
+            csv_path=csv_path,
+        )
 
-    by_campaign_writer.writerow(["Campaign"] + status_labels)
-    for campaign_name, counts_per_campaign in zip(
-        campaign_titles,
-        zip(*[per_campaign_counts[key] for key in status_keys], strict=True),
-        strict=True,
-    ):
-        by_campaign_writer.writerow([campaign_name] + list(counts_per_campaign))
-
-    by_campaign_csv_content = by_campaign_csv.getvalue()
-    by_campaign_csv_path = (
-        "visualization_exports/page-status-by-campaign-active-campaigns.csv"
-    )
-    VISUALIZATION_STORAGE.save(
-        by_campaign_csv_path, ContentFile(by_campaign_csv_content)
-    )
-    by_campaign_csv_url = VISUALIZATION_STORAGE.url(by_campaign_csv_path)
-
+    # Update cache
     overview_payload = {
         "status_labels": status_labels,
         "total_counts": total_counts,
         "csv_url": overview_csv_url,
     }
-    visualization_cache.set("asset-status-overview", overview_payload, None)
+    visualization_cache.set(cache_key, overview_payload, None)
 
-    by_campaign_payload = {
-        "status_labels": status_labels,
-        "campaign_names": campaign_titles,
-        "per_campaign_counts": per_campaign_counts,
-        "csv_url": by_campaign_csv_url,
-    }
-    visualization_cache.set("asset-status-by-campaign", by_campaign_payload, None)
+    structured_logger.debug(
+        "Asset status visualization cache updated.",
+        event_code="asset_status_vis_cache_set",
+        cache_key=cache_key,
+        total_counts=total_counts,
+    )
+
+    structured_logger.debug(
+        "Asset status visualization task completed successfully.",
+        event_code="asset_status_vis_complete",
+    )
 
 
 @celery_app.task(bind=True, ignore_result=True)
@@ -2432,6 +2435,15 @@ def populate_daily_activity_visualization_cache(self):
           ]
         - `csv_url`: URL to download a CSV of the data
     """
+    visualization_cache = caches["visualization_cache"]
+    cache_key = "daily-transcription-activity-last-28-days"
+    csv_path = "visualization_exports/daily-transcription-activity-last-28-days.csv"
+
+    structured_logger.debug(
+        "Starting daily activity visualization task.",
+        event_code="daily_activity_vis_start",
+    )
+
     yesterday = timezone.now().date() - timedelta(days=1)
     start_date = yesterday - timedelta(days=27)
     date_range = [start_date + timedelta(days=i) for i in range(28)]
@@ -2441,7 +2453,6 @@ def populate_daily_activity_visualization_cache(self):
         report_name=SiteReport.ReportName.TOTAL,
         created_on__date__in=date_range,
     )
-
     report_lookup = {report.created_on.date(): report for report in reports}
 
     # Find the most recent SiteReport BEFORE the first of our dates, if any
@@ -2475,6 +2486,42 @@ def populate_daily_activity_visualization_cache(self):
         transcriptions.append(daily_saved)
         reviews.append(daily_review)
 
+    structured_logger.debug(
+        "Compiled daily activity series.",
+        event_code="daily_activity_vis_series_compiled",
+        start_date=start_date.isoformat(),
+        end_date=yesterday.isoformat(),
+        transcriptions_total=sum(transcriptions),
+        reviews_total=sum(reviews),
+    )
+
+    # If data unchanged, skip CSV + cache update
+    existing = visualization_cache.get(cache_key)
+    if isinstance(existing, dict):
+        prev_series = existing.get("transcription_datasets") or []
+        prev_transcriptions = next(
+            (
+                ds.get("data")
+                for ds in prev_series
+                if ds.get("label") == "Transcriptions"
+            ),
+            None,
+        )
+        prev_reviews = next(
+            (ds.get("data") for ds in prev_series if ds.get("label") == "Reviews"),
+            None,
+        )
+        if prev_transcriptions == transcriptions and prev_reviews == reviews:
+            structured_logger.info(
+                "Daily activity data unchanged; skipping CSV and cache update.",
+                event_code="daily_activity_vis_unchanged",
+            )
+            return
+        else:
+            csv_url = existing.get("csv_url")
+    else:
+        csv_url = None
+
     data = {
         "labels": date_strings,
         "transcription_datasets": [
@@ -2483,20 +2530,52 @@ def populate_daily_activity_visualization_cache(self):
         ],
     }
 
-    # Write CSV
-    csv_output = StringIO()
+    csv_output = StringIO(newline="")
     writer = csv.writer(csv_output)
     writer.writerow(["Date", "Transcriptions", "Reviews"])
     for i in range(28):
         writer.writerow([date_strings[i], transcriptions[i], reviews[i]])
-
     csv_content = csv_output.getvalue()
-    csv_path = "visualization_exports/daily-transcription-activity-last-28-days.csv"
-    VISUALIZATION_STORAGE.save(csv_path, ContentFile(csv_content))
-    data["csv_url"] = VISUALIZATION_STORAGE.url(csv_path)
 
-    caches["visualization_cache"].set(
-        "daily-transcription-activity-last-28-days", data, None
+    try:
+        VISUALIZATION_STORAGE.save(csv_path, ContentFile(csv_content))
+        csv_url = VISUALIZATION_STORAGE.url(csv_path)
+        structured_logger.debug(
+            "CSV saved for daily activity visualization.",
+            event_code="daily_activity_vis_csv_saved",
+            csv_path=csv_path,
+            byte_length=len(csv_content.encode("utf-8")),
+            csv_url=csv_url,
+        )
+    except Exception:
+        if csv_url is None:
+            structured_logger.exception(
+                (
+                    "CSV upload failed for daily activity visualization and "
+                    "no existing CSV URL could be determined"
+                ),
+                event_code="daily_activity_vis_csv_missing_url_error",
+                csv_path=csv_path,
+            )
+            raise
+        structured_logger.exception(
+            "CSV upload failed for daily activity visualization.",
+            event_code="daily_activity_vis_csv_error",
+            csv_path=csv_path,
+        )
+
+    data["csv_url"] = csv_url
+    visualization_cache.set(cache_key, data, None)
+
+    structured_logger.debug(
+        "Daily activity visualization cache updated.",
+        event_code="daily_activity_vis_cache_set",
+        cache_key=cache_key,
+    )
+
+    structured_logger.debug(
+        "Daily activity visualization task completed successfully.",
+        event_code="daily_activity_vis_complete",
     )
 
 
