@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
     base: '/static/',
     build: {
+        manifest: true,
         outDir: 'concordia/static', // where the compiled files go
         emptyOutDir: false,
         rollupOptions: {
