@@ -13,8 +13,12 @@ export default defineConfig({
         emptyOutDir: false,
         rollupOptions: {
             output: {
-                entryFileNames: 'bundle.js',
-                assetFileNames: 'bundle.[ext]',
+                entryFileNames: 'js/[name].js',
+                chunkFileNames: 'js/[name].js',
+                assetFileNames: ({name}) =>
+                    name && name.endsWith('.css')
+                        ? 'css/[name][extname]'
+                        : 'assets/[name][extname]',
             },
         },
     },
