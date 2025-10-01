@@ -7,6 +7,7 @@ export default defineConfig({
         outDir: 'concordia/static', // where the compiled files go
         emptyOutDir: false,
         rollupOptions: {
+            input: './src/main.js',
             output: {
                 entryFileNames: 'js/[name].js',
                 chunkFileNames: 'js/[name].js',
