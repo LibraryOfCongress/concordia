@@ -574,7 +574,7 @@ class CreateItemImportTaskTests(TestCase):
                 log.output,
                 [
                     f"WARNING:importer.tasks.items:"
-                    f"Not reprocessing existing item with all asssets: {item}"
+                    f"Not reprocessing existing item with all assets: {item}"
                 ],
             )
             self.assertEqual(
@@ -606,6 +606,85 @@ class CreateItemImportTaskTests(TestCase):
                 self.job.pk, self.item_url, redownload=True
             )
             self.assertTrue(task_mock.called)
+
+    def test_create_item_import_task_full_clean_exception_updates_status_and_reraises(
+        self, get_mock
+    ):
+        get_mock.return_value = self.response_mock
+        self.response_mock.json.return_value = self.item_data
+
+        with (
+            self.assertLogs("importer.tasks", level="ERROR") as log,
+            mock.patch("importer.tasks.items.Item.full_clean") as full_clean_mock,
+            mock.patch("importer.tasks.items.import_item_task.delay") as task_mock,
+            mock.patch(
+                "importer.tasks.items.download_and_set_item_thumbnail"
+            ) as thumb_mock,
+        ):
+            full_clean_mock.side_effect = RuntimeError("boom")
+            with self.assertRaises(RuntimeError):
+                tasks.items.create_item_import_task(self.job.pk, self.item_url)
+
+            self.assertTrue(
+                any("Unhandled exception when importing item" in m for m in log.output)
+            )
+            thumb_mock.assert_not_called()
+            task_mock.assert_not_called()
+
+        item = Item.objects.get(item_id=self.item_id)
+        import_item = ImportItem.objects.get(item=item)
+        self.assertIsNotNone(import_item.failed)
+        self.assertIn("Unhandled exception: boom", import_item.status)
+
+    def test_create_item_import_task_save_exception_updates_status_and_reraises(
+        self, get_mock
+    ):
+        get_mock.return_value = self.response_mock
+        self.response_mock.json.return_value = self.item_data
+
+        # Grab the real save before patching so we can wrap it.
+        from importer.tasks.items import Item as _Item
+
+        real_save = _Item.save
+        call_count = {"n": 0}
+
+        def save_side_effect(self, *args, **kwargs):
+            call_count["n"] += 1
+            # First call is from Item.objects.get_or_create(...) -> allow it to persist.
+            if call_count["n"] == 1:
+                return real_save(self, *args, **kwargs)
+            # Second call is the one under test -> raise.
+            raise RuntimeError("save failed")
+
+        with (
+            self.assertLogs("importer.tasks", level="ERROR") as log,
+            mock.patch("importer.tasks.items.Item.full_clean") as full_clean_mock,
+            mock.patch(
+                "importer.tasks.items.Item.save",
+                side_effect=save_side_effect,
+                autospec=True,
+            ),
+            mock.patch("importer.tasks.items.import_item_task.delay") as task_mock,
+            mock.patch(
+                "importer.tasks.items.download_and_set_item_thumbnail"
+            ) as thumb_mock,
+        ):
+            # Ensure full_clean does not fail so we reach save().
+            full_clean_mock.return_value = None
+
+            with self.assertRaises(RuntimeError):
+                tasks.items.create_item_import_task(self.job.pk, self.item_url)
+
+            self.assertTrue(
+                any("Unhandled exception when importing item" in m for m in log.output)
+            )
+            thumb_mock.assert_not_called()
+            task_mock.assert_not_called()
+
+        item = Item.objects.get(item_id=self.item_id)
+        import_item = ImportItem.objects.get(item=item)
+        self.assertIsNotNone(import_item.failed)
+        self.assertIn("Unhandled exception: save failed", import_item.status)
 
 
 class ItemImportTests(TestCase):
