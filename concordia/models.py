@@ -2895,6 +2895,9 @@ class CampaignRetirementProgress(models.Model):
     def __str__(self):
         return f"Removal progress for {self.campaign}"
 
+    class Meta:
+        verbose_name_plural = "campaign retirement progresses"
+
 
 class TutorialCard(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
