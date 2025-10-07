@@ -2,7 +2,7 @@ from django.http import QueryDict
 from django.template import Context, Template
 from django.templatetags.static import static
 from django.test import TestCase, override_settings
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 
 from concordia.models import TranscriptionStatus
 from concordia.templatetags.concordia_filtering_tags import transcription_status_filters
@@ -106,10 +106,7 @@ class VisualizationTagsTests(TestCase):
             '<div class="visualization-container"><section>'
             '<canvas id="daily-activity"></canvas></section></div>'
         )
-        expected_script = '<script type="module" src="{}"></script>'.format(
-            static("js/visualizations/daily-activity.js")
-        )
-        self.assertHTMLEqual(result, expected_section + expected_script)
+        self.assertHTMLEqual(result, expected_section)
 
     def test_with_attrs_and_escaping(self):
         # Attributes that include characters needing HTML escaping
@@ -125,15 +122,16 @@ class VisualizationTagsTests(TestCase):
             f"</section>"
             f"</div>"
         )
-        expected_script = '<script type="module" src="{}"></script>'.format(
-            static("js/visualizations/chart1.js")
-        )
-        self.assertHTMLEqual(result, expected_section + expected_script)
+        self.assertHTMLEqual(result, expected_section)
 
     def test_name_escaping_in_id_and_script_src(self):
         # Name contains characters needing HTML escaping
         name = 'x"><script>alert(1)</script>'
-        result = concordia_visualization(name)
+        script_src = static(f"js/visualizations/{name}.js")
+        script_html = format_html(
+            '<script type="module" src="{}"></script>', script_src
+        )
+        result = concordia_visualization(name) + script_html
 
         # The id attribute must have the name escaped
         escaped_id = escape(name)
