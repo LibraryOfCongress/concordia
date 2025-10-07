@@ -1,5 +1,8 @@
+from typing import Dict
+
+from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Subquery, Value, When
+from django.db.models import Case, IntegerField, Q, QuerySet, Subquery, Value, When
 
 from concordia import models as concordia_models
 from concordia.logging import ConcordiaLogger
@@ -8,21 +11,49 @@ from concordia.utils.celery import get_registered_task
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
-def _reserved_asset_ids_subq(campaign):
+def _reserved_asset_ids_subq(
+    campaign: concordia_models.Campaign,
+) -> "QuerySet[Dict[str, int]]":
     """
-    Subquery of reserved asset IDs for the given campaign. Used to exclude
-    assets that currently have an active reservation.
+    Return a subquery of reserved asset identifiers for a campaign.
+
+    Behavior:
+        Produces a subquery suitable for use with `Subquery(...)` and
+        `exclude(pk__in=...)` clauses to filter out assets that currently have
+        an active reservation.
+
+    Args:
+        campaign (concordia_models.Campaign): Campaign whose reserved
+        assets should be excluded.
+
+    Returns:
+        QuerySet[Dict[str, int]]: A queryset of dictionaries with a single key
+            "asset_id" corresponding to reserved assets.
     """
     return concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__campaign=campaign
     ).values("asset_id")
 
 
-def _eligible_reviewable_base_qs(campaign, user=None):
+def _eligible_reviewable_base_qs(
+    campaign: concordia_models.Campaign,
+    user: User | None = None,
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Base queryset for reviewable assets within a campaign, restricted to
-    published objects and SUBMITTED status. Optionally excludes assets
-    transcribed by the given user.
+    Build the base queryset of reviewable assets for a campaign.
+
+    Behavior:
+        Restricts to published projects, items, and assets, and to assets whose
+        transcription status is `SUBMITTED`. Optionally excludes assets
+        transcribed by the supplied user.
+
+    Args:
+        campaign (concordia_models.Campaign): Campaign scope for filtering.
+        user (User | None): If provided, exclude assets transcribed by this user.
+
+    Returns:
+        QuerySet[concordia_models.Asset]: Reviewable assets, with `item` and
+            `item__project` selected via `select_related`.
     """
     qs = concordia_models.Asset.objects.filter(
         campaign_id=campaign.id,
@@ -38,8 +69,18 @@ def _eligible_reviewable_base_qs(campaign, user=None):
 
 def _next_seq_after(pk: int | None) -> int | None:
     """
-    Resolve the sequence number for the given asset primary key. Returns None
-    if the PK is falsy or if no corresponding asset exists.
+    Resolve the sequence number for a given asset primary key.
+
+    Behavior:
+        Convenience utility for ordering logic when advancing within a series
+        of assets.
+
+    Args:
+        pk (int | None): Asset primary key whose sequence to resolve.
+
+    Returns:
+        int | None: The asset's sequence number, or None if `pk` is falsy
+            or the asset does not exist.
     """
     if not pk:
         return None
@@ -52,32 +93,40 @@ def _next_seq_after(pk: int | None) -> int | None:
 
 @transaction.atomic
 def _find_reviewable_in_item(
-    campaign, user, *, item_id: str, after_asset_pk: int | None
-):
+    campaign: concordia_models.Campaign,
+    user: User,
+    *,
+    item_id: str,
+    after_asset_pk: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Short-circuit helper: return the next reviewable asset within the same item
-    for the given campaign and user.
+    Select the next reviewable asset within the same item.
 
-    Ordering rule:
-        - Advance within the item by (sequence, id) strictly greater than the
-          current asset, if an original asset is provided and belongs to the same
-          item/campaign.
-        - Otherwise return the earliest eligible by (sequence, id).
+    Behavior:
+        Attempts a short-circuit within the user's current item to provide a
+        locally contiguous review flow.
 
     Eligibility:
-        - Asset.published = True, Item.published = True, Project.published = True
-        - transcription_status == SUBMITTED
-        - Not reserved in AssetTranscriptionReservation
-        - Exclude assets transcribed by `user`
+        - Asset, Item, and Project are published.
+        - Asset transcription status is SUBMITTED.
+        - Asset is not reserved.
+        - Asset was not transcribed by the current user.
+
+    Ordering:
+        - If `after_asset_pk` refers to an asset in the same item and campaign,
+          select the earliest asset whose (sequence, id) is strictly greater
+          than the current asset's pair.
+        - Otherwise, select the earliest eligible by (sequence, id).
 
     Args:
-        campaign (Campaign): Campaign scope.
-        user (User): Requesting user (to exclude their own work).
-        item_id (str): Item.item_id to stay within.
-        after_asset_pk (int | None): The pk of the asset we are advancing from.
+        campaign (concordia_models.Campaign): Campaign scope.
+        user (User): Current user; used to exclude their own work.
+        item_id (str): Identifier of the item to stay within.
+        after_asset_pk (int | None): Asset primary key to advance from.
 
     Returns:
-        Asset | None: Locked eligible asset, or None if no match.
+        concordia_models.Asset | None: A locked eligible asset, or
+            None if no match is available.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__item__item_id=item_id,
@@ -138,25 +187,39 @@ def _find_reviewable_in_item(
 
 @transaction.atomic
 def _find_reviewable_in_project(
-    campaign, user, *, project_slug: str, after_asset_pk: int | None
-):
+    campaign: concordia_models.Campaign,
+    user: User,
+    *,
+    project_slug: str,
+    after_asset_pk: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Short-circuit helper: return the first eligible reviewable asset within the same
-    project for the given campaign and user.
+    Select the first eligible reviewable asset within the same project.
 
-    Notes:
-        - This is a *first eligible* selector, not an "after current" selector,
-          since sequence is per-item. We keep the result deterministic by ordering
-          by (item__item_id, sequence, id).
+    Behavior:
+        Short-circuit when staying within a project. Sequence is per item,
+        so this returns the first eligible asset, not strictly "after" a given asset.
 
     Eligibility:
-        - Same campaign & project
-        - Asset/Item/Project published
-        - transcription_status == SUBMITTED
-        - Not reserved; exclude assets transcribed by `user`
+        - Same campaign and project.
+        - Asset, Item, and Project are published.
+        - Asset transcription status is SUBMITTED.
+        - Asset is not reserved.
+        - Asset was not transcribed by the current user.
+
+    Ordering:
+        Deterministic by (item__item_id, sequence, id).
+
+    Args:
+        campaign (concordia_models.Campaign): Campaign scope.
+        user (User): Current user; used to exclude their own work.
+        project_slug (str): Slug of the project to stay within.
+        after_asset_pk (int | None): Present for parity with the item
+            variant; not used for ordering here.
 
     Returns:
-        Asset | None
+        concordia_models.Asset | None: A locked eligible asset, or
+            None if no match is available.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__item__project__slug=project_slug,
@@ -191,26 +254,26 @@ def _find_reviewable_in_project(
     return eligible
 
 
-def find_new_reviewable_campaign_assets(campaign, user=None):
+def find_new_reviewable_campaign_assets(
+    campaign: concordia_models.Campaign,
+    user: User | None = None,
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Returns a queryset of assets in the given campaign that are eligible for review
-    caching.
+    Return assets in a campaign that are eligible to be added to the cache.
 
-    This excludes:
-    - Assets with transcription_status not SUBMITTED
-    - Assets currently reserved
-    - Assets already present in the NextReviewableCampaignAsset table
-    - Optionally, assets transcribed by the given user
+    Behavior:
+        Builds the candidate set for the NextReviewableCampaignAsset cache by
+        excluding assets that are not SUBMITTED, assets already reserved, and
+        assets already present in the cache. Optionally excludes assets
+        transcribed by the provided user.
 
     Args:
-        campaign (Campaign): The campaign to filter assets by.
-        user (User, optional): If provided, assets transcribed by this user will be
-        excluded.
+        campaign (concordia_models.Campaign): Campaign to filter by.
+        user (User | None): If provided, exclude assets transcribed by this user.
 
     Returns:
-        QuerySet: Eligible assets ordered by sequence.
+        QuerySet[concordia_models.Asset]: Eligible assets ordered by sequence.
     """
-
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__campaign=campaign
     ).values("asset_id")
@@ -235,47 +298,54 @@ def find_new_reviewable_campaign_assets(campaign, user=None):
     return queryset
 
 
-def find_next_reviewable_campaign_assets(campaign, user):
+def find_next_reviewable_campaign_assets(
+    campaign: concordia_models.Campaign,
+    user: User,
+) -> "QuerySet[concordia_models.NextReviewableCampaignAsset]":
     """
-    Returns cached reviewable assets for a campaign that were not transcribed by the
-    given user.
+    Return cached reviewable assets in a campaign not transcribed by the user.
 
-    This accesses the NextReviewableCampaignAsset cache table and filters out any
-    assets associated with the given user via the transcriber_ids field.
+    Behavior:
+        Reads from the NextReviewableCampaignAsset cache table and filters out
+        assets where the requesting user appears in transcriber_ids.
 
     Args:
-        campaign (Campaign): The campaign to filter assets by.
-        user (User): The user requesting a reviewable asset.
+        campaign (concordia_models.Campaign): Campaign to retrieve cached assets from.
+        user (User): Requesting user.
 
     Returns:
-        QuerySet: Cached assets
+        QuerySet[concordia_models.NextReviewableCampaignAsset]: Cached candidate rows
+        for the given user.
     """
-
     return concordia_models.NextReviewableCampaignAsset.objects.filter(
         campaign=campaign
     ).exclude(transcriber_ids__contains=[user.id])
 
 
 @transaction.atomic
-def find_reviewable_campaign_asset(campaign, user):
+def find_reviewable_campaign_asset(
+    campaign: concordia_models.Campaign,
+    user: User,
+) -> "concordia_models.Asset | None":
     """
-    Retrieves a single reviewable asset from the campaign for the given user.
+    Retrieve a single reviewable asset for a user from a campaign.
 
-    Attempts to retrieve an asset from the cache table (NextReviewableCampaignAsset).
-    If no eligible asset is found, falls back to computing one directly from the
-    Asset table and asynchronously schedules a background task to repopulate the cache.
+    Behavior:
+        First attempts to select a cached asset from NextReviewableCampaignAsset.
+        If none is available, falls back to a direct query over Asset and
+        triggers a background task to replenish the cache.
 
-    Ensures database row-level locking to prevent multiple concurrent consumers
-    from selecting the same asset.
+    Concurrency:
+        Uses `select_for_update(skip_locked=True, of=("self",))` so only the
+        Asset row is locked and concurrent consumers skip locked rows.
 
     Args:
-        campaign (Campaign): The campaign to retrieve an asset from.
-        user (User): The user requesting the asset (used to exclude their own work).
+        campaign (concordia_models.Campaign): Campaign to search within.
+        user (User): Requesting user; their own transcriptions are excluded.
 
     Returns:
-        Asset or None: A locked asset eligible for review, or None if unavailable.
+        concordia_models.Asset | None: A locked eligible asset, or None if unavailable.
     """
-
     next_asset = (
         find_next_reviewable_campaign_assets(campaign, user)
         .select_for_update(skip_locked=True, of=("self",))
@@ -305,6 +375,7 @@ def find_reviewable_campaign_asset(campaign, user):
         .select_related("item", "item__project")
         .first()
     )
+
     if spawn_task:
         # Spawn a task to populate the table for this campaign
         # We wait to do this until after getting an asset because otherwise there's a
@@ -320,31 +391,48 @@ def find_reviewable_campaign_asset(campaign, user):
             "concordia.tasks.populate_next_reviewable_for_campaign"
         )
         populate_task.delay(campaign.id)
+
     return asset
 
 
 def find_and_order_potential_reviewable_campaign_assets(
-    campaign, user, project_slug, item_id, asset_pk
-):
+    campaign: concordia_models.Campaign,
+    user: User,
+    project_slug: str,
+    item_id: str,
+    asset_pk: int | None,
+) -> "QuerySet[concordia_models.NextReviewableCampaignAsset]":
     """
-    Retrieves and prioritizes cached reviewable assets for a user based on proximity.
+    Retrieve and prioritize cached reviewable assets for proximity.
 
-    Orders results from NextReviewableCampaignAsset by:
-    - Whether the asset comes after the given asset in sequence
-    - Whether the asset belongs to the same project
-    - Whether the asset belongs to the same item
+    Behavior:
+        Orders cached candidates from NextReviewableCampaignAsset to prefer
+        continuity with the user's current location.
+
+    Annotations added to each row (transient fields):
+        - next_asset (int): 1 if the candidate's asset_id is greater than
+            asset_pk, else 0.
+        - same_project (int): 1 if the candidate shares the given
+            project_slug, else 0.
+        - same_item (int): 1 if the candidate shares the given item_id, else 0.
+
+    Prioritization (descending on the following keys, then ascending by sequence):
+        - next_asset
+        - same_project
+        - same_item
+        - sequence
 
     Args:
-        campaign (Campaign): The campaign to filter assets by.
-        user (User): The user requesting the next asset.
-        project_slug (str): Slug of the original asset's project.
-        item_id (str): Item ID of the original asset.
-        asset_pk (int): Primary key of the original asset.
+        campaign (concordia_models.Campaign): Campaign to filter by.
+        user (User): Requesting user.
+        project_slug (str): Slug of the user's current project.
+        item_id (str): Identifier of the user's current item.
+        asset_pk (int | None): Identifier of the current asset, if any.
 
     Returns:
-        QuerySet: Prioritized list of candidate assets.
+        QuerySet[concordia_models.NextReviewableCampaignAsset]: Prioritized
+            cached candidates.
     """
-
     potential_next_assets = find_next_reviewable_campaign_assets(campaign, user)
 
     # We'll favor assets which are in the same item or project as the original:
@@ -375,34 +463,36 @@ def find_and_order_potential_reviewable_campaign_assets(
 
 @transaction.atomic
 def find_next_reviewable_campaign_asset(
-    campaign, user, project_slug, item_id, original_asset_id
-):
+    campaign: concordia_models.Campaign,
+    user: User,
+    project_slug: str,
+    item_id: str,
+    original_asset_id: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Retrieves the next best reviewable asset for a user within a campaign.
+    Retrieve the next best reviewable asset for a user within a campaign.
 
-    - If item_id is provided, first try to return the next eligible asset
-      in that item by sequence (short-circuit).
-    - Else if project_slug is provided, try to return the first eligible
-      asset within that project (short-circuit).
-    - Else fall back to the existing cache-backed path:
+    Strategy:
+        1. If `item_id` is provided, try a same-item short-circuit that advances
+           by (sequence, id) relative to `original_asset_id`.
+        2. Else, if `project_slug` is provided, select the first eligible asset
+           within that project (short-circuit).
+        3. Else, prioritize cached candidates, and if none are suitable, fall
+           back to computing from Asset and trigger cache population.
 
-    Attempts to retrieve an asset from the cache table (NextReviewableCampaignAsset).
-    If no eligible asset is found, falls back to computing one directly from the
-    Asset table and asynchronously schedules a background task to repopulate the cache.
-
-    Ensures database row-level locking to prevent multiple concurrent consumers
-    from selecting the same asset.
+    Concurrency:
+        Uses `select_for_update(skip_locked=True, of=("self",))` to avoid
+        double-assignments across concurrent consumers.
 
     Args:
-        campaign (Campaign): The campaign to find an asset in.
-        user (User): The user requesting the asset.
-        project_slug (str): Slug of the project the user is currently reviewing.
-        item_id (str): ID of the item the user is currently reviewing.
-        original_asset_id (int): ID of the asset the user just reviewed.
+        campaign (concordia_models.Campaign): Campaign to search within.
+        user (User): Requesting user.
+        project_slug (str): Slug of the user's current project.
+        item_id (str): Identifier of the user's current item.
+        original_asset_id (int | None): Identifier of the asset just reviewed.
 
     Returns:
-        Asset or None: A locked asset eligible for review, or None if
-        unavailable.
+        concordia_models.Asset | None: A locked eligible asset, or None if unavailable.
     """
     try:
         after_pk = int(original_asset_id) if original_asset_id else None
@@ -500,18 +590,23 @@ def find_next_reviewable_campaign_asset(
     return asset
 
 
-def find_invalid_next_reviewable_campaign_assets(campaign_id):
+def find_invalid_next_reviewable_campaign_assets(
+    campaign_id: int,
+) -> "QuerySet[concordia_models.NextReviewableCampaignAsset]":
     """
-    Returns a queryset of NextReviewableCampaignAsset records that are no longer valid
-    for review. This includes:
-    - Assets with a transcription status other than SUBMITTED.
-    - Assets currently reserved via AssetTranscriptionReservation.
+    Return cache rows that are invalid for review for a given campaign.
+
+    Behavior:
+        Identifies NextReviewableCampaignAsset rows that are no longer valid
+        because the underlying asset is not SUBMITTED or because the asset is
+        currently reserved.
 
     Args:
-        campaign_id (int): The ID of the campaign to filter by.
+        campaign_id (int): Identifier of the campaign.
 
     Returns:
-        QuerySet: Invalid NextReviewableCampaignAsset records.
+        QuerySet[concordia_models.NextReviewableCampaignAsset]: Distinct
+            invalid cache rows.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__campaign_id=campaign_id
