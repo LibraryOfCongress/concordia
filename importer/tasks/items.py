@@ -87,7 +87,7 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
         )
         if item.asset_set.count() >= len(asset_urls):
             # The item has all of its assets, so we can skip it
-            logger.warning("Not reprocessing existing item with all asssets: %s", item)
+            logger.warning("Not reprocessing existing item with all assets: %s", item)
             import_item.update_status(
                 f"Not reprocessing existing item with all assets: {item}", do_save=False
             )
@@ -105,8 +105,23 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
 
     thumbnail_url = populate_item_from_data(import_item.item, item_data["item"])
 
-    item.full_clean()
-    item.save()
+    try:
+        item.full_clean()
+        item.save()
+    except Exception as exc:
+        # Because we're creating the import jobs here, we can't count on
+        # our update_task_status decorator to catch errors and update our
+        # task status, so we need to do it manually before raising the error
+        logger.exception("Unhandled exception when importing item %s", item)
+        new_status = "{}\n\nUnhandled exception: {}".format(
+            import_item.status, exc
+        ).strip()
+        import_item.update_status(new_status, do_save=False)
+        import_item.failed = now()
+        import_item.task_id = self.request.id
+        import_item.save()
+        raise exc
+
     download_and_set_item_thumbnail(item, thumbnail_url)
 
     return import_item_task.delay(import_item.pk)

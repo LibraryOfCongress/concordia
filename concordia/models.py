@@ -565,7 +565,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
-    title = models.CharField(max_length=700)
+    title = models.CharField(max_length=1000)
     item_url = models.URLField(max_length=255)
     item_id = models.CharField(
         max_length=100, help_text="Unique item ID assigned by the upstream source"
@@ -2894,6 +2894,9 @@ class CampaignRetirementProgress(models.Model):
 
     def __str__(self):
         return f"Removal progress for {self.campaign}"
+
+    class Meta:
+        verbose_name_plural = "campaign retirement progresses"
 
 
 class TutorialCard(models.Model):
