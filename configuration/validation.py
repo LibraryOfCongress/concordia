@@ -7,15 +7,24 @@ RATE_LIMIT_PATTERN = re.compile(r"^\d+/(s|m|h|d)$")
 
 def validate_rate(rate: str) -> str:
     """
-    Validate that a string is a valid rate limit pattern (e.g., '10/m').
+    Validate that a rate string matches the expected pattern like '10/m'.
 
-    Leading/trailing whitespace is stripped before validation.
+    Behavior:
+        - Strip leading and trailing whitespace.
+        - Require the format '<positive integer>/<unit>' where unit is one of
+          's', 'm', 'h', or 'd' (seconds, minutes, hours, days).
+        - Return the cleaned string unchanged if valid.
 
-    Raises:
-        ValidationError: if the format is invalid or value is nonsensical.
+    Args:
+        rate (str): The candidate rate string to validate.
 
     Returns:
         str: The cleaned rate string if valid.
+
+    Raises:
+        ValidationError: If the input is not a string, if the format does not
+            match the required pattern, or if the integer portion is less than
+            or equal to zero.
     """
     if not isinstance(rate, str):
         raise ValidationError("Rate limit must be a string.")
