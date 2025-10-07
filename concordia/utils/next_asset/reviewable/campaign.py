@@ -108,7 +108,7 @@ def _find_reviewable_in_item(
 
     Eligibility:
         - Asset, Item, and Project are published.
-        - Asset transcription status is SUBMITTED.
+        - Asset transcription status is `SUBMITTED`.
         - Asset is not reserved.
         - Asset was not transcribed by the current user.
 
@@ -203,7 +203,7 @@ def _find_reviewable_in_project(
     Eligibility:
         - Same campaign and project.
         - Asset, Item, and Project are published.
-        - Asset transcription status is SUBMITTED.
+        - Asset transcription status is `SUBMITTED`.
         - Asset is not reserved.
         - Asset was not transcribed by the current user.
 
@@ -263,7 +263,7 @@ def find_new_reviewable_campaign_assets(
 
     Behavior:
         Builds the candidate set for the NextReviewableCampaignAsset cache by
-        excluding assets that are not SUBMITTED, assets already reserved, and
+        excluding assets that are not `SUBMITTED`, assets already reserved, and
         assets already present in the cache. Optionally excludes assets
         transcribed by the provided user.
 
@@ -378,7 +378,7 @@ def find_reviewable_campaign_asset(
 
     if spawn_task:
         # Spawn a task to populate the table for this campaign
-        # We wait to do this until after getting an asset because otherwise there's a
+        # We wait to do this until after getting an asset because otherwise there's
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
         structured_logger.debug(
@@ -573,7 +573,7 @@ def find_next_reviewable_campaign_asset(
 
     if spawn_task:
         # Spawn a task to populate the table for this campaign
-        # We wait to do this until after getting an asset because otherwise there's a
+        # We wait to do this until after getting an asset because otherwise there's
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
         structured_logger.debug(
@@ -598,7 +598,7 @@ def find_invalid_next_reviewable_campaign_assets(
 
     Behavior:
         Identifies NextReviewableCampaignAsset rows that are no longer valid
-        because the underlying asset is not SUBMITTED or because the asset is
+        because the underlying asset is not `SUBMITTED` or because the asset is
         currently reserved.
 
     Args:
