@@ -1228,8 +1228,8 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             changed = build_key_metrics_reports.run(recompute_all=True)
 
         # One month, four quarters, one fiscal year
-        self.assertEqual(changed, 7)
-        self.assertEqual(up_m.call_count, 2)
+        self.assertEqual(changed, 6)
+        self.assertEqual(up_m.call_count, 1)
         self.assertEqual(up_q.call_count, 4)
         self.assertEqual(up_y.call_count, 1)
 
