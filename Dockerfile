@@ -47,7 +47,7 @@ COPY . /app
 
 RUN npm install --silent --global npm@10 \
     && /usr/local/bin/npm install --silent --omit=dev \
-    && npm run build \    # build vite assets
+    && npm run build \
     && npx gulp build
 
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
