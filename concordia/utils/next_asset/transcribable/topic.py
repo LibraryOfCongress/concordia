@@ -1,5 +1,7 @@
+from typing import Dict
+
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Subquery, When
+from django.db.models import Case, IntegerField, Q, QuerySet, Subquery, When
 
 from concordia import models as concordia_models
 from concordia.logging import ConcordiaLogger
@@ -8,17 +10,39 @@ from concordia.utils.celery import get_registered_task
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
-def _reserved_asset_ids_subq():
+def _reserved_asset_ids_subq() -> "QuerySet[Dict[str, int]]":
     """
-    Subquery of reserved asset IDs. Not filtered to topic to avoid extra joins.
+    Return a subquery of reserved asset identifiers.
+
+    Behavior:
+        Not filtered to the topic to avoid extra joins. Produces a subquery
+        suitable for use with `Subquery(...)` and `exclude(pk__in=...)`
+        clauses to filter out assets that currently have an active
+        reservation.
+
+    Returns:
+        QuerySet[Dict[str, int]]: A queryset of dictionaries with a single key
+            "asset_id" corresponding to reserved assets.
     """
     return concordia_models.AssetTranscriptionReservation.objects.values("asset_id")
 
 
-def _eligible_transcribable_base_qs(topic):
+def _eligible_transcribable_base_qs(
+    topic: "concordia_models.Topic",
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Base queryset for transcribable assets within a topic, restricted to
-    published objects and the NOT_STARTED / IN_PROGRESS statuses.
+    Build the base queryset of transcribable assets for a topic.
+
+    Behavior:
+        Restricts to published projects, items, and assets, and to assets whose
+        transcription status is either `NOT_STARTED` or `IN_PROGRESS`.
+
+    Args:
+        topic (concordia_models.Topic): Topic scope for filtering.
+
+    Returns:
+        QuerySet[concordia_models.Asset]: Transcribable assets, with `item` and
+            `item__project` selected via `select_related`.
     """
     return concordia_models.Asset.objects.filter(
         item__project__topics=topic.id,
@@ -34,8 +58,18 @@ def _eligible_transcribable_base_qs(topic):
 
 def _next_seq_after(pk: int | None) -> int | None:
     """
-    Resolve the sequence number for the given asset PK. Returns None if PK is
-    falsy or the asset does not exist.
+    Resolve the sequence number for a given asset primary key.
+
+    Behavior:
+        Convenience utility for ordering logic when advancing within a series
+        of assets.
+
+    Args:
+        pk (int | None): Asset primary key whose sequence to resolve.
+
+    Returns:
+        int | None: The asset's sequence number, or None if `pk` is falsy
+            or the asset does not exist.
     """
     if not pk:
         return None
@@ -46,9 +80,19 @@ def _next_seq_after(pk: int | None) -> int | None:
     )
 
 
-def _order_unstarted_first(qs):
+def _order_unstarted_first(
+    qs: "QuerySet[concordia_models.Asset]",
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Stable ordering that prefers NOT_STARTED over IN_PROGRESS, then by sequence.
+    Apply a stable ordering that prefers `NOT_STARTED` over `IN_PROGRESS`,
+    then orders by `sequence`.
+
+    Args:
+        qs (QuerySet[concordia_models.Asset]): Base queryset to annotate and sort.
+
+    Returns:
+        QuerySet[concordia_models.Asset]: Annotated and ordered queryset with a
+            transient `unstarted` field (1 for `NOT_STARTED`, else 0).
     """
     return qs.annotate(
         unstarted=Case(
@@ -63,25 +107,30 @@ def _order_unstarted_first(qs):
 
 
 def _find_transcribable_in_item_for_topic(
-    topic, *, item_id: str, after_asset_pk: int | None
-):
+    topic: "concordia_models.Topic",
+    *,
+    item_id: str,
+    after_asset_pk: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Fast path: find the next transcribable asset in the SAME ITEM, constrained
+    Fast path: find the next transcribable asset in the same item, constrained
     to the topic.
 
-    Rules:
-      - Asset must belong to a project that’s in this topic.
-      - Exclude the current asset (never return the same one).
-      - Advance by sequence within the item:
-          (sequence > current_sequence)
-          OR (sequence == current_sequence AND id > current_id)
-      - **Return ONLY NOT_STARTED** here. (We defer IN_PROGRESS to later fallbacks so
-        same-project NOT_STARTEDs are preferred over same-item IN_PROGRESS.)
-      - Skip reserved assets.
-      - Respect published flags.
+    Behavior:
+        - Asset must belong to a project that is in this topic.
+        - Exclude the current asset.
+        - Advance by `(sequence, id)` within the item.
+        - Return only `NOT_STARTED` here (defer `IN_PROGRESS` to later fallbacks).
+        - Skip reserved assets.
+        - Respect published flags.
+
+    Args:
+        topic (concordia_models.Topic): Topic scope.
+        item_id (str): Identifier of the item to stay within.
+        after_asset_pk (int | None): Asset primary key to advance from.
 
     Returns:
-        Asset | None
+        concordia_models.Asset | None: The next eligible asset, or None if none.
     """
     if not item_id:
         return None
@@ -126,14 +175,26 @@ def _find_transcribable_in_item_for_topic(
 
 
 def _find_transcribable_not_started_in_project_for_topic(
-    topic, *, project_slug: str, exclude_item_id: str | None = None
-):
+    topic: "concordia_models.Topic",
+    *,
+    project_slug: str,
+    exclude_item_id: str | None = None,
+) -> "concordia_models.Asset | None":
     """
-    Fast path: find the first NOT_STARTED asset in the SAME PROJECT within this topic.
-    Optionally exclude the current item.
+    Fast path: find the first `NOT_STARTED` asset in the same project within
+    this topic.
+
+    Behavior:
+        Optionally exclude the current item. Uses a stable ordering by
+        `(item__item_id, sequence, id)`.
+
+    Args:
+        topic (concordia_models.Topic): Topic scope.
+        project_slug (str): Slug of the project to stay within.
+        exclude_item_id (str | None): If provided, exclude this item.
 
     Returns:
-        Asset | None
+        concordia_models.Asset | None: The first eligible asset, or None if none.
     """
     if not project_slug:
         return None
@@ -157,23 +218,23 @@ def _find_transcribable_not_started_in_project_for_topic(
     return base.order_by("item__item_id", "sequence", "id").first()
 
 
-def find_new_transcribable_topic_assets(topic):
+def find_new_transcribable_topic_assets(
+    topic: "concordia_models.Topic",
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Returns a queryset of assets in the given topic that are eligible for transcription
-    caching.
+    Return assets in a topic that are eligible to be added to the cache.
 
-    This excludes:
-    - Assets with transcription_status not NOT_STARTED or IN_PROGRESS
-    - Assets currently reserved
-    - Assets already present in the NextTranscribableTopicAsset table
+    Behavior:
+        Builds the candidate set for the `NextTranscribableTopicAsset` cache by
+        excluding assets that are not `NOT_STARTED` or `IN_PROGRESS`, assets
+        already reserved, and assets already present in the cache.
 
     Args:
-        topic (Topic): The topic to filter assets by.
+        topic (concordia_models.Topic): Topic to filter by.
 
     Returns:
-        QuerySet: Eligible assets ordered by sequence.
+        QuerySet[concordia_models.Asset]: Eligible assets ordered by `sequence`.
     """
-
     # Filtering this to the topic would be more costly than just getting all ids
     # in most cases because it requires joining the asset table to the item table to
     # the project table to the topic table.
@@ -201,42 +262,49 @@ def find_new_transcribable_topic_assets(topic):
     )
 
 
-def find_next_transcribable_topic_assets(topic):
+def find_next_transcribable_topic_assets(
+    topic: "concordia_models.Topic",
+) -> "QuerySet[concordia_models.NextTranscribableTopicAsset]":
     """
-    Returns all cached transcribable assets for a topic.
+    Return all cached transcribable assets for a topic.
 
-    This accesses the NextTranscribableTopicAsset cache table for the given topic.
+    Behavior:
+        Reads from the `NextTranscribableTopicAsset` cache table for the
+        given topic.
 
     Args:
-        topic (Topic): The topic to retrieve cached assets for.
+        topic (concordia_models.Topic): Topic to retrieve cached assets for.
 
     Returns:
-        QuerySet: Cached assets
+        QuerySet[concordia_models.NextTranscribableTopicAsset]: Cached candidates.
     """
-
     return concordia_models.NextTranscribableTopicAsset.objects.filter(topic=topic)
 
 
 @transaction.atomic
-def find_transcribable_topic_asset(topic):
+def find_transcribable_topic_asset(
+    topic: "concordia_models.Topic",
+) -> "concordia_models.Asset | None":
     """
-    Retrieves a single transcribable asset from the topic.
+    Retrieve a single transcribable asset from the topic.
 
-    Attempts to retrieve an asset from the cache table (NextTranscribableTopicAsset).
-    If no eligible asset is found, falls back to computing one directly from the
-    Asset table and asynchronously schedules a background task to repopulate the cache.
+    Behavior:
+        First attempts to select a cached asset from
+        `NextTranscribableTopicAsset`. If none is available, falls back to a
+        direct query over `Asset` and triggers a background task to replenish
+        the cache.
 
-    Ensures database row-level locking to prevent multiple concurrent consumers
-    from selecting the same asset.
+    Concurrency:
+        Uses `select_for_update(skip_locked=True, of=("self",))` so only the
+        `Asset` row is locked and concurrent consumers skip locked rows.
 
     Args:
-        topic (Topic): The topic to retrieve an asset from.
+        topic (concordia_models.Topic): Topic to search within.
 
     Returns:
-        Asset or None: A locked asset eligible for transcription, or None if
-        unavailable.
+        concordia_models.Asset | None: A locked eligible asset, or None if
+            unavailable.
     """
-
     next_asset = (
         find_next_transcribable_topic_assets(topic)
         .select_for_update(skip_locked=True, of=("self",))
@@ -282,27 +350,37 @@ def find_transcribable_topic_asset(topic):
 
 
 def find_and_order_potential_transcribable_topic_assets(
-    topic, project_slug, item_id, asset_pk
-):
+    topic: "concordia_models.Topic",
+    project_slug: str,
+    item_id: str,
+    asset_pk: int,
+) -> "QuerySet[concordia_models.NextTranscribableTopicAsset]":
     """
-    Retrieves and prioritizes cached transcribable assets based on proximity and status.
+    Retrieve and prioritize cached transcribable assets based on proximity
+    and status.
 
-    Orders results from NextTranscribableTopicAsset by:
-    - Whether the asset is in the NOT_STARTED state
-    - Whether the asset belongs to the same project
-    - Whether the asset belongs to the same item
-    - Then by sequence and asset_id for stability
+    Behavior:
+        Orders cached candidates from `NextTranscribableTopicAsset` to prefer:
+        - `NOT_STARTED` over `IN_PROGRESS` (via transient `unstarted` flag),
+        - same project,
+        - same item,
+        then by `sequence` and `asset_id` for stability.
+
+    Annotations added to each row (transient fields):
+        - unstarted (int): 1 if transcription status is `NOT_STARTED`, else 0.
+        - same_project (int): 1 if the candidate shares `project_slug`, else 0.
+        - same_item (int): 1 if the candidate shares `item_id`, else 0.
 
     Args:
-        topic (Topic): The topic to filter assets by.
+        topic (concordia_models.Topic): Topic to filter by.
         project_slug (str): Slug of the original asset's project.
-        item_id (str): Item ID of the original asset.
-        asset_pk (int): Primary key of the original asset (not used to order first).
+        item_id (str): Item identifier of the original asset.
+        asset_pk (int): Primary key of the original asset.
 
     Returns:
-        QuerySet: Prioritized list of candidate assets.
+        QuerySet[concordia_models.NextTranscribableTopicAsset]: Prioritized
+            cached candidates.
     """
-
     potential_next_assets = find_next_transcribable_topic_assets(topic)
 
     potential_next_assets = potential_next_assets.annotate(
@@ -337,11 +415,41 @@ def find_and_order_potential_transcribable_topic_assets(
 
 @transaction.atomic
 def find_next_transcribable_topic_asset(
-    topic, project_slug, item_id, original_asset_id
-):
+    topic: "concordia_models.Topic",
+    project_slug: str,
+    item_id: str,
+    original_asset_id: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Retrieves the next best transcribable asset for a user within a topic.
-    (Docstring unchanged)
+    Retrieve the next best transcribable asset within a topic.
+
+    Priority for short-circuit selection (before cache and fallback):
+        1) If `item_id` is provided, return the next `NOT_STARTED` asset in
+           that item by sequence (strictly after the original asset when known).
+        2) If `project_slug` is provided, return the first `NOT_STARTED` asset
+           in that project (ordered by item id, then sequence), excluding the
+           current item to keep moving forward.
+
+    If none of the above match, fall back to the cache-backed path:
+        Attempts to retrieve a candidate from `NextTranscribableTopicAsset`. If
+        none is found, compute from `Asset` and trigger cache population.
+
+    After exhausting `NOT_STARTED` options, consider `IN_PROGRESS` assets in the
+    same item (strictly after the original when known).
+
+    Concurrency:
+        Uses `select_for_update(skip_locked=True, of=("self",))` to avoid
+        double-assignments across concurrent consumers.
+
+    Args:
+        topic (concordia_models.Topic): Topic to search within.
+        project_slug (str): Slug of the current project.
+        item_id (str): Identifier of the current item.
+        original_asset_id (int | None): Identifier of the asset just transcribed.
+
+    Returns:
+        concordia_models.Asset | None: A locked eligible asset, or None if
+            unavailable.
     """
     # Resolve original context safely (int or digit-string only)
     after_seq = None
@@ -543,18 +651,23 @@ def find_next_transcribable_topic_asset(
     return None
 
 
-def find_invalid_next_transcribable_topic_assets(topic_id):
+def find_invalid_next_transcribable_topic_assets(
+    topic_id: int,
+) -> "QuerySet[concordia_models.NextTranscribableTopicAsset]":
     """
-    Returns a queryset of NextTranscribableTopicAsset records that are no longer valid
-    for transcription. This includes:
-    - Assets with a transcription status other than NOT_STARTED or IN_PROGRESS.
-    - Assets currently reserved via AssetTranscriptionReservation.
+    Return cached rows that are invalid for transcription for a topic.
+
+    Behavior:
+        Identifies `NextTranscribableTopicAsset` rows that are no longer valid
+        because the underlying asset is neither `NOT_STARTED` nor
+        `IN_PROGRESS`, or because the asset is currently reserved.
 
     Args:
-        topic_id (int): The ID of the topic to filter by.
+        topic_id (int): Identifier of the topic.
 
     Returns:
-        QuerySet: Invalid NextTranscribableTopicAsset records.
+        QuerySet[concordia_models.NextTranscribableTopicAsset]: Distinct invalid
+            cache rows.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__item__project__topics=topic_id

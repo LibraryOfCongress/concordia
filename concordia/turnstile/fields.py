@@ -25,15 +25,47 @@ class TurnstileField(forms.Field):
     """
     Field that renders a Turnstile widget and validates its response token.
 
-    The field collects widget configuration from keyword arguments that are not
-    consumed by `forms.Field.__init__`, attaches them to the widget as
-    `data-*` attributes and validates the submitted token by POSTing to the
-    configured Turnstile verification endpoint.
+    Behavior:
+        - Collects widget configuration from keyword arguments that are not
+          consumed by `forms.Field.__init__` and stores them in
+          `self.widget_settings`.
+        - Extracts specific script URL options (`onload`, `render`, `hl`) from
+          `self.widget_settings` and assigns them to
+          `self.widget.extra_url` for query string construction.
+        - Renders using `TurnstileWidget`.
+        - Validates the submitted token by POSTing to the configured
+          Turnstile verify endpoint and raises `forms.ValidationError` on
+          failure.
+
+    Args:
+        **kwargs: Standard `forms.Field` keyword arguments plus any Turnstile
+            configuration that should be emitted as `data-*` attributes on the
+            widget. The following keys are treated as script URL parameters and
+            moved to `self.widget.extra_url`:
+            - `onload`
+            - `render`
+            - `hl`
 
     Attributes:
-        widget (TurnstileWidget): The widget used to render Turnstile.
+        widget (TurnstileWidget): The widget class used to render Turnstile.
         default_error_messages (dict[str, str]): Error messages for invalid or
-            failed verification states. Messages match existing behavior.
+            failed verification states.
+
+    Requirements:
+        The following Django settings must be defined:
+        - `TURNSTILE_DEFAULT_CONFIG` (dict)
+        - `TURNSTILE_JS_API_URL` (string)
+        - `TURNSTILE_VERIFY_URL` (string)
+        - `TURNSTILE_SECRET` (string)
+        - `TURNSTILE_TIMEOUT` (float or int)
+        - `TURNSTILE_PROXIES` (dict or None)
+
+    Statuses and errors:
+        - Raises `forms.ValidationError(code="error_turnstile")` when an HTTP
+          error occurs while contacting the verify endpoint.
+        - Raises `forms.ValidationError(code="invalid_turnstile")` when the
+          verify endpoint returns a non-success response.
+        - Uses the standard `required` message when no token is provided.
     """
 
     widget = TurnstileWidget
@@ -44,6 +76,18 @@ class TurnstileField(forms.Field):
     }
 
     def __init__(self, **kwargs: Any) -> None:
+        """
+        Initialize the field and partition keyword arguments.
+
+        Behavior:
+            - Splits `kwargs` into those accepted by `forms.Field.__init__`
+              and those intended as Turnstile configuration.
+            - Moves `onload`, `render`, and `hl` from the configuration into
+              `self.widget.extra_url` so they are appended to the API script
+              URL as a query string.
+            - Retains the remaining configuration in `self.widget_settings` to
+              be emitted as `data-*` attributes by `widget_attrs`.
+        """
         superclass_parameters = inspect.signature(super().__init__).parameters
         superclass_kwargs: Dict[str, Any] = {}
         widget_settings = settings.TURNSTILE_DEFAULT_CONFIG.copy()
@@ -64,6 +108,17 @@ class TurnstileField(forms.Field):
         self.widget.extra_url = widget_url_settings
 
     def widget_attrs(self, widget: forms.Widget) -> dict[str, Any]:
+        """
+        Extend `forms.Field.widget_attrs`.
+
+        Behavior:
+            Calls the base implementation to get default attributes, then adds
+            one `data-*` attribute per key in `self.widget_settings`. Keys are
+            lowercased as-is and prefixed with `data-`.
+
+        Returns:
+            dict[str, Any]: Combined widget attributes.
+        """
         attrs = super().widget_attrs(widget)
         for key, value in self.widget_settings.items():
             attrs["data-%s" % key] = value
@@ -73,12 +128,18 @@ class TurnstileField(forms.Field):
         """
         Validate the submitted Turnstile token against the verify endpoint.
 
+        Behavior:
+            - Calls `forms.Field.validate` for base required checks.
+            - Issues a POST request to `settings.TURNSTILE_VERIFY_URL` using
+              `urllib` with `TURNSTILE_PROXIES` and `TURNSTILE_TIMEOUT`.
+            - Parses the JSON response and checks the `success` field.
+
         Args:
             value (str | None): The token returned by the Turnstile widget.
 
         Raises:
-            forms.ValidationError: If Turnstile verification fails or cannot be
-                completed due to an HTTP error.
+            forms.ValidationError: If Turnstile verification fails or if an HTTP
+                error occurs while contacting the verify endpoint.
         """
         super().validate(value)
 
@@ -128,6 +189,7 @@ class TurnstileField(forms.Field):
 
         response_data = json.loads(response.read().decode("utf-8"))
 
+        # Non-success responses from Turnstile.
         if not response_data.get("success"):
             logger.exception(
                 "Failure received from Turnstile. Error codes: %s. Messages: %s",
