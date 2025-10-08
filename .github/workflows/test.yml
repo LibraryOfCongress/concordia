@@ -89,6 +89,9 @@ jobs:
                   mkdir logs
                   touch ./logs/concordia-celery.log
 
+            - name: Build Frontend (Vite)
+              run: npm run build
+
             - name: Build and Collect Static Files
               run: |
                   npx gulp build
