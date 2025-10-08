@@ -4,8 +4,7 @@
         "@puppeteer/browsers": "^2.10.5",
         "child_process": "^1.0.2",
         "fancy-log": "^2.0.0",
-        "stylelint-value-no-unknown-custom-properties": "^6.0.1",
-        "vite": "^7.0.4"
+        "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
@@ -30,7 +29,8 @@
         "sass": "^1.78.0",
         "screenfull": "^5.1.0",
         "split.js": "^1.6.2",
-        "urijs": "^1.19.11"
+        "urijs": "^1.19.11",
+        "vite": "^7.0.4"
     },
     "name": "concordia",
     "private": true,
