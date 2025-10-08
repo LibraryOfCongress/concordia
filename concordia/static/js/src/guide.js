@@ -1,4 +1,8 @@
-/* global $ trackUIInteraction */
+/* global */
+
+import $ from 'jquery';
+import {Carousel} from 'bootstrap';
+import {trackUIInteraction} from './base.js';
 
 function openOffcanvas() {
     let guide = document.getElementById('guide-sidebar');
@@ -29,23 +33,31 @@ function closeOffcanvas() {
     }
 }
 
-$('#open-guide').on('click', openOffcanvas);
+document.getElementById('open-guide')?.addEventListener('click', openOffcanvas);
 
-$('#close-guide').on('click', closeOffcanvas);
+document
+    .getElementById('close-guide')
+    ?.addEventListener('click', closeOffcanvas);
 
-$(function () {
-    $('#guide-carousel')
-        .carousel({
+document.addEventListener('DOMContentLoaded', () => {
+    const guideCarouselElement = document.getElementById('guide-carousel');
+    if (guideCarouselElement) {
+        new Carousel(guideCarouselElement, {
             interval: false,
             wrap: false,
-        })
-        .on('slide.bs.carousel', function (event) {
-            if (event.to == 0) {
-                $('#guide-bars-col').addClass('d-none');
+        });
+
+        guideCarouselElement.addEventListener('slide.bs.carousel', (event) => {
+            const barsCol = document.getElementById('guide-bars-col');
+            if (!barsCol) return;
+
+            if (event.to === 0) {
+                barsCol.classList.add('d-none');
             } else {
-                $('#guide-bars-col').removeClass('d-none');
+                barsCol.classList.remove('d-none');
             }
         });
+    }
 });
 
 $('#previous-card').hide();
@@ -67,21 +79,31 @@ function trackHowToInteraction(element, label) {
     trackUIInteraction(element, 'How To Guide', 'click', label);
 }
 
-$('#open-guide').on('click', function () {
-    trackHowToInteraction($(this), 'Open');
-});
-$('#close-guide').on('click', function () {
-    trackHowToInteraction($(this), 'Close');
-});
-$('#previous-guide').on('click', function () {
-    trackHowToInteraction($(this), 'Back');
-});
-$('#next-guide').on('click', function () {
-    trackHowToInteraction($(this), 'Next');
-});
-$('#guide-bars').on('click', function () {
-    trackHowToInteraction($(this), 'Hamburger Menu');
-});
+if ($('#open-guide').length > 0) {
+    $('#open-guide').on('click', function () {
+        trackHowToInteraction($(this), 'Open');
+    });
+}
+if ($('#close-guide').length > 0) {
+    $('#close-guide').on('click', function () {
+        trackHowToInteraction($(this), 'Close');
+    });
+}
+if ($('#previous-guide').length > 0) {
+    $('#previous-guide').on('click', function () {
+        trackHowToInteraction($(this), 'Back');
+    });
+}
+if ($('#next-guide').length > 0) {
+    $('#next-guide').on('click', function () {
+        trackHowToInteraction($(this), 'Next');
+    });
+}
+if ($('#guide-bars').length > 0) {
+    $('#guide-bars').on('click', function () {
+        trackHowToInteraction($(this), 'Hamburger Menu');
+    });
+}
 $('#guide-sidebar .nav-link').on('click', function () {
     let label = $(this).text().trim();
     trackHowToInteraction($(this), label);
