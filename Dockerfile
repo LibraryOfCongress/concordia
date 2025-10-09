@@ -45,10 +45,8 @@ RUN pip install --no-cache-dir pipenv
 WORKDIR /app
 COPY . /app
 
-RUN npm install --silent --global npm@10 \
-    && /usr/local/bin/npm install --silent --omit=dev \
-    && npm run build \
-    && npx gulp build
+RUN npm install --silent --global npm@10 && /usr/local/bin/npm install --silent --omit=dev && npx gulp build
+RUN npm run build
 
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
 
