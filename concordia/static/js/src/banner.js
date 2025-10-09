@@ -1,5 +1,3 @@
-import $ from 'jquery';
-
 var storage = window.localStorage;
 var storageAvailable;
 try {
@@ -12,17 +10,22 @@ try {
 }
 if (storageAvailable) {
     for (var key in storage) {
-        if (key.startsWith('banner-') && $('#' + key).hasClass('alert')) {
-            $('#' + key).attr('hidden', true);
+        if (key.startsWith('banner-')) {
+            const banner = document.getElementById(key);
+            if (banner && banner.classList.contains('alert')) {
+                banner.setAttribute('hidden', 'hidden');
+            }
         }
     }
 }
-$('#no-interface-banner').click(function (event) {
-    var banner = event.target.parentElement.parentElement;
-    if (banner.hasAttribute('id')) {
-        storage.setItem(banner.id, true);
-        var element = document.getElementById(banner.id);
-        element.classList.remove('d-flex');
-        $(element).attr('hidden', 'hidden');
-    }
-});
+const noInterfaceBanner = document.getElementById('no-interface-banner');
+if (noInterfaceBanner) {
+    noInterfaceBanner.addEventListener('click', (event) => {
+        var banner = event.target.parentElement.parentElement;
+        if (banner.hasAttribute('id')) {
+            storage.setItem(banner.id, 'true');
+            banner.classList.remove('d-flex');
+            banner.setAttribute('hidden', 'hidden');
+        }
+    });
+}

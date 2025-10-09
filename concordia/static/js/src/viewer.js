@@ -1,7 +1,6 @@
-import {debounce} from './base.js';
+import {debounce, displayHtmlMessage} from './base.js';
 import screenfull from 'screenfull';
 import OpenSeadragon from 'openseadragon';
-import {displayHtmlMessage} from './base.js';
 
 const viewerElement = document.getElementById('viewer-data');
 

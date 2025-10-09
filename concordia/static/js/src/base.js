@@ -1,3 +1,4 @@
+import 'bootstrap';
 import Cookies from 'js-cookie';
 import $ from 'jquery';
 import screenfull from 'screenfull';
@@ -124,7 +125,7 @@ function loadLegacyPolyfill(scriptUrl, callback) {
     document.body.append(script);
 }
 
-$(function () {
+document.addEventListener('DOMContent', () => {
     if (isOutdatedBrowser()) {
         var theMessage =
             'You are using an outdated browser. This website fully supports the current ' +
@@ -239,7 +240,7 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
 );
 
 // eslint-disable-next-line no-unused-vars
-function debounce(function_, timeout = 300) {
+export function debounce(function_, timeout = 300) {
     // Based on https://www.freecodecamp.org/news/javascript-debounce-example/
     let timer;
     return (...arguments_) => {
@@ -249,8 +250,6 @@ function debounce(function_, timeout = 300) {
         }, timeout);
     };
 }
-
-export {debounce};
 
 /* Social share stuff */
 
@@ -282,61 +281,72 @@ var $copyUrlButton = $('.copy-url-button');
 var $facebookShareButton = $('.facebook-share-button');
 var $twitterShareButton = $('.twitter-share-button');
 
-$copyUrlButton.on('click', function (event) {
-    event.preventDefault();
+const copyUrlButton = document.querySelector('.copy-url-button');
+if (copyUrlButton) {
+    copyUrlButton.addEventListener('click', function (event) {
+        event.preventDefault();
 
-    // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
-    // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#Browser_compatibility
-    // We'll use the older document.execCommand("copy") interface which requires a text input:
-    var $clipboardInput = $('<input type="text">')
-        .val($copyUrlButton.attr('href'))
-        .insertAfter($copyUrlButton);
-    $clipboardInput.get(0).select();
+        // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
+        // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#Browser_compatibility
+        // We'll use the older document.execCommand("copy") interface which requires a text input:
+        var $clipboardInput = $('<input type="text">')
+            .val($copyUrlButton.attr('href'))
+            .insertAfter($copyUrlButton);
+        $clipboardInput.get(0).select();
 
-    var tooltipMessage = '';
+        var tooltipMessage = '';
 
-    trackShareInteraction($copyUrlButton, 'Link copy');
+        trackShareInteraction($copyUrlButton, 'Link copy');
 
-    try {
-        document.execCommand('copy');
-        // Show the tooltip with a success message
-        tooltipMessage = 'This link has been copied to your clipboard';
-        $copyUrlButton
-            .tooltip('dispose')
-            .tooltip({title: tooltipMessage})
-            .tooltip('show')
-            .on('shown.bs.tooltip', hideTooltipCallback);
-    } catch (error) {
-        if (Sentry !== 'undefined') {
-            Sentry.captureException(error);
+        try {
+            document.execCommand('copy');
+            // Show the tooltip with a success message
+            tooltipMessage = 'This link has been copied to your clipboard';
+            $copyUrlButton
+                .tooltip('dispose')
+                .tooltip({title: tooltipMessage})
+                .tooltip('show')
+                .on('shown.bs.tooltip', hideTooltipCallback);
+        } catch (error) {
+            if (Sentry !== 'undefined') {
+                Sentry.captureException(error);
+            }
+
+            // Display an error message in the tooltip
+            tooltipMessage =
+                '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
+            $copyUrlButton
+                .tooltip('dispose')
+                .tooltip({title: tooltipMessage, html: true})
+                .tooltip('show');
+            document
+                .querySelector('#dismiss-tooltip-button')
+                .addEventListener('click', function () {
+                    $copyUrlButton.tooltip('hide');
+                });
+        } finally {
+            $clipboardInput.remove();
         }
 
-        // Display an error message in the tooltip
-        tooltipMessage =
-            '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
-        $copyUrlButton
-            .tooltip('dispose')
-            .tooltip({title: tooltipMessage, html: true})
-            .tooltip('show');
-        $('#dismiss-tooltip-button').on('click', function () {
-            $copyUrlButton.tooltip('hide');
-        });
-    } finally {
-        $clipboardInput.remove();
-    }
+        return false;
+    });
+}
 
-    return false;
-});
+const fbShareButton = document.querySelector('.copy-url-button');
+if (fbShareButton) {
+    fbShareButton.addEventListener('click', function () {
+        trackShareInteraction($facebookShareButton, 'Facebook Share');
+        return true;
+    });
+}
 
-$facebookShareButton.on('click', function () {
-    trackShareInteraction($facebookShareButton, 'Facebook Share');
-    return true;
-});
-
-$twitterShareButton.on('click', function () {
-    trackShareInteraction($twitterShareButton, 'Twitter Share');
-    return true;
-});
+const xShareButton = document.querySelector('.twitter-share-button');
+if (xShareButton) {
+    xShareButton.addEventListener('click', function () {
+        trackShareInteraction($twitterShareButton, 'Twitter Share');
+        return true;
+    });
+}
 
 // eslint-disable-next-line no-unused-vars
 export function trackUIInteraction(element, category, action, label) {
