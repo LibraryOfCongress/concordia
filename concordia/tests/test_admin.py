@@ -508,7 +508,7 @@ class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 
         response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
         content = self.get_streaming_content(response).split(b"\r\n")
-        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        self.assertEqual(len(content), 3)
         test_data = [
             b"ID,asset__id,asset__slug,user,created on,updated on,supersedes,"
             + b"submitted,accepted,rejected,reviewed by,text,ocr generated,"
@@ -532,6 +532,45 @@ class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         response = self.admin.export_to_excel(request, self.admin.get_queryset(request))
         # TODO: Test contents of file (requires a library to read xlsx files)
         self.assertNotEqual(len(response.content), 0)
+
+    def test_show_full_result_count_is_disabled(self):
+        self.assertFalse(self.admin.show_full_result_count)
+
+    def test_list_display_includes_superseded(self):
+        self.assertIn("superseded", self.admin.list_display)
+
+    def test_list_filter_includes_superseded_param(self):
+        params = {
+            getattr(f, "parameter_name", None)
+            for f in self.admin.list_filter
+            if hasattr(f, "parameter_name")
+        }
+        self.assertIn("superseded", params)
+
+    def test_get_queryset_adds_is_superseded_annotation(self):
+        base = create_transcription(asset=self.asset, user=self.user, text="base")
+        superseding = create_transcription(
+            asset=self.asset, user=self.user, supersedes=base, text="superseding"
+        )
+        request = self.request_factory.get("/")
+        qs = self.admin.get_queryset(request).filter(pk__in=[base.pk, superseding.pk])
+        by_id = {t.pk: t for t in qs}
+        self.assertIn(base.pk, by_id)
+        self.assertIn(superseding.pk, by_id)
+        self.assertTrue(hasattr(by_id[base.pk], "is_superseded"))
+        self.assertTrue(by_id[base.pk].is_superseded)
+        self.assertFalse(by_id[superseding.pk].is_superseded)
+
+    def test_superseded_column_uses_annotation_boolean(self):
+        base = create_transcription(asset=self.asset, user=self.user, text="base2")
+        superseding = create_transcription(
+            asset=self.asset, user=self.user, supersedes=base, text="superseding2"
+        )
+        request = self.request_factory.get("/")
+        qs = self.admin.get_queryset(request).filter(pk__in=[base.pk, superseding.pk])
+        by_id = {t.pk: t for t in qs}
+        self.assertTrue(self.admin.superseded(by_id[base.pk]))
+        self.assertFalse(self.admin.superseded(by_id[superseding.pk]))
 
 
 class SiteReportAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
