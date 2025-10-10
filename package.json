@@ -7,6 +7,11 @@
         "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
     "dependencies": {
+        "@codemirror/basic-setup": "^0.20.0",
+        "@codemirror/lang-html": "^6.4.11",
+        "@codemirror/lang-markdown": "^6.4.0",
+        "@codemirror/state": "^6.5.2",
+        "@codemirror/view": "^6.38.5",
         "@duetds/date-picker": "^1.4.0",
         "@fortawesome/fontawesome-free": "^6.7.2",
         "@popperjs/core": "^2.11.8",
@@ -16,7 +21,6 @@
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.0",
         "chroma-js": "^3.1.2",
-        "codemirror": "^5.65.19",
         "gulp": "^5.0.1",
         "gulp-rename": "^2.1.0",
         "gulp-sass": "^6.0.1",

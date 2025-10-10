@@ -1,19 +1,26 @@
-/* global CodeMirror prettier prettierPlugins django */
+/* global prettier prettierPlugins django */
+
+import {EditorState} from '@codemirror/state';
+import {EditorView, basicSetup} from '@codemirror/view';
+import {html} from '@codemirror/lang-html';
+import {markdown} from '@codemirror/lang-markdown';
 
 (function ($) {
     window.setupCodeMirror = function (textarea, flavor) {
         var converter;
         switch (flavor) {
-            case 'html':
+            case 'html': {
                 converter = (input) => input;
                 break;
-
-            case 'markdown':
+            }
+            case 'markdown': {
                 var md = new window.remarkable.Remarkable({html: true});
                 converter = (input) => md.render(input);
                 break;
-            default:
+            }
+            default: {
                 throw 'Unknown code flavor: ' + flavor;
+            }
         }
 
         var $formRow = $(textarea).parents('.form-row').first();
@@ -30,15 +37,15 @@
                 );
                 frameDocument.close();
 
-                var previewTemplate = document.querySelector(
+                const previewTemplate = document.querySelector(
                     'template#preview-head',
                 ).content;
 
-                previewTemplate.childNodes.forEach((node) => {
+                for (const node of previewTemplate.childNodes) {
                     frameDocument.head.append(
                         frameDocument.importNode(node, true),
                     );
-                });
+                }
 
                 queueUpdate();
             })
@@ -48,39 +55,35 @@
         function updatePreview() {
             var main = preview.contentDocument.body.querySelector('main');
             if (main) {
-                main.innerHTML = converter(editor.getValue());
+                main.innerHTML = converter(view.state.doc.toString());
             }
         }
 
-        var editorMode = flavor;
-        if (flavor == 'html') {
-            // CodeMirror actually treats HTML as a subset of XML:
-            editorMode = {
-                name: 'xml',
-                htmlMode: true,
-            };
-        }
-
-        var editor = CodeMirror.fromTextArea(textarea, {
-            mode: editorMode,
-            lineNumbers: true,
-            highlightFormatting: true,
-            indentUnit: 4,
-            lineWrapping: true,
-        });
-
-        var editorLineWidgets = [];
-
-        var queuedUpdate;
-
-        editor.on('change', queueUpdate);
-
+        let queuedUpdate;
         function queueUpdate() {
             if (queuedUpdate) {
-                window.cancelAnimationFrame(queuedUpdate);
+                cancelAnimationFrame(queuedUpdate);
             }
-            queuedUpdate = window.requestAnimationFrame(updatePreview);
+            queuedUpdate = requestAnimationFrame(updatePreview);
         }
+
+        const language = flavor === 'html' ? html() : markdown();
+
+        const updateListener = EditorView.updateListener.of((update) => {
+            if (update.docChanged) queueUpdate();
+        });
+
+        const state = EditorState.create({
+            doc: textarea.value,
+            extensions: [basicSetup, language, updateListener],
+        });
+
+        const view = new EditorView({
+            state,
+            parent: textarea.parentElement,
+        });
+
+        textarea.style.display = 'none'; // hide the original
 
         $('<button class="button">Run Prettier</button>')
             .prependTo($formRow)
@@ -89,41 +92,25 @@
 
                 $formRow.find('.errornote').remove();
 
-                editorLineWidgets.forEach((widget) =>
-                    editor.removeLineWidget(widget),
-                );
-
                 try {
-                    var pretty = prettier.format(editor.getValue(), {
+                    var pretty = prettier.format(view.state.doc.toString(), {
                         parser: flavor,
                         plugins: prettierPlugins,
                         printWidth: 120,
                         tabWidth: 4,
                     });
 
-                    editor.setValue(pretty);
+                    view.dispatch({
+                        changes: {
+                            from: 0,
+                            to: view.state.doc.length,
+                            insert: pretty,
+                        },
+                    });
                     queueUpdate();
                 } catch (error) {
                     $('<p class="errornote">').text(error).appendTo($formRow);
-
-                    var lineWarning = document.createElement('div');
-                    lineWarning.style.whiteSpace = 'nowrap';
-                    lineWarning.style.overflow = 'hidden';
-
-                    var icon = lineWarning.append(
-                        document.createElement('span'),
-                    );
-                    icon.style.marginRight = '1rem';
-                    icon.innerHTML = '⚠️';
-                    lineWarning.append(document.createTextNode(error.message));
-
-                    editorLineWidgets.push(
-                        editor.addLineWidget(
-                            error.loc.start.line - 1,
-                            lineWarning,
-                            {coverGutter: false, noHScroll: true},
-                        ),
-                    );
+                    console.error(error);
                 }
             });
     };
