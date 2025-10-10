@@ -1,19 +1,26 @@
-/* global CodeMirror prettier prettierPlugins django */
+/* global CodeMirror django */
+
+import prettier from 'prettier/standalone';
+import parseHtml from 'prettier/plugins/html';
+import parseMarkdown from 'prettier/plugins/markdown';
 
 (function ($) {
     window.setupCodeMirror = function (textarea, flavor) {
         var converter;
         switch (flavor) {
-            case 'html':
+            case 'html': {
                 converter = (input) => input;
                 break;
+            }
 
-            case 'markdown':
+            case 'markdown': {
                 var md = new window.remarkable.Remarkable({html: true});
                 converter = (input) => md.render(input);
                 break;
-            default:
+            }
+            default: {
                 throw 'Unknown code flavor: ' + flavor;
+            }
         }
 
         var $formRow = $(textarea).parents('.form-row').first();
@@ -34,11 +41,11 @@
                     'template#preview-head',
                 ).content;
 
-                previewTemplate.childNodes.forEach((node) => {
+                for (const node of previewTemplate.childNodes) {
                     frameDocument.head.append(
                         frameDocument.importNode(node, true),
                     );
-                });
+                }
 
                 queueUpdate();
             })
@@ -89,14 +96,14 @@
 
                 $formRow.find('.errornote').remove();
 
-                editorLineWidgets.forEach((widget) =>
-                    editor.removeLineWidget(widget),
-                );
+                for (const widget of editorLineWidgets) {
+                    editor.removeLineWidget(widget);
+                }
 
                 try {
                     var pretty = prettier.format(editor.getValue(), {
                         parser: flavor,
-                        plugins: prettierPlugins,
+                        plugins: [parseHtml, parseMarkdown],
                         printWidth: 120,
                         tabWidth: 4,
                     });

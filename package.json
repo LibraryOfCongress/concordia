@@ -25,7 +25,7 @@
         "js-cookie": "^3.0.5",
         "openseadragon": "^5.0.1",
         "openseadragon-filtering": "^1.0.0",
-        "prettier": "^2.8.8",
+        "prettier": "^3.6.2",
         "remarkable": "^2.0.1",
         "sass": "^1.78.0",
         "screenfull": "^6.0.0",
