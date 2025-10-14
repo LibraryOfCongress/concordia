@@ -78,7 +78,7 @@ class ParserTestCase(TestCase):
         )
         mock_get.return_value = mock_response
 
-        with self.assertLogs("", level="WARNING") as cm:
+        with self.assertLogs(level="WARNING") as cm:
             result = fetch_blog_posts()
 
         self.assertEqual(result, [])
@@ -96,7 +96,7 @@ class ParserTestCase(TestCase):
     @mock.patch("concordia.parser.requests.get")
     def test_get_connection_error(self, mock_get):
         mock_get.side_effect = requests.exceptions.ConnectionError()
-        with self.assertLogs("", level="WARNING") as cm:
+        with self.assertLogs(level="WARNING") as cm:
             result = fetch_blog_posts()
 
         self.assertEqual(result, [])
@@ -105,7 +105,7 @@ class ParserTestCase(TestCase):
     @mock.patch("concordia.parser.requests.get")
     def test_get_request_exception(self, mock_get):
         mock_get.side_effect = requests.exceptions.RequestException()
-        with self.assertLogs("", level="WARNING") as cm:
+        with self.assertLogs(level="WARNING") as cm:
             result = fetch_blog_posts()
 
         self.assertEqual(result, [])
