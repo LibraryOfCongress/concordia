@@ -499,6 +499,12 @@ class CreateItemImportTaskTests(TestCase):
                 "id": self.item_id,
                 "title": self.item_title,
                 "image_url": self.image_url,
+                "call_number": ["CALL.NUM"],
+                "contributor_names": ["Test Contributor Name"],
+                "library_of_congress_control_number": "1234567890",
+                "original_format": ["format1", "format2"],
+                "repository": ["Test Repository"],
+                "subject_headings": ["test--heading--1", "test--heading--2"],
             }
         }
 
@@ -521,6 +527,20 @@ class CreateItemImportTaskTests(TestCase):
             self.assertTrue(task_mock.called)
             self.assertEqual(Item.objects.count(), 1)
             self.assertTrue(Item.objects.filter(item_id=self.item_id).exists())
+            item = Item.objects.get(item_id=self.item_id)
+            self.assertIn("item", item.metadata)
+            item = item.metadata["item"]
+            self.assertIn("call_number", item)
+            self.assertEqual(["CALL.NUM"], item["call_number"])
+            lccn = item.get("library_of_congress_control_number", None) or item.get(
+                "number_lccn"
+            )
+            self.assertEqual("1234567890", lccn)
+            self.assertEqual(
+                ["test--heading--1", "test--heading--2"], item["subject_headings"]
+            )
+            self.assertEqual(["Test Contributor Name"], item["contributor_names"])
+            self.assertEqual(["Test Repository"], item["repository"])
 
     def test_create_item_import_task_existing_item_missing_assets(self, get_mock):
         item = create_item(item_id="testid1", project=self.job.project)
