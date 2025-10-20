@@ -123,21 +123,3 @@ class AccountDeletionForm(forms.Form):
 
 class TurnstileForm(forms.Form):
     turnstile = TurnstileField()
-
-
-class ContactUsForm(forms.Form):
-    referrer = forms.CharField(
-        label="Referring Page", widget=forms.HiddenInput(), required=False
-    )
-
-    email = forms.EmailField(label="Your email:", required=True)
-    subject = forms.CharField(label="Subject:", required=True)
-
-    link = forms.URLField(
-        label="Have a specific page you need help with? Add the link below (optional):",
-        required=False,
-    )
-
-    story = forms.CharField(
-        label="Let us know how we can help:", required=True, widget=forms.Textarea
-    )
