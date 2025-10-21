@@ -9,7 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, F, Func, OuterRef, TextField, Value
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
@@ -724,6 +724,25 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
     change_list_template = "admin/concordia/asset/change_list.html"
+    EXPORT_FIELDS = (
+        "id",
+        "item__id",
+        "campaign_id",
+        "published",
+        "title",
+        "slug",
+        "description",
+        "media_type",
+        "sequence",
+        "year",
+        "resource_url",
+        "download_url",
+        "metadata",
+        "transcription_status",
+        "difficulty",
+        "storage_image",
+        "disable_ocr",
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -808,6 +827,24 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         opts = self.opts
         codename = get_permission_codename("reopen", opts)
         return request.user.has_perm(f"{opts.app_label}.{codename}")
+
+    def export_to_csv(self, request, queryset):
+        queryset = queryset.annotate(
+            subject_headings=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("subject_headings"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            )
+        )
+        field_names = self.EXPORT_FIELDS + ("subject_headings",)
+        return export_to_csv_action(self, request, queryset, field_names=field_names)
+
+    def export_to_excel(self, request, queryset):
+        return export_to_excel_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
 
 
 @admin.register(Tag)
