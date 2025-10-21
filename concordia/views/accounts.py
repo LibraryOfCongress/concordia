@@ -43,11 +43,13 @@ from concordia.forms import (
     UserProfileForm,
     UserRegistrationForm,
 )
+from concordia.logging import ConcordiaLogger
 from concordia.models import Campaign, ConcordiaUser, UserProfileActivity
 
 from .utils import _get_pages
 
 logger = logging.getLogger(__name__)
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 class ConcordiaPasswordResetConfirmView(PasswordResetConfirmView):
@@ -116,8 +118,18 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
     """
     registration_form = UserRegistrationForm(request.POST)
     if registration_form.is_valid():
+        structured_logger.debug(
+            "Registration form valid.",
+            event_code="registration_rate_ok",
+            user=request.user,
+        )
         return None
     else:
+        structured_logger.debug(
+            "Registration form invalid, throttling.",
+            event_code="registration_rate_throttle",
+            user=request.user,
+        )
         return "10/h"
 
 
@@ -182,25 +194,51 @@ class ConcordiaLoginView(LoginView):
     form_class = UserLoginForm
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        structured_logger.debug(
+            "Login POST received.",
+            event_code="login_post_entry",
+            user=request.user,
+        )
         form = self.get_form()
         if form.is_valid():
             turnstile_form = TurnstileForm(request.POST)
             if turnstile_form.is_valid():
+                structured_logger.debug(
+                    "Login and Turnstile ok.",
+                    event_code="login_success",
+                    user=request.user,
+                )
                 return self.form_valid(form)
             else:
+                structured_logger.warning(
+                    "Turnstile failed for login.",
+                    event_code="login_turnstile_failed",
+                    reason="Turnstile validation failed",
+                    reason_code="turnstile_failed",
+                    user=request.user,
+                )
                 form.add_error(
                     None, "Unable to validate. Please login or complete the challenge."
                 )
                 return self.form_invalid(form)
 
         else:
+            structured_logger.debug(
+                "Login form invalid.",
+                event_code="login_form_invalid",
+                user=request.user,
+            )
             return self.form_invalid(form)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context_data(**kwargs)
 
         ctx["turnstile_form"] = TurnstileForm(auto_id=False)
-
+        structured_logger.debug(
+            "Added Turnstile form to context.",
+            event_code="login_context_turnstile",
+            user=self.request.user,
+        )
         return ctx
 
 
@@ -227,6 +265,11 @@ def account_letter(request: HttpRequest) -> HttpResponse:
             - Total transcriptions and reviews.
             - List of assets the user contributed to.
     """
+    structured_logger.debug(
+        "Building account letter.",
+        event_code="account_letter_start",
+        user=request.user,
+    )
     image_url = "file://{0}/{1}/img/logo.jpg".format(
         settings.SITE_ROOT_DIR, settings.STATIC_ROOT
     )
@@ -250,6 +293,14 @@ def account_letter(request: HttpRequest) -> HttpResponse:
         content=html.write_pdf(variant="pdf/ua-1"), content_type="application/pdf"
     )
     response["Content-Disposition"] = "attachment; filename=letter.pdf"
+    structured_logger.debug(
+        "Account letter generated.",
+        event_code="account_letter_success",
+        user=request.user,
+        total_reviews=aggregate_sums["review_count__sum"],
+        total_transcriptions=aggregate_sums["transcribe_count__sum"],
+        asset_count=len(asset_list),
+    )
     return response
 
 
@@ -292,6 +343,14 @@ def get_pages(request: HttpRequest) -> JsonResponse:
         }
         ```
     """
+    structured_logger.debug(
+        "Fetching recent pages.",
+        event_code="recent_pages_entry",
+        user=request.user,
+        page=request.GET.get("page", "1"),
+        campaign=request.GET.get("campaign"),
+        activity=request.GET.get("activity"),
+    )
     asset_list = _get_pages(request)
     paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
 
@@ -316,6 +375,14 @@ def get_pages(request: HttpRequest) -> JsonResponse:
     data = {}
     data["content"] = loader.render_to_string(
         "fragments/recent-pages.html", context, request=request
+    )
+    structured_logger.debug(
+        "Recent pages rendered.",
+        event_code="recent_pages_success",
+        user=request.user,
+        assets=len(asset_list),
+        num_pages=paginator.num_pages,
+        page=page_number,
     )
     return JsonResponse(data)
 
@@ -385,6 +452,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     paginate_by: int = 30
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        structured_logger.debug(
+            "Profile POST received.",
+            event_code="profile_post_entry",
+            user=request.user,
+        )
         self.object_list = self.get_queryset()
         if "submit_name" in request.POST:
             form = UserNameForm(request.POST)
@@ -393,11 +465,21 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 user.first_name = form.cleaned_data["first_name"]
                 user.last_name = form.cleaned_data["last_name"]
                 user.save()
+                structured_logger.debug(
+                    "Updated profile name.",
+                    event_code="profile_name_updated",
+                    user=request.user,
+                )
             return redirect("user-profile")
         else:
             return super().post(request, *args, **kwargs)
 
     def get_queryset(self) -> Any:
+        structured_logger.debug(
+            "Fetching pages for profile.",
+            event_code="profile_get_queryset",
+            user=self.request.user,
+        )
         return _get_pages(self.request)
 
     def get_context_data(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -443,6 +525,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         ctx["unconfirmed_email"] = concordia_user.get_email_for_reconfirmation()
         ctx["name_form"] = UserNameForm()
+        structured_logger.debug(
+            "Profile context ready.",
+            event_code="profile_context_ready",
+            user=self.request.user,
+            total_reviews=ctx["totalReviews"],
+            total_transcriptions=ctx["totalTranscriptions"],
+            pages_worked=ctx["pages_worked_on"],
+        )
         return ctx
 
     def get_initial(self) -> dict[str, Any]:
@@ -460,6 +550,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     def form_valid(self, form: Form) -> HttpResponse:
         user = self.request.user
         new_email = form.cleaned_data["email"]
+        structured_logger.info(
+            "Profile email update submitted.",
+            event_code="profile_email_update",
+            user=user,
+            require_reconfirm=settings.REQUIRE_EMAIL_RECONFIRMATION,
+        )
         # This is annoying, but there's no better way to get the proxy model here
         # without being hacky (changing user.__class__ directly.)
         # Every method (such as using a user profile) would incur the same
@@ -467,18 +563,35 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         concordia_user = ConcordiaUser.objects.get(id=user.id)
         if settings.REQUIRE_EMAIL_RECONFIRMATION:
             concordia_user.set_email_for_reconfirmation(new_email)
+            structured_logger.debug(
+                "Email set for reconfirmation.",
+                event_code="email_reconfirm_set",
+                user=user,
+                new_email=new_email,
+            )
             self.send_reconfirmation_email(concordia_user)
         else:
             concordia_user.email = new_email
             concordia_user.full_clean()
             concordia_user.save()
             concordia_user.delete_email_for_reconfirmation()
+            structured_logger.debug(
+                "Email updated without reconfirmation.",
+                event_code="email_updated_no_reconfirm",
+                user=user,
+                new_email=new_email,
+            )
 
         self.request.session["valid"] = True
 
         return super().form_valid(form)
 
     def form_invalid(self, form: Form) -> HttpResponse:
+        structured_logger.debug(
+            "Profile form invalid.",
+            event_code="profile_form_invalid",
+            user=self.request.user,
+        )
         self.request.session["valid"] = False
         return self.render_to_response(
             self.get_context_data(form=form, active_tab="account")
@@ -512,16 +625,36 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             request=self.request,
         )
         try:
+            structured_logger.info(
+                "Sending reconfirmation email.",
+                event_code="email_reconfirm_send_start",
+                user=user,
+                email=user.get_email_for_reconfirmation(),
+            )
             send_mail(
                 subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.get_email_for_reconfirmation()],
             )
+            structured_logger.debug(
+                "Reconfirmation email sent.",
+                event_code="email_reconfirm_send_success",
+                user=user,
+                email=user.get_email_for_reconfirmation(),
+            )
         except SMTPException:
             logger.exception(
                 "Unable to send email reconfirmation to %s",
                 user.get_email_for_reconfirmation(),
+            )
+            structured_logger.exception(
+                "Reconfirmation email send failed.",
+                event_code="email_reconfirm_send_failed",
+                reason="SMTPException",
+                reason_code="smtp_error",
+                user=user,
+                email=user.get_email_for_reconfirmation(),
             )
             messages.error(
                 self.request,
@@ -583,14 +716,29 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form: Form) -> HttpResponse:
+        structured_logger.info(
+            "Account deletion confirmed.",
+            event_code="account_delete_confirmed",
+            user=form.request.user,
+        )
         self.delete_user(form.request.user, form.request)
         return super().form_valid(form)
 
     def delete_user(self, user: ConcordiaUser, request: HttpRequest) -> None:
         logger.info("Deletion request for %s", user)
+        structured_logger.info(
+            "Processing account deletion.",
+            event_code="account_delete_start",
+            user=user,
+        )
         email = user.email
         if user.transcription_set.exists():
             logger.info("Anonymizing %s", user)
+            structured_logger.info(
+                "Anonymizing user account.",
+                event_code="account_anonymize",
+                user=user,
+            )
             user.username = "Anonymized %s" % uuid.uuid4()
             user.first_name = ""
             user.last_name = ""
@@ -602,9 +750,19 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
             user.save()
         else:
             logger.info("Deleting %s", user)
+            structured_logger.info(
+                "Deleting user account.",
+                event_code="account_delete",
+                user=user,
+            )
             user.delete()
         self.send_deletion_email(email)
         logout(request)
+        structured_logger.info(
+            "Account deletion complete.",
+            event_code="account_delete_complete",
+            user=user,
+        )
 
     def send_deletion_email(self, email: str) -> None:
         context = {}
@@ -621,16 +779,36 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
             request=self.request,
         )
         try:
+            structured_logger.info(
+                "Sending deletion email.",
+                event_code="account_delete_email_send_start",
+                user=self.request.user,
+                email=email,
+            )
             send_mail(
                 subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
             )
+            structured_logger.debug(
+                "Deletion email sent.",
+                event_code="account_delete_email_send_success",
+                user=self.request.user,
+                email=email,
+            )
         except SMTPException:
             logger.exception(
                 "Unable to send account deletion email to %s",
                 email,
+            )
+            structured_logger.exception(
+                "Deletion email send failed.",
+                event_code="account_delete_email_send_failed",
+                reason="SMTPException",
+                reason_code="smtp_error",
+                user=self.request.user,
+                email=email,
             )
             messages.error(
                 self.request,
@@ -690,8 +868,18 @@ class EmailReconfirmationView(TemplateView):
     def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
         extra_context = {}
         try:
+            structured_logger.debug(
+                "Email reconfirmation GET received.",
+                event_code="email_reconfirm_entry",
+            )
             self.confirm(*args, **kwargs)
         except ValidationError as exc:
+            structured_logger.warning(
+                "Email reconfirmation failed.",
+                event_code="email_reconfirm_failed",
+                reason=str(exc.message),
+                reason_code=str(exc.code),
+            )
             extra_context["reconfirmation_error"] = {
                 "message": exc.message,
                 "code": exc.code,
@@ -701,6 +889,10 @@ class EmailReconfirmationView(TemplateView):
             context_data.update(extra_context)
             return self.render_to_response(context_data, status=403)
         else:
+            structured_logger.debug(
+                "Email reconfirmation ok.",
+                event_code="email_reconfirm_success",
+            )
             return HttpResponseRedirect(self.get_success_url())
 
     def confirm(self, *args: Any, **kwargs: Any) -> ConcordiaUser:
@@ -715,6 +907,12 @@ class EmailReconfirmationView(TemplateView):
             raise ValidationError(self.BAD_EMAIL_MESSAGE, code="bad_email") from None
         user.save()
         user.delete_email_for_reconfirmation()
+        structured_logger.info(
+            "Email reconfirmed and applied.",
+            event_code="email_reconfirm_applied",
+            user=user,
+            new_email=email,
+        )
         return user
 
     def validate_key(self, confirmation_key: str) -> tuple[str, str]:
@@ -735,8 +933,19 @@ class EmailReconfirmationView(TemplateView):
     def get_user(self, username: str) -> ConcordiaUser:
         try:
             user = ConcordiaUser.objects.get(username=username)
+            structured_logger.debug(
+                "Loaded user for reconfirmation.",
+                event_code="email_reconfirm_user_loaded",
+                user=user,
+            )
             return user
         except ConcordiaUser.DoesNotExist as exc:
+            structured_logger.warning(
+                "User not found for reconfirmation.",
+                event_code="email_reconfirm_user_missing",
+                reason="User does not exist",
+                reason_code="user_missing",
+            )
             raise ValidationError(
                 self.BAD_USERNAME_MESSAGE, code="bad_username"
             ) from exc
