@@ -1,3 +1,4 @@
+import csv
 import io
 import zipfile
 from datetime import date, datetime
@@ -362,7 +363,7 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         )
 
 
-class AssetAdminTest(TestCase, CreateTestUsers):
+class AssetAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
         self.super_user = self.create_super_user()
@@ -370,6 +371,9 @@ class AssetAdminTest(TestCase, CreateTestUsers):
         self.user = self.create_test_user()
         self.admin = AssetAdmin(model=Asset, admin_site=self.site)
         self.asset = create_asset()
+        self.asset.item.metadata = {
+            "item": {"subject_headings": "History, Photography"}
+        }
         create_transcription(asset=self.asset, user=self.user)
         self.request_factory = RequestFactory()
 
@@ -387,6 +391,18 @@ class AssetAdminTest(TestCase, CreateTestUsers):
 
     def test_item_id(self):
         self.assertEqual(self.asset.item.item_id, self.admin.item_id(self.asset))
+
+    def test_export_to_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+
+        response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
+        content = self.get_streaming_content(response).decode("utf-8")  # .split("\r\n")
+        reader = csv.DictReader(io.StringIO(content))
+        row = next(reader)
+
+        self.assertIn("subject_headings", row)
+        self.assertEqual(row["subject_headings"], "History, Photography")
 
     def test_truncated_storage_image(self):
         truncated_url = self.admin.truncated_storage_image(self.asset)
