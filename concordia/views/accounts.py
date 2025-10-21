@@ -117,18 +117,19 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
             invalid; otherwise `None` to indicate no throttling.
     """
     registration_form = UserRegistrationForm(request.POST)
+    user = getattr(request, "user", None)
     if registration_form.is_valid():
         structured_logger.debug(
             "Registration form valid.",
             event_code="registration_rate_ok",
-            user=request.user,
+            user=user,
         )
         return None
     else:
         structured_logger.debug(
             "Registration form invalid, throttling.",
             event_code="registration_rate_throttle",
-            user=request.user,
+            user=user,
         )
         return "10/h"
 
