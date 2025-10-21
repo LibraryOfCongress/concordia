@@ -1,42 +1,55 @@
-# concordia/templatetags/visualization_tags.py
+# concordia/templatetags/visualization.py
 
 from django import template
 from django.utils.html import escape, format_html, format_html_join
+from django.utils.safestring import SafeString
 
 register = template.Library()
 
 
 @register.simple_tag
-def concordia_visualization(name, **attrs):
+def concordia_visualization(name: str, **attrs) -> SafeString:
     """
-    Render a <section> with a <canvas> and include its corresponding
-    visualization script.
+    Render a container with a section and a canvas for a named visualization.
 
-    Usage in a template:
-        {% load visualization_tags %}
-        {% concordia_visualization "daily-activity" style="float:left;" class="chart" %}
+    This tag outputs a `<div>` that always includes the
+    `visualization-container` class, wrapping a `<section>` with a `<canvas>`
+    whose `id` is set to the provided `name`. Any extra attributes passed to
+    the tag are applied to the outer `<div>` after being safely escaped.
 
-    This will output:
-        <div class="visualization-container chart" style="float:left;">
-            <section>
-                <canvas id="daily-activity"></canvas>
-            </section>
-        </div>
+    Usage:
+        Load the tag library, then invoke the tag with a name and optional
+        HTML attributes.
+
+        Template:
+
+            {% load visualization %}
+            {% concordia_visualization "daily-activity"
+                style="float:left;" class="chart" data-role="viz" %}
+
+        Output:
+
+            <div class="visualization-container chart" style="float:left;"
+                 data-role="viz">
+                <section>
+                    <canvas id="daily-activity"></canvas>
+                </section>
+            </div>
+
+        Notes:
+            - The `class` attribute you pass is appended to
+              `visualization-container`.
+            - All attribute names and values are escaped.
+            - This tag does not include any `<script>` tags. Visualization
+              scripts are included in the site-wide JavaScript rollup.
 
     Args:
-        name (str):
-            The slug identifying both the <canvas>’s id and the visualization
-            script filename.
-        **attrs:
-            Any number of HTML attribute=value pairs to set on the <section> tag.
-            Example: style="width:50%; float:left;" class="chart-wrapper" data-foo="bar"
+        name (str): The slug used as the `id` of the `<canvas>` element.
+        **attrs: Any HTML attributes to apply to the outer `<div>` container.
 
     Returns:
-        SafeString:
-            The combined HTML for the <section> (with escaped attrs) and
-            the <script> tag.
+        SafeString: Escaped HTML for the container, section, and canvas.
     """
-
     # Ensure 'visualization-container' is always present in class attribute
     user_classes = attrs.pop("class", "")
     combined_classes = "visualization-container"
