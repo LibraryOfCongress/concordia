@@ -142,6 +142,7 @@ def about_simple_page(
             + retired_campaigns.assets_waiting_review,
             "users_activated": active_campaigns.users_activated,
             "blog_posts": paginate_blog_posts(),
+            "about_page": True,
         }
         cache.set(context_cache_key, about_context, 60 * 60)
 
