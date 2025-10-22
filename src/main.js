@@ -9,8 +9,6 @@ import '../concordia/static/js/src/asset-reservation.js';
 import '../concordia/static/js/src/banner.js';
 import '../concordia/static/js/src/modules/concordia-visualization.js';
 import '../concordia/static/js/src/contribute.js';
-import '../concordia/static/js/src/visualizations/asset-status-overview.js';
-import '../concordia/static/js/src/visualizations/daily-activity.js';
 import '../concordia/static/js/src/guide.js';
 import '../concordia/static/js/src/homepage-carousel.js';
 import '../concordia/static/js/src/ocr.js';
