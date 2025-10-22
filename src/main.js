@@ -7,7 +7,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../concordia/static/js/src/about-accordions.js';
 import '../concordia/static/js/src/asset-reservation.js';
 import '../concordia/static/js/src/banner.js';
-import '../concordia/static/js/src/modules/concordia-visualization.js';
 import '../concordia/static/js/src/contribute.js';
 import '../concordia/static/js/src/guide.js';
 import '../concordia/static/js/src/homepage-carousel.js';
