@@ -348,7 +348,7 @@ def find_transcribable_campaign_asset(
             campaign=campaign,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_transcribable_for_campaign"
+            "concordia.tasks.next_asset.transcribable.populate_next_transcribable_for_campaign"
         )
         populate_task.delay(campaign.id)
     return asset
@@ -601,7 +601,7 @@ def find_next_transcribable_campaign_asset(
                 campaign=campaign,
             )
             populate_task = get_registered_task(
-                "concordia.tasks.populate_next_transcribable_for_campaign"
+                "concordia.tasks.next_asset.transcribable.populate_next_transcribable_for_campaign"
             )
             populate_task.delay(campaign.id)
         return asset

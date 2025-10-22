@@ -54,7 +54,7 @@ from ..models import (
     UserAssetTagCollection,
     UserProfileActivity,
 )
-from ..tasks import retire_campaign
+from ..tasks.retirement import retire_campaign
 from ..views.campaigns import ReportCampaignView
 from .actions import (
     anonymize_action,
