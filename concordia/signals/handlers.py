@@ -26,7 +26,8 @@ from concordia.models import (
     TranscriptionStatus,
     UserProfile,
 )
-from concordia.tasks import calculate_difficulty_values, update_useractivity_cache
+from concordia.tasks.assets import calculate_difficulty_values
+from concordia.tasks.useractivity import update_useractivity_cache
 from concordia.utils.next_asset import remove_next_asset_objects
 
 from .signals import reservation_obtained, reservation_released

@@ -6,7 +6,7 @@ from timeit import default_timer
 
 from django.core.management.base import BaseCommand
 
-from concordia.tasks import calculate_difficulty_values
+from concordia.tasks.assets import calculate_difficulty_values
 
 
 class Command(BaseCommand):

@@ -388,7 +388,7 @@ def find_reviewable_campaign_asset(
             user=user,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_campaign"
+            "concordia.tasks.next_asset.reviewable.populate_next_reviewable_for_campaign"
         )
         populate_task.delay(campaign.id)
 
@@ -583,7 +583,7 @@ def find_next_reviewable_campaign_asset(
             user=user,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_campaign"
+            "concordia.tasks.next_asset.reviewable.populate_next_reviewable_for_campaign"
         )
         populate_task.delay(campaign.id)
 

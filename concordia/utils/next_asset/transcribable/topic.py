@@ -343,7 +343,7 @@ def find_transcribable_topic_asset(
             topic=topic,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_transcribable_for_topic"
+            "concordia.tasks.next_asset.transcribable.populate_next_transcribable_for_topic"
         )
         populate_task.delay(topic.id)
     return asset
@@ -607,7 +607,7 @@ def find_next_transcribable_topic_asset(
                 topic=topic,
             )
             populate_task = get_registered_task(
-                "concordia.tasks.populate_next_transcribable_for_topic"
+                "concordia.tasks.next_asset.transcribable.populate_next_transcribable_for_topic"
             )
             populate_task.delay(topic.id)
         return asset
@@ -643,7 +643,7 @@ def find_next_transcribable_topic_asset(
                     topic=topic,
                 )
                 populate_task = get_registered_task(
-                    "concordia.tasks.populate_next_transcribable_for_topic"
+                    "concordia.tasks.next_asset.transcribable.populate_next_transcribable_for_topic"
                 )
                 populate_task.delay(topic.id)
             return asset

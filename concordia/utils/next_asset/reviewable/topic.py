@@ -386,7 +386,7 @@ def find_reviewable_topic_asset(
             user=user,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_topic"
+            "concordia.tasks.next_asset.reviewable.populate_next_reviewable_for_topic"
         )
         populate_task.delay(topic.id)
 
@@ -583,7 +583,7 @@ def find_next_reviewable_topic_asset(
             user=user,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_topic"
+            "concordia.tasks.next_asset.reviewable.populate_next_reviewable_for_topic"
         )
         populate_task.delay(topic.id)
 
