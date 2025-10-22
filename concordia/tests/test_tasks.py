@@ -21,7 +21,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
-from concordia.tasks.blogs import fetch_and_cache_blog_images
+from concordia.tasks.blog import fetch_and_cache_blog_images
 from concordia.tasks.next_asset.renew import renew_next_asset_cache
 from concordia.tasks.next_asset.reviewable import (
     clean_next_reviewable_for_campaign,
@@ -271,7 +271,7 @@ class TaskTestCase(CreateTestUsers, TestCase):
 
     @mock.patch("django.core.cache.cache.add")
     @mock.patch("django.core.cache.cache.delete")
-    @mock.patch("concordia.tasks.reports.sitereport._update_useractivity_cache")
+    @mock.patch("concordia.tasks.useractivity._update_useractivity_cache")
     def test_update_useractivity_cache(self, mock_update, mock_delete, mock_add):
         user = self.create_test_user()
         campaign = create_campaign()
@@ -1313,8 +1313,8 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(up_y.call_count, 1)
 
     @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
-    @mock.patch("concordia.tasks.reports.sitereport.SiteReport")
-    @mock.patch("concordia.tasks.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.SiteReport")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_early_return_after_backsteps(self, mock_local, mock_sr, slog):
         # Force "today" to mid-March so last_month_start starts at Mar 1.
         mock_local.return_value = date(2024, 3, 15)
@@ -1335,9 +1335,9 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_build_no_months", codes)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_recompute_all_month_upsert_and_december_rollover(
         self, mock_local, upsert_month, slog
     ):
@@ -1362,13 +1362,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_month_upserted", codes)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_incremental_month_create_and_refresh(
         self,
         mock_local,
@@ -1411,11 +1411,11 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         changed = build_key_metrics_reports.run(recompute_all=False)
         self.assertEqual(changed, 2)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.objects")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.objects")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_recompute_all_logs(
         self, mock_local, upsert_month, upsert_quarter, kmr_objects, slog
     ):
@@ -1451,11 +1451,11 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_quarter_upserted", codes)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.objects")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.objects")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_incremental_refresh_all_quarters(
         self, mock_local, upsert_month, kmr_objects, upsert_quarter, slog
     ):
@@ -1523,13 +1523,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_quarter_refreshed", codes)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.objects")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.objects")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_recompute_all_logs(
         self, mock_local, upsert_month, kmr_objects, upsert_year, slog
     ):
@@ -1558,13 +1558,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_year_upserted", codes)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.objects")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.objects")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_incremental_create_and_refresh(
         self, mock_local, upsert_month, kmr_objects, upsert_year, slog
     ):
@@ -1649,13 +1649,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes2 = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_year_refreshed", codes2)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_recompute_all_quarter_upserts_only(
         self, mock_local, mock_month, mock_quarter, mock_year, slog
     ):
@@ -1695,13 +1695,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         # Called once per quarter
         self.assertEqual(mock_quarter.call_count, 4)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_incremental_quarter_refresh_only(
         self, mock_local, mock_month, mock_quarter, mock_year, slog
     ):
@@ -1763,13 +1763,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
         self.assertEqual(mock_quarter.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_recompute_all_year_upsert_only(
         self, mock_local, mock_month, mock_quarter, mock_year, slog
     ):
@@ -1802,13 +1802,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
         self.assertEqual(mock_year.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_incremental_year_create(
         self, mock_local, mock_month, mock_quarter, mock_year, slog
     ):
@@ -1838,13 +1838,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
         self.assertEqual(mock_year.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_incremental_year_refresh(
         self, mock_local, mock_month, mock_quarter, mock_year, slog
     ):
@@ -1891,13 +1891,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
         self.assertEqual(mock_year.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_recompute_all_upserts_and_continue(
         self,
         mock_localdate,
@@ -1938,13 +1938,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 4)
         self.assertEqual(mock_upsert_quarter.call_count, 4)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_recompute_all_upserts_and_continue(
         self,
         mock_localdate,
@@ -1982,13 +1982,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
         self.assertEqual(mock_upsert_year.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_incremental_fiscal_year_created_branch(
         self,
         mock_localdate,
@@ -2024,13 +2024,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
         self.assertEqual(mock_upsert_year.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year"
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year"
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_incremental_fiscal_year_refresh_due_to_newer_quarter(
         self,
         mock_localdate,
@@ -2081,11 +2081,11 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(mock_upsert_year.call_count, 1)
 
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
-    @mock.patch("concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter")
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_recompute_all_non_none_continue_edge(
         self, mock_localdate, mock_upsert_quarter, mock_upsert_month
     ):
@@ -2116,20 +2116,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(mock_upsert_quarter.call_count, 4)
 
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=mock.MagicMock(
             period_start=date(2024, 10, 1), period_end=date(2025, 9, 30)
         ),
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_incremental_refresh_monthly_newer(
         self,
         mock_localdate,
@@ -2207,20 +2207,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertGreaterEqual(mock_upsert_quarter.call_count, 1)
 
     @mock.patch(
-        "concordia.tasksreport.key_metrics..KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasksreport.key_metrics..KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=mock.MagicMock(
             period_start=date(2024, 10, 1), period_end=date(2025, 9, 30)
         ),
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_recompute_all_non_none_continue_edge(
         self, mock_localdate, mock_upsert_fy, mock_upsert_quarter, mock_upsert_month
     ):
@@ -2243,20 +2243,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
 
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=mock.MagicMock(
             period_start=date(2024, 10, 1), period_end=date(2025, 9, 30)
         ),
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_incremental_create_missing(
         self,
         mock_localdate,
@@ -2290,20 +2290,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 1)
 
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=mock.MagicMock(
             period_start=date(2024, 10, 1), period_end=date(2025, 9, 30)
         ),
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_incremental_refresh_when_quarter_newer(
         self, mock_localdate, mock_upsert_fy, mock_upsert_quarter, mock_upsert_month
     ):
@@ -2337,20 +2337,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         changed = build_key_metrics_reports(recompute_all=False)
         self.assertEqual(changed, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_recompute_all_none_branch_continue(
         self, mock_localdate, upsert_quarter, upsert_month, upsert_year, slog
     ):
@@ -2384,20 +2384,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 0)
         self.assertEqual(upsert_quarter.call_count, 4)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_quarter_incremental_refresh_none_branch_continue(
         self,
         mock_localdate,
@@ -2458,20 +2458,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(changed, 0)
         self.assertEqual(mock_upsert_quarter.call_count, 1)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_recompute_all_none_branch_continue(
         self,
         mock_localdate,
@@ -2509,20 +2509,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertNotIn("key_metrics_year_upserted", codes)
 
-    @mock.patch("concordia.tasks.report.key_metrics.structured_logger")
+    @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_fiscal_year",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_fiscal_year",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_quarter",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_quarter",
         return_value=None,
     )
     @mock.patch(
-        "concordia.tasks.report.key_metrics.KeyMetricsReport.upsert_month",
+        "concordia.tasks.reports.key_metrics.KeyMetricsReport.upsert_month",
         return_value=None,
     )
-    @mock.patch("concordia.tasks.report.key_metrics.timezone.localdate")
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
     def test_fiscal_year_incremental_refresh_none_branch_continue(
         self,
         mock_localdate,
