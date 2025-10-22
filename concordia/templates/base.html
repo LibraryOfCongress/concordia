@@ -40,6 +40,7 @@
                 <script type="module" src="{% static 'js/main.js' %}"></script>
             {% endif %}
         {% endblock head_content %}
+        {% block extra_scripts %}{% endblock %}
         {% comment %}
     Adobe's tag manager requires this script to be placed at the top even though it's bad
 for performance:
