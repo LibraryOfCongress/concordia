@@ -399,15 +399,12 @@ class AssetAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         original_format = "book, collection"
         repository = "LOC Collections"
         subject_headings = '["History", "Photography"]'
-        self.asset.metadata = {
-            "original_format": original_format,
-        }
-        self.asset.save()
         self.asset.item.metadata = {
             "item": {
                 "call_number": call_number,
                 "contributor_names": contributor_names,
                 "library_of_congress_control_number": lccn,
+                "original_format": original_format,
                 "repository": repository,
                 "subject_headings": subject_headings,
             }

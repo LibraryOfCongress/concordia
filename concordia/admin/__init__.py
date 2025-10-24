@@ -747,7 +747,56 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related("item").order_by("item__item_id", "sequence")
+        qs = qs.select_related("item")
+        qs = qs.annotate(
+            call_number=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("call_number"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            contributor_names=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("contributor_names"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            lccn_permalink=Concat(
+                Value("https://lccn.loc.gov/"),
+                Func(
+                    F("item__metadata"),
+                    Value("item"),
+                    Value("library_of_congress_control_number"),
+                    function="jsonb_extract_path_text",
+                    output_field=TextField(),
+                ),
+                output_field=TextField(),
+            ),
+            original_format=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("original_format"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            repository=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("repository"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            subject_headings=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("subject_headings"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+        )
+        return qs.order_by("item__item_id", "sequence")
 
     def lookup_allowed(self, key, value):
         if key in ("item__project__id__exact", "item__project__campaign__id__exact"):
@@ -830,65 +879,9 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return request.user.has_perm(f"{opts.app_label}.{codename}")
 
     def export_to_csv(self, request, queryset):
-        queryset = queryset.select_related("item")
-
-        queryset = queryset.annotate(
-            call_number=Func(
-                F("item__metadata"),
-                Value("item"),
-                Value("call_number"),
-                function="jsonb_extract_path_text",
-                output_field=TextField(),
-            ),
-            contributor_names=Func(
-                F("item__metadata"),
-                Value("item"),
-                Value("contributor_names"),
-                function="jsonb_extract_path_text",
-                output_field=TextField(),
-            ),
-            lccn_permalink=Concat(
-                Value("https://lccn.loc.gov/"),
-                Func(
-                    F("item__metadata"),
-                    Value("item"),
-                    Value("library_of_congress_control_number"),
-                    function="jsonb_extract_path_text",
-                    output_field=TextField(),
-                ),
-                output_field=TextField(),
-            ),
-            original_format=Func(
-                F("metadata"),
-                Value("original_format"),
-                function="jsonb_extract_path_text",
-                output_field=TextField(),
-            ),
-            repository=Func(
-                F("item__metadata"),
-                Value("item"),
-                Value("repository"),
-                function="jsonb_extract_path_text",
-                output_field=TextField(),
-            ),
-            subject_headings=Func(
-                F("item__metadata"),
-                Value("item"),
-                Value("subject_headings"),
-                function="jsonb_extract_path_text",
-                output_field=TextField(),
-            ),
+        return export_to_csv_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
         )
-
-        field_names = self.EXPORT_FIELDS + (
-            "call_number",
-            "contributor_names",
-            "lccn_permalink",
-            "original_format",
-            "repository",
-            "subject_headings",
-        )
-        return export_to_csv_action(self, request, queryset, field_names=field_names)
 
     def export_to_excel(self, request, queryset):
         return export_to_excel_action(
