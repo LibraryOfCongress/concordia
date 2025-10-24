@@ -10,6 +10,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
 from django.db.models import Exists, F, Func, OuterRef, TextField, Value
+from django.db.models.functions import Concat
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
@@ -829,16 +830,64 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return request.user.has_perm(f"{opts.app_label}.{codename}")
 
     def export_to_csv(self, request, queryset):
+        queryset = queryset.select_related("item")
+
         queryset = queryset.annotate(
+            call_number=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("call_number"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            contributor_names=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("contributor_names"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            lccn_permalink=Concat(
+                Value("https://lccn.loc.gov/"),
+                Func(
+                    F("item__metadata"),
+                    Value("item"),
+                    Value("library_of_congress_control_number"),
+                    function="jsonb_extract_path_text",
+                    output_field=TextField(),
+                ),
+                output_field=TextField(),
+            ),
+            original_format=Func(
+                F("metadata"),
+                Value("original_format"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
+            repository=Func(
+                F("item__metadata"),
+                Value("item"),
+                Value("repository"),
+                function="jsonb_extract_path_text",
+                output_field=TextField(),
+            ),
             subject_headings=Func(
                 F("item__metadata"),
                 Value("item"),
                 Value("subject_headings"),
                 function="jsonb_extract_path_text",
                 output_field=TextField(),
-            )
+            ),
         )
-        field_names = self.EXPORT_FIELDS + ("subject_headings",)
+
+        field_names = self.EXPORT_FIELDS + (
+            "call_number",
+            "contributor_names",
+            "lccn_permalink",
+            "original_format",
+            "repository",
+            "subject_headings",
+        )
         return export_to_csv_action(self, request, queryset, field_names=field_names)
 
     def export_to_excel(self, request, queryset):
