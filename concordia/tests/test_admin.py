@@ -373,9 +373,7 @@ class AssetAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.user = self.create_test_user()
         self.admin = AssetAdmin(model=Asset, admin_site=self.site)
         self.asset = create_asset()
-        self.asset.item.metadata = {
-            "item": {"subject_headings": "History, Photography"}
-        }
+
         create_transcription(asset=self.asset, user=self.user)
         self.request_factory = RequestFactory()
 
@@ -395,16 +393,41 @@ class AssetAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(self.asset.item.item_id, self.admin.item_id(self.asset))
 
     def test_export_to_csv(self):
+        call_number = "A12.3.B4 C56 Vol. 789"
+        contributor_names = "Records Collection (LOC)"
+        lccn = "1234567890"
+        original_format = "book, collection"
+        repository = "LOC Collections"
+        subject_headings = '["History", "Photography"]'
+        self.asset.metadata = {
+            "original_format": original_format,
+        }
+        self.asset.save()
+        self.asset.item.metadata = {
+            "item": {
+                "call_number": call_number,
+                "contributor_names": contributor_names,
+                "library_of_congress_control_number": lccn,
+                "repository": repository,
+                "subject_headings": subject_headings,
+            }
+        }
+        self.asset.item.save()
+
         request = self.request_factory.get("/")
         request.user = self.super_user
 
         response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
-        content = self.get_streaming_content(response).decode("utf-8")  # .split("\r\n")
+        content = self.get_streaming_content(response).decode("utf-8")
         reader = csv.DictReader(io.StringIO(content))
         row = next(reader)
 
-        self.assertIn("subject_headings", row)
-        self.assertEqual(row["subject_headings"], "History, Photography")
+        self.assertEqual(row["call_number"], call_number)
+        self.assertEqual(row["contributor_names"], contributor_names)
+        self.assertEqual(row["lccn_permalink"], f"https://lccn.loc.gov/{lccn}")
+        self.assertEqual(row["original_format"], original_format)
+        self.assertEqual(row["repository"], repository)
+        self.assertEqual(row["subject_headings"], subject_headings)
 
     def test_truncated_storage_image(self):
         truncated_url = self.admin.truncated_storage_image(self.asset)
