@@ -51,7 +51,9 @@ def turnstile_default_settings(request: "HttpRequest") -> "Dict[str, Any]":
             settings, "TURNSTILE_SITEKEY", "1x00000000000000000000BB"
         ),
         "TURNSTILE_SECRET": getattr(
-            settings, "TURNSTILE_SECRET", "1x0000000000000000000000000000000AA"
+            settings,
+            "TURNSTILE_SECRET",
+            "1x0000000000000000000000000000000AA",  # nosec B106: test-only dummy secret
         ),
         "TURNSTILE_TIMEOUT": getattr(settings, "TURNSTILE_TIMEOUT", 5),
         "TURNSTILE_DEFAULT_CONFIG": getattr(settings, "TURNSTILE_DEFAULT_CONFIG", {}),
