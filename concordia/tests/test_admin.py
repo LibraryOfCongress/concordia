@@ -4,8 +4,10 @@ from datetime import date, datetime
 from html import escape
 from unittest import mock
 
+from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseRedirect
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -421,6 +423,114 @@ class AssetAdminTest(TestCase, CreateTestUsers):
 
         request.user = self.staff_user
         self.admin.has_reopen_permission(request)
+
+    def test_response_action_redirects_with_valid_next(self):
+        request = self.request_factory.post(
+            reverse("admin:concordia_asset_changelist"),
+            data={"next": "/admin/"},
+        )
+        request._messages = mock.MagicMock()
+        request.user = self.super_user
+
+        queryset = Asset.objects.all()
+        admin_instance = AssetAdmin(Asset, self.site)
+        admin_instance.get_actions = mock.MagicMock(return_value={})
+        response = admin_instance.response_action(request, queryset)
+
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, "/admin/")
+
+    def test_response_action_falls_back_to_default_without_valid_next(self):
+        request = self.request_factory.post(
+            reverse("admin:concordia_asset_changelist"),
+            data={"next": "https://example.com/malicious"},
+        )
+        request._messages = mock.MagicMock()
+        request.user = self.super_user
+
+        queryset = Asset.objects.all()
+        admin_instance = AssetAdmin(Asset, self.site)
+
+        fallback_response = HttpResponseRedirect("/default/")
+        with mock.patch.object(
+            admin.ModelAdmin, "response_action", return_value=fallback_response
+        ):
+            response = admin_instance.response_action(request, queryset)
+
+        self.assertEqual(response.url, "/default/")
+
+    def test_change_view_skips_asset_logic_when_no_object_id(self):
+        request = self.request_factory.get("/admin/concordia/asset/add/")
+        request.user = self.super_user
+
+        admin_instance = AssetAdmin(Asset, self.site)
+
+        with mock.patch.object(
+            admin.ModelAdmin, "change_view", return_value=HttpResponse("OK")
+        ) as mock_super_change_view:
+            response = admin_instance.change_view(request, object_id=None)
+
+        self.assertEqual(response.status_code, 200)
+        mock_super_change_view.assert_called_once()
+
+    def test_change_view_handles_submitted_status_as_needs_review(self):
+        asset = create_asset(
+            item=self.asset.item, slug="test-asset-2", transcription_status="submitted"
+        )
+        request = self.request_factory.get(
+            reverse("admin:concordia_asset_change", args=[asset.pk])
+        )
+        request.user = self.super_user
+
+        admin_instance = AssetAdmin(Asset, self.site)
+
+        with mock.patch.object(admin_instance, "get_actions") as mock_get_actions:
+            mock_get_actions.return_value = {
+                "change_status_to_completed": (
+                    "func",
+                    None,
+                    "Change status to Completed",
+                ),
+                "change_status_to_needs_review": (
+                    "func",
+                    None,
+                    "Change status to Needs Review",
+                ),
+                "change_status_to_in_progress": (
+                    "func",
+                    None,
+                    "Change status to In Progress",
+                ),
+            }
+
+            with mock.patch.object(
+                admin.ModelAdmin, "change_view", return_value=HttpResponse("OK")
+            ) as mock_super_change_view:
+                response = admin_instance.change_view(request, str(asset.pk))
+
+        self.assertEqual(response.status_code, 200)
+        mock_super_change_view.assert_called_once()
+
+    def test_response_action_returns_default_when_no_next_url(self):
+        request = self.request_factory.post(
+            reverse("admin:concordia_asset_changelist"),
+            data={},
+        )
+        request._messages = mock.MagicMock()
+        request.user = self.super_user
+
+        queryset = Asset.objects.all()
+        admin_instance = AssetAdmin(Asset, self.site)
+
+        default_response = HttpResponseRedirect("/default/")
+        with mock.patch.object(
+            admin.ModelAdmin, "response_action", return_value=default_response
+        ) as mock_super_response_action:
+            response = admin_instance.response_action(request, queryset)
+
+        mock_super_response_action.assert_called_once_with(request, queryset)
+        self.assertEqual(response, default_response)
+        self.assertEqual(response.url, "/default/")
 
 
 class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
