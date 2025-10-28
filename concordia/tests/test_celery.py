@@ -72,3 +72,25 @@ class ConcordiaCeleryTests(TestCase):
 
         mock_walk.assert_called_once()
         mock_import.assert_called_once_with("empty_pkg")
+
+    def test__load_all_task_modules_invokes_imports(self):
+        with mock.patch.object(celery_mod, "import_all_submodules") as mock_import_all:
+            celery_mod._load_all_task_modules(sender=celery_mod.app)
+
+        mock_import_all.assert_has_calls(
+            [
+                mock.call("concordia.tasks"),
+                mock.call("importer.tasks"),
+            ],
+            any_order=False,
+        )
+
+    def test_on_after_finalize_signal_triggers_handler(self):
+        with mock.patch.object(celery_mod, "import_all_submodules") as mock_import_all:
+            celery_mod.app.on_after_finalize.send(sender=celery_mod.app)
+
+        mock_import_all.assert_has_calls(
+            [mock.call("concordia.tasks"), mock.call("importer.tasks")],
+            any_order=False,
+        )
+        self.assertEqual(mock_import_all.call_count, 2)
