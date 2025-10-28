@@ -3029,11 +3029,11 @@ class NextTopicAssetManager(models.Manager):
 
 
 class NextTranscribableCampaignAssetManager(NextCampaignAssetManager):
-    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+    target_count = getattr(settings, "NEXT_TRANSCRIBABLE_ASSET_COUNT", 100)
 
 
 class NextTranscribableTopicAssetManager(NextTopicAssetManager):
-    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+    target_count = getattr(settings, "NEXT_TRANSCRIBABLE_ASSET_COUNT", 100)
 
 
 class NextReviewableCampaignAssetManager(NextCampaignAssetManager):
