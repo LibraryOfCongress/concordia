@@ -6,7 +6,9 @@ from django.utils.html import escape, format_html
 
 from concordia.models import TranscriptionStatus
 from concordia.templatetags.concordia_filtering_tags import transcription_status_filters
+from concordia.templatetags.concordia_text_tags import reprchar
 from concordia.templatetags.custom_math import multiply
+from concordia.templatetags.reject_filter import reject
 from concordia.templatetags.truncation import (
     WordBreakTruncator,
     truncatechars_on_word_break,
@@ -93,6 +95,64 @@ class TestTemplateTags(TestCase):
             base_template + "{% qs_alter data add_if_missing:bar='newvalue' %}"
         ).render(Context({"data": data}))
         self.assertEqual(out, "bar=baz&amp;bar=foo&amp;baz=taz")
+
+    def test_reprchar_variants(self):
+        cases = [
+            ("A", "A"),
+            ("\n", "\\n"),
+            ("\x00", "\\x00"),
+            ("\u200b", "\\u200b"),
+            ("\\", "\\\\"),
+        ]
+        for ch, expected in cases:
+            self.assertEqual(reprchar(ch), expected)
+
+
+class RejectFilterTests(TestCase):
+    def test_returns_input_when_falsy(self):
+        self.assertEqual(reject("", "x"), "")
+        self.assertEqual(reject([], "x"), [])
+        self.assertIsNone(reject(None, "x"))
+        self.assertEqual(reject((), "x"), ())
+
+    def test_string_single_reject(self):
+        self.assertEqual(
+            reject("error warn marked-safe", "marked-safe"),
+            "error warn",
+        )
+
+    def test_string_multiple_rejects(self):
+        self.assertEqual(
+            reject("error warn marked-safe", "marked-safe,warn"),
+            "error",
+        )
+
+    def test_string_no_match(self):
+        self.assertEqual(reject("one two", "three"), "one two")
+
+    def test_string_empty_args(self):
+        self.assertEqual(reject("one two", ""), "one two")
+
+    def test_string_whitespace_split_and_join(self):
+        self.assertEqual(reject("a   b\tc", "b"), "a c")
+
+    def test_string_case_sensitivity(self):
+        self.assertEqual(reject("A a", "a"), "A")
+
+    def test_iterable_list(self):
+        self.assertEqual(
+            reject(["ok", "deprecated", "x", "hidden"], "deprecated,hidden"),
+            ["ok", "x"],
+        )
+
+    def test_iterable_tuple_and_duplicates(self):
+        self.assertEqual(reject(("a", "b", "c", "b"), "b"), ["a", "c"])
+
+    def test_iterable_no_match(self):
+        self.assertEqual(reject(["one", "two"], "three"), ["one", "two"])
+
+    def test_iterable_empty_args(self):
+        self.assertEqual(reject(["one", "two"], ""), ["one", "two"])
 
 
 @override_settings(

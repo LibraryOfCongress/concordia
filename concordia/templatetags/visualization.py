@@ -59,15 +59,12 @@ def concordia_visualization(name: str, **attrs) -> SafeString:
 
     # Build an attribute string like: key1="value1" key2="value2"
     # Using format_html_join ensures that each key and value is properly escaped.
-    if attrs:
-        attr_items = ((escape(key), escape(value)) for key, value in attrs.items())
-        # format_html_join(' ', '{}="{}"', attr_items) -> 'key1="value1" key2="value2"'
-        attrs_str = format_html_join(" ", '{}="{}"', attr_items)
-        # Prepend a space so that when we do '<div {attrs_str}>
-        # we get "<div key=...>"
-        attrs_str = format_html(" {}", attrs_str)
-    else:
-        attrs_str = format_html("")  # empty
+    attr_items = ((escape(key), escape(value)) for key, value in attrs.items())
+    # format_html_join(' ', '{}="{}"', attr_items) -> 'key1="value1" key2="value2"'
+    attrs_str = format_html_join(" ", '{}="{}"', attr_items)
+    # Prepend a space so that when we do '<div {attrs_str}>
+    # we get "<div key=...>"
+    attrs_str = format_html(" {}", attrs_str)
 
     # Build the <div> + <section> + <canvas> line
     # We use the section in order to be able to grow the
