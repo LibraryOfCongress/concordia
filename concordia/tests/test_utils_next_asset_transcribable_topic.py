@@ -214,6 +214,29 @@ class NextTranscribableTopicAssetTests(CreateTestUsers, TestCase):
         )
         self.assertEqual(chosen, not_started_asset)
 
+    @patch("concordia.utils.next_asset.transcribable.topic.get_registered_task")
+    def test_project_short_circuit_topic_without_item_id_allows_same_item(
+        self, mock_get_task
+    ):
+        """
+        With item_id not set, the project-level short-circuit
+        should return the first NOT_STARTED in the project,
+        ordered by (item__item_id, sequence, id).
+        """
+        mock_task = mock_get_task.return_value
+        mock_task.delay = MagicMock()
+
+        chosen = find_next_transcribable_topic_asset(
+            self.topic,
+            project_slug=self.asset1.item.project.slug,
+            item_id="",  # falsy -> do not exclude same item
+            original_asset_id=None,  # no exclusion of original
+        )
+        # Both assets are NOT_STARTED in the same item; ordering picks asset1.
+        self.assertEqual(chosen, self.asset1)
+        self.assertFalse(mock_get_task.called)
+        self.assertFalse(mock_task.delay.called)
+
 
 class TranscribableTopicInternalsTests(CreateTestUsers, TestCase):
     def setUp(self):
@@ -878,3 +901,100 @@ class NextTranscribableTopicMoreTests(CreateTestUsers, TestCase):
         self.assertEqual(chosen, self.asset2)
         self.assertTrue(mock_get_task.called)
         self.assertTrue(mock_task.delay.called)
+
+    @patch("concordia.utils.next_asset.transcribable.topic.get_registered_task")
+    def test_inprogress_fallback_item_id_returns_none_when_no_candidates_topic(
+        self, mock_get_task
+    ):
+        """
+        With item_id truthy but no same-item IN_PROGRESS (and no NOT_STARTED anywhere),
+        the IN_PROGRESS fallback should yield no asset and the function returns None.
+        Ensures the path where `asset` is falsy in the IN_PROGRESS block is covered.
+        """
+        mock_task = mock_get_task.return_value
+        mock_task.delay = MagicMock()
+
+        # Fresh topic/project with a single item and no transcribable assets at all.
+        campaign = create_campaign(slug="tt-ip-none-c", title="tt-ip-none-c")
+        project = create_project(
+            campaign=campaign, slug="tt-ip-none-p", title="tt-ip-none-p"
+        )
+        topic = create_topic(project=project)
+        item = create_item(project=project, item_id="tt-ip-none-i")
+
+        a1 = create_asset(item=item, sequence=1, slug="tt-ip-none-a1")
+        a2 = create_asset(item=item, sequence=2, slug="tt-ip-none-a2")
+        # Make both SUBMITTED so neither NOT_STARTED nor IN_PROGRESS exists.
+        create_transcription(asset=a1, user=get_anonymous_user(), submitted=now())
+        create_transcription(asset=a2, user=get_anonymous_user(), submitted=now())
+
+        got = find_next_transcribable_topic_asset(
+            topic=topic,
+            project_slug=project.slug,
+            item_id=item.item_id,  # truthy, so we enter the IN_PROGRESS fallback
+            original_asset_id=None,
+        )
+        self.assertIsNone(got)
+        # No task should be spawned since the IN_PROGRESS block found nothing.
+        self.assertFalse(mock_get_task.called)
+
+    @patch("concordia.utils.next_asset.transcribable.topic.get_registered_task")
+    def test_inprogress_fallback_returns_asset_without_spawning(self, mock_get_task):
+        """
+        Force a path where the cache stage is exercised (so spawn_task stays False),
+        but yields no usable asset (simulated by making the cached asset retrieval
+        return None). The function should then fall through to the IN_PROGRESS
+        fallback, return that asset and NOT spawn the population task.
+        """
+        mock_task = mock_get_task.return_value
+        mock_task.delay = MagicMock()
+
+        # Current item: seq1 SUBMITTED, seq2 IN_PROGRESS -> same-item NOT_STARTED fails.
+        create_transcription(asset=self.asset1, user=self.anonymous, submitted=now())
+        create_transcription(asset=self.asset2, user=self.anonymous)  # IN_PROGRESS
+
+        # Prepare a cached candidate in a DIFFERENT project so project short-circuit
+        # doesn't grab it (only checks current project_slug).
+        other_campaign = create_campaign(slug="tt-ip-cache-c", title="tt-ip-cache-c")
+        other_project = create_project(
+            campaign=other_campaign, slug="tt-ip-cache-p", title="tt-ip-cache-p"
+        )
+        other_item = create_item(project=other_project, item_id="tt-ip-cache-i")
+        cached_asset = create_asset(item=other_item, sequence=1, slug="tt-ip-cache-a")
+
+        NextTranscribableTopicAsset.objects.create(
+            asset=cached_asset,
+            topic=self.topic,
+            item=cached_asset.item,
+            item_item_id=cached_asset.item.item_id,
+            project=cached_asset.item.project,
+            project_slug=cached_asset.item.project.slug,
+            sequence=cached_asset.sequence,
+            transcription_status=TranscriptionStatus.NOT_STARTED,
+        )
+
+        # Patch Asset.objects.filter only for id=cached_asset.id so the cache lookup
+        # produces an asset_id (spawn_task remains False) but then returns no row,
+        # forcing the function into the IN_PROGRESS fallback.
+        real_filter = Asset.objects.filter
+
+        def filter_side_effect(*args, **kwargs):
+            if kwargs == {"id": cached_asset.id}:
+                qs_mock = MagicMock()
+                qs_mock.select_for_update.return_value = qs_mock
+                qs_mock.select_related.return_value = qs_mock
+                qs_mock.first.return_value = None  # simulate skip-locked/missing row
+                return qs_mock
+            return real_filter(*args, **kwargs)
+
+        with patch.object(Asset.objects, "filter", side_effect=filter_side_effect):
+            chosen = find_next_transcribable_topic_asset(
+                self.topic,
+                project_slug=self.asset1.item.project.slug,
+                item_id=self.asset1.item.item_id,
+                original_asset_id=None,
+            )
+
+        # Should fall back to same-item IN_PROGRESS and NOT spawn the task.
+        self.assertEqual(chosen, self.asset2)
+        self.assertFalse(mock_get_task.called)
