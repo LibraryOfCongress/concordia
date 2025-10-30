@@ -210,3 +210,23 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.topic1_report.daily_review_actions, 2)
         self.assertEqual(self.topic1_report.distinct_tags, 1)
         self.assertEqual(self.topic1_report.tag_uses, 1)
+
+    def test_topic_report_zero_assets_emits_warning(self):
+        # Create a new topic attached to a project with no items/assets so the
+        # topic report computes zero total assets and emits a warning.
+        from unittest import mock
+
+        empty_campaign = create_campaign(slug="sr-empty-c")
+        empty_project = create_project(campaign=empty_campaign, slug="sr-empty-p")
+        empty_topic = create_topic(project=empty_project, slug="sr-empty-t")
+
+        with mock.patch("concordia.tasks.reports.sitereport.structured_logger") as slog:
+            site_report()
+
+            warn_calls = [
+                c
+                for c in slog.warning.call_args_list
+                if c.kwargs.get("event_code") == "topic_report_zero_assets"
+                and c.kwargs.get("topic") == empty_topic
+            ]
+            self.assertTrue(warn_calls)
