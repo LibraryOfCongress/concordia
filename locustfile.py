@@ -6,7 +6,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlencode, urljoin, urlparse
 
-from gevent import sleep
+from gevent import sleep, spawn
 from gevent.event import Event
 from locust import HttpUser, between, events, runners, task
 from locust.exception import StopUser
@@ -137,15 +137,17 @@ def _trigger_global_abort(
         return
 
     try:
-        # Worker that discovers the problem -> tell master
+        # If a worker discovers the problem, tell the master.
         if isinstance(runner, runners.WorkerRunner):
             runner.send_message("global-abort", {"reason": reason})
+            return  # worker stops on its own via its own quit()
 
-        # Master -> broadcast to all workers
+        # Master/local runner: broadcast (if master) and QUIT NOW
         if broadcast and isinstance(runner, runners.MasterRunner):
             runner.send_message("global-abort", {"reason": reason})
 
-        runner.quit()
+        # Important: quit in another greenlet to avoid deadlocks
+        spawn(runner.quit)
     except Exception as e:
         logger.error("Error quitting runner: %s", e)
 
