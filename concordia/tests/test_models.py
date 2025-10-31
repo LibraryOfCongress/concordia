@@ -15,6 +15,7 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Campaign,
     CardFamily,
+    ConcordiaUser,
     KeyMetricsReport,
     MediaType,
     NextReviewableCampaignAsset,
@@ -26,6 +27,7 @@ from concordia.models import (
     Topic,
     Transcription,
     TranscriptionStatus,
+    UserProfile,
     UserProfileActivity,
     _update_useractivity_cache,
     resource_file_upload_path,
@@ -45,6 +47,7 @@ from .utils import (
     create_card_family,
     create_carousel_slide,
     create_guide,
+    create_item,
     create_resource,
     create_resource_file,
     create_simple_page,
@@ -156,6 +159,47 @@ class AssetTestCase(CreateTestUsers, TestCase):
             "rollback transcription did not supersede a previous transcription",
         ):
             asset.rollforward_transcription(self.anon)
+
+    def test_get_storage_path_handles_jpeg(self):
+        # Ensure ".jpeg" is normalized to ".jpg"
+        expected = self.asset.get_asset_image_filename("jpg")
+        self.assertEqual(self.asset.get_storage_path("anything.jpeg"), expected)
+
+
+class ItemModelTests(TestCase):
+    def test_thumbnail_link_prefers_image_url_when_present(self):
+        item = create_item()
+
+        class Img:
+            url = "http://example.test/media/thumb.jpg"
+
+        item.thumbnail_image = Img()
+        self.assertEqual(item.thumbnail_link, Img.url)
+
+    def test_thumbnail_link_falls_back_when_image_url_raises(self):
+        # If .url access raises ValueError, fall back to thumbnail_url
+        item = create_item()
+
+        class BadImg:
+            @property
+            def url(self):
+                raise ValueError("missing from storage")
+
+        item.thumbnail_image = BadImg()
+        item.thumbnail_url = "http://example.test/media/fallback.jpg"
+        self.assertEqual(item.thumbnail_link, item.thumbnail_url)
+
+    def test_thumbnail_link_returns_thumbnail_url_when_no_image(self):
+        item = create_item()
+        item.thumbnail_image = None
+        item.thumbnail_url = "http://example.test/media/fallback.jpg"
+        self.assertEqual(item.thumbnail_link, item.thumbnail_url)
+
+    def test_thumbnail_link_returns_none_when_no_image_or_url(self):
+        item = create_item()
+        item.thumbnail_image = None
+        item.thumbnail_url = None
+        self.assertIsNone(item.thumbnail_link)
 
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
@@ -302,6 +346,109 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
             users[0],
             (self.transcription1.user.id, self.transcription1.user.username, 3, 6),
         )
+
+    def test_review_incidents_returns_empty_when_counts_zero(self):
+        reviewer = self.create_user(username="rev-zero")
+        asset = self.transcription1.asset
+
+        t1 = create_transcription(
+            asset=asset,
+            user=self.create_user(username="u-a"),
+            reviewed_by=reviewer,
+            accepted=timezone.now() - timedelta(minutes=5),
+        )
+        create_transcription(
+            asset=asset,
+            user=self.create_user(username="u-b"),
+            reviewed_by=reviewer,
+            accepted=t1.accepted + timedelta(seconds=61),
+        )
+
+        out = Transcription.objects.review_incidents()
+        self.assertEqual(out, [])
+
+    def test_user_review_incidents_no_threshold_hit(self):
+        asset = self.transcription1.asset
+
+        reviewer = self.create_user("reviewer-1")
+        reviewer_proxy = ConcordiaUser.objects.get(pk=reviewer.pk)
+
+        base = timezone.now()
+        create_transcription(
+            asset=asset,
+            user=self.create_user("ri_u1"),
+            reviewed_by=reviewer_proxy,
+            accepted=base,
+        )
+        create_transcription(
+            asset=asset,
+            user=self.create_user("ri_u2"),
+            reviewed_by=reviewer_proxy,
+            accepted=base + timedelta(seconds=61),
+        )
+
+        recent = Transcription.objects.filter(accepted__isnull=False)
+        incidents = reviewer_proxy.review_incidents(recent)
+        self.assertEqual(incidents, 0)
+
+    def test_review_incidents_no_threshold_match_inner_loop_break(self):
+        # Two accepts for same reviewer but >60s apart:
+        a1 = create_asset(slug="rev-gap-a1", item=self.transcription1.asset.item)
+        a2 = create_asset(slug="rev-gap-a2", item=a1.item)
+        reviewer = self.create_user("reviewer-1")
+
+        t0 = timezone.now()
+        create_transcription(
+            asset=a1, user=self.create_user("u1"), reviewed_by=reviewer, accepted=t0
+        )
+        create_transcription(
+            asset=a2,
+            user=self.create_user("u2"),
+            reviewed_by=reviewer,
+            accepted=t0 + timedelta(seconds=61),
+        )
+
+        recent = Transcription.objects.filter(accepted__isnull=False)
+        reviewer_proxy = ConcordiaUser.objects.get(pk=reviewer.pk)
+
+        incidents = reviewer_proxy.review_incidents(recent)
+        self.assertEqual(incidents, 0)
+
+    def test_review_incidents_loops_until_threshold(self):
+        reviewer = self.create_user(username="test-reviewer-1")
+
+        # Three accepts within 60s so threshold=3 will require two inner
+        # iterations (count goes 1->2, not equal to threshold, then 2->3)
+        base = timezone.now()
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=reviewer,
+            accepted=base,
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=reviewer,
+            accepted=base + timedelta(seconds=20),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=reviewer,
+            accepted=base + timedelta(seconds=40),
+        )
+
+        recent_accepts = Transcription.objects.filter(
+            accepted__gte=base - timedelta(seconds=1)
+        )
+
+        reviewer_proxy = ConcordiaUser.objects.get(id=reviewer.id)
+
+        incidents = reviewer_proxy.review_incidents(
+            recent_accepts=recent_accepts, threshold=3
+        )
+        self.assertEqual(incidents, 1)
 
 
 class TranscriptionTestCase(CreateTestUsers, TestCase):
@@ -460,6 +607,33 @@ class UserProfileTestCase(CreateTestUsers, TestCase):
         )
 
         self.assertTrue(hasattr(user, "profile"))
+        self.assertEqual(user.profile.transcribe_count, 1)
+
+        signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
+
+    def test_update_userprofileactivity_table_updates_existing_and_profile(self):
+        # Avoid auto-profile creation so we control both branches
+        signals.post_save.disconnect(
+            create_user_profile, sender=settings.AUTH_USER_MODEL
+        )
+
+        user = self.create_test_user()
+        UserProfile.objects.create(user=user)
+
+        transcription = create_transcription(user=user)
+        campaign = transcription.asset.item.project.campaign
+        upa, _ = UserProfileActivity.objects.get_or_create(
+            user=user, campaign=campaign, defaults={"transcribe_count": 1}
+        )
+
+        update_userprofileactivity_table(user, campaign.id, "transcribe_count")
+
+        # F() increments apply on save; refresh to observe DB values
+        upa.refresh_from_db()
+        user.refresh_from_db()
+        user.profile.refresh_from_db()
+
+        self.assertEqual(upa.transcribe_count, 2)
         self.assertEqual(user.profile.transcribe_count, 1)
 
         signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
