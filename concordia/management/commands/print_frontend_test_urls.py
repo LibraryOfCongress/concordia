@@ -1,7 +1,18 @@
 """
-Print a list of URLs using the local database suitable for front-end testing
+Print a list of URLs (derived from local database content) suitable for
+front-end testing.
+
+Usage:
+    python manage.py print_frontend_test_urls \
+        --base-url "http://localhost:8000/"
+
+Notes:
+    - Always prints a core set of static paths.
+    - If a visible Asset exists it also prints detail pages for that
+      asset, its item, project and campaign.
 """
 
+import argparse
 from urllib.parse import urljoin
 
 from django.core.management.base import BaseCommand
@@ -11,16 +22,20 @@ from concordia.models import Asset
 
 
 class Command(BaseCommand):
+    """Management command to emit front-end test URLs."""
+
     help = "Print URLs for front-end testing"  # NOQA: A003
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: "argparse.ArgumentParser") -> None:
+        """Register command-line arguments."""
         parser.add_argument(
             "--base-url",
             default="http://localhost:8000/",
             help="Change the base URL for all generated URLs from %(default)s",
         )
 
-    def handle(self, *, base_url, **options):
+    def handle(self, *, base_url: str, **options) -> None:
+        """Generate and print URLs, prefixed by ``base_url``."""
         paths = [
             reverse("homepage"),
             reverse("about"),
@@ -43,7 +58,7 @@ class Command(BaseCommand):
         ]
 
         # Database content
-        # First we'll find an asset which is actually visible:
+        # First find an asset which is actually visible:
         asset_qs = Asset.objects.filter(
             published=True,
             item__published=True,
