@@ -4,11 +4,11 @@ from unittest import mock
 
 from django.test import TestCase
 
-import concordia.celery as celery_mod
-from concordia.celery import import_all_submodules
+import importer.celery as celery_mod
+from importer.celery import import_all_submodules
 
 
-class ConcordiaCeleryTests(TestCase):
+class ImporterCeleryTests(TestCase):
     def test_returns_early_for_non_package(self):
         mock_pkg = SimpleNamespace(__name__="not_a_pkg")  # no __path__
 
