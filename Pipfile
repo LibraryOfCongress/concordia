@@ -47,7 +47,7 @@ django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
 locust = "==2.42.1"
-django = "==4.2.25"
+django = "==4.2.26"
 defusedxml = "==0.7.1"
 django-ninja = "==1.4.3"
 urllib3 = "==2.5.0"
