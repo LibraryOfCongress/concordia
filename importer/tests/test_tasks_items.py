@@ -20,6 +20,7 @@ from concordia.tests.utils import (
 from importer import tasks
 from importer.models import ImportItem
 from importer.tasks.items import (
+    _guess_extension,
     download_and_set_item_thumbnail,
     get_item_id_from_item_url,
     get_item_info_from_result,
@@ -165,6 +166,22 @@ class GetItemInfoFromResultTests(TestCase):
         )
         self.assertEqual(item_info[0], "mss859430021")
         self.assertEqual(item_info[1], url)
+
+    def test_ignored_format(self):
+        result = {
+            "id": 42,
+            "image_url": "https://www.loc.gov/resource/foo/",
+            "original_format": {"collection"},
+            "url": "https://www.loc.gov/item/abc123/",
+        }
+        with self.assertLogs("importer.tasks", level="INFO") as log:
+            out = get_item_info_from_result(result)
+        self.assertIsNone(out)
+        self.assertEqual(
+            log.output[0],
+            "INFO:importer.tasks.items:Skipping result 42 because it contains an "
+            "unsupported format: {'collection'}",
+        )
 
 
 @mock.patch("importer.tasks.items.requests.get")
@@ -441,6 +458,30 @@ class ItemImportTests(TestCase):
         self.assertEqual(item.description, "Test description")
         self.assertEqual(item.thumbnail_url, "http://example.com/image.jpg")
 
+    def test_populate_item_from_data_handles_exception_and_returns_none(self):
+        # Proxy dict that explodes only when .get("image_url") is called,
+        # but still works with indexing for the earlier code path.
+        class ExplodingImageInfo(dict):
+            def get(self, key, default=None):
+                if key == "image_url":
+                    raise RuntimeError("error")
+                return super().get(key, default)
+
+        item = Item(item_url="http://example.com")
+        info = ExplodingImageInfo(
+            {
+                "title": "T",
+                "description": "D",
+                "image_url": ["image.jpg"],  # used by the earlier indexing path
+            }
+        )
+
+        result = tasks.items.populate_item_from_data(item, info)
+        # Early indexing still sets thumbnail_url, but the try/except branch
+        # should swallow the error and return None.
+        self.assertIsNone(result)
+        self.assertEqual(item.thumbnail_url, "http://example.com/image.jpg")
+
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.FileSystemStorage")
 class DownloadItemThumbnailTests(TestCase):
@@ -588,3 +629,205 @@ class DownloadItemThumbnailTests(TestCase):
         self.assertEqual(saved, item.thumbnail_image.name)
         self.assertTrue(saved.endswith(".png"))
         self.assertTrue(default_storage.exists(saved))
+
+    def test_stream_with_empty_chunk_is_skipped(self):
+        item = create_item()
+        payload = self.make_image_bytes(fmt="PNG")
+        url = "https://example.com/streamed.png"
+
+        class TwoChunkResponse:
+            def __init__(self, content, content_type="image/png"):
+                self.headers = {"Content-Type": content_type}
+                self._chunks = [b"", content]  # first empty, then real data
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def raise_for_status(self):
+                return
+
+            def iter_content(self, chunk_size=64 * 1024):
+                for c in self._chunks:
+                    yield c
+
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=TwoChunkResponse(payload, "image/png"),
+        ):
+            saved = download_and_set_item_thumbnail(item, url)
+
+        item.refresh_from_db()
+        self.assertEqual(saved, item.thumbnail_image.name)
+        self.assertTrue(saved.endswith(".png"))
+        with default_storage.open(saved, "rb") as fh:
+            self.assertEqual(fh.read(), payload)
+
+    def test_guess_extension_uses_url_path_extension_lowercases(self):
+        self.assertEqual(
+            _guess_extension("", "/path/TO/NAME.JPG"),
+            ".jpg",
+        )
+
+    def test_guess_extension_returns_bin_when_no_ext_and_no_content_type(self):
+        self.assertEqual(
+            _guess_extension("", "/noext"),
+            ".bin",
+        )
+
+    @mock.patch("importer.tasks.items.mimetypes.guess_extension", return_value=None)
+    def test_header_guess_none_uses_url_extension(self, _guess):
+        item = create_item()
+        payload = self.make_image_bytes(fmt="JPEG")
+        # Upper-case extension to assert lower-casing behavior
+        url = "https://example.com/path/name.JPEG"
+        with mock.patch(
+            "importer.tasks.items.requests.get",
+            return_value=type(self).FakeResponse(payload, "image/unknown"),
+        ):
+            saved = download_and_set_item_thumbnail(item, url)
+        item.refresh_from_db()
+        self.assertTrue(saved.endswith(".jpeg"))
+
+
+class GetAssetUrlsFromItemResourcesTests(TestCase):
+    def test_empty_resources(self):
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources([])
+        self.assertEqual(assets, [])
+        self.assertEqual(resource_url, "")
+
+    def test_missing_item_resource_url_key(self):
+        resources = [
+            {
+                # 'url' intentionally omitted to hit KeyError path
+                "files": [
+                    [
+                        {
+                            "url": "http://example.com/ok.jpg",
+                            "height": 2,
+                            "width": 2,
+                            "mimetype": "image/jpeg",
+                        },
+                        {"url": "http://example.com/missing_dims.jpg"},  # skipped
+                    ]
+                ],
+            }
+        ]
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources(resources)
+        self.assertEqual(resource_url, "")
+        self.assertEqual(assets, ["http://example.com/ok.jpg"])
+
+    def test_files_key_missing(self):
+        resources = [{"url": "http://example.com"}]  # no 'files' key
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources(resources)
+        self.assertEqual(assets, [])
+        self.assertEqual(resource_url, "http://example.com")
+
+    def test_picks_largest_jpeg_when_present(self):
+        resources = [
+            {
+                "url": "http://example.com",
+                "files": [
+                    [
+                        {
+                            "url": "http://example.com/small.jpg",
+                            "height": 1,
+                            "width": 1,
+                            "mimetype": "image/jpeg",
+                        },
+                        {
+                            "url": "http://example.com/large.jpg",
+                            "height": 3,
+                            "width": 3,
+                            "mimetype": "image/jpeg",
+                        },
+                    ]
+                ],
+            }
+        ]
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources(resources)
+        self.assertEqual(resource_url, "http://example.com")
+        self.assertEqual(assets, ["http://example.com/large.jpg"])
+
+    def test_falls_back_to_largest_gif_when_no_jpeg(self):
+        resources = [
+            {
+                "url": "http://example.com",
+                "files": [
+                    [
+                        {
+                            "url": "http://example.com/small.gif",
+                            "height": 2,
+                            "width": 2,
+                            "mimetype": "image/gif",
+                        },
+                        {
+                            "url": "http://example.com/large.gif",
+                            "height": 5,
+                            "width": 5,
+                            "mimetype": "image/gif",
+                        },
+                        # unacceptable types are ignored
+                        {
+                            "url": "http://example.com/file.tif",
+                            "height": 100,
+                            "width": 100,
+                            "mimetype": "image/tiff",
+                        },
+                    ]
+                ],
+            }
+        ]
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources(resources)
+        self.assertEqual(resource_url, "http://example.com")
+        self.assertEqual(assets, ["http://example.com/large.gif"])
+
+    def test_variants_missing_required_keys_are_ignored(self):
+        resources = [
+            {
+                "url": "http://example.com",
+                "files": [
+                    [
+                        {"url": "http://example.com/nw.jpg", "height": 2},  # no width
+                        {"height": 2, "width": 2, "mimetype": "image/jpeg"},  # no url
+                        {
+                            "url": "http://example.com/valid.jpg",
+                            "height": 2,
+                            "width": 3,
+                            "mimetype": "image/jpeg",
+                        },
+                    ]
+                ],
+            }
+        ]
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources(resources)
+        self.assertEqual(resource_url, "http://example.com")
+        self.assertEqual(assets, ["http://example.com/valid.jpg"])
+
+    def test_no_candidates_or_backups_skips_appending(self):
+        resources = [
+            {
+                "url": "http://example.com",
+                "files": [
+                    [
+                        {
+                            "url": "http://example.com/file1.tif",
+                            "height": 10,
+                            "width": 10,
+                            "mimetype": "image/tiff",  # unsupported
+                        },
+                        {
+                            "url": "http://example.com/file2",
+                            "height": 5,
+                            "width": 5,
+                            # no mimetype -> not added to candidates/backups
+                        },
+                    ]
+                ],
+            }
+        ]
+        assets, resource_url = tasks.items.get_asset_urls_from_item_resources(resources)
+        self.assertEqual(resource_url, "http://example.com")
+        self.assertEqual(assets, [])
