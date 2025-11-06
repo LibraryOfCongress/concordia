@@ -194,6 +194,31 @@ class ImportCollectionTests(CreateTestUsers, TestCase):
         import_collection_task(import_job.pk)
         self.assertTrue(mock_get.called)
 
+    @mock.patch("importer.tasks.collections.create_item_import_task.delay")
+    @mock.patch("importer.tasks.collections.get_collection_items")
+    @mock.patch("importer.tasks.collections.normalize_collection_url")
+    def test_import_collection_enqueues_item_tasks(
+        self, mock_normalize, mock_get, mock_delay
+    ):
+        import_job = create_import_job(created_by=self.user)
+        mock_normalize.return_value = "https://www.loc.gov/collections/example/?fo=json"
+        mock_get.return_value = [
+            ("mss1", "https://www.loc.gov/item/mss1/"),
+            ("mss2", "https://www.loc.gov/item/mss2/"),
+        ]
+
+        # redownload=True so we can assert the third arg is propagated
+        import_collection_task(import_job.pk, redownload=True)
+
+        self.assertEqual(mock_delay.call_count, 2)
+        self.assertEqual(
+            mock_delay.call_args_list,
+            [
+                mock.call(import_job.pk, "https://www.loc.gov/item/mss1/", True),
+                mock.call(import_job.pk, "https://www.loc.gov/item/mss2/", True),
+            ],
+        )
+
 
 class CollectionURLNormalizationTests(TestCase):
     def test_basic_normalization(self):
