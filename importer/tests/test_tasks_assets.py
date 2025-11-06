@@ -449,7 +449,7 @@ class AssetImportTests(TestCase):
             "importer.models.tasks.assets.download_and_store_asset_image"
         ) as download_mock:
             download_mock.return_value = "image.jpg"
-            # Revert to the original task used in the monolithic tests:
+
             tasks.assets.download_asset_task.delay(import_asset.pk)
             import_asset.refresh_from_db()
             self.assertTrue(download_mock.called)
