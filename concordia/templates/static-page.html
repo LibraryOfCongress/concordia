@@ -3,10 +3,16 @@
 
 {% block title %}{{ title }}{% endblock title %}
 
-{% block head_content %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/about-accordions.js' %}"></script>
-{% endblock head_content %}
+{% block extra_scripts %}
+    {% if about_page %}
+        {% if LOCAL_DEV %}
+            <script type="module" src="http://localhost:5173/static/src/js/visualizations/asset-status-overview.js"></script>
+            <script type="module" src="http://localhost:5173/static/src/js/about-page.js"></script>
+        {% else %}
+            <script type="module" src="{% static 'js/about.js' %}"></script>
+        {% endif %}
+    {% endif %}
+{% endblock %}
 
 {% block breadcrumbs %}
     {% for link, title in breadcrumbs %}

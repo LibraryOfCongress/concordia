@@ -52,7 +52,7 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir pre-commit
 RUN pip install --no-cache-dir pipenv
 
-RUN npm install --silent --global npm@9
+RUN npm install --silent --global npm@10
 
 # Set the working directory and permissions
 WORKDIR /workspace

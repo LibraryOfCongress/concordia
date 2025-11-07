@@ -19,6 +19,7 @@ from concordia.admin.filters import (
     ProjectCampaignStatusListFilter,
     SiteReportCampaignListFilter,
     SubmittedFilter,
+    SupersededListFilter,
     TopicListFilter,
 )
 from concordia.admin_site import ConcordiaAdminSite
@@ -260,3 +261,61 @@ class NextAssetCampaignListFilterTests(TestCase):
         self.assertEqual(len(lookups), 1)
         self.assertEqual(lookups[0][0], self.campaign.id)
         self.assertEqual(lookups[0][1], self.campaign.title)
+
+
+class SupersededListFilterTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.user = self.create_user(username="tester")
+        self.base = create_transcription(user=self.user, text="base")
+        self.superseding = create_transcription(
+            user=self.user,
+            supersedes=self.base,
+            text="superseding",
+            asset=self.base.asset,
+        )
+        asset2 = create_asset(item=self.base.asset.item, slug="asset-2")
+        self.independent = create_transcription(
+            user=self.user, text="independent", asset=asset2
+        )
+
+    def test_lookups(self):
+        request = RequestFactory().get("/admin/concordia/transcription/")
+        f = SupersededListFilter(request, {}, Transcription, TranscriptionAdmin)
+        lookups = dict(f.lookups(request, TranscriptionAdmin(Transcription, None)))
+        self.assertIn("yes", lookups)
+        self.assertIn("no", lookups)
+        self.assertEqual(lookups["yes"], "Superseded")
+        self.assertEqual(lookups["no"], "Not superseded")
+
+    def test_queryset_superseded_yes(self):
+        f = SupersededListFilter(
+            None, {"superseded": "yes"}, Transcription, TranscriptionAdmin
+        )
+        qs = f.queryset(None, Transcription.objects.all())
+        self.assertQuerySetEqual(
+            qs.order_by("id").values_list("id", flat=True),
+            [self.base.id],
+            transform=lambda x: x,
+        )
+
+    def test_queryset_superseded_no(self):
+        f = SupersededListFilter(
+            None, {"superseded": "no"}, Transcription, TranscriptionAdmin
+        )
+        qs = f.queryset(None, Transcription.objects.all())
+        ids = set(qs.values_list("id", flat=True))
+        self.assertEqual(ids, {self.superseding.id, self.independent.id})
+
+    def test_queryset_no_param_returns_all(self):
+        f = SupersededListFilter(None, {}, Transcription, TranscriptionAdmin)
+        qs = f.queryset(None, Transcription.objects.all())
+        ids = set(qs.values_list("id", flat=True))
+        self.assertEqual(ids, {self.base.id, self.superseding.id, self.independent.id})
+
+    def test_queryset_ignores_unknown_value(self):
+        f = SupersededListFilter(
+            None, {"superseded": "maybe"}, Transcription, TranscriptionAdmin
+        )
+        qs = f.queryset(None, Transcription.objects.all())
+        ids = set(qs.values_list("id", flat=True))
+        self.assertEqual(ids, {self.base.id, self.superseding.id, self.independent.id})

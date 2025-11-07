@@ -9,6 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
+from django.db.models import Exists, OuterRef
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
@@ -53,7 +54,7 @@ from ..models import (
     UserAssetTagCollection,
     UserProfileActivity,
 )
-from ..tasks import retire_campaign
+from ..tasks.retirement import retire_campaign
 from ..views.campaigns import ReportCampaignView
 from .actions import (
     anonymize_action,
@@ -86,6 +87,7 @@ from .filters import (
     SiteReportCampaignListFilter,
     SiteReportSortedCampaignListFilter,
     SubmittedFilter,
+    SupersededListFilter,
     TagCampaignListFilter,
     TagCampaignStatusListFilter,
     TopicListFilter,
@@ -881,6 +883,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "accepted",
         "rejected",
         "reviewed_by",
+        "superseded",
     )
     list_display_links = ("id", "asset")
 
@@ -888,6 +891,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         SubmittedFilter,
         AcceptedFilter,
         RejectedFilter,
+        SupersededListFilter,
         OcrGeneratedFilter,
         OcrOriginatedFilter,
         TranscriptionCampaignStatusListFilter,
@@ -928,15 +932,33 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "ocr_originated",
     )
 
-    def lookup_allowed(self, key, value):
-        if key in ("asset__item__project__campaign__id__exact",):
-            return True
-        else:
-            return super().lookup_allowed(key, value)
+    show_full_result_count = False
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Make FK columns cheaper to render
+        qs = qs.select_related("asset", "user", "reviewed_by")
+
+        # Annotate a boolean so the "Superseded?" column is O(1) per row
+        return qs.annotate(
+            is_superseded=Exists(
+                Transcription.objects.filter(supersedes=OuterRef("pk"))
+            )
+        )
 
     @admin.display(description="Text")
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
+
+    @admin.display(boolean=True, description="Superseded?")
+    def superseded(self, obj):
+        # Uses the annotation from get_queryset; no per-row queries.
+        return bool(getattr(obj, "is_superseded", False))
+
+    def lookup_allowed(self, key, value):
+        if key in ("asset__item__project__campaign__id__exact",):
+            return True
+        return super().lookup_allowed(key, value)
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(

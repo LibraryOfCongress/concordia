@@ -1,5 +1,8 @@
+from typing import Dict
+
+from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Subquery, Value, When
+from django.db.models import Case, IntegerField, Q, QuerySet, Subquery, Value, When
 
 from concordia import models as concordia_models
 from concordia.logging import ConcordiaLogger
@@ -8,17 +11,42 @@ from concordia.utils.celery import get_registered_task
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
-def _reserved_asset_ids_subq():
+def _reserved_asset_ids_subq() -> "QuerySet[Dict[str, int]]":
     """
-    Subquery of reserved asset IDs. Not filtered to the topic to avoid extra joins.
+    Return a subquery of reserved asset identifiers.
+
+    Behavior:
+        Produces a subquery suitable for use with `Subquery(...)` and
+        `exclude(pk__in=...)` to filter out assets that currently have an
+        active reservation. This is not filtered to the topic to avoid
+        additional joins.
+
+    Returns:
+        QuerySet[Dict[str, int]]: A queryset of dictionaries with a single key
+            "asset_id" corresponding to reserved assets.
     """
     return concordia_models.AssetTranscriptionReservation.objects.values("asset_id")
 
 
-def _eligible_reviewable_base_qs(topic, user=None):
+def _eligible_reviewable_base_qs(
+    topic: concordia_models.Topic,
+    user: User | None = None,
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Base queryset for reviewable assets within a topic, restricted to published
-    objects and SUBMITTED status. Optionally excludes assets transcribed by user.
+    Build the base queryset of reviewable assets for a topic.
+
+    Behavior:
+        Restricts to published projects, items, and assets, and to assets whose
+        transcription status is `SUBMITTED`. Optionally excludes assets
+        transcribed by the supplied user.
+
+    Args:
+        topic (concordia_models.Topic): Topic scope for filtering.
+        user (User | None): If provided, exclude assets transcribed by this user.
+
+    Returns:
+        QuerySet[concordia_models.Asset]: Reviewable assets, with `item` and
+            `item__project` selected via `select_related`.
     """
     qs = concordia_models.Asset.objects.filter(
         item__project__topics=topic.id,
@@ -34,8 +62,18 @@ def _eligible_reviewable_base_qs(topic, user=None):
 
 def _next_seq_after(pk: int | None) -> int | None:
     """
-    Resolve the sequence number for the given asset PK. Returns None if PK is
-    falsy or the asset does not exist.
+    Resolve the sequence number for a given asset primary key.
+
+    Behavior:
+        Convenience utility for ordering logic when advancing within a series
+        of assets.
+
+    Args:
+        pk (int | None): Asset primary key whose sequence to resolve.
+
+    Returns:
+        int | None: The asset's sequence number, or None if `pk` is falsy
+            or the asset does not exist.
     """
     if not pk:
         return None
@@ -47,24 +85,41 @@ def _next_seq_after(pk: int | None) -> int | None:
 
 
 @transaction.atomic
-def _find_reviewable_in_item(topic, user, *, item_id: str, after_asset_pk: int | None):
+def _find_reviewable_in_item(
+    topic: concordia_models.Topic,
+    user: User,
+    *,
+    item_id: str,
+    after_asset_pk: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Short-circuit helper: return the next reviewable asset within the same item
-    for the given topic and user.
+    Select the next reviewable asset within the same item.
 
-    Ordering rule:
-        - Advance by (sequence, id) strictly greater than current if the original
-          asset is within the same item and that item's project belongs to `topic`.
-        - Else return earliest eligible by (sequence, id).
+    Behavior:
+        Attempts a short-circuit within the user's current item to provide a
+        locally contiguous review flow.
 
     Eligibility:
-        - Asset/Item/Project published
-        - Project is in `topic`
-        - transcription_status == SUBMITTED
-        - Not reserved; exclude assets transcribed by `user`
+        - Asset, Item, and Project are published.
+        - Asset transcription status is `SUBMITTED`.
+        - Asset is not reserved.
+        - Asset was not transcribed by the current user.
+
+    Ordering:
+        - If `after_asset_pk` refers to an asset in the same item whose project
+          is in `topic`, select the earliest asset whose (sequence, id) is
+          strictly greater than the current asset's pair.
+        - Otherwise, select the earliest eligible by (sequence, id).
+
+    Args:
+        topic (concordia_models.Topic): Topic scope.
+        user (User): Current user; used to exclude their own work.
+        item_id (str): Identifier of the item to stay within.
+        after_asset_pk (int | None): Asset primary key to advance from.
 
     Returns:
-        Asset | None
+        concordia_models.Asset | None: A locked eligible asset, or
+            None if no match is available.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__item__item_id=item_id,
@@ -125,16 +180,40 @@ def _find_reviewable_in_item(topic, user, *, item_id: str, after_asset_pk: int |
 
 @transaction.atomic
 def _find_reviewable_in_project(
-    topic, user, *, project_slug: str, after_asset_pk: int | None
-):
+    topic: concordia_models.Topic,
+    user: User,
+    *,
+    project_slug: str,
+    after_asset_pk: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Short-circuit helper: return the first eligible reviewable asset within the same
-    project for the given topic and user.
+    Select the first eligible reviewable asset within the same project.
 
-    Deterministic order: (item__item_id, sequence, id).
+    Behavior:
+        Short-circuit when staying within a project. Sequence is per item,
+        so this returns the first eligible asset, not strictly "after" a given
+        asset.
+
+    Eligibility:
+        - Same topic and project.
+        - Asset, Item, and Project are published.
+        - Asset transcription status is `SUBMITTED`.
+        - Asset is not reserved.
+        - Asset was not transcribed by the current user.
+
+    Ordering:
+        Deterministic by (item__item_id, sequence, id).
+
+    Args:
+        topic (concordia_models.Topic): Topic scope.
+        user (User): Current user; used to exclude their own work.
+        project_slug (str): Slug of the project to stay within.
+        after_asset_pk (int | None): Present for parity with the item
+            variant; not used for ordering here.
 
     Returns:
-        Asset | None
+        concordia_models.Asset | None: A locked eligible asset, or
+            None if no match is available.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__item__project__slug=project_slug,
@@ -169,26 +248,26 @@ def _find_reviewable_in_project(
     return eligible
 
 
-def find_new_reviewable_topic_assets(topic, user=None):
+def find_new_reviewable_topic_assets(
+    topic: concordia_models.Topic,
+    user: User | None = None,
+) -> "QuerySet[concordia_models.Asset]":
     """
-    Returns a queryset of assets in the given topic that are eligible for review
-    caching.
+    Return assets in a topic that are eligible to be added to the cache.
 
-    This excludes:
-    - Assets with transcription_status not SUBMITTED
-    - Assets currently reserved
-    - Assets already present in the NextReviewableTopicAsset table
-    - Optionally, assets transcribed by the given user
+    Behavior:
+        Builds the candidate set for the `NextReviewableTopicAsset` cache by
+        excluding assets that are not `SUBMITTED`, assets already reserved, and
+        assets already present in the cache. Optionally excludes assets
+        transcribed by the provided user.
 
     Args:
-        topic (Topic): The topic to filter assets by.
-        user (User, optional): If provided, assets transcribed by this user will be
-        excluded.
+        topic (concordia_models.Topic): Topic to filter by.
+        user (User | None): If provided, exclude assets transcribed by this user.
 
     Returns:
-        QuerySet: Eligible assets ordered by sequence.
+        QuerySet[concordia_models.Asset]: Eligible assets ordered by sequence.
     """
-
     # Filtering this to the topic would be more costly than just getting all ids
     # in most cases because it requires joining the asset table to the item table to
     # the project table to the topic table.
@@ -216,47 +295,55 @@ def find_new_reviewable_topic_assets(topic, user=None):
     return queryset
 
 
-def find_next_reviewable_topic_assets(topic, user):
+def find_next_reviewable_topic_assets(
+    topic: concordia_models.Topic,
+    user: User,
+) -> "QuerySet[concordia_models.NextReviewableTopicAsset]":
     """
-    Returns cached reviewable assets for a topic that were not transcribed by the given
-    user.
+    Return cached reviewable assets in a topic not transcribed by the user.
 
-    This accesses the NextReviewableTopicAsset cache table and filters out any
-    assets associated with the given user via the transcriber_ids field.
+    Behavior:
+        Reads from the `NextReviewableTopicAsset` cache table and filters out
+        assets where the requesting user appears in `transcriber_ids`.
 
     Args:
-        topic (Topic): The topic to filter assets by.
-        user (User): The user requesting a reviewable asset.
+        topic (concordia_models.Topic): Topic to retrieve cached assets from.
+        user (User): Requesting user.
 
     Returns:
-        QuerySet: Cached assets
+        QuerySet[concordia_models.NextReviewableTopicAsset]: Cached candidate rows
+            for the given user.
     """
-
     return concordia_models.NextReviewableTopicAsset.objects.filter(
         topic=topic
     ).exclude(transcriber_ids__contains=[user.id])
 
 
 @transaction.atomic
-def find_reviewable_topic_asset(topic, user):
+def find_reviewable_topic_asset(
+    topic: concordia_models.Topic,
+    user: User,
+) -> "concordia_models.Asset | None":
     """
-    Retrieves a single reviewable asset from the topic for the given user.
+    Retrieve a single reviewable asset for a user from a topic.
 
-    Attempts to retrieve an asset from the cache table (NextReviewableTopicAsset).
-    If no eligible asset is found, falls back to computing one directly from the
-    Asset table and asynchronously schedules a background task to repopulate the cache.
+    Behavior:
+        First attempts to select a cached asset from `NextReviewableTopicAsset`.
+        If none is available, falls back to a direct query over `Asset` and
+        triggers a background task to replenish the cache.
 
-    Ensures database row-level locking to prevent multiple concurrent consumers
-    from selecting the same asset.
+    Concurrency:
+        Uses `select_for_update(skip_locked=True, of=("self",))` so only the
+        `Asset` row is locked and concurrent consumers skip locked rows.
 
     Args:
-        topic (Topic): The topic to retrieve an asset from.
-        user (User): The user requesting the asset (used to exclude their own work).
+        topic (concordia_models.Topic): Topic to search within.
+        user (User): Requesting user; their own transcriptions are excluded.
 
     Returns:
-        Asset or None: A locked asset eligible for review, or None if unavailable.
+        concordia_models.Asset | None: A locked eligible asset, or None
+            if unavailable.
     """
-
     next_asset = (
         find_next_reviewable_topic_assets(topic, user)
         .select_for_update(skip_locked=True, of=("self",))
@@ -299,7 +386,7 @@ def find_reviewable_topic_asset(topic, user):
             user=user,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_topic"
+            "concordia.tasks.next_asset.reviewable.populate_next_reviewable_for_topic"
         )
         populate_task.delay(topic.id)
 
@@ -307,27 +394,43 @@ def find_reviewable_topic_asset(topic, user):
 
 
 def find_and_order_potential_reviewable_topic_assets(
-    topic, user, project_slug, item_id, asset_pk
-):
+    topic: concordia_models.Topic,
+    user: User,
+    project_slug: str,
+    item_id: str,
+    asset_pk: int | None,
+) -> "QuerySet[concordia_models.NextReviewableTopicAsset]":
     """
-    Retrieves and prioritizes cached reviewable assets for a user based on proximity.
+    Retrieve and prioritize cached reviewable assets for proximity.
 
-    Orders results from NextReviewableTopicAsset by:
-    - Whether the asset comes after the given asset in sequence
-    - Whether the asset belongs to the same project
-    - Whether the asset belongs to the same item
+    Behavior:
+        Orders cached candidates from `NextReviewableTopicAsset` to prefer
+        continuity with the user's current location.
+
+    Annotations added to each row (transient fields):
+        - next_asset (int): 1 if the candidate's asset_id is greater than
+            asset_pk, else 0.
+        - same_project (int): 1 if the candidate shares the given
+            project_slug, else 0.
+        - same_item (int): 1 if the candidate shares the given item_id, else 0.
+
+    Prioritization (descending on the following keys, then ascending by sequence):
+        - next_asset
+        - same_project
+        - same_item
+        - sequence
 
     Args:
-        topic (Topic): The topic to filter assets by.
-        user (User): The user requesting the next asset.
-        project_slug (str): Slug of the original asset's project.
-        item_id (str): Item ID of the original asset.
-        asset_pk (int): Primary key of the original asset.
+        topic (concordia_models.Topic): Topic to filter by.
+        user (User): Requesting user.
+        project_slug (str): Slug of the user's current project.
+        item_id (str): Identifier of the user's current item.
+        asset_pk (int | None): Identifier of the current asset, if any.
 
     Returns:
-        QuerySet: Prioritized list of candidate assets.
+        QuerySet[concordia_models.NextReviewableTopicAsset]: Prioritized
+            cached candidates.
     """
-
     potential_next_assets = find_next_reviewable_topic_assets(topic, user)
 
     # Handle None safely for the "next" signal
@@ -359,33 +462,37 @@ def find_and_order_potential_reviewable_topic_assets(
 
 @transaction.atomic
 def find_next_reviewable_topic_asset(
-    topic, user, project_slug, item_id, original_asset_id
-):
+    topic: concordia_models.Topic,
+    user: User,
+    project_slug: str,
+    item_id: str,
+    original_asset_id: int | None,
+) -> "concordia_models.Asset | None":
     """
-    Retrieves the next best reviewable asset for a user within a topic.
+    Retrieve the next best reviewable asset for a user within a topic.
 
-    - If item_id is provided, first try to return the next eligible asset
-      in that item by sequence (short-circuit).
-    - Else if project_slug is provided, try to return the first eligible
-      asset within that project (short-circuit).
-    - Else fall back to the existing cache-backed path:
+    Strategy:
+        1. If `item_id` is provided, try a same-item short-circuit that advances
+           by (sequence, id) relative to `original_asset_id`.
+        2. Else, if `project_slug` is provided, select the first eligible asset
+           within that project (short-circuit).
+        3. Else, prioritize cached candidates, and if none are suitable, fall
+           back to computing from `Asset` and trigger cache population.
 
-    Prioritizes assets from the cache that are:
-    - After the current asset in sequence
-    - In the same project or item
-
-    Falls back to computing candidates if the cache is empty, and triggers
-    a background task to repopulate the cache after selection.
+    Concurrency:
+        Uses `select_for_update(skip_locked=True, of=("self",))` to avoid
+        double-assignments across concurrent consumers.
 
     Args:
-        topic (Topic): The topic to find an asset in.
-        user (User): The user requesting the asset.
-        project_slug (str): Slug of the project the user is currently reviewing.
-        item_id (str): ID of the item the user is currently reviewing.
-        original_asset_id (int): ID of the asset the user just reviewed.
+        topic (concordia_models.Topic): Topic to search within.
+        user (User): Requesting user.
+        project_slug (str): Slug of the user's current project.
+        item_id (str): Identifier of the user's current item.
+        original_asset_id (int | None): Identifier of the asset just reviewed.
 
     Returns:
-        Asset or None: A locked asset eligible for review, or None if unavailable.
+        concordia_models.Asset | None: A locked eligible asset, or None if
+            unavailable.
     """
     # Normalize the "after" reference
     try:
@@ -466,7 +573,7 @@ def find_next_reviewable_topic_asset(
 
     if spawn_task:
         # Spawn a task to populate the table for this topic
-        # We wait to do this until after getting an asset because otherwise there's a
+        # We wait to do this until after getting an asset because otherwise there's
         # a chance all valid assets get grabbed by the task and our query will return
         # nothing
         structured_logger.debug(
@@ -476,25 +583,30 @@ def find_next_reviewable_topic_asset(
             user=user,
         )
         populate_task = get_registered_task(
-            "concordia.tasks.populate_next_reviewable_for_topic"
+            "concordia.tasks.next_asset.reviewable.populate_next_reviewable_for_topic"
         )
         populate_task.delay(topic.id)
 
     return asset
 
 
-def find_invalid_next_reviewable_topic_assets(topic_id):
+def find_invalid_next_reviewable_topic_assets(
+    topic_id: int,
+) -> "QuerySet[concordia_models.NextReviewableTopicAsset]":
     """
-    Returns a queryset of NextReviewableTopicAsset records that are no longer valid for
-    review. This includes:
-    - Assets with a transcription status other than SUBMITTED.
-    - Assets currently reserved via AssetTranscriptionReservation.
+    Return cache rows that are invalid for review for a given topic.
+
+    Behavior:
+        Identifies `NextReviewableTopicAsset` rows that are no longer valid
+        because the underlying asset is not `SUBMITTED` or because the asset is
+        currently reserved.
 
     Args:
-        topic_id (int): The ID of the topic to filter by.
+        topic_id (int): Identifier of the topic.
 
     Returns:
-        QuerySet: Invalid NextReviewableTopicAsset records.
+        QuerySet[concordia_models.NextReviewableTopicAsset]: Distinct invalid
+            cache rows.
     """
     reserved_asset_ids = concordia_models.AssetTranscriptionReservation.objects.filter(
         asset__item__project__topics=topic_id

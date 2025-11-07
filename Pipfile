@@ -46,8 +46,8 @@ psycopg2 = "==2.9.10"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
-locust = "==2.37.4"
-django = "==4.2.25"
+locust = "==2.42.1"
+django = "==4.2.26"
 defusedxml = "==0.7.1"
 django-ninja = "==1.4.3"
 urllib3 = "==2.5.0"
@@ -58,6 +58,7 @@ boto3 = "==1.39.17"
 botocore = "==1.39.17"
 cron-descriptor = "~=1.4"
 certifi = "==2025.7.14"
+websocket-client = "<1.8.0"
 
 [dev-packages]
 invoke = "==2.2.0"

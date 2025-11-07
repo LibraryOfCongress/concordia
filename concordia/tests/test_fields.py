@@ -10,7 +10,7 @@ from concordia.turnstile.fields import TurnstileField
 class TestFields(TestCase):
     @override_settings(
         TURNSTILE_PROXIES={},
-        TURNSTILE_SECRET="test-secret",
+        TURNSTILE_SECRET="test-secret",  # nosec B106: test-only dummy secret
         TURNSTILE_VERIFY_URL="http://example.com",
         TURNSTILE_TIMEOUT=0,
     )
