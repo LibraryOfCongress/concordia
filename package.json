@@ -1,6 +1,6 @@
 {
     "devDependencies": {
-        "@axe-core/cli": "^4.10.2",
+        "@axe-core/cli": "^4.11.0",
         "@puppeteer/browsers": "^2.10.13",
         "child_process": "^1.0.2",
         "fancy-log": "^2.0.0",
