@@ -42,7 +42,7 @@ pillow = "==11.3.0"
 prometheus-client = "==0.21.0"
 xlsxwriter = "==3.2.5"
 blinker = "==1.7.0"
-psycopg2 = "==2.9.10"
+psycopg2 = "==2.9.11"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
