@@ -36,7 +36,7 @@ twisted = { extras = ["http2", "tls"], version = "==25.5.0" }
 hiredis = "==3.0.0"
 pyasn1 = "==0.6.1"
 pyleniumio = "==1.21.0"
-django-maintenance-mode = "==0.21.1"
+django-maintenance-mode = "==0.22.0"
 faker = "==23.3.0"
 pillow = "==11.3.0"
 prometheus-client = "==0.21.0"
