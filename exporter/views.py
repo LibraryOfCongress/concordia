@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
 from django.db.models import OuterRef, Subquery
+from django.db.models.query import QuerySet
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -37,7 +38,23 @@ from exporter.utils import validate_text_for_export
 logger = getLogger(__name__)
 
 
-def get_latest_transcription_data(asset_qs):
+def get_latest_transcription_data(
+    asset_qs: QuerySet[Asset],
+) -> QuerySet[Asset]:
+    """
+    Annotate each asset with its latest transcription text.
+
+    The annotation is named ``latest_transcription`` and is derived from the
+    most recent ``Transcription`` by primary key.
+
+    Args:
+        asset_qs:
+            QuerySet[Asset] to annotate.
+
+    Returns:
+        QuerySet[Asset]: The input queryset annotated with
+        ``latest_transcription``.
+    """
     latest_trans_subquery = (
         Transcription.objects.filter(asset=OuterRef("pk"))
         .order_by("-pk")
@@ -48,14 +65,41 @@ def get_latest_transcription_data(asset_qs):
     return assets
 
 
-def get_tag_values(asset_qs):
+def get_tag_values(asset_qs: QuerySet[Asset]) -> QuerySet[Asset]:
+    """
+    Annotate each asset with a semicolon-joined string of tag values.
+
+    The annotation is named ``tag_values`` and aggregates related tag text from
+    ``userassettagcollection__tags__value``.
+
+    Args:
+        asset_qs:
+            QuerySet[Asset] to annotate.
+
+    Returns:
+        QuerySet[Asset]: The input queryset annotated with ``tag_values``.
+    """
     assets = asset_qs.annotate(
         tag_values=StringAgg("userassettagcollection__tags__value", "; ")
     )
     return assets
 
 
-def remove_incomplete_items(item_qs):
+def remove_incomplete_items(item_qs: QuerySet[Item]) -> QuerySet[Asset]:
+    """
+    Filter out items that are not fully completed and return their assets.
+
+    An item is considered incomplete if any of its assets have a status of
+    NOT_STARTED, IN_PROGRESS or SUBMITTED.
+
+    Args:
+        item_qs:
+            QuerySet[Item] to check for completeness.
+
+    Returns:
+        QuerySet[Asset]: Assets belonging to completed items, ordered by
+        project, item and sequence.
+    """
     incomplete_item_assets = Asset.objects.filter(
         item__in=item_qs,
         transcription_status__in=(
@@ -71,10 +115,22 @@ def remove_incomplete_items(item_qs):
     return asset_qs
 
 
-def get_original_asset_id(download_url):
+def get_original_asset_id(download_url: str) -> str:
     """
-    Extract the bit from the download url
-    that identifies this image uniquely on loc.gov
+    Derive a stable external asset identifier from a LOC download URL.
+
+    For ``tile.loc.gov`` URLs a best-effort pattern is used to extract the
+    identifier. Non-matching URLs are returned unchanged.
+
+    Args:
+        download_url:
+            The asset's download URL.
+
+    Returns:
+        str: Identifier suitable for naming files inside the BagIt payload.
+
+    Raises:
+        ValueError: If the URL looks like ``tile.loc.gov`` but no ID is found.
     """
     download_url = download_url.replace("https", "http")
     if download_url.startswith("http://tile.loc.gov/"):
@@ -86,27 +142,49 @@ def get_original_asset_id(download_url):
         asset_id = re.search(pattern, download_url)
         if not asset_id:
             logger.error(
-                "Couldn't find a matching asset ID in download URL %s", download_url
+                "Could not find a matching asset ID in download URL %s",
+                download_url,
             )
             raise ValueError(
-                f"Couldn't find a matching asset ID in download URL {download_url}"
+                f"Could not find a matching asset ID in download URL {download_url}"
             )
-        else:
-            matching_asset_id = next((group for group in asset_id.groups() if group))
-            logger.debug(
-                "Found asset ID %s in download URL %s", matching_asset_id, download_url
-            )
-            return matching_asset_id
-    else:
-        logger.warning("Download URL doesn't start with tile.loc.gov: %s", download_url)
-        return download_url
+        matching_asset_id = next((group for group in asset_id.groups() if group))
+        logger.debug(
+            "Found asset ID %s in download URL %s",
+            matching_asset_id,
+            download_url,
+        )
+        return matching_asset_id
+
+    logger.warning(
+        "Download URL does not start with tile.loc.gov: %s",
+        download_url,
+    )
+    return download_url
 
 
-def write_distinct_asset_resource_file(assets, export_base_dir):
+def write_distinct_asset_resource_file(
+    assets: Iterable[Any], export_base_dir: str | Path
+) -> None:
+    """
+    Write a unique list of resource URLs for the provided assets.
+
+    The file is named ``item-resource-urls.txt`` and written at the export
+    root. Each line contains one distinct ``Asset.resource_url``.
+
+    Args:
+        assets:
+            Iterable of asset identifiers or a QuerySet[Asset]. Passed to
+            ``Asset.objects.filter(pk__in=assets)``.
+        export_base_dir:
+            Directory where the file should be created.
+
+    Raises:
+        AssertionError: If an asset has no ``resource_url``.
+    """
     asset_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
 
     with open(asset_resource_file, "a") as f:
-        # write to file a list of distinct resource_url values for the selected assets
         distinct_resource_urls = (
             Asset.objects.filter(pk__in=assets)
             .order_by("resource_url")
@@ -119,58 +197,54 @@ def write_distinct_asset_resource_file(assets, export_base_dir):
                 f.write(url)
                 f.write("\n")
             else:
-                logger.error(
-                    "No resource URL found for asset %s",
-                    title,
-                )
+                logger.error("No resource URL found for asset %s", title)
                 raise AssertionError
 
 
 def do_bagit_export(
-    assets: Iterable[Asset],
+    assets: Iterable[Asset] | QuerySet[Asset],
     export_base_dir: str | Path,
     export_filename_base: str,
     request: HttpRequest | None = None,
 ) -> HttpResponse | HttpResponseRedirect | List[dict[str, Any]]:
     """
-    Build and deliver a BagIt package for `assets` or report invalid characters.
+    Build and deliver a BagIt package for ``assets`` or report invalid chars.
 
-    The function validates every asset's `latest_transcription`. For each
+    The function validates every asset's ``latest_transcription``. For each
     unacceptable character it records:
-
-    * the asset ID
-    * the 1-based line number
-    * the 1-based column number
-    * the offending character
+    - the asset ID
+    - the 1-based line number
+    - the 1-based column number
+    - the offending character
 
     Behaviour:
-
-    1. **Validation pass** - files are written only after a transcription passes
+    1. Validation pass: files are written only after a transcription passes
        validation.
-    2. **Failure(s)** - any files already written are removed. If `request` is
-       supplied, a template is rendered; otherwise the raw error list is
+    2. Failure(s): any files already written are removed. If ``request`` is
+       supplied a template is rendered, otherwise the raw error list is
        returned.
-    3. **All clear** - a BagIt structure is created, zipped and either returned
-       as a download or uploaded to S3.
+    3. All clear: a BagIt structure is created, zipped and either returned as a
+       download or uploaded to S3.
 
     Args:
-        assets (Iterable[Asset]): Iterable yielding the assets to export. Each
-            element must have a `download_url` attribute and a
-            `latest_transcription` string.
-        export_base_dir (str | Path): Temporary directory into which the BagIt
-            hierarchy is built.
-        export_filename_base (str): Base name (without ".zip") for the final
-            archive.
-        request (HttpRequest | None, optional): Current request, used to render
-            an error-report template when invalid characters are found. If
-            omitted, the function returns the error data instead.
+        assets:
+            Iterable or QuerySet of ``Asset`` to export. Each must have
+            ``download_url`` and ``latest_transcription``.
+        export_base_dir:
+            Temporary directory into which the BagIt hierarchy is built.
+        export_filename_base:
+            Base name (without ``.zip``) for the archive.
+        request:
+            Current request. If provided, an error template will be rendered
+            when validation fails.
 
     Returns:
         HttpResponse | HttpResponseRedirect | list[dict[str, Any]]:
-        * A **download response** when packaging locally,
-        * an **HTTP redirect** to the uploaded archive when S3 is configured, or
-        * a **list of validation errors** when `request` is `None` and
-          unacceptable characters were found.
+
+        - a download response when packaging locally
+        - a redirect to the uploaded archive when S3 is configured
+        - a list of validation errors when ``request`` is ``None`` and errors
+          were found
     """
     export_base_dir = Path(export_base_dir)
     errors: List[dict[str, Any]] = []
@@ -184,13 +258,7 @@ def do_bagit_export(
         try:
             validate_text_for_export(transcription)
         except UnacceptableCharacterError as err:
-            errors.append(
-                {
-                    "asset": asset,
-                    "violations": err.violations,
-                }
-            )
-            # Skip writing this file but keep validating the rest
+            errors.append({"asset": asset, "violations": err.violations})
             continue
 
         # Passed validation -> write the transcription file
@@ -204,7 +272,6 @@ def do_bagit_export(
 
     # If any errors -> cleanup and report
     if errors:
-        # Remove everything we may have written
         if export_base_dir.exists():
             shutil.rmtree(export_base_dir, ignore_errors=True)
 
@@ -214,7 +281,6 @@ def do_bagit_export(
                 "admin/exporter/unacceptable_character_report.html",
                 {"errors": errors},
             )
-        # Called without a request -> let the caller decide
         return errors
 
     # All assets valid -> create BagIt, zip, upload / return
@@ -258,15 +324,27 @@ def do_bagit_export(
 
 class ExportCampaignToCSV(TemplateView):
     """
-    Exports the most recent transcription for each asset in a campaign
+    Stream a CSV of the most recent transcription for each asset in a campaign.
+
+    Only the latest transcription text per asset is included. Tag values
+    are aggregated into a semicolon-delimited string.
     """
 
     @method_decorator(staff_member_required)
-    def get(self, request, *args, **kwargs):
-        asset_qs = Asset.objects.filter(
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        Return a CSV response for the requested campaign.
+
+        Args:
+            request: Current HTTP request.
+
+        Returns:
+            HttpResponse: CSV content for the campaign.
+        """
+        asset_qs: QuerySet[Asset] = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"]
         )
-        assets = get_latest_transcription_data(asset_qs)
+        assets: QuerySet[Asset] = get_latest_transcription_data(asset_qs)
         assets = get_tag_values(assets)
 
         headers, data = flatten_queryset(
@@ -305,20 +383,38 @@ class ExportCampaignToCSV(TemplateView):
 
 
 class ExportItemToBagIt(TemplateView):
+    """
+    Build a BagIt archive for a single item consisting of completed assets.
+
+    Only assets with ``TranscriptionStatus.COMPLETED`` are included.
+    """
+
     @method_decorator(staff_member_required)
-    def get(self, request, *args, **kwargs):
+    def get(
+        self, request: HttpRequest, *args, **kwargs
+    ) -> HttpResponse | HttpResponseRedirect:
+        """
+        Create and return a BagIt archive for the requested item.
+
+        Args:
+            request: Current HTTP request.
+
+        Returns:
+            HttpResponse | HttpResponseRedirect: Local zip download or redirect
+            to S3.
+        """
         campaign_slug = self.kwargs["campaign_slug"]
         project_slug = self.kwargs["project_slug"]
         item_id = self.kwargs["item_id"]
 
-        asset_qs = Asset.objects.filter(
+        asset_qs: QuerySet[Asset] = Asset.objects.filter(
             item__project__campaign__slug=campaign_slug,
             item__project__slug=project_slug,
             item__item_id=item_id,
             transcription_status=TranscriptionStatus.COMPLETED,
         ).order_by("sequence")
 
-        assets = get_latest_transcription_data(asset_qs)
+        assets: QuerySet[Asset] = get_latest_transcription_data(asset_qs)
 
         campaign = Campaign.objects.get(slug__exact=campaign_slug)
         campaign_slug_dbv = campaign.slug
@@ -341,16 +437,32 @@ class ExportItemToBagIt(TemplateView):
 
 
 class ExportProjectToBagIt(TemplateView):
+    """
+    Build a BagIt archive for a project consisting of completed items only.
+    """
+
     @method_decorator(staff_member_required)
-    def get(self, request, *args, **kwargs):
+    def get(
+        self, request: HttpRequest, *args, **kwargs
+    ) -> HttpResponse | HttpResponseRedirect:
+        """
+        Create and return a BagIt archive for the requested project.
+
+        Args:
+            request: Current HTTP request.
+
+        Returns:
+            HttpResponse | HttpResponseRedirect: Local zip download or redirect
+            to S3.
+        """
         campaign_slug = self.kwargs["campaign_slug"]
         project_slug = self.kwargs["project_slug"]
 
-        item_qs = Item.objects.filter(
+        item_qs: QuerySet[Item] = Item.objects.filter(
             project__campaign__slug=campaign_slug, project__slug=project_slug
         )
-        asset_qs = remove_incomplete_items(item_qs)
-        assets = get_latest_transcription_data(asset_qs)
+        asset_qs: QuerySet[Asset] = remove_incomplete_items(item_qs)
+        assets: QuerySet[Asset] = get_latest_transcription_data(asset_qs)
 
         campaign = Campaign.objects.get(slug__exact=campaign_slug)
         campaign_slug_dbv = campaign.slug
@@ -368,13 +480,31 @@ class ExportProjectToBagIt(TemplateView):
 
 
 class ExportCampaignToBagIt(TemplateView):
+    """
+    Build a BagIt archive for a campaign consisting of completed items only.
+    """
+
     @method_decorator(staff_member_required)
-    def get(self, request, *args, **kwargs):
+    def get(
+        self, request: HttpRequest, *args, **kwargs
+    ) -> HttpResponse | HttpResponseRedirect:
+        """
+        Create and return a BagIt archive for the requested campaign.
+
+        Args:
+            request: Current HTTP request.
+
+        Returns:
+            HttpResponse | HttpResponseRedirect: Local zip download or redirect
+            to S3.
+        """
         campaign_slug = self.kwargs["campaign_slug"]
 
-        item_qs = Item.objects.filter(project__campaign__slug=campaign_slug)
-        asset_qs = remove_incomplete_items(item_qs)
-        assets = get_latest_transcription_data(asset_qs)
+        item_qs: QuerySet[Item] = Item.objects.filter(
+            project__campaign__slug=campaign_slug
+        )
+        asset_qs: QuerySet[Asset] = remove_incomplete_items(item_qs)
+        assets: QuerySet[Asset] = get_latest_transcription_data(asset_qs)
 
         campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
 
@@ -390,19 +520,31 @@ class ExportCampaignToBagIt(TemplateView):
 
 class ExportProjectToCSV(TemplateView):
     """
-    Exports the most recent transcription for each asset in a project
+    Stream a CSV of the most recent transcription for each asset in a project.
+
+    Only the latest transcription text per asset is included. Tag values
+    are aggregated into a semicolon-delimited string.
     """
 
     @method_decorator(staff_member_required)
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """
+        Return a CSV response for the requested project.
+
+        Args:
+            request: Current HTTP request.
+
+        Returns:
+            HttpResponse: CSV content for the project.
+        """
         campaign_slug = self.kwargs["campaign_slug"]
         project_slug = self.kwargs["project_slug"]
 
         campaign = Campaign.objects.get(slug__exact=campaign_slug)
         project = Project.objects.get(campaign=campaign, slug__exact=project_slug)
 
-        asset_qs = Asset.objects.filter(item__project=project)
-        assets = get_latest_transcription_data(asset_qs)
+        asset_qs: QuerySet[Asset] = Asset.objects.filter(item__project=project)
+        assets: QuerySet[Asset] = get_latest_transcription_data(asset_qs)
         assets = get_tag_values(assets)
 
         headers, data = flatten_queryset(

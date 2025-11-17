@@ -23,9 +23,7 @@ from concordia.models import (
     Transcription,
 )
 from concordia.signals.handlers import on_transcription_save
-from concordia.tasks import (
-    campaign_report,
-)
+from concordia.tasks.reports.sitereport import campaign_report
 from concordia.utils import get_anonymous_user
 from concordia.views.accounts import AccountProfileView, registration_rate
 from concordia.views.campaigns import CompletedCampaignListView

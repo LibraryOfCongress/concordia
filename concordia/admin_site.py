@@ -1,12 +1,32 @@
+"""Admin site customizations for Concordia.
+
+Provides a subclass of Django's ``AdminSite`` that adds project-specific
+admin URLs alongside the default admin views.
+"""
+
 from django.contrib import admin
 from django.urls import path
 
 
 class ConcordiaAdminSite(admin.AdminSite):
+    """Custom admin site with additional Concordia tools and views."""
+
     site_header = "Concordia Admin"
     site_title = "Concordia"
 
-    def get_urls(self):
+    def get_urls(self) -> list:
+        """Return admin URL patterns including Concordia-specific routes.
+
+        This extends ``admin.AdminSite.get_urls`` by prepending a set of
+        project routes for bulk import, bulk review, Celery task review,
+        site reporting, project-level export, JSON object inspection
+        and the cache-clearing tool. The base admin URLs are returned
+        unchanged after the custom routes.
+
+        Returns:
+            list: URL patterns for the custom admin views followed by the
+            default admin URLs.
+        """
         from concordia.admin import views
 
         urls = super().get_urls()

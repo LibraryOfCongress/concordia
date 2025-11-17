@@ -565,7 +565,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
-    title = models.CharField(max_length=700)
+    title = models.CharField(max_length=1000)
     item_url = models.URLField(max_length=255)
     item_id = models.CharField(
         max_length=100, help_text="Unique item ID assigned by the upstream source"
@@ -2895,6 +2895,9 @@ class CampaignRetirementProgress(models.Model):
     def __str__(self):
         return f"Removal progress for {self.campaign}"
 
+    class Meta:
+        verbose_name_plural = "campaign retirement progresses"
+
 
 class TutorialCard(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
@@ -3026,11 +3029,11 @@ class NextTopicAssetManager(models.Manager):
 
 
 class NextTranscribableCampaignAssetManager(NextCampaignAssetManager):
-    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+    target_count = getattr(settings, "NEXT_TRANSCRIBABLE_ASSET_COUNT", 100)
 
 
 class NextTranscribableTopicAssetManager(NextTopicAssetManager):
-    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+    target_count = getattr(settings, "NEXT_TRANSCRIBABLE_ASSET_COUNT", 100)
 
 
 class NextReviewableCampaignAssetManager(NextCampaignAssetManager):

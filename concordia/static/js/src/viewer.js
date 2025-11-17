@@ -1,69 +1,80 @@
-/* global OpenSeadragon screenfull debounce displayHtmlMessage */
+import {debounce, displayHtmlMessage} from './base.js';
+import screenfull from 'screenfull';
+import OpenSeadragon from 'openseadragon';
 
-const viewerData = document.getElementById('viewer-data').dataset;
+const viewerElement = document.getElementById('viewer-data');
 
-let seadragonViewer = OpenSeadragon({
-    id: 'asset-image',
-    prefixUrl: viewerData.prefixUrl,
-    tileSources: {
-        type: 'image',
-        url: viewerData.tileSourceUrl,
-    },
-    gestureSettingsTouch: {
-        pinchRotate: true,
-    },
-    showNavigator: true,
-    showRotationControl: true,
-    showFlipControl: true,
-    toolbar: 'viewer-controls',
-    zoomInButton: 'viewer-zoom-in',
-    zoomOutButton: 'viewer-zoom-out',
-    homeButton: 'viewer-home',
-    rotateLeftButton: 'viewer-rotate-left',
-    rotateRightButton: 'viewer-rotate-right',
-    flipButton: 'viewer-flip',
-    crossOriginPolicy: 'Anonymous',
-    drawer: 'canvas',
-    defaultZoomLevel: 0,
-    homeFillsView: false,
-});
+let viewerData;
+let seadragonViewer;
 
-// We need to define our own fullscreen function rather than using OpenSeadragon's
-// because the built-in fullscreen function overwrites the DOM with the viewer,
-// breaking our extra controls, such as the image filters.
-if (screenfull.isEnabled) {
-    let fullscreenButton = document.querySelector('#viewer-fullscreen');
-    fullscreenButton.addEventListener('click', function (event) {
-        event.preventDefault();
-        let targetElement = document.querySelector(
-            fullscreenButton.dataset.target,
-        );
-        if (screenfull.isFullscreen) {
-            screenfull.exit();
-        } else {
-            screenfull.request(targetElement);
-        }
+if (viewerElement) {
+    viewerData = viewerElement.dataset;
+
+    seadragonViewer = OpenSeadragon({
+        id: 'asset-image',
+        prefixUrl: viewerData.prefixUrl,
+        tileSources: {
+            type: 'image',
+            url: viewerData.tileSourceUrl,
+        },
+        gestureSettingsTouch: {
+            pinchRotate: true,
+        },
+        showNavigator: true,
+        showRotationControl: true,
+        showFlipControl: true,
+        toolbar: 'viewer-controls',
+        zoomInButton: 'viewer-zoom-in',
+        zoomOutButton: 'viewer-zoom-out',
+        homeButton: 'viewer-home',
+        rotateLeftButton: 'viewer-rotate-left',
+        rotateRightButton: 'viewer-rotate-right',
+        flipButton: 'viewer-flip',
+        crossOriginPolicy: 'Anonymous',
+        drawer: 'canvas',
+        defaultZoomLevel: 0,
+        homeFillsView: false,
     });
-}
 
-// The buttons configured as controls for the viewer don't properly get focus
-// when clicked. This mostly isn't a problem, but causes odd-looking behavior
-// when one of the extra buttons in the control bar is clicked (and therefore
-// focused) first--clicking the control button leaves the focus on the extra
-// button.
-// TODO: Attempting to add focus to the clicked button here doesn't consistently
-// work for unknown reasons, so it just removes focus from the extra buttons
-// for now
-let viewerControlButtons = document.querySelectorAll('.viewer-control-button');
-for (const node of viewerControlButtons) {
-    node.addEventListener('click', function () {
-        let focusedButton = document.querySelector(
-            '.extra-control-button:focus',
-        );
-        if (focusedButton) {
-            focusedButton.blur();
-        }
-    });
+    // We need to define our own fullscreen function rather than using OpenSeadragon's
+    // because the built-in fullscreen function overwrites the DOM with the viewer,
+    // breaking our extra controls, such as the image filters.
+    if (screenfull.isEnabled) {
+        let fullscreenButton = document.querySelector('#viewer-fullscreen');
+        fullscreenButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            let targetElement = document.querySelector(
+                fullscreenButton.dataset.target,
+            );
+            if (screenfull.isFullscreen) {
+                screenfull.exit();
+            } else {
+                screenfull.request(targetElement);
+            }
+        });
+    }
+
+    // The buttons configured as controls for the viewer don't properly get focus
+    // when clicked. This mostly isn't a problem, but causes odd-looking behavior
+    // when one of the extra buttons in the control bar is clicked (and therefore
+    // focused) first--clicking the control button leaves the focus on the extra
+    // button.
+    // TODO: Attempting to add focus to the clicked button here doesn't consistently
+    // work for unknown reasons, so it just removes focus from the extra buttons
+    // for now
+    let viewerControlButtons = document.querySelectorAll(
+        '.viewer-control-button',
+    );
+    for (const node of viewerControlButtons) {
+        node.addEventListener('click', function () {
+            let focusedButton = document.querySelector(
+                '.extra-control-button:focus',
+            );
+            if (focusedButton) {
+                focusedButton.blur();
+            }
+        });
+    }
 }
 
 /*
@@ -124,32 +135,34 @@ function updateFilters() {
     });
 }
 
-for (const filterData of availableFilters) {
-    let form = document.getElementById(filterData.formId);
-    if (form) {
-        form.addEventListener('change', updateFilters);
-        form.addEventListener('reset', function () {
-            // We use setTimeout to push the updateFilters
-            // call to the next event cycle in order to
-            // call it after the form is reset, instead
-            // of before, which is when this listener
-            // triggers
-            setTimeout(updateFilters);
-        });
-    }
+if (viewerElement) {
+    for (const filterData of availableFilters) {
+        let form = document.getElementById(filterData.formId);
+        if (form) {
+            form.addEventListener('change', updateFilters);
+            form.addEventListener('reset', function () {
+                // We use setTimeout to push the updateFilters
+                // call to the next event cycle in order to
+                // call it after the form is reset, instead
+                // of before, which is when this listener
+                // triggers
+                setTimeout(updateFilters);
+            });
+        }
 
-    let input = document.getElementById(filterData.inputId);
-    if (input) {
-        // We use debounce here so that updateFilters is only called once,
-        // after the user stops typing or scrolling with their mousewheel
-        input.addEventListener(
-            'keyup',
-            debounce(() => updateFilters()),
-        );
-        input.addEventListener(
-            'wheel',
-            debounce(() => updateFilters()),
-        );
+        let input = document.getElementById(filterData.inputId);
+        if (input) {
+            // We use debounce here so that updateFilters is only called once,
+            // after the user stops typing or scrolling with their mousewheel
+            input.addEventListener(
+                'keyup',
+                debounce(() => updateFilters()),
+            );
+            input.addEventListener(
+                'wheel',
+                debounce(() => updateFilters()),
+            );
+        }
     }
 }
 
@@ -179,77 +192,79 @@ function resetImageFilterForms() {
     }
 }
 
-let gammaNumber = document.getElementById('gamma');
-let gammaRange = document.getElementById('gamma-range');
+if (seadragonViewer) {
+    let gammaNumber = document.getElementById('gamma');
+    let gammaRange = document.getElementById('gamma-range');
 
-gammaNumber.addEventListener('input', function () {
-    gammaRange.value = gammaNumber.value;
-});
+    gammaNumber.addEventListener('input', function () {
+        gammaRange.value = gammaNumber.value;
+    });
 
-gammaRange.addEventListener('input', function () {
-    gammaNumber.value = gammaRange.value;
-});
+    gammaRange.addEventListener('input', function () {
+        gammaNumber.value = gammaRange.value;
+    });
 
-let gammaUp = document.getElementById('gamma-up');
-gammaUp.addEventListener('click', function () {
-    stepUp('gamma');
-});
+    let gammaUp = document.getElementById('gamma-up');
+    gammaUp.addEventListener('click', function () {
+        stepUp('gamma');
+    });
 
-let gammaDown = document.getElementById('gamma-down');
-gammaDown.addEventListener('click', function () {
-    stepDown('gamma');
-});
+    let gammaDown = document.getElementById('gamma-down');
+    gammaDown.addEventListener('click', function () {
+        stepDown('gamma');
+    });
 
-let thresholdNumber = document.getElementById('threshold');
-let thresholdRange = document.getElementById('threshold-range');
+    let thresholdNumber = document.getElementById('threshold');
+    let thresholdRange = document.getElementById('threshold-range');
 
-thresholdNumber.addEventListener('input', function () {
-    thresholdRange.value = thresholdNumber.value;
-});
+    thresholdNumber.addEventListener('input', function () {
+        thresholdRange.value = thresholdNumber.value;
+    });
 
-thresholdRange.addEventListener('input', function () {
-    thresholdNumber.value = thresholdRange.value;
-});
+    thresholdRange.addEventListener('input', function () {
+        thresholdNumber.value = thresholdRange.value;
+    });
 
-let thresholdUp = document.getElementById('threshold-up');
-thresholdUp.addEventListener('click', function () {
-    stepUp('threshold');
-});
+    let thresholdUp = document.getElementById('threshold-up');
+    thresholdUp.addEventListener('click', function () {
+        stepUp('threshold');
+    });
 
-let thresholdDown = document.getElementById('threshold-down');
-thresholdDown.addEventListener('click', function () {
-    stepDown('threshold');
-});
+    let thresholdDown = document.getElementById('threshold-down');
+    thresholdDown.addEventListener('click', function () {
+        stepDown('threshold');
+    });
 
-let reset = document.getElementById('viewer-reset');
-reset.addEventListener('click', resetImageFilterForms);
+    let reset = document.getElementById('viewer-reset');
+    reset.addEventListener('click', resetImageFilterForms);
 
-// After the viewer has opened, set it to the home
-// view, which insures the entire image is displayed
-// (Workaround for change in behavior introduced during
-// the upgrade to OpenSeadragon 5.0.1)
-seadragonViewer.addHandler('open', function () {
-    // We use setTimeout to make sure everything is
-    // fully loaded so the viewport is ready calculate
-    // the bounds and zoom correctly.
-    setTimeout(() => {
-        seadragonViewer.viewport.goHome(true);
-    }, 0);
-});
+    // After the viewer has opened, set it to the home
+    // view, which insures the entire image is displayed
+    // (Workaround for change in behavior introduced during
+    // the upgrade to OpenSeadragon 5.0.1)
+    seadragonViewer.addHandler('open', function () {
+        // We use setTimeout to make sure everything is
+        // fully loaded so the viewport is ready calculate
+        // the bounds and zoom correctly.
+        setTimeout(() => {
+            seadragonViewer.viewport.goHome(true);
+        }, 0);
+    });
 
-seadragonViewer.addHandler('open-failed', function () {
-    // We don't use the eventData or error message
-    // because it contains the image URL, which we don't
-    // want to display
-    let contactUs =
-        '<strong><a class="alert-link" href="' +
-        viewerData.contactUrl +
-        '" target="_blank">Contact us</a></strong>';
-    displayHtmlMessage(
-        'error',
-        'Unable to display image - ' + contactUs,
-        'openseadragon-open-failed',
-    );
-});
+    seadragonViewer.addHandler('open-failed', function () {
+        // We don't use the eventData or error message
+        // because it contains the image URL, which we don't
+        // want to display
+        let contactUs =
+            '<strong><a class="alert-link" href="' +
+            viewerData.contactUrl +
+            '" target="_blank">Contact us</a></strong>';
+        displayHtmlMessage(
+            'error',
+            'Unable to display image - ' + contactUs,
+            'openseadragon-open-failed',
+        );
+    });
+}
 
 export {seadragonViewer};

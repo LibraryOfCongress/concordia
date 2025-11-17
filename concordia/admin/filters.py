@@ -1,7 +1,8 @@
 from django.contrib import admin
+from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 
-from ..models import Campaign, Project, Topic
+from ..models import Campaign, Project, Topic, Transcription
 
 
 class NullableTimestampFilter(admin.SimpleListFilter):
@@ -335,3 +336,25 @@ class OcrGeneratedFilter(BooleanFilter):
 class OcrOriginatedFilter(BooleanFilter):
     title = "OCR Originated"
     parameter_name = "ocr_originated"
+
+
+class SupersededListFilter(admin.SimpleListFilter):
+    title = "superseded"
+    parameter_name = "superseded"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Superseded"), ("no", "Not superseded"))
+
+    def queryset(self, request, queryset):
+        # Uses Exists to make joining cheaper
+        superseded_exists = Transcription.objects.filter(supersedes=OuterRef("pk"))
+        val = self.value()
+        if val == "yes":
+            return queryset.annotate(_is_superseded=Exists(superseded_exists)).filter(
+                _is_superseded=True
+            )
+        if val == "no":
+            return queryset.annotate(_is_superseded=Exists(superseded_exists)).filter(
+                _is_superseded=False
+            )
+        return queryset
