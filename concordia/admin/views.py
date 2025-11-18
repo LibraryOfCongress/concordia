@@ -3,6 +3,7 @@ import re
 import tempfile
 import time
 from http import HTTPStatus
+from typing import Any
 
 from django.apps import apps
 from django.contrib import messages
@@ -11,7 +12,7 @@ from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.core.cache import caches
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -48,7 +49,26 @@ logger = logging.getLogger(__name__)
 @permission_required("concordia.change_project")
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
-def project_level_export(request):
+def project_level_export(request: HttpRequest) -> HttpResponse:
+    """
+    Render the project-level BagIt export admin view and run exports.
+
+    When called with `GET`, shows a form to select campaigns and projects.
+    When called with `POST`, builds a BagIt export for completed items in
+    the selected projects.
+
+    Request Parameters:
+        `id` (str, optional): Campaign primary key used to filter projects.
+        `slug` (str, optional): Campaign slug used when building the export
+            filename.
+
+    Args:
+        request (HttpRequest): Current admin request.
+
+    Returns:
+        HttpResponse: HTML response for the selection view or a streamed
+            BagIt export.
+    """
     request.current_app = "admin"
     context = {"title": "Project Level Bagit Exporter"}
     form = AdminProjectBulkImportForm()
@@ -132,7 +152,26 @@ def project_level_export(request):
 @permission_required("concordia.change_project")
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
-def celery_task_review(request):
+def celery_task_review(request: HttpRequest) -> HttpResponse:
+    """
+    Inspect importer Celery tasks and summarize their status by project.
+
+    For a selected campaign, iterates through related projects, import
+    jobs and item assets to count successful, incomplete, unstarted and
+    failed tasks. Writes per-asset status messages to the admin message
+    framework and renders a summary table.
+
+    Request Parameters:
+        `id` (str, optional): Campaign primary key used to select which
+            projects to inspect.
+
+    Args:
+        request (HttpRequest): Current admin request.
+
+    Returns:
+        HttpResponse: HTML response showing task counts by project or a
+            campaign picker.
+    """
     request.current_app = "admin"
     totalcount = 0
     counter = 0
@@ -224,7 +263,25 @@ def celery_task_review(request):
 @permission_required("concordia.change_project")
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
-def admin_bulk_import_review(request):
+def admin_bulk_import_review(request: HttpRequest) -> HttpResponse:
+    """
+    Preview a bulk import spreadsheet without creating campaigns or items.
+
+    Parses the uploaded spreadsheet, validates required columns and slugs
+    and extracts all import URLs. Uses `fetch_all_urls` to preflight the
+    URLs then reports the results and total asset count in admin messages.
+
+    Request Parameters:
+        Uploaded file `spreadsheet_file` (multipart): Spreadsheet with one
+            row per campaign and project definition.
+
+    Args:
+        request (HttpRequest): Current admin request.
+
+    Returns:
+        HttpResponse: HTML response containing the review form and any
+            status messages.
+    """
     request.current_app = "admin"
     url_regex = r"[-\w+]+"
     pattern = re.compile(url_regex)
@@ -313,7 +370,7 @@ def admin_bulk_import_review(request):
                     sum_count = sum_count + return_result[1]
                     time.sleep(7)
 
-                messages.info(request, f"Total Asset Count:{sum_count}")
+                messages.info(request, f"Total Asset Count:{sum_count}")
             finally:
                 messages.info(request, "All Processes Completed")
 
@@ -333,7 +390,27 @@ def admin_bulk_import_review(request):
 @permission_required("concordia.change_project")
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
-def admin_bulk_import_view(request):
+def admin_bulk_import_view(request: HttpRequest) -> HttpResponse:
+    """
+    Queue bulk import jobs from a spreadsheet.
+
+    Reads an uploaded spreadsheet, creates or reuses `Campaign` and
+    `Project` records using `validated_get_or_create` then queues import
+    jobs via `import_items_into_project_from_url` for each URL.
+
+    Request Parameters:
+        Uploaded file `spreadsheet_file` (multipart): Spreadsheet defining
+            campaigns, projects and URLs.
+        Field `redownload` (bool, optional): If true, forces existing
+            items to be re-downloaded.
+
+    Args:
+        request (HttpRequest): Current admin request.
+
+    Returns:
+        HttpResponse: HTML response containing the bulk import form and
+            any queued job information.
+    """
     request.current_app = "admin"
     url_regex = r"[-\w+]+"
     pattern = re.compile(url_regex)
@@ -439,7 +516,8 @@ def admin_bulk_import_view(request):
                     messages.info(request, f"Created new project {project_title}")
                 else:
                     messages.info(
-                        request, f"Reusing project {project_title} without modification"
+                        request,
+                        f"Reusing project {project_title} without modification",
                     )
 
                 potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
@@ -459,7 +537,10 @@ def admin_bulk_import_view(request):
 
                         messages.info(
                             request,
-                            f"Queued {campaign_title} {project_title} import for {url}",
+                            (
+                                f"Queued {campaign_title} {project_title} "
+                                f"import for {url}"
+                            ),
                         )
                     except Exception as exc:
                         messages.error(
@@ -476,7 +557,19 @@ def admin_bulk_import_view(request):
 
 @never_cache
 @staff_member_required
-def admin_site_report_view(request):
+def admin_site_report_view(request: HttpRequest) -> HttpResponse:
+    """
+    Export all `SiteReport` records as a CSV file.
+
+    Builds tabular data using `flatten_queryset` and returns a CSV
+    response suitable for download.
+
+    Args:
+        request (HttpRequest): Current admin request.
+
+    Returns:
+        HttpResponse: CSV download with one row per `SiteReport`.
+    """
     site_reports = SiteReport.objects.all()
 
     headers, data = flatten_queryset(
@@ -490,7 +583,20 @@ def admin_site_report_view(request):
 
 @never_cache
 @staff_member_required
-def admin_retired_site_report_view(request):
+def admin_retired_site_report_view(request: HttpRequest) -> HttpResponse:
+    """
+    Export a CSV of the latest `SiteReport` per retired campaign.
+
+    Selects the most recent report per retired campaign then appends a
+    final summary row that totals numeric fields across all rows.
+
+    Args:
+        request (HttpRequest): Current admin request.
+
+    Returns:
+        HttpResponse: CSV download including per-campaign rows and a
+            `RETIRED TOTAL` row.
+    """
     site_reports = site_reports = (
         SiteReport.objects.filter(campaign__status=Campaign.Status.RETIRED)
         .order_by("campaign_id", "-created_on")
@@ -521,7 +627,37 @@ def admin_retired_site_report_view(request):
 
 
 class SerializedObjectView(View):
-    def get(self, request, *args, **kwargs):
+    """
+    Return a single field from a Concordia model instance as JSON.
+
+    The model, instance and field to fetch are provided through query
+    string parameters. This is intended for lightweight admin tools that
+    need to inspect or preview stored values.
+    """
+
+    def get(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> JsonResponse:
+        """
+        Handle `GET` requests and serialize the requested field.
+
+        Request Parameters:
+            `model_name` (str): Name of the `concordia` app model to query.
+            `object_id` (str): Primary key of the model instance.
+            `field_name` (str): Name of the attribute or field to return.
+
+        Args:
+            request (HttpRequest): Current HTTP request.
+            *args (Any): Positional arguments passed by the URLconf.
+            **kwargs (Any): Keyword arguments passed by the URLconf.
+
+        Returns:
+            JsonResponse: JSON object containing the field value or a 404
+                status if the instance does not exist.
+        """
         model_name = request.GET.get("model_name")
         object_id = request.GET.get("object_id")
         field_name = request.GET.get("field_name")
@@ -538,11 +674,32 @@ class SerializedObjectView(View):
 @method_decorator(never_cache, name="dispatch")
 @method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
 class ClearCacheView(FormView):
+    """
+    Admin view for clearing non-default Django caches.
+
+    Uses `ClearCacheForm` to pick a cache alias then calls `clear()` on
+    the selected cache. Only superusers can access this view.
+    """
+
     form_class = ClearCacheForm
     template_name = "admin/clear_cache.html"
     success_url = reverse_lazy("admin:clear-cache")
 
-    def form_valid(self, form):
+    def form_valid(self, form: ClearCacheForm) -> HttpResponse:
+        """
+        Clear the selected cache and redirect back to the form.
+
+        On success, adds a success message. On failure, logs an error
+        message then continues with the normal `FormView` redirect.
+
+        Args:
+            form (ClearCacheForm): Validated form containing the selected
+                cache alias.
+
+        Returns:
+            HttpResponse: Redirect to the configured `success_url` after
+                processing.
+        """
         try:
             cache_name = form.cleaned_data["cache_name"]
             caches[cache_name].clear()
@@ -550,7 +707,9 @@ class ClearCacheView(FormView):
         except Exception as err:
             messages.error(
                 self.request,
-                f"Couldn't clear cache '{cache_name}', "
-                f"something went wrong. Received error: {err}",
+                (
+                    f"Couldn't clear cache '{cache_name}', "
+                    f"something went wrong. Received error: {err}"
+                ),
             )
         return super().form_valid(form)
