@@ -73,6 +73,13 @@ class AdminProjectBulkImportForm(forms.Form):
     )
 
 
+class AdminAssetsBulkChangeStatusForm(forms.Form):
+    spreadsheet_file = forms.FileField(
+        required=True,
+        label="Spreadsheet containing the items to change",
+    )
+
+
 class SanitizedDescriptionAdminForm(forms.ModelForm):
     class Meta:
         model = Campaign

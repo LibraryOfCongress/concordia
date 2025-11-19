@@ -35,7 +35,12 @@ from importer.tasks.items import import_items_into_project_from_url
 from importer.utils import slurp_excel
 
 from ..models import Campaign, Project, SiteReport
-from .forms import AdminProjectBulkImportForm, ClearCacheForm
+from .forms import (
+    AdminAssetsBulkChangeStatusForm,
+    AdminProjectBulkImportForm,
+    ClearCacheForm,
+)
+from .utils import _change_status
 
 logger = logging.getLogger(__name__)
 
@@ -323,6 +328,26 @@ def admin_bulk_import_review(request):
     context["form"] = form
 
     return render(request, "admin/bulk_review.html", context)
+
+
+@never_cache
+@staff_member_required
+def admin_bulk_change_asset_status(request):
+    if request.method == "POST":
+        form = AdminAssetsBulkChangeStatusForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            rows = slurp_excel(request.FILES["spreadsheet_file"])
+
+            asset_ids = [row["asset__id"] for idx, row in enumerate(rows)]
+            assets = Asset.objects.filter(id__in=asset_ids)
+            _change_status(request.user, assets)
+    else:
+        form = AdminAssetsBulkChangeStatusForm()
+
+    context = {"form": form}
+
+    return render(request, "admin/bulk_change.html", context)
 
 
 @never_cache

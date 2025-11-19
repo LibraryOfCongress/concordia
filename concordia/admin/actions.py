@@ -14,6 +14,7 @@ from ..models import (
     Transcription,
     TranscriptionStatus,
 )
+from .utils import _change_status
 
 logger = getLogger(__name__)
 
@@ -127,48 +128,10 @@ def change_status_to_completed(modeladmin, request, queryset):
         )
 
 
-def _change_status(request, assets, submit=True):
-    # Count the number of assets that will be updated
-    count = assets.count()
-    """
-    For each asset:
-    - create a new transcription. if transcriptions already exist:
-      - supersede the currently-latest transcription
-      - use the same transcription text as the latest transcription
-    - set either submitted or rejected to now
-    - set reviewed_by to the current user
-    Don't use bulk_create, because then the post-save signal will not be sent.
-
-    """
-    for asset in assets:
-        latest_transcription = asset.transcription_set.order_by("-pk").first()
-        kwargs = {
-            "reviewed_by": request.user,
-            "asset": asset,
-            "user": request.user,
-        }
-        if latest_transcription is not None:
-            kwargs.update(
-                **{
-                    "supersedes": latest_transcription,
-                    "text": latest_transcription.text,
-                }
-            )
-        if submit:
-            kwargs["submitted"] = now()
-        else:
-            kwargs["rejected"] = now()
-        new_transcription = Transcription(**kwargs)
-        new_transcription.full_clean()
-        new_transcription.save()
-
-    return count
-
-
 @admin.action(permissions=["reopen"], description="Change status to Needs Review")
 def change_status_to_needs_review(modeladmin, request, queryset):
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
-    count = _change_status(request, eligible)
+    count = _change_status(request.user, eligible)
 
     if count == 1:
         asset = queryset.first()
@@ -188,7 +151,7 @@ def change_status_to_needs_review(modeladmin, request, queryset):
 @admin.action(permissions=["reopen"], description="Change status to In Progress")
 def change_status_to_in_progress(modeladmin, request, queryset):
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
-    count = _change_status(request, eligible, submit=False)
+    count = _change_status(request.user, eligible, submit=False)
 
     if count == 1:
         asset = queryset.first()

@@ -521,6 +521,22 @@ class TestAdminBulkImportView(CreateTestUsers, TestCase):
             )
 
 
+class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
+    def setUp(self):
+        asset = create_asset()
+        self.spreadsheet_data = [{"asset__id": asset.id}]
+
+    def test_admin_bulk_change_asset_status(self):
+        self.login_user(is_staff=True, is_superuser=True)
+
+        response = self.client.get(reverse("admin:bulk-change"))
+        self.assertEqual(response.status_code, 200)
+        with mock.patch(
+            "concordia.admin.views.slurp_excel", autospec=True
+        ) as slurp_mock:
+            slurp_mock.return_value = self.spreadsheet_data
+
+
 class TestAdminBulkImportReview(CreateTestUsers, TestCase):
     def setUp(self):
         self.login_user(is_staff=True, is_superuser=True)
