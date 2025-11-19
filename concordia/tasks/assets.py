@@ -18,8 +18,18 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 @celery_app.task
 def calculate_difficulty_values(asset_qs=None):
     """
-    Calculate the difficulty scores for the provided AssetQuerySet and update
-    the Asset records for changed difficulty values
+    Calculate difficulty scores for assets and update their stored values.
+
+    This Celery task walks a queryset of Asset rows in 500-row chunks, computes
+    a difficulty score based on transcription activity, and bulk-updates only
+    those assets whose difficulty value has changed.
+
+    Args:
+        asset_qs: Optional queryset of Asset instances to process. If omitted,
+            all published assets are fetched via Asset.objects.published().
+
+    Returns:
+        int: The number of Asset records whose difficulty field was updated.
     """
 
     if asset_qs is None:
@@ -57,7 +67,15 @@ def calculate_difficulty_values(asset_qs=None):
 @celery_app.task
 def populate_asset_years():
     """
-    Pull out date info from raw Item metadata and populate it for each Asset
+    Populate the Asset.year field using dates from related Item metadata.
+
+    This Celery task iterates over assets in 500-row chunks, inspects each
+    asset's Item.metadata["item"]["dates"] structure, and assigns the final
+    year key encountered to the Asset.year field. Only assets whose year value
+    changes are persisted with bulk_update().
+
+    Returns:
+        int: The number of Asset records whose year field was updated.
     """
 
     asset_qs = Asset.objects.prefetch_related("item")
@@ -89,6 +107,26 @@ def populate_asset_years():
 
 @celery_app.task(ignore_result=True)
 def fix_storage_images(campaign_slug=None, asset_start_id=None):
+    """
+    Ensure that each Asset has a backing file in the asset storage backend.
+
+    For each matching asset, this Celery task checks whether the file referenced
+    by Asset.storage_image exists in ASSET_STORAGE. If it is missing, the task
+    downloads the image from Asset.download_url and saves it into storage using
+    the expected campaign/project/item/sequence-based filename.
+
+    Args:
+        campaign_slug: Optional campaign slug used to restrict the assets that
+            are checked. If omitted, all assets are examined.
+        asset_start_id: Optional numeric Asset primary key. If provided, only
+            assets with id >= this value are processed.
+
+    Raises:
+        requests.RequestException: Propagated if the remote download fails.
+        Exception: Any other exception encountered during download or save is
+            logged and re-raised.
+    """
+
     if campaign_slug:
         from concordia.models import Campaign
 
