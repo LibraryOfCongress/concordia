@@ -12,5 +12,11 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 
 @celery_app.task(ignore_result=True)
 def clear_sessions():
-    # This clears expired Django sessions in the database
+    """
+    Clear expired Django session records.
+
+    This Celery task runs Django's ``clearsessions`` management command to
+    remove expired rows from the session store. It is typically invoked on a
+    schedule to prevent the session table from growing without bounds.
+    """
     call_command("clearsessions")
