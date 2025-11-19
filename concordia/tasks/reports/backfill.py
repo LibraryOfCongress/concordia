@@ -16,37 +16,43 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 @locked_task(lock_by_args=False)
 def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -> int:
     """
-    Compute and persist `assets_started` for all existing SiteReport rows.
+    Backfill the ``assets_started`` field for existing site-report series.
 
-    This is a temporary job for backfilling missing information in SiteReports.
-    It should be removed in the next release after it goes live and has been run.
+    This one-off task computes and persists ``assets_started`` values for all
+    relevant ``SiteReport`` rows. It should be removed after it has been run in
+    production and the backfill is no longer needed.
 
     Series processed:
-      - Site-wide TOTAL                (report_name=TOTAL)
-      - Site-wide RETIRED_TOTAL        (report_name=RETIRED_TOTAL)
-      - Per-campaign                   (campaign is not null)
-      - Per-topic                      (topic is not null)
+
+    * Site-wide TOTAL (``report_name=TOTAL``)
+    * Site-wide RETIRED_TOTAL (``report_name=RETIRED_TOTAL``)
+    * Per-campaign (``campaign`` is not null)
+    * Per-topic (``topic`` is not null)
 
     Rules:
-      - The first "snapshot" in each series assumes assets_started = 0 (this
-        represents when the site launched or at least the time before the
-        first site report, when we have no data).
-      - If there are gaps in days, the previous value is simply the most
-        recent prior report in that series.
-      - All results are floored at 0, since negative numbers are not actually
-        possible in reality--the cause would be data removal, which we do not
-        want to treat as negative activity in these reports.
+
+    * The first snapshot in each series assumes ``assets_started = 0``. This
+      represents the launch of the site or the time before the first report
+      when no earlier data is available.
+    * If there are gaps in days, the previous value is taken from the most
+      recent prior report in that series.
+    * All results are floored at 0, since negative values indicate data
+      removal and should not be treated as negative activity.
 
     Resumability:
-      - By default, rows that already have a non-null `assets_started` are
-        skipped (`skip_existing=True`), so the task can be re-run to resume
-        where it left off.
-      - If you need to recompute all rows (for example, after changing the
-        formula), call with `skip_existing=False`.
 
-    Progress visibility:
-      - Emits heartbeat logs while scanning long series so it does not appear
-        idle when no rows need updates.
+    * By default, rows that already have a non-null ``assets_started`` value
+      are skipped (``skip_existing=True``), so the task can be re-run to
+      resume where it left off.
+    * To recompute all rows, for example after changing the formula, call the
+      task with ``skip_existing=False``.
+
+    Args:
+        skip_existing: If true, skip rows where ``assets_started`` is already
+            populated.
+
+    Returns:
+        The number of ``SiteReport`` rows updated across all series.
     """
 
     structured_logger.info(
@@ -69,9 +75,21 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         series_label: str,
     ) -> int:
         """
-        Walk a single series in chronological order, computing/saving
-        `assets_started`. Logs each saved row at info level with context,
-        and emits heartbeat logs even when no rows change.
+        Process a single series in chronological order and backfill values.
+
+        This helper walks one site-report series and computes
+        ``assets_started`` for each row based on the previous snapshot. It
+        saves updated rows and logs progress, including periodic heartbeat
+        messages for monitoring long-running scans.
+
+        Args:
+            qs: Queryset or iterable of ``SiteReport`` objects ordered by
+                ``created_on`` and primary key.
+            series_label: Short label for logging, such as ``"TOTAL"`` or
+                ``"CAMPAIGN:<id>"``.
+
+        Returns:
+            The number of rows in the series that were updated.
         """
         changed = 0
         scanned = 0

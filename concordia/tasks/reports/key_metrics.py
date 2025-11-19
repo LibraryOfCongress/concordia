@@ -18,23 +18,35 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 @locked_task(lock_by_args=False)
 def build_key_metrics_reports(self, recompute_all: bool = False) -> int:
     """
-    Build or refresh KeyMetricsReport rows (monthly, quarterly, fiscal year).
+    Build or refresh KeyMetricsReport rows (monthly, quarterly and fiscal year).
 
-    Modes:
-      - recompute_all=True:
-          * Recompute EVERY monthly period that is computable from SiteReport.
-          * Then recompute ALL quarters that have at least one monthly row.
-          * Then recompute ALL fiscal years that have at least one quarterly row.
-      - recompute_all=False (default, incremental):
-          * Create any MISSING monthly rows.
-          * Refresh any EXISTING monthly row if any SiteReport in that month has
-            created_on > monthly.updated_on (keeps partial months current).
-          * Create any MISSING quarter rows that have at least one monthly row.
-          * Refresh any EXISTING quarter whose input monthly rows have
-            updated_on > quarter.updated_on.
-          * Create any MISSING fiscal year rows that have at least one quarter row.
-          * Refresh any EXISTING fiscal year whose input quarter rows have
-            updated_on > fiscal_year.updated_on.
+    The task operates in two modes, controlled by ``recompute_all``:
+
+    - If ``recompute_all`` is True:
+        - Recompute every monthly period that can be derived from
+          SiteReport data.
+        - Recompute all quarters that have at least one monthly row.
+        - Recompute all fiscal years that have at least one quarterly
+          row.
+    - If ``recompute_all`` is False (incremental mode):
+        - Create any missing monthly rows.
+        - Refresh a monthly row if any SiteReport in that month has
+          ``created_on`` later than the row's ``updated_on`` value.
+        - Create any missing quarter rows that have at least one
+          monthly row.
+        - Refresh a quarter row if any of its monthly inputs have
+          ``updated_on`` later than the quarter's ``updated_on`` value.
+        - Create any missing fiscal year rows that have at least one
+          quarter row.
+        - Refresh a fiscal year row if any of its quarterly inputs have
+          ``updated_on`` later than the fiscal year's ``updated_on``
+          value.
+
+    Args:
+        recompute_all: If True, recompute all monthly, quarterly and
+            fiscal-year rows from scratch based on SiteReport data. If
+            False, only create missing rows and refresh rows that are
+            stale.
 
     Returns:
         int: Count of KeyMetricsReport rows created or updated.

@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
 from concordia.logging import ConcordiaLogger
@@ -25,7 +25,18 @@ logger = getLogger(__name__)
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
-def _recent_transcriptions():
+def _recent_transcriptions() -> QuerySet[Transcription]:
+    """
+    Return transcriptions with activity in the last day.
+
+    "Recent" activity is defined as any transcription whose accepted, created,
+    rejected, submitted, or updated timestamp is greater than or equal to
+    ONE_DAY_AGO. This queryset is used as the basis for daily activity and DAU
+    calculations.
+
+    Returns:
+        QuerySet[Transcription]: Django queryset of recent transcriptions.
+    """
     qs = Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
@@ -41,7 +52,16 @@ def _recent_transcriptions():
     return qs
 
 
-def _daily_active_users():
+def _daily_active_users() -> int:
+    """
+    Calculate the daily active user count based on recent transcriptions.
+
+    A daily active user is any account that either created or updated a
+    transcription, or performed a review, within the last day.
+
+    Returns:
+        int: The number of unique users who were active in the last day.
+    """
     transcriptions = _recent_transcriptions()
     transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
     reviewer_ids = (
@@ -64,7 +84,15 @@ def _daily_active_users():
 
 
 @celery_app.task
-def site_report():
+def site_report() -> None:
+    """
+    Generate site-wide, per-campaign, per-topic, and retired rollup SiteReports.
+
+    This task snapshots current counts for assets, items, projects, campaigns,
+    tags, users, and transcription activity into SiteReport rows. It creates a
+    site-wide TOTAL report, then per-campaign and per-topic reports, and
+    finally a RETIRED_TOTAL rollup for retired campaigns.
+    """
     structured_logger.debug(
         "Starting site report generation task.",
         event_code="site_report_task_start",
@@ -216,7 +244,16 @@ def site_report():
     )
 
 
-def topic_report(topic):
+def topic_report(topic: Topic) -> None:
+    """
+    Generate and save a SiteReport snapshot for a single topic.
+
+    The report aggregates asset, item, project, tag, and review activity counts
+    for the topic and stores them as a new SiteReport row.
+
+    Args:
+        topic: Topic instance to generate a report for.
+    """
     structured_logger.debug(
         "Starting topic report generation.",
         event_code="topic_report_generation_start",
@@ -343,7 +380,16 @@ def topic_report(topic):
     )
 
 
-def campaign_report(campaign):
+def campaign_report(campaign: Campaign) -> None:
+    """
+    Generate and save a SiteReport snapshot for a single campaign.
+
+    The report aggregates asset, item, project, contributor, tag, and review
+    counts for the campaign and stores them as a new SiteReport row.
+
+    Args:
+        campaign: Campaign instance to generate a report for.
+    """
     structured_logger.debug(
         "Starting campaign report generation.",
         event_code="campaign_report_generation_start",
@@ -497,7 +543,14 @@ def campaign_report(campaign):
     )
 
 
-def retired_total_report():
+def retired_total_report() -> None:
+    """
+    Generate and save the RETIRED_TOTAL SiteReport rollup.
+
+    This aggregates the most recent SiteReport for each retired campaign into a
+    single rollup row, summing most fields directly and recalculating
+    assets_started using the retired-total series.
+    """
     structured_logger.debug(
         "Starting retired total report generation.",
         event_code="retired_total_report_generation_start",
