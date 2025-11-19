@@ -21,9 +21,16 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
-def populate_asset_status_visualization_cache(self):
+def populate_asset_status_visualization_cache(self) -> None:
     """
-    Queries live Asset objects for all ACTIVE campaigns and builds a dataset:
+    Build and cache aggregate asset status counts for active campaigns.
+
+    This task queries live Asset rows for all campaigns that are published,
+    listed and active then aggregates counts by ``transcription_status``. It
+    also writes a CSV export to ``VISUALIZATION_STORAGE`` and stores the
+    following payload in the ``"visualization_cache"`` under the
+    ``"asset-status-overview"`` key:
+
         - `status_labels`: [
                 "Not Started",
                 "In Progress",
@@ -142,11 +149,19 @@ def populate_asset_status_visualization_cache(self):
 
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
-def populate_daily_activity_visualization_cache(self):
+def populate_daily_activity_visualization_cache(self) -> None:
     """
-    Queries total SiteReport objects for the past 28 days and builds a dataset.
+    Build and cache a 28 day time series of transcription activity.
+
+    This task queries ``SiteReport`` rows with
+    ``report_name=SiteReport.ReportName.TOTAL`` for the last 28 days
+    (excluding today) and derives per day counts of saved transcriptions and
+    review actions. It writes a CSV export to ``VISUALIZATION_STORAGE`` and
+    stores the following payload in the ``"visualization_cache"`` under the
+    ``"daily-transcription-activity-last-28-days"`` key.
 
     The dataset contains:
+
         - `labels`: [ "YYYY-MM-DD", ..., ] (28 dates)
         - `transcription_datasets`: [
               {
