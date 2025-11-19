@@ -16,6 +16,20 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 
 @celery_app.task
 def expire_inactive_asset_reservations():
+    """
+    Release and delete stale asset transcription reservations.
+
+    This task identifies reservations which have not been updated within a grace
+    period defined as twice ``TRANSCRIPTION_RESERVATION_SECONDS`` and:
+
+    * Emits the ``reservation_released`` signal for each expired reservation so
+      any listeners can react (for example, by making the asset available again).
+    * Deletes the expired reservation records from the database.
+
+    This is intended to be run periodically (for example via Celery beat) to
+    ensure that abandoned reservations do not block other users from working on
+    assets.
+    """
     timestamp = timezone.now()
 
     # Clear old reservations, with a grace period:
@@ -40,6 +54,18 @@ def expire_inactive_asset_reservations():
 
 @celery_app.task
 def tombstone_old_active_asset_reservations():
+    """
+    Mark very old active reservations as tombstoned.
+
+    This task finds asset transcription reservations whose ``created_on`` is
+    older than ``TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS`` and that are not
+    already tombstoned. Each matching reservation is marked with
+    ``tombstoned=True`` and saved.
+
+    Tombstoning is a soft-deactivation step that prevents further use of
+    obsolete reservations while still retaining a short history for debugging
+    or analytics before final deletion.
+    """
     timestamp = timezone.now()
 
     cutoff = timestamp - (
@@ -57,6 +83,19 @@ def tombstone_old_active_asset_reservations():
 
 @celery_app.task
 def delete_old_tombstoned_reservations():
+    """
+    Permanently delete tombstoned reservations after a retention period.
+
+    This task finds asset transcription reservations which:
+
+    * Have ``tombstoned=True``, and
+    * Have not been updated within
+      ``TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS``.
+
+    Each matching reservation is deleted from the database. This provides a
+    final cleanup step after tombstoning so reservation records do not linger
+    indefinitely.
+    """
     timestamp = timezone.now()
 
     cutoff = timestamp - (
