@@ -27,22 +27,23 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 @locked_task
 def populate_next_reviewable_for_campaign(self, campaign_id):
     """
-    Populate the cache table of next reviewable assets for a given campaign.
+    Populate the next reviewable cache for a campaign.
 
-    This task checks how many reviewable assets are still needed for the campaign,
-    finds eligible assets, and inserts them into the NextReviewableCampaignAsset table
-    up to the target count.
+    This task checks how many reviewable assets are still needed for the
+    campaign, finds eligible assets and inserts them into the
+    NextReviewableCampaignAsset table up to the target count.
 
-    The task prioritizes assets not transcribed by transcribers already in the table,
-    to avoid review bottlenecks.
+    The task prefers assets whose transcribers are not already represented in
+    the cache to avoid review bottlenecks.
 
-    Only a single instance of the task will run at a time for a particular campaign_id,
-    using the cache locking system to avoid duplication. This can be overriden with
-    the `force` kwarg, which is stripped out by the decorator and not passed to the
-    task itself. See the `locked_task` documentation for more information.
+    Only a single instance of this task runs at a time for a given campaign,
+    using the cache locking system to avoid duplication. This can be
+    overridden with the ``force`` keyword argument, which is stripped by the
+    decorator and not passed to the task itself. See the ``locked_task``
+    documentation for details.
 
     Args:
-        campaign_id (int): The primary key of the Campaign to process.
+        campaign_id: Primary key of the campaign to process.
     """
     try:
         campaign = Campaign.objects.get(id=campaign_id)
@@ -72,11 +73,11 @@ def populate_next_reviewable_for_campaign(self, campaign_id):
             "transcription__user",
         )
         # We prefer to not use transcribers that already exist, to avoid
-        # the situation where all possible reviewable assets have the same transcriber
-        # (since that would mean that user would miss the cache table when they try
-        # to review).
-        # If that's impossible, we just take whatever assets we can; that means only
-        # these transcribers have reviewable assets in the campaign
+        # the situation where all possible reviewable assets have the same
+        # transcriber (since that would mean that user would miss the cache
+        # table when they try to review).
+        # If that's impossible, we just take whatever assets we can; that means
+        # only these transcribers have reviewable assets in the campaign
         excluded_assets_qs = assets_qs.exclude(
             transcription__user_id__in=excluded_user_ids
         )
@@ -122,22 +123,23 @@ def populate_next_reviewable_for_campaign(self, campaign_id):
 @locked_task
 def populate_next_reviewable_for_topic(self, topic_id):
     """
-    Populate the cache table of next reviewable assets for a given topic.
+    Populate the next reviewable cache for a topic.
 
     This task checks how many reviewable assets are still needed for the topic,
-    finds eligible assets, and inserts them into the NextReviewableTopicAsset table
-    up to the target count.
+    finds eligible assets and inserts them into the NextReviewableTopicAsset
+    table up to the target count.
 
-    The task prioritizes assets not transcribed by transcribers already in the table,
-    to avoid review bottlenecks.
+    The task prefers assets whose transcribers are not already represented in
+    the cache to avoid review bottlenecks.
 
-    Only a single instance of the task will run at a time for a particular topic_id,
-    using the cache locking system to avoid duplication. This can be overriden with
-    the `force` kwarg, which is stripped out by the decorator and not passed to the
-    task itself. See the `locked_task` documentation for more information.
+    Only a single instance of this task runs at a time for a given topic,
+    using the cache locking system to avoid duplication. This can be
+    overridden with the ``force`` keyword argument, which is stripped by the
+    decorator and not passed to the task itself. See the ``locked_task``
+    documentation for details.
 
     Args:
-        topic_id (int): The primary key of the Topic to process.
+        topic_id: Primary key of the topic to process.
     """
     try:
         topic = Topic.objects.get(id=topic_id)
@@ -164,11 +166,11 @@ def populate_next_reviewable_for_topic(self, topic_id):
             "transcription__user",
         )
         # We prefer to not use transcribers that already exist, to avoid
-        # the situation where all possible reviewable assets have the same transcriber
-        # (since that would mean that user would miss the cache table when they try
-        # to review).
-        # If that's impossible, we just take whatever assets we can; that means only
-        # these transcribers have reviewable assets in the campaign
+        # the situation where all possible reviewable assets have the same
+        # transcriber (since that would mean that user would miss the cache
+        # table when they try to review).
+        # If that's impossible, we just take whatever assets we can; that means
+        # only these transcribers have reviewable assets in the campaign
         excluded_assets_qs = assets_qs.exclude(
             transcription__user_id__in=excluded_user_ids
         )
@@ -212,14 +214,15 @@ def populate_next_reviewable_for_topic(self, topic_id):
 @locked_task
 def clean_next_reviewable_for_campaign(self, campaign_id):
     """
-    Removes invalid cached reviewable assets for a campaign and repopulates the cache.
+    Clean cached reviewable assets for a campaign then repopulate the cache.
 
-    Invalid assets include those that no longer have transcription status SUBMITTED and
-    are therefore not eligible for review. After cleaning, the corresponding populate
-    task is queued to restore the cache to the target count.
+    Invalid entries are those whose assets no longer have transcription status
+    ``SUBMITTED`` and are no longer eligible for review. After cleaning, the
+    corresponding populate task is queued to restore the cache to the target
+    count.
 
     Args:
-        campaign_id (int): The ID of the campaign to clean.
+        campaign_id: Primary key of the campaign to clean.
     """
 
     for next_asset in find_invalid_next_reviewable_campaign_assets(campaign_id):
@@ -237,14 +240,15 @@ def clean_next_reviewable_for_campaign(self, campaign_id):
 @locked_task
 def clean_next_reviewable_for_topic(self, topic_id):
     """
-    Removes invalid cached reviewable assets for a topic and repopulates the cache.
+    Clean cached reviewable assets for a topic then repopulate the cache.
 
-    Invalid assets include those that no longer have transcription status SUBMITTED and
-    are therefore not eligible for review. After cleaning, the corresponding populate
-    task is queued to restore the cache to the target count.
+    Invalid entries are those whose assets no longer have transcription status
+    ``SUBMITTED`` and are no longer eligible for review. After cleaning, the
+    corresponding populate task is queued to restore the cache to the target
+    count.
 
     Args:
-        topic_id (int): The ID of the topic to clean.
+        topic_id: Primary key of the topic to clean.
     """
 
     for next_asset in find_invalid_next_reviewable_topic_assets(topic_id):
