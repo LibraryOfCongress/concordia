@@ -6,6 +6,7 @@ from io import BytesIO
 from unittest import mock
 
 from django.contrib.messages import get_messages
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -20,6 +21,7 @@ from concordia.tests.utils import (
     create_asset,
     create_campaign,
     create_card,
+    create_item,
     create_project,
     create_site_report,
     create_transcription,
@@ -525,19 +527,27 @@ class TestAdminBulkImportView(CreateTestUsers, TestCase):
 
 class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
     def setUp(self):
-        self.accepted_transcription = create_transcription(accepted=now())
-        asset = create_asset(
-            slug="rejected-asset", item=self.accepted_transcription.asset.item
+        item = create_item()
+        self.asset1 = create_asset(item=item)
+        self.asset2 = create_asset(item=item, slug="test-asset-2")
+        self.accepted_transcription = create_transcription(
+            asset=self.asset1, accepted=now()
         )
-        self.rejected_transcription = create_transcription(asset=asset, rejected=now())
+        self.rejected_transcription = create_transcription(
+            asset=self.asset2, rejected=now()
+        )
         self.spreadsheet_data = [
-            {"asset__id": self.accepted_transcription.asset.id},
-            {"asset__id": self.rejected_transcription.asset.id},
+            {"asset__id": self.asset1.id},
+            {"asset__id": self.asset2.id},
         ]
-        self.post_data = {"spreadsheet_file": BytesIO()}
 
     def test_admin_bulk_change_asset_status(self):
         self.login_user(is_staff=True, is_superuser=True)
+
+        fake_file = SimpleUploadedFile(
+            "test.xlsx", b"x", content_type="application/vnd.ms-excel"
+        )
+        post_data = {"spreadsheet_file": fake_file}
 
         with mock.patch(
             "concordia.admin.views.slurp_excel", autospec=True
@@ -545,14 +555,17 @@ class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
             slurp_mock.return_value = self.spreadsheet_data
 
             path = reverse("admin:bulk-change")
-            response = self.client.post(path, data=self.post_data)
+            response = self.client.post(path, data=post_data)
+            self.asset1.refresh_from_db()
+            self.asset2.refresh_from_db()
             self.assertEqual(response.status_code, 200)
+            slurp_mock.assert_called()
             self.assertEqual(
-                self.accepted_transcription.asset.transcription_status,
+                self.asset1.transcription_status,
                 TranscriptionStatus.SUBMITTED,
             )
             self.assertEqual(
-                self.rejected_transcription.asset.transcription_status,
+                self.asset2.transcription_status,
                 TranscriptionStatus.SUBMITTED,
             )
 

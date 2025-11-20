@@ -17,7 +17,10 @@ def _change_status(user, assets, submit=True):
 
     """
     for asset in assets:
-        latest_transcription = asset.transcription_set.order_by("-pk").first()
+        if hasattr(asset, "prefetched_transcriptions"):
+            latest_transcription = asset.prefetched_transcriptions[0]
+        else:
+            latest_transcription = asset.transcription_set.order_by("-pk").first()
         kwargs = {
             "reviewed_by": user,
             "asset": asset,

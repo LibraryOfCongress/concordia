@@ -10,7 +10,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.core.cache import caches
 from django.core.exceptions import ValidationError
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Prefetch, Subquery
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -339,7 +339,13 @@ class AdminBulkChangeAssetStatusView(FormView):
     def form_valid(self, form):
         rows = slurp_excel(self.request.FILES["spreadsheet_file"])
         asset_ids = [row["asset__id"] for row in rows]
-        assets = Asset.objects.filter(id__in=asset_ids)
+        assets = Asset.objects.filter(id__in=asset_ids).prefetch_related(
+            Prefetch(
+                "transcription_set",
+                queryset=Transcription.objects.order_by("-pk"),
+                to_attr="prefetched_transcriptions",
+            )
+        )
 
         _change_status(self.request.user, assets)
         return self.render_to_response(self.get_context_data(form=form))
