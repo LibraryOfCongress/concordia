@@ -1,5 +1,3 @@
-from __future__ import annotations  # Necessary until Python 3.12
-
 import calendar
 import csv
 import datetime
@@ -63,6 +61,14 @@ THRESHOLD = 2
 
 
 def resource_file_upload_path(instance, filename):
+    """
+    Return the upload path for a ResourceFile instance.
+
+    If the instance already has a primary key and a stored path, that path is
+    reused so the file is not moved on subsequent saves. Otherwise, a dated
+    path is generated under ``cm-uploads/resources/`` using the lowercased
+    filename.
+    """
     if instance.id and instance.path:
         return instance.path
     path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
@@ -70,17 +76,31 @@ def resource_file_upload_path(instance, filename):
 
 
 class ConcordiaUser(User):
-    # This class is a simple proxy model to add
-    # additional user functionality to, without changing
-    # the base User model.
+    """
+    Proxy model adding Concordia-specific helpers and rate-limit tracking.
+
+    This avoids changing the base ``auth.User`` model while still attaching
+    project-specific behavior such as email reconfirmation flow and review
+    rate limiting.
+    """
+
     class Meta:
         proxy = True
 
     @property
     def email_reconfirmation_cache_key(self):
+        """
+        Return the cache key used to store the pending reconfirmation email.
+        """
         return settings.EMAIL_RECONFIRMATION_KEY.format(id=self.id)
 
     def set_email_for_reconfirmation(self, email):
+        """
+        Store a pending reconfirmation email address in the cache.
+
+        The value is stored under :attr:`email_reconfirmation_cache_key` for
+        the duration configured by ``EMAIL_RECONFIRMATION_TIMEOUT``.
+        """
         cache.set(
             self.email_reconfirmation_cache_key,
             email,
@@ -88,12 +108,34 @@ class ConcordiaUser(User):
         )
 
     def get_email_for_reconfirmation(self):
+        """
+        Return the cached reconfirmation email address, if present.
+
+        Returns:
+            str | None: The pending reconfirmation email, or None if no value
+            is cached.
+        """
         return cache.get(self.email_reconfirmation_cache_key)
 
     def delete_email_for_reconfirmation(self):
+        """
+        Remove any cached reconfirmation email address for this user.
+        """
         cache.delete(self.email_reconfirmation_cache_key)
 
     def get_email_reconfirmation_key(self):
+        """
+        Build a signed reconfirmation token for the cached email address.
+
+        The token encodes the username and pending email address using
+        Django's :mod:`signing` utilities.
+
+        Returns:
+            str: A signed string suitable for use in reconfirmation URLs.
+
+        Raises:
+            ValueError: If no email address has been cached for this user.
+        """
         email = self.get_email_for_reconfirmation()
         if email:
             return signing.dumps(obj={"username": self.get_username(), "email": email})
@@ -101,9 +143,34 @@ class ConcordiaUser(User):
             raise ValueError("No email cached for reconfirmation")
 
     def validate_reconfirmation_email(self, email):
+        """
+        Check whether the supplied email matches the cached reconfirmation one.
+
+        Args:
+            email (str): Email address to validate.
+
+        Returns:
+            bool: True if the email matches the cached value, otherwise False.
+        """
         return email == self.get_email_for_reconfirmation()
 
     def review_incidents(self, recent_accepts, threshold=THRESHOLD):
+        """
+        Count review-rate incidents for this user within a queryset.
+
+        An incident is counted when this user records ``threshold`` or more
+        accepts within any rolling 60-second window among the provided
+        ``recent_accepts`` queryset.
+
+        Args:
+            recent_accepts (QuerySet): Transcription queryset filtered to rows
+                with non-null ``accepted`` timestamps.
+            threshold (int): Minimum number of accepts in a 60-second window
+                required to count as one incident.
+
+        Returns:
+            int: Number of detected review incidents.
+        """
         accepts = recent_accepts.filter(reviewed_by=self).values_list(
             "accepted", flat=True
         )
@@ -123,6 +190,20 @@ class ConcordiaUser(User):
         return incidents
 
     def transcribe_incidents(self, transcriptions):
+        """
+        Count transcription-speed incidents for this user.
+
+        An incident is counted when the user submits more than one distinct
+        asset's transcription within a 60-second window.
+
+        Args:
+            transcriptions (QuerySet): Transcription queryset to inspect. It
+                should already be filtered to this user and the desired time
+                range.
+
+        Returns:
+            int: Number of detected transcription incidents.
+        """
         transcriptions = transcriptions.filter(user=self).order_by("submitted")
         incidents = 0
         for transcription in transcriptions:
@@ -139,9 +220,31 @@ class ConcordiaUser(User):
 
     @property
     def transcription_accepted_cache_key(self):
+        """
+        Return the cache key used to track this user's recent accept timestamps.
+        """
         return settings.TRANSCRIPTION_ACCEPTED_TRACKING_KEY.format(user_id=self.id)
 
     def check_and_track_accept_limit(self, transcription):
+        """
+        Enforce and update the per-minute accept-rate limit for this user.
+
+        For non-superusers, this loads the recent acceptance timestamps from
+        the cache, discards values older than one minute, and checks the
+        resulting count against the ``review_rate_limit`` configuration
+        value. If recording another acceptance would exceed that limit, a
+        :class:`RateLimitExceededError` is raised. Otherwise, the current
+        timestamp is appended and written back to the cache.
+
+        Args:
+            transcription (Transcription): The transcription being accepted.
+                (The argument is not inspected, but kept for call-site
+                clarity.)
+
+        Raises:
+            RateLimitExceededError: If the user would exceed the configured
+                rate limit.
+        """
         if not self.is_superuser:
             key = self.transcription_accepted_cache_key
             now = timezone.now()
@@ -207,6 +310,10 @@ STATUS_COUNT_KEYS = {
 
 
 class MediaType:
+    """
+    Enumeration of supported asset media types.
+    """
+
     IMAGE = "IMG"
     AUDIO = "AUD"
     VIDEO = "VID"
@@ -216,14 +323,34 @@ class MediaType:
 
 class PublicationQuerySet(models.QuerySet):
     def published(self):
+        """
+        Return queryset filtered to published objects.
+        """
         return self.filter(published=True)
 
     def unpublished(self):
+        """
+        Return queryset filtered to unpublished objects.
+        """
         return self.filter(published=False)
 
 
 class UnlistedPublicationQuerySet(PublicationQuerySet):
     def annotated(self):
+        """
+        Return campaigns/topics annotated with asset counts and completion data.
+
+        The returned queryset includes:
+
+        - ``asset_count``: Number of published assets reachable through the
+          associated projects and items.
+        - Per-status counts based on :data:`STATUS_COUNT_KEYS`, such as
+          ``completed_count`` and ``submitted_count``.
+        - ``completed_percent`` and ``needs_review_percent``: Rounded
+          percentages of assets in the completed or needs-review state,
+          clamped so that 100 percent is only returned if all assets are in
+          that state.
+        """
         return (
             self.annotate(
                 asset_count=Count(
@@ -793,7 +920,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def can_rollback(
         self,
-    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+    ) -> Tuple[bool, Union[str, "Transcription"], Optional["Transcription"]]:
         """
         Determine whether the latest transcription on this asset can be rolled back.
 
@@ -864,10 +991,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             .first()
         )
         if transcription_to_rollback_to is None:
-            # We didn't find one, which means there's no eligible
+            # We did not find one, which means there is no eligible
             # transcription to rollback to, because everything before
             # is either a rollforward or the source of a rollforward
-            # (or there just isn't an earlier transcription at all)
+            # (or there just is not an earlier transcription at all)
             self.logger.debug(
                 "No eligible transcription found for rollback.",
                 event_code="rollback_check_failed",
@@ -898,30 +1025,31 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         )
         return True, transcription_to_rollback_to, original_latest_transcription
 
-    def rollback_transcription(self, user: User) -> Transcription:
+    def rollback_transcription(self, user: User) -> "Transcription":
         """
         Perform a rollback of the latest transcription on this asset.
 
         This creates a new transcription that copies the text of the most recent
-        eligible prior transcription (as determined by `can_rollback`) and marks it
-        as rolled back. It also updates the original latest transcription to reflect
-        that it has been superseded.
+        eligible prior transcription (as determined by ``can_rollback``) and marks
+        it as rolled back. It also updates the original latest transcription to
+        reflect that it has been superseded.
 
-        If rollback is not possible, raises a `ValueError`.
+        If rollback is not possible, raises a ``ValueError``.
 
         The new transcription will:
-            - Have `rolled_back=True`.
-            - Set its `source` to the transcription it is rolled back to.
-            - Set `supersedes` to the current latest transcription.
+            - Have ``rolled_back=True``.
+            - Set its ``source`` to the transcription it is rolled back to.
+            - Set ``supersedes`` to the current latest transcription.
 
         Args:
             user (User): The user performing the rollback.
 
         Returns:
-            transcription (Transcription): The newly created rollback transcription.
+            Transcription: The newly created rollback transcription.
 
         Raises:
-            ValueError: If rollback is not possible due to invalid or missing history.
+            ValueError: If rollback is not possible due to invalid or missing
+                history.
         """
         results = self.can_rollback()
         if results[0] is not True:
@@ -969,12 +1097,13 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def can_rollforward(
         self,
-    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+    ) -> Tuple[bool, Union[str, "Transcription"], Optional["Transcription"]]:
         """
         Determine whether a previous rollback on this asset can be rolled forward.
 
         This checks whether the most recent transcription is a rollback transcription
-        and whether the transcription it replaced (its `supersedes`) can be restored.
+        and whether the transcription it replaced (its ``supersedes``) can be
+        restored.
 
         This method handles cases where multiple rollforwards were applied,
         walking backward through the transcription chain to find the appropriate
@@ -982,10 +1111,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         A rollforward is only possible if:
         - The latest transcription is a rollback.
-        - The rollback's superseded transcription still exists and can be restored.
+        - The rollback's superseded transcription still exists and can be
+          restored.
 
         This method does not perform the rollforward, only checks feasibility.
-
 
         Returns:
             result (tuple): A (bool, value, latest) tuple describing rollforward
@@ -999,8 +1128,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
-        # but if it's a rolled forward transcription, we use it to find the most
-        # recent non-rolled-forward transcription and store that in latest_transcription
+        # but if it is a rolled forward transcription, we use it to find the most
+        # recent non-rolled-forward transcription and store that in
+        # latest_transcription
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
@@ -1027,7 +1157,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         # Rollforwards can be chained through multiple rollback/forward cycles,
         # so we may need to walk back the supersedes chain to find the original.
         if latest_transcription.rolled_forward:
-            # We need to find the latest transcription that wasn't rolled forward
+            # We need to find the latest transcription that was not rolled forward
             rolled_forward_count = 0
             try:
                 while latest_transcription.rolled_forward:
@@ -1067,7 +1197,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 )
             # latest_transcription is now the most recent non-rolled-forward
             # transcription, but we need to go back fruther based on the number
-            # of rolled-forward transcriptions we've seen to get to the actual
+            # of rolled-forward transcriptions we have seen to get to the actual
             # rollback transcription we need to rollforward from
             try:
                 while rolled_forward_count >= 1:
@@ -1132,8 +1262,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 None,
             )
 
-        # If that replaced transcription doesn't exist, we can't do anything
-        # This shouldn't be possible normally, but if a transcription history
+        # If that replaced transcription does not exist, we cannot do anything
+        # This should not be possible normally, but if a transcription history
         # is manually edited, you could end up in this state.
         if not transcription_to_rollforward:
             self.logger.debug(
@@ -1142,14 +1272,16 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 reason_code="no_superseded_transcription",
                 reason=(
                     "Can not rollforward transcription on an asset if the latest "
-                    "rollback transcription did not supersede a previous transcription."
+                    "rollback transcription did not supersede a previous "
+                    "transcription."
                 ),
             )
             return (
                 False,
                 (
                     "Can not rollforward transcription on an asset if the latest "
-                    "rollback transcription did not supersede a previous transcription"
+                    "rollback transcription did not supersede a previous "
+                    "transcription"
                 ),
                 None,
             )
@@ -1163,27 +1295,27 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         return True, transcription_to_rollforward, original_latest_transcription
 
-    def rollforward_transcription(self, user: User) -> Transcription:
+    def rollforward_transcription(self, user: User) -> "Transcription":
         """
          Perform a rollforward of the most recent rollback transcription.
 
-        This creates a new transcription that restores the text from the rollback's
-        superseded transcription and marks it as a rollforward. A rollforward is only
-        possible if the latest transcription is a rollback and the replaced
-        transcription still exists.
+        This creates a new transcription that restores the text from the
+        rollback's superseded transcription and marks it as a rollforward. A
+        rollforward is only possible if the latest transcription is a rollback
+        and the replaced transcription still exists.
 
-        If rollforward is not possible, raises a `ValueError`.
+        If rollforward is not possible, raises a ``ValueError``.
 
         The new transcription will:
-            - Have `rolled_forward=True`.
-            - Set its `source` to the transcription being rolled forward to.
-            - Set `supersedes` to the current latest transcription.
+            - Have ``rolled_forward=True``.
+            - Set its ``source`` to the transcription being rolled forward to.
+            - Set ``supersedes`` to the current latest transcription.
 
         Args:
             user (User): The user initiating the rollforward.
 
         Returns:
-            transcription (Transcription): The newly created rollforward transcription.
+            Transcription: The newly created rollforward transcription.
 
         Raises:
             ValueError: If rollforward is not possible, such as when no rollback
@@ -1192,9 +1324,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         Return Behavior:
             - If rollforward is possible:
                 - Creates a new transcription restoring the original text.
-                - Marks it with `rolled_forward=True`.
+                - Marks it with ``rolled_forward=True``.
             - If rollforward is not possible:
-                - Raises `ValueError` with a descriptive message.
+                - Raises ``ValueError`` with a descriptive message.
         """
         results = self.can_rollforward()
         if results[0] is not True:
@@ -1431,6 +1563,23 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 
 def update_userprofileactivity_table(user, campaign_id, field, increment=1):
+    """
+    Update per-user activity counters for a campaign and the user's profile.
+
+    This function updates or creates a ``UserProfileActivity`` row for the given
+    user and campaign, adjusts the requested counter field by ``increment``,
+    and recalculates the number of distinct assets the user has contributed to
+    in that campaign. It also updates the corresponding ``UserProfile`` record
+    to keep global counters in sync.
+
+    Args:
+        user: The Django user whose activity should be updated.
+        campaign_id: Primary key of the campaign to update activity for.
+        field: Name of the integer field to increment (for example,
+            ``"transcribe_count"`` or ``"review_count"``).
+        increment: Amount to add to the chosen field. Defaults to ``1``.
+
+    """
     structured_logger.info(
         "Updating user profile activity table.",
         event_code="userprofileactivity_update_start",
@@ -1493,6 +1642,19 @@ def update_userprofileactivity_table(user, campaign_id, field, increment=1):
 
 
 def _update_useractivity_cache(user_id, campaign_id, attr_name):
+    """
+    Update the in-memory cache of user activity for a campaign.
+
+    The cache stores a mapping of ``user_id`` to a tuple
+    ``(transcribe_count, review_count)`` for each campaign. This helper
+    increments the requested attribute and persists the updated mapping.
+
+    Args:
+        user_id: ID of the user whose cached counters should be updated.
+        campaign_id: ID of the related campaign.
+        attr_name: Name of the activity type to increment, either
+            ``"transcribe"`` or ``"review"``.
+    """
     key = f"userprofileactivity_{campaign_id}"
     updates = cache.get(key, {})
     transcribe_count, review_count = updates.get(user_id, (0, 0))
@@ -1515,7 +1677,11 @@ def _update_useractivity_cache(user_id, campaign_id, attr_name):
 
 class AssetTranscriptionReservation(models.Model):
     """
-    Records a user's reservation to transcribe a particular asset
+    Record a user's reservation to transcribe a particular asset.
+
+    The reservation token encodes both a short reservation identifier and the
+    user information. Convenience methods slice the stored token to return
+    each component.
     """
 
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
@@ -1533,6 +1699,13 @@ class AssetTranscriptionReservation(models.Model):
 
 
 class SimplePage(models.Model):
+    """
+    Simple, CMS-like content page addressable by a URL path.
+
+    These records back lightweight informational pages that can be edited
+    via the Django admin instead of being hard-coded in templates.
+    """
+
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
@@ -1551,6 +1724,13 @@ class SimplePage(models.Model):
 
 
 class Banner(models.Model):
+    """
+    Site-wide banner for alerts or announcements.
+
+    Banners can link out to supporting pages and use a limited set of
+    alert-style color classes.
+    """
+
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
@@ -1587,6 +1767,13 @@ class Banner(models.Model):
 
 
 class CarouselSlide(models.Model):
+    """
+    Configurable slide for the homepage carousel.
+
+    Each slide can show an image, text overlay, and call-to-action URL, with
+    simple ordering and publication controls.
+    """
+
     objects = PublicationQuerySet.as_manager()
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
@@ -1980,7 +2167,8 @@ class SiteReport(models.Model):
 
     def to_debug_json(self) -> str:
         """
-        Return a pretty-printed JSON string of `to_debug_dict()` with ISO datetimes.
+        Return a pretty-printed JSON string of `to_debug_dict()` with ISO
+        datetimes.
         """
         return json.dumps(
             self.to_debug_dict(), cls=DjangoJSONEncoder, indent=2, sort_keys=True
@@ -1990,36 +2178,39 @@ class SiteReport(models.Model):
 class KeyMetricsReport(models.Model):
     """
     Site-wide Key Metrics report persisted for three period types:
-    - MONTHLY: per calendar month (with special handling for the very first month)
-    - QUARTERLY: fiscal quarter rollup (Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep)
+
+    - MONTHLY: per calendar month (with special handling for the very first
+      month)
+    - QUARTERLY: fiscal quarter rollup (Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun,
+      Q4=Jul-Sep)
     - FISCAL_YEAR: fiscal year rollup (Oct 1 - Sep 30)
 
     Monthly numbers are computed from SiteReport as follows:
 
-      - For cumulative counters (e.g., assets_published, assets_completed,
-        transcriptions_saved, users_activated, anonymous_transcriptions,
-        tag_uses): the monthly value is the non-negative difference between the
-        combined site-wide TOTAL + RETIRED_TOTAL values at the end of the month
-        and the baseline snapshot. Baseline is the latest snapshot strictly before
-        the first day of the month; if none exists, baseline is the first snapshot
-        within the month (yielding the delta within that month).
-
-      - For assets_started: the monthly value is the sum of the daily
-        `assets_started` field across the month for the TOTAL and RETIRED_TOTAL
-        site-wide series.
+    - For cumulative counters (for example, assets_published, assets_completed,
+      transcriptions_saved, users_activated, anonymous_transcriptions,
+      tag_uses): the monthly value is the non-negative difference between the
+      combined site-wide TOTAL + RETIRED_TOTAL values at the end of the month
+      and the baseline snapshot. Baseline is the latest snapshot strictly
+      before the first day of the month; if none exists, baseline is the first
+      snapshot within the month (yielding the delta within that month).
+    - For assets_started: the monthly value is the sum of the daily
+      ``assets_started`` field across the month for the TOTAL and
+      RETIRED_TOTAL site-wide series.
 
     Quarterly and fiscal-year numbers are rollups from the monthly rows:
-      - For count metrics: sum of the months in the period.
-      - For avg_visit_seconds: arithmetic mean of the months that have a value.
-        (If no month has a value, the rollup is NULL.)
 
-    Manual fields are stored here too so CMs can edit them in the admin
-    and have them included when exporting CSVs. If unset they remain NULL and
-    are rendered as empty strings in exports. Manual fields only roll up if
-    at least one of the rolled up reports' value is not NULL, so manual values
-    in "higher" reports won't be set to NULL if none of the "lower" reports have
-    values (so the values can just be set in quarterly and/or yearly reports,
-    rather than having to be set monthly).
+    - For count metrics: sum of the months in the period.
+    - For avg_visit_seconds: arithmetic mean of the months that have a value.
+      If no month has a value, the rollup is NULL.
+
+    Manual fields are stored here too so CMs can edit them in the admin and
+    have them included when exporting CSVs. If unset they remain NULL and are
+    rendered as empty strings in exports. Manual fields only roll up if at
+    least one of the rolled up reports' value is not NULL, so manual values in
+    "higher" reports will not be set to NULL if none of the "lower" reports
+    have values. This allows manual values to be set only in quarterly and/or
+    yearly reports instead of every month.
     """
 
     class PeriodType(models.TextChoices):
@@ -2109,10 +2300,12 @@ class KeyMetricsReport(models.Model):
 
     def __str__(self) -> str:
         """
-        Human-friendly name for the report:
-          - Fiscal year: "FY2024 Report"
-          - Quarter:     "FY2023 Q2 Report"
-          - Monthly:     "FY2022M06 Report (June 2022)"
+        Return a human-friendly name for the report.
+
+        Formats:
+        - Fiscal year: ``"FY2024 Report"``
+        - Quarter: ``"FY2023 Q2 Report"``
+        - Monthly: ``"FY2022M06 Report (June 2022)"``
         """
         if self.period_type == self.PeriodType.FISCAL_YEAR:
             return f"FY{self.fiscal_year} Report"
@@ -2133,17 +2326,18 @@ class KeyMetricsReport(models.Model):
 
         # Fallback if fields are incomplete
         return (
-            f"KeyMetricsReport {self.period_type} {self.period_start}–{self.period_end}"
+            "KeyMetricsReport "
+            f"{self.period_type} {self.period_start}-{self.period_end}"
         )
 
     @staticmethod
     def get_fiscal_year_for_date(d: datetime.date) -> int:
-        """Fiscal year runs Oct 1-Sep 30."""
+        """Return the fiscal year for a date (Oct 1-Sep 30)."""
         return d.year + 1 if d.month >= 10 else d.year
 
     @staticmethod
     def get_fiscal_quarter_for_date(d: datetime.date) -> int:
-        """Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun, Q4=Jul-Sep."""
+        """Return the fiscal quarter for a date (Q1=Oct-Dec, ..., Q4=Jul-Sep)."""
         if 10 <= d.month <= 12:
             return 1
         if 1 <= d.month <= 3:
@@ -2168,18 +2362,19 @@ class KeyMetricsReport(models.Model):
         cls, *, month_start: datetime.date, month_end: datetime.date
     ) -> dict[str, int | Decimal | None]:
         """
-        Compute monthly site-wide metrics from SiteReport for the month defined by
-        [month_start, month_end].
+        Compute monthly site-wide metrics from SiteReport.
 
-        Snapshot-delta metrics are computed as the non-negative difference between:
-          (total_eom + retired_eom) and (total_baseline + retired_baseline),
-        where baseline is the latest snapshot strictly before month_start; if none,
-        baseline is the first snapshot within the month.
+        The month is defined by [month_start, month_end]. Snapshot-delta
+        metrics are computed as the non-negative difference between:
 
-        assets_started is computed as the sum of daily `assets_started` across the
-        month for TOTAL + RETIRED_TOTAL.
+        ``(total_eom + retired_eom)`` and
+        ``(total_baseline + retired_baseline)``
 
-        Returns a dict keyed by model field names.
+        where baseline is the latest snapshot strictly before month_start. If
+        none exists, baseline is the first snapshot within the month.
+
+        assets_started is computed as the sum of daily ``assets_started``
+        across the month for TOTAL + RETIRED_TOTAL.
         """
         # Identify the current (EOM) snapshots by series
         total_eom = SiteReport.objects.last_on_or_before_date_for_series(
@@ -2226,8 +2421,9 @@ class KeyMetricsReport(models.Model):
 
         def val(obj: Optional[SiteReport], field: str) -> int:
             """
-            Safely extract an integer field from a SiteReport;
-            treat missing obj/field as 0.
+            Safely extract an integer field from a SiteReport.
+
+            Missing objects or missing fields are treated as zero.
             """
             if obj is None:
                 return 0
@@ -2308,18 +2504,16 @@ class KeyMetricsReport(models.Model):
         obj.save()
         return obj
 
-    # models.py — replace KeyMetricsReport.upsert_quarter with this version
-
     @classmethod
     def upsert_quarter(
         cls, *, fiscal_year: int, fiscal_quarter: int
     ) -> Optional["KeyMetricsReport"]:
         """
         Create or update the QUARTERLY report by rolling up existing monthly rows.
-        If no monthly rows exist for the quarter, returns None.
 
-        We sum all monthly rows present in the quarter; partial quarters are allowed
-        (e.g., at the very beginning of history).
+        If no monthly rows exist for the quarter, returns None. We sum all
+        monthly rows present in the quarter; partial quarters are allowed (for
+        example, at the very beginning of history).
         """
         if fiscal_quarter not in (1, 2, 3, 4):
             raise ValueError("fiscal_quarter must be 1..4")
@@ -2420,8 +2614,9 @@ class KeyMetricsReport(models.Model):
     @classmethod
     def upsert_fiscal_year(cls, *, fiscal_year: int) -> Optional["KeyMetricsReport"]:
         """
-        Create or update the FISCAL_YEAR report by rolling up monthly rows for that FY.
-        Returns None if no monthly rows exist for the FY.
+        Create or update the FISCAL_YEAR report by rolling up monthly rows.
+
+        Returns None if no monthly rows exist for the fiscal year.
         """
         monthly_qs = cls.objects.filter(
             period_type=cls.PeriodType.MONTHLY, fiscal_year=fiscal_year
@@ -2520,10 +2715,10 @@ class KeyMetricsReport(models.Model):
         Convert model values to CSV-friendly outputs.
 
         Rules:
-          - Calculated numeric fields: default to 0 if NULL.
-          - Manual fields: default to empty string if NULL.
-          - avg_visit_seconds (Decimal) renders as a string with up to 2 decimals;
-            empty string if NULL.
+        - Calculated numeric fields: default to 0 if NULL.
+        - Manual fields: default to empty string if NULL.
+        - avg_visit_seconds (Decimal) renders as a string with up to 2 decimals;
+          empty string if NULL.
         """
         if field_name in self.MANUAL_FIELDS:
             if value is None:
@@ -2541,21 +2736,22 @@ class KeyMetricsReport(models.Model):
 
     def _calendar_year_for_month_in_fy(self, month: int, fiscal_year: int) -> int:
         """
-        Given a fiscal year and a month number (1..12) interpreted in FY context,
-        return the calendar year for that month label.
+        Return the calendar year for a month number interpreted in FY context.
         """
         return fiscal_year - 1 if 10 <= month <= 12 else fiscal_year
 
     def _fy_abbrev(self, fiscal_year: int) -> str:
         """
-        Return 'FY##' two-digit abbreviation for a fiscal year number.
-        Example: 2024 -> 'FY24'.
+        Return an "FY##" abbreviation for a fiscal year number.
+
+        Example:
+            2024 -> "FY24".
         """
         return f"FY{fiscal_year % 100:02d}"
 
     def _month_label(self, fiscal_year: int, month: int) -> str:
         """
-        Return the month name only (e.g., 'June').
+        Return the month name label (for example, "June").
         """
         return calendar.month_name[month]
 
@@ -2567,9 +2763,11 @@ class KeyMetricsReport(models.Model):
 
     def _csv_matrix_monthly(self) -> tuple[list[str], list[list[str | int | float]]]:
         """
+        Build the CSV header and rows for a MONTHLY report.
+
         MONTHLY CSV:
-          Headers: ['Metric', '<Month>']  (month name only)
-          Rows: one per metric.
+        - Headers: ``["Metric", "<Month>"]`` (month name only)
+        - Rows: one per metric.
         """
         headers = ["Metric", self._month_label(self.fiscal_year, int(self.month))]
 
@@ -2581,7 +2779,9 @@ class KeyMetricsReport(models.Model):
 
     def _quarter_month_specs(self) -> list[tuple[int, int]]:
         """
-        Return [(year, month), ...] for months in this object's quarter (FY context).
+        Return [(year, month), ...] for months in this object's quarter.
+
+        Months are interpreted in the fiscal-year (FY) context.
         """
         fy = int(self.fiscal_year)
         fq = int(self.fiscal_quarter)
@@ -2595,16 +2795,22 @@ class KeyMetricsReport(models.Model):
 
     def _csv_matrix_quarterly(self) -> tuple[list[str], list[list[str | int | float]]]:
         """
-        QUARTERLY CSV:
-          Headers:
-            ['Metric', '<M1>', '<M2>', '<M3>', 'FY## Q# totals', 'FY## Lifetime totals']
-            - Month columns include only months that have MONTHLY rows.
-            - Month labels are month names only ('June', 'September', ...).
-          Lifetime for a quarter:
-            sum(all prior fiscal-year reports) + sum(quarters in current FY with
-            quarter < current quarter). (Manual fields: blank if all inputs blank.)
-        """
+        Build the CSV header and rows for a QUARTERLY report.
 
+        QUARTERLY CSV:
+
+        Headers:
+            ["Metric", "<M1>", "<M2>", "<M3>", "FY## Q# totals",
+             "FY## Lifetime totals"]
+
+        - Month columns include only months that have MONTHLY rows.
+        - Month labels are month names only ("June", "September", ...).
+
+        Lifetime for a quarter:
+            sum(all prior fiscal-year reports) + sum(quarters in current FY with
+            quarter < current quarter). Manual fields are blank if all inputs
+            are blank.
+        """
         # Which months exist for this quarter?
         specs = self._quarter_month_specs()
         months_in_quarter = [m for (_y, m) in specs]
@@ -2711,20 +2917,22 @@ class KeyMetricsReport(models.Model):
         self,
     ) -> tuple[list[str], list[list[str | int | float]]]:
         """
-        FISCAL_YEAR CSV:
-          Headers:
-            ['Metric',
-             'FY## Q1 totals' (if Q1 present),
-             'Q2 totals' (if present),
-             'Q3 totals' (if present),
-             'Q4 totals' (if present),
-             'FY## totals',
-             'FY## Lifetime totals']
-          Lifetime for a fiscal year:
-            sum of all FY rows up to and including this FY (manual: blank if all
-            inputs blank).
-        """
+        Build the CSV header and rows for a FISCAL_YEAR report.
 
+        Headers:
+
+        - "Metric"
+        - "FY## Q1 totals" (if Q1 present)
+        - "Q2 totals" (if present)
+        - "Q3 totals" (if present)
+        - "Q4 totals" (if present)
+        - "FY## totals"
+        - "FY## Lifetime totals"
+
+        Lifetime for a fiscal year:
+            sum of all FY rows up to and including this FY. Manual fields are
+            blank if all inputs are blank.
+        """
         # Quarter rows present in this FY
         quarter_rows = (
             KeyMetricsReport.objects.filter(
@@ -2818,17 +3026,18 @@ class KeyMetricsReport(models.Model):
 
     def render_csv(self) -> bytes:
         """
-        Render this report as a CSV pivot:
+        Render this report as a CSV pivot.
 
-          - Rows: metrics (CSV_METRIC_COLUMNS order).
+        Rows:
+            Metrics in CSV_METRIC_COLUMNS order.
 
-          - Columns:
-              * MONTHLY:     Metric | <Month>
-              * QUARTERLY:   Metric | months present | FY## Q# totals
-                             | FY## Lifetime totals
-              * FISCAL_YEAR: Metric | ('FY## Q1 totals' if present) | Q2 totals
-                             | Q3 totals | Q4 totals | FY## totals
-                             | FY## Lifetime totals
+        Columns:
+            - MONTHLY:     Metric | <Month>
+            - QUARTERLY:   Metric | months present | FY## Q# totals |
+                            FY## Lifetime totals
+            - FISCAL_YEAR: Metric | ("FY## Q1 totals" if present) | Q2 totals |
+                            Q3 totals | Q4 totals | FY## totals |
+                            FY## Lifetime totals
         """
         if self.period_type == self.PeriodType.MONTHLY:
             headers, rows = self._csv_matrix_monthly()
@@ -2845,6 +3054,13 @@ class KeyMetricsReport(models.Model):
 
 
 class UserProfileActivity(models.Model):
+    """
+    Per-campaign activity summary for a single user.
+
+    This model stores campaign-scoped counts such as how many assets a user
+    has touched and how many transcriptions or reviews they have performed.
+    """
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
     campaign = models.ForeignKey(
         Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
@@ -2880,6 +3096,13 @@ class UserProfileActivity(models.Model):
 
 
 class CampaignRetirementProgress(models.Model):
+    """
+    Track progress while retiring a campaign and deleting related content.
+
+    This model stores counts of projects, items, and assets processed for a
+    retiring campaign, along with a log of removal operations.
+    """
+
     campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE)
     project_total = models.IntegerField(default=0)
     projects_removed = models.IntegerField(default=0)
@@ -2900,6 +3123,10 @@ class CampaignRetirementProgress(models.Model):
 
 
 class TutorialCard(models.Model):
+    """
+    Through model for ordering cards within a CardFamily tutorial.
+    """
+
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
@@ -2909,6 +3136,13 @@ class TutorialCard(models.Model):
 
 
 class Guide(models.Model):
+    """
+    Guide entry grouping SimplePage or link-based content.
+
+    Guides back the sidebar and inline help sections that surface how-to
+    documentation for contributors.
+    """
+
     title = models.CharField(max_length=80)
     page = models.ForeignKey(
         SimplePage, on_delete=models.SET_NULL, blank=True, null=True
@@ -2924,20 +3158,24 @@ class Guide(models.Model):
 
 def validated_get_or_create(klass, **kwargs):
     """
-    Similar to :meth:`~django.db.models.query.QuerySet.get_or_create` but uses
-    the methodical get/save including a full_clean() call to avoid problems with
-    models which have validation requirements which are not completely enforced
-    by the underlying database.
+    Create or return an object using full model validation.
 
-    For example, with a django-model-translation we always want to go through
-    the setattr route rather than inserting into the database so translated
-    fields will be mapped according to the active language. This avoids normally
-    impossible situations such as creating a record where `title` is defined but
-    `title_en` is not.
+    This works like ``QuerySet.get_or_create()``, but always constructs the
+    object via attribute assignment and ``full_clean()`` before saving.
 
-    Originally from https://github.com/acdha/django-bittersweet
+    This is helpful for models with validation that is not fully enforced at
+    the database level, or when using integrations like django-model-translation
+    where fields must be set through normal attribute access.
+
+    Args:
+        klass: The model class to query or create.
+        **kwargs: Lookup fields, plus optional ``defaults`` dict, as in
+            ``get_or_create()``.
+
+    Returns:
+        tuple[Model, bool]: A ``(obj, created)`` tuple like
+        ``get_or_create()``.
     """
-
     defaults = kwargs.pop("defaults", {})
 
     try:
@@ -2955,6 +3193,14 @@ def validated_get_or_create(klass, **kwargs):
 
 
 class NextAsset(models.Model):
+    """
+    Abstract base class for "next asset" queues.
+
+    These lightweight records cache the next transcribable or reviewable
+    assets selected for a campaign or topic, so they can be fetched quickly
+    without recomputing complex queries.
+    """
+
     id = models.UUIDField(  # noqa: A003
         primary_key=True, default=uuid.uuid4, editable=False
     )
@@ -2973,6 +3219,10 @@ class NextAsset(models.Model):
 
 
 class NextTranscribableAsset(NextAsset):
+    """
+    Abstract base for cached transcribable asset queues.
+    """
+
     transcription_status = models.CharField(
         editable=False,
         max_length=20,
@@ -2986,6 +3236,13 @@ class NextTranscribableAsset(NextAsset):
 
 
 class NextReviewableAsset(NextAsset):
+    """
+    Abstract base for cached reviewable asset queues.
+
+    Stores the IDs of prior transcribers to help avoid assigning reviewers
+    to assets they have already worked on.
+    """
+
     transcriber_ids = ArrayField(
         base_field=models.IntegerField(),
         blank=True,
@@ -2997,9 +3254,27 @@ class NextReviewableAsset(NextAsset):
 
 
 class NextCampaignAssetManager(models.Manager):
+    """
+    Base manager for "next asset" campaign queues.
+
+    Subclasses should set ``target_count`` to control how many entries
+    should be prepopulated per campaign.
+    """
+
     target_count = None  # Override in subclass
 
     def needed_for_campaign(self, campaign_id, target_count=None):
+        """
+        Return how many additional entries are needed for a campaign.
+
+        Args:
+            campaign_id: The campaign primary key.
+            target_count: Optional override for the per-campaign queue size.
+                If omitted, ``self.target_count`` is used.
+
+        Returns:
+            int: Number of additional entries required to reach the target.
+        """
         if target_count is None:
             if self.target_count is None:
                 raise NotImplementedError(
@@ -3013,9 +3288,27 @@ class NextCampaignAssetManager(models.Manager):
 
 
 class NextTopicAssetManager(models.Manager):
+    """
+    Base manager for "next asset" topic queues.
+
+    Subclasses should set ``target_count`` to control how many entries
+    should be prepopulated per topic.
+    """
+
     target_count = None  # Override in subclass
 
     def needed_for_topic(self, topic_id, target_count=None):
+        """
+        Return how many additional entries are needed for a topic.
+
+        Args:
+            topic_id: The topic primary key.
+            target_count: Optional override for the per-topic queue size.
+                If omitted, ``self.target_count`` is used.
+
+        Returns:
+            int: Number of additional entries required to reach the target.
+        """
         if target_count is None:
             if self.target_count is None:
                 raise NotImplementedError(
@@ -3045,6 +3338,10 @@ class NextReviewableTopicAssetManager(NextTopicAssetManager):
 
 
 class NextTranscribableCampaignAsset(NextTranscribableAsset):
+    """
+    Cached transcribable asset entry for a campaign-wide queue.
+    """
+
     asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -3056,6 +3353,10 @@ class NextTranscribableCampaignAsset(NextTranscribableAsset):
 
 
 class NextTranscribableTopicAsset(NextTranscribableAsset):
+    """
+    Cached transcribable asset entry for a topic-scoped queue.
+    """
+
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
@@ -3068,6 +3369,10 @@ class NextTranscribableTopicAsset(NextTranscribableAsset):
 
 
 class NextReviewableCampaignAsset(NextReviewableAsset):
+    """
+    Cached reviewable asset entry for a campaign-wide queue.
+    """
+
     asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -3082,6 +3387,10 @@ class NextReviewableCampaignAsset(NextReviewableAsset):
 
 
 class NextReviewableTopicAsset(NextReviewableAsset):
+    """
+    Cached reviewable asset entry for a topic-scoped queue.
+    """
+
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
@@ -3097,6 +3406,13 @@ class NextReviewableTopicAsset(NextReviewableAsset):
 
 
 class ProjectTopic(models.Model):
+    """
+    Link table connecting projects and topics with optional status filtering.
+
+    url_filter can be used to restrict which asset transcription status is
+    shown when browsing the project through a given topic.
+    """
+
     project = models.ForeignKey("Project", on_delete=models.CASCADE)
     topic = models.ForeignKey("Topic", on_delete=models.CASCADE)
 

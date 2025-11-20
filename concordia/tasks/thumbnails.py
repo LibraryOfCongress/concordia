@@ -29,20 +29,20 @@ def download_item_thumbnail_task(
     force: bool = False,
 ) -> str:
     """
-    Fetch an Item and ensure its thumbnail_image is populated.
+    Fetch an item and ensure its thumbnail image is populated.
 
-    The Item's `thumbnail_url` field is used as the source of the download.
+    The item's ``thumbnail_url`` field is used as the source of the download.
 
     Args:
-        item_id: Primary key of the Item to process.
-        force: Overwrite an existing thumbnail if True.
+        item_id: Primary key of the item to process.
+        force: Overwrite an existing thumbnail if true.
 
     Returns:
-        Storage path of the saved image, or a skip message.
+        Storage path of the saved image or a skip message.
 
     Raises:
-        ValueError: If `Item.thumbnail_url` is unavailable.
-        requests.RequestException: Network errors (auto-retried).
+        ValueError: If ``Item.thumbnail_url`` is unavailable.
+        requests.RequestException: For network errors (auto-retried).
     """
     from importer.tasks.items import download_and_set_item_thumbnail
 
@@ -76,9 +76,9 @@ def download_missing_thumbnails_task(
     """
     Spawn per-item download tasks for items missing thumbnails in chunks.
 
-    This finds Items that have a non-empty thumbnail_url but no stored
-    thumbnail_image. It then executes per-item tasks in chunks of `batch_size`,
-    waiting for each chunk to finish before starting the next.
+    This finds items that have a non-empty ``thumbnail_url`` but no stored
+    ``thumbnail_image``. It then executes per-item tasks in chunks of
+    ``batch_size``, waiting for each chunk to finish before starting the next.
 
     Args:
         project_id: Optional project filter.
@@ -87,7 +87,7 @@ def download_missing_thumbnails_task(
         force: Overwrite existing thumbnails if true.
 
     Returns:
-        Count of items scheduled/processed.
+        Count of items scheduled or processed.
     """
     qs = Item.objects.all()
 

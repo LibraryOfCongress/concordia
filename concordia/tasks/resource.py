@@ -15,6 +15,25 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 
 @celery_app.task(ignore_result=True)
 def populate_resource_files():
+    """
+    Synchronize ResourceFile records with S3 objects under the resources prefix.
+
+    This task lists all objects in the S3 bucket specified by
+    ``settings.S3_BUCKET_NAME`` whose keys begin with
+    ``"cm-uploads/resources/"``. For each object (excluding the bare prefix
+    placeholder key), it ensures that a corresponding :class:`ResourceFile`
+    exists.
+
+    For any S3 key that does not already have a matching ``ResourceFile``
+    (by ``resource`` field), a new record is created with:
+
+    * ``resource`` set to the full S3 key.
+    * ``name`` derived from the filename and extension, in the form
+      ``"<filename>-<extension>"`` (for example, ``"guide-pdf"``).
+
+    Existing records are left unchanged, making this task safe to run
+    repeatedly to backfill or resynchronize metadata from S3.
+    """
     client = boto3.client("s3")
     response = client.list_objects_v2(
         Bucket=settings.S3_BUCKET_NAME, Prefix="cm-uploads/resources/"

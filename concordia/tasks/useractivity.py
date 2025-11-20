@@ -1,4 +1,5 @@
 from logging import getLogger
+from typing import Iterable
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -27,7 +28,18 @@ logger = getLogger(__name__)
 structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
-def _populate_activity_table(campaigns):
+def _populate_activity_table(campaigns: Iterable[Campaign]) -> None:
+    """
+    Populate UserProfileActivity rows for the given campaigns.
+
+    For each campaign this helper calculates per user counts of assets,
+    tags, transcriptions and reviews and bulk creates rows for all
+    non-anonymous users. It also updates or creates an aggregate row for
+    the anonymous user.
+
+    Args:
+        campaigns: Iterable of Campaign instances to process.
+    """
     anonymous_user = get_anonymous_user()
     for campaign in campaigns:
         transcriptions = Transcription.objects.filter(
@@ -99,7 +111,14 @@ def _populate_activity_table(campaigns):
 
 
 @celery_app.task
-def populate_completed_campaign_counts():
+def populate_completed_campaign_counts() -> None:
+    """
+    Populate UserProfileActivity for completed and retired campaigns.
+
+    This task should be run after the UserProfileActivity table is
+    created. It processes all campaigns that are not active by
+    delegating to ``_populate_activity_table``.
+    """
     # this task creates records in the UserProfileActivity table for campaigns
     # that are completed or have status == RETIRED (but have not yet actually
     # been retired). It should be run once, after the table has initially been
@@ -110,7 +129,13 @@ def populate_completed_campaign_counts():
 
 
 @celery_app.task
-def populate_active_campaign_counts():
+def populate_active_campaign_counts() -> None:
+    """
+    Populate UserProfileActivity for active campaigns.
+
+    This task builds or refreshes activity rows for campaigns whose
+    status is ACTIVE by delegating to ``_populate_activity_table``.
+    """
     active_campaigns = Campaign.objects.filter(status=Campaign.Status.ACTIVE)
     _populate_activity_table(active_campaigns)
 
@@ -121,7 +146,33 @@ def populate_active_campaign_counts():
     retry_backoff=5,
     retry_kwargs={"max_retries": 5, "countdown": 5},
 )
-def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kwargs):
+def update_useractivity_cache(
+    self,
+    user_id: int,
+    campaign_id: int,
+    attr_name: str,
+    *args,
+    **kwargs,
+) -> None:
+    """
+    Update cached user activity counts for a single metric.
+
+    This Celery task acquires a short lived cache based lock to prevent
+    concurrent updates for the same key. On success it calls
+    ``_update_useractivity_cache`` then releases the lock and logs a
+    completion event. If the lock cannot be acquired after the retry
+    budget it logs a warning and sends an email to the developer list.
+
+    Args:
+        user_id: Primary key of the user to update.
+        campaign_id: Primary key of the campaign whose cache is updated.
+        attr_name: Name of the activity attribute being incremented,
+            for example ``"transcribe_count"`` or ``"review_count"``.
+
+    Raises:
+        CacheLockedError: If the cache lock cannot be acquired before
+            retries are exhausted.
+    """
     structured_logger.info(
         "Running update_useractivity_cache task",
         event_code="useractivity_cache_task_start",
@@ -194,7 +245,15 @@ def update_useractivity_cache(self, user_id, campaign_id, attr_name, *args, **kw
 
 @celery_app.task(bind=True, ignore_result=True)
 @locked_task
-def update_userprofileactivity_from_cache(self):
+def update_userprofileactivity_from_cache(self) -> None:
+    """
+    Flush per campaign activity deltas from cache to the database.
+
+    This task is wrapped by the ``locked_task`` decorator so only one
+    instance runs at a time. For each campaign it reads the cached
+    update payload, writes transcribe and review counts with
+    ``update_userprofileactivity_table`` then clears the cache entry.
+    """
     structured_logger.info(
         "Starting update_userprofileactivity_from_cache task",
         event_code="starting_update_userprofileactivity_from_cache_task",
@@ -212,14 +271,20 @@ def update_userprofileactivity_from_cache(self):
             for user_id in updates_by_user:
                 user = User.objects.get(id=user_id)
                 update_userprofileactivity_table(
-                    user, campaign.id, "transcribe_count", updates_by_user[user_id][0]
+                    user,
+                    campaign.id,
+                    "transcribe_count",
+                    updates_by_user[user_id][0],
                 )
                 update_userprofileactivity_table(
-                    user, campaign.id, "review_count", updates_by_user[user_id][1]
+                    user,
+                    campaign.id,
+                    "review_count",
+                    updates_by_user[user_id][1],
                 )
                 structured_logger.debug(
                     "Updated activity counts for user",
-                    event_code="update_userprofileactivity_from_cache_database_write",
+                    event_code=("update_userprofileactivity_from_cache_database_write"),
                     user=user_id,
                 )
         else:

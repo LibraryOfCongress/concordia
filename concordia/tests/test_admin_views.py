@@ -579,7 +579,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
             messages = [str(message) for message in get_messages(response.wsgi_request)]
             self.assertEqual(len(messages), 3)
             self.assertEqual(messages[0], "Fetch test message")
-            self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+            self.assertEqual(messages[1], "Total Asset Count:1")
             self.assertEqual(messages[2], "All Processes Completed")
 
     def test_missing_field(self):
@@ -610,7 +610,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], "Skipping row 0: missing fields ['Campaign']")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_empty_field(self):
@@ -648,7 +648,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
                 "(Campaign, Project, Import URLs) is empty",
             )
             self.assertEqual(messages[1], "Fetch test message")
-            self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+            self.assertEqual(messages[2], "Total Asset Count:1")
             self.assertEqual(messages[3], "All Processes Completed")
 
     def test_all_empty_fields(self):
@@ -678,7 +678,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 3)
         self.assertEqual(messages[0], "Fetch test message")
-        self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[1], "Total Asset Count:1")
         self.assertEqual(messages[2], "All Processes Completed")
 
     def test_empty_campaign_slug(self):
@@ -708,7 +708,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 3)
         self.assertEqual(messages[0], "Fetch test message")
-        self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[1], "Total Asset Count:1")
         self.assertEqual(messages[2], "All Processes Completed")
 
     def test_bad_campaign_slug(self):
@@ -739,7 +739,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], "Campaign slug doesn't match pattern.")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_empty_project_slug(self):
@@ -770,7 +770,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 3)
         self.assertEqual(messages[0], "Fetch test message")
-        self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[1], "Total Asset Count:1")
         self.assertEqual(messages[2], "All Processes Completed")
 
     def test_bad_project_slug(self):
@@ -801,7 +801,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], "Project slug doesn't match pattern.")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_bad_url(self):
@@ -832,7 +832,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], f"Skipping unrecognized URL value: {bad_url}")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_large_number_urls(self):
@@ -864,7 +864,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(messages[0], "Fetch test message")
         self.assertEqual(messages[1], "Fetch test message")
         # This count is weird because we mock the fetch_all_urls function
-        self.assertEqual(messages[2], "Total Asset\xa0Count:2")
+        self.assertEqual(messages[2], "Total Asset Count:2")
         self.assertEqual(messages[3], "All Processes Completed")
 
 

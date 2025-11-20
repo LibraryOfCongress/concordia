@@ -3,6 +3,7 @@
 
 import logging
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 
 from django.core.cache import cache
@@ -13,21 +14,25 @@ DEFAULT_LOCK_DURATION = 60 * 10  # 10 minutes
 
 
 @contextmanager
-def cache_lock(lock_id, oid, lock_duration=DEFAULT_LOCK_DURATION):
+def cache_lock(
+    lock_id: str,
+    oid: str,
+    lock_duration: int = DEFAULT_LOCK_DURATION,
+) -> Generator[bool, None, None]:
     """
     Context manager to acquire a distributed cache-based lock.
 
     Ensures that only one process or thread can execute a block of code
-    associated with a given lock ID at a time. Uses Django's cache backend to
-    store the lock key and automatically releases it upon exiting the context
-    if it was acquired and hasn't expired.
+    associated with a given lock ID at a time. Uses Django's cache backend
+    and `cache.add` to store the lock key, then `cache.delete` to release the
+    lock when exiting the context if it was acquired and has not expired.
 
-    Parameters:
-        lock_id (str): A unique string key identifying the lock in the cache.
-        oid (str): An identifier for the owner of the lock, used as the cache value.
-                   Otherwise is not used, so the actual value isn't important.
-        lock_duration (int): How long the lock should be held (in seconds).
-                             Defaults to 10 minutes.
+    Args:
+        lock_id (str): Unique key identifying the lock in the cache.
+        oid (str): Identifier for the owner of the lock. Stored as the cache
+            value but not otherwise used.
+        lock_duration (int): How long to hold the lock in seconds. Defaults
+            to 10 minutes.
 
     Yields:
         bool: True if the lock was acquired, False otherwise.
@@ -46,7 +51,7 @@ def cache_lock(lock_id, oid, lock_duration=DEFAULT_LOCK_DURATION):
         yield status
     finally:
         if status and time.monotonic() < timeout_at:
-            # Don't release the lock if we didn't acquire it
+            # Don't release the lock if we did not acquire it
             # Also, don't release the lock if we exceeded the timeout
             # to reduce the chance of releasing an expired lock
             # owned by someone else
