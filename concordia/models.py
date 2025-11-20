@@ -3119,7 +3119,7 @@ class CampaignRetirementProgress(models.Model):
         return f"Removal progress for {self.campaign}"
 
     class Meta:
-        verbose_name_plural = "campaign retirement progresses"
+        verbose_name_plural = "campaign retirement progress"
 
 
 class TutorialCard(models.Model):
