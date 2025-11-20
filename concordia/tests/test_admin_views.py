@@ -10,9 +10,10 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.timezone import now
 
 from concordia.admin.views import SerializedObjectView
-from concordia.models import Campaign, Project
+from concordia.models import Campaign, Project, TranscriptionStatus
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -21,6 +22,7 @@ from concordia.tests.utils import (
     create_card,
     create_project,
     create_site_report,
+    create_transcription,
 )
 from importer.tests.utils import create_import_asset
 
@@ -523,18 +525,36 @@ class TestAdminBulkImportView(CreateTestUsers, TestCase):
 
 class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
     def setUp(self):
-        asset = create_asset()
-        self.spreadsheet_data = [{"asset__id": asset.id}]
+        self.accepted_transcription = create_transcription(accepted=now())
+        asset = create_asset(
+            slug="rejected-asset", item=self.accepted_transcription.asset.item
+        )
+        self.rejected_transcription = create_transcription(asset=asset, rejected=now())
+        self.spreadsheet_data = [
+            {"asset__id": self.accepted_transcription.asset.id},
+            {"asset__id": self.rejected_transcription.asset.id},
+        ]
+        self.post_data = {"spreadsheet_file": BytesIO()}
 
     def test_admin_bulk_change_asset_status(self):
         self.login_user(is_staff=True, is_superuser=True)
 
-        response = self.client.get(reverse("admin:bulk-change"))
-        self.assertEqual(response.status_code, 200)
         with mock.patch(
             "concordia.admin.views.slurp_excel", autospec=True
         ) as slurp_mock:
             slurp_mock.return_value = self.spreadsheet_data
+
+            path = reverse("admin:bulk-change")
+            response = self.client.post(path, data=self.post_data)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                self.accepted_transcription.asset.transcription_status,
+                TranscriptionStatus.SUBMITTED,
+            )
+            self.assertEqual(
+                self.rejected_transcription.asset.transcription_status,
+                TranscriptionStatus.SUBMITTED,
+            )
 
 
 class TestAdminBulkImportReview(CreateTestUsers, TestCase):

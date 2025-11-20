@@ -330,24 +330,19 @@ def admin_bulk_import_review(request):
     return render(request, "admin/bulk_review.html", context)
 
 
-@never_cache
-@staff_member_required
-def admin_bulk_change_asset_status(request):
-    if request.method == "POST":
-        form = AdminAssetsBulkChangeStatusForm(request.POST, request.FILES)
+@method_decorator(staff_member_required, name="dispatch")
+@method_decorator(never_cache, name="dispatch")
+class AdminBulkChangeAssetStatusView(FormView):
+    template_name = "admin/bulk_change.html"
+    form_class = AdminAssetsBulkChangeStatusForm
 
-        if form.is_valid():
-            rows = slurp_excel(request.FILES["spreadsheet_file"])
+    def form_valid(self, form):
+        rows = slurp_excel(self.request.FILES["spreadsheet_file"])
+        asset_ids = [row["asset__id"] for row in rows]
+        assets = Asset.objects.filter(id__in=asset_ids)
 
-            asset_ids = [row["asset__id"] for idx, row in enumerate(rows)]
-            assets = Asset.objects.filter(id__in=asset_ids)
-            _change_status(request.user, assets)
-    else:
-        form = AdminAssetsBulkChangeStatusForm()
-
-    context = {"form": form}
-
-    return render(request, "admin/bulk_change.html", context)
+        _change_status(self.request.user, assets)
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 @never_cache

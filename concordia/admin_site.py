@@ -53,7 +53,9 @@ class ConcordiaAdminSite(admin.AdminSite):
             ),
             path("clear-cache/", views.ClearCacheView.as_view(), name="clear-cache"),
             path(
-                "bulk-change/", views.admin_bulk_change_asset_status, name="bulk-change"
+                "bulk-change/",
+                views.AdminBulkChangeAssetStatusView.as_view(),
+                name="bulk-change",
             ),
         ]
 
