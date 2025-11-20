@@ -1232,7 +1232,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                     False,
                     (
                         "More rollforward transcription exist than non-roll-forward "
-                        "transcriptions, which should not be possible. Possibly "
+                        "transcriptions, which shouldn't be possible. Possibly "
                         "incorrectly modified transcriptions for this asset."
                     ),
                     None,
