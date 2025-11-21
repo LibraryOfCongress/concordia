@@ -347,7 +347,11 @@ class AdminBulkChangeAssetStatusView(FormView):
             )
         )
 
+        count = assets.count()
+        messages.info(self.request, f"Processing {len(rows)} rows.")
+        messages.info(self.request, f"Updating {count} assets.")
         _change_status(self.request.user, assets)
+        messages.success(self.request, f"Changed {count} assets to 'needs review.'")
         return self.render_to_response(self.get_context_data(form=form))
 
 
