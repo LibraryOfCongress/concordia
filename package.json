@@ -31,7 +31,7 @@
         "screenfull": "^6.0.0",
         "split.js": "^1.6.2",
         "urijs": "^1.19.11",
-        "vite": "^6.3.5"
+        "vite": "^7.2.4"
     },
     "name": "concordia",
     "private": true,
