@@ -11,7 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.core.cache import caches
 from django.core.exceptions import ValidationError
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Prefetch, Subquery
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -36,7 +36,12 @@ from importer.tasks.items import import_items_into_project_from_url
 from importer.utils import slurp_excel
 
 from ..models import Campaign, Project, SiteReport
-from .forms import AdminProjectBulkImportForm, ClearCacheForm
+from .forms import (
+    AdminAssetsBulkChangeStatusForm,
+    AdminProjectBulkImportForm,
+    ClearCacheForm,
+)
+from .utils import _change_status
 
 logger = logging.getLogger(__name__)
 
@@ -380,6 +385,46 @@ def admin_bulk_import_review(request: HttpRequest) -> HttpResponse:
     context["form"] = form
 
     return render(request, "admin/bulk_review.html", context)
+
+
+@method_decorator(staff_member_required, name="dispatch")
+@method_decorator(never_cache, name="dispatch")
+class AdminBulkChangeAssetStatusView(FormView):
+    template_name = "admin/bulk_change.html"
+    form_class = AdminAssetsBulkChangeStatusForm
+
+    def form_valid(self, form):
+        rows = slurp_excel(self.request.FILES["spreadsheet_file"])
+        total_in_sheet = len(rows)
+        asset_ids = list({row["asset__id"] for row in rows})
+        assets = Asset.objects.filter(id__in=asset_ids).prefetch_related(
+            Prefetch(
+                "transcription_set",
+                queryset=Transcription.objects.order_by("-pk"),
+                to_attr="prefetched_transcriptions",
+            )
+        )
+        matched = assets.count()
+
+        if matched == 0:
+            messages.warning(
+                self.request,
+                (
+                    f"No matching assets found in database. "
+                    f"Spreadsheet contained {total_in_sheet} rows."
+                ),
+            )
+
+        updated_count = _change_status(self.request.user, assets)
+
+        messages.success(
+            self.request,
+            (
+                f"Processed spreadsheet with {total_in_sheet} rows. "
+                f"Updated {updated_count} assets."
+            ),
+        )
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 @never_cache

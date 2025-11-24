@@ -52,6 +52,11 @@ class ConcordiaAdminSite(admin.AdminSite):
                 name="serialized_object",
             ),
             path("clear-cache/", views.ClearCacheView.as_view(), name="clear-cache"),
+            path(
+                "bulk-change/",
+                views.AdminBulkChangeAssetStatusView.as_view(),
+                name="bulk-change",
+            ),
         ]
 
         return custom_urls + urls

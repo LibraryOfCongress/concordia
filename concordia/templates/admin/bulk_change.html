@@ -1,0 +1,45 @@
+{% extends "admin/base_site.html" %}
+
+{% block messages %}
+    {% comment %} This is displayed elswhere {% endcomment %}
+{% endblock messages %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .message-error, .message-warning {
+            font-weight: bold;
+        }
+
+        .message-error {
+            color: #dc3545;
+        }
+
+        .message-warning {
+            color: #ffc107;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content" class="colM">
+        <div>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_table }}
+                <div class="submit-row">
+                    <input type="submit" value="import!" class="default" />
+                </div>
+            </form>
+        </div>
+
+        {% if messages %}
+            <h4>Messages</h4>
+            <ul>
+                {% for message in messages %}
+                    <li class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.ERROR %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}message-warning{% endif %}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endblock content %}
