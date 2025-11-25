@@ -88,6 +88,18 @@ class AdminProjectBulkImportForm(forms.Form):
     )
 
 
+class AdminAssetsBulkChangeStatusForm(forms.Form):
+    """
+    Admin form for changing status of assets across multiple items in bulk
+    via CSV upload.
+    """
+
+    spreadsheet_file = forms.FileField(
+        required=True,
+        label="Spreadsheet containing the items to change",
+    )
+
+
 class SanitizedDescriptionAdminForm(forms.ModelForm):
     """
     Base admin form that sanitizes HTML description fields.

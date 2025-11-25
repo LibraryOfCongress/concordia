@@ -6,21 +6,25 @@ from io import BytesIO
 from unittest import mock
 
 from django.contrib.messages import get_messages
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.timezone import now
 
 from concordia.admin.views import SerializedObjectView
-from concordia.models import Campaign, Project
+from concordia.models import Campaign, Project, TranscriptionStatus
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
     create_asset,
     create_campaign,
     create_card,
+    create_item,
     create_project,
     create_site_report,
+    create_transcription,
 )
 from importer.tests.utils import create_import_asset
 
@@ -518,6 +522,51 @@ class TestAdminBulkImportView(CreateTestUsers, TestCase):
             self.assertEqual(
                 messages[2],
                 f"Unhandled error attempting to import {self.url}: Test Exception",
+            )
+
+
+class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
+    def setUp(self):
+        item = create_item()
+        self.asset1 = create_asset(item=item)
+        self.asset2 = create_asset(item=item, slug="test-asset-2")
+        self.accepted_transcription = create_transcription(
+            asset=self.asset1, accepted=now()
+        )
+        self.rejected_transcription = create_transcription(
+            asset=self.asset2, rejected=now()
+        )
+        self.spreadsheet_data = [
+            {"asset__id": self.asset1.id},
+            {"asset__id": self.asset2.id},
+        ]
+
+    def test_admin_bulk_change_asset_status(self):
+        self.login_user(is_staff=True, is_superuser=True)
+
+        fake_file = SimpleUploadedFile(
+            "test.xlsx", b"x", content_type="application/vnd.ms-excel"
+        )
+        post_data = {"spreadsheet_file": fake_file}
+
+        with mock.patch(
+            "concordia.admin.views.slurp_excel", autospec=True
+        ) as slurp_mock:
+            slurp_mock.return_value = self.spreadsheet_data
+
+            path = reverse("admin:bulk-change")
+            response = self.client.post(path, data=post_data)
+            self.asset1.refresh_from_db()
+            self.asset2.refresh_from_db()
+            self.assertEqual(response.status_code, 200)
+            slurp_mock.assert_called()
+            self.assertEqual(
+                self.asset1.transcription_status,
+                TranscriptionStatus.SUBMITTED,
+            )
+            self.assertEqual(
+                self.asset2.transcription_status,
+                TranscriptionStatus.SUBMITTED,
             )
 
 

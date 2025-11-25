@@ -16,6 +16,7 @@ from ..models import (
     Transcription,
     TranscriptionStatus,
 )
+from .utils import _change_status
 
 logger = getLogger(__name__)
 
@@ -241,56 +242,6 @@ def change_status_to_completed(
         )
 
 
-def _change_status(
-    request: HttpRequest,
-    assets: QuerySet[Asset],
-    submit: bool = True,
-) -> int:
-    """
-    Create review transcriptions to move assets to a new workflow status.
-
-    For each asset in `assets` this helper creates a new `Transcription` that
-    supersedes the latest transcription when one exists. The new transcription
-    copies the latest text and records the current user as the reviewer. It
-    sets `submitted` when `submit` is true, otherwise it sets `rejected`.
-    Signals are preserved because this does not use `bulk_create`.
-
-    Args:
-        request (HttpRequest): Current request used to determine the user.
-        assets (QuerySet[Asset]): Assets whose status should be updated.
-        submit (bool): When true mark transcriptions as submitted, otherwise
-            mark them as rejected.
-
-    Returns:
-        int: Number of assets that were processed.
-    """
-    # Count the number of assets that will be updated
-    count = assets.count()
-    for asset in assets:
-        latest_transcription = asset.transcription_set.order_by("-pk").first()
-        kwargs = {
-            "reviewed_by": request.user,
-            "asset": asset,
-            "user": request.user,
-        }
-        if latest_transcription is not None:
-            kwargs.update(
-                **{
-                    "supersedes": latest_transcription,
-                    "text": latest_transcription.text,
-                }
-            )
-        if submit:
-            kwargs["submitted"] = now()
-        else:
-            kwargs["rejected"] = now()
-        new_transcription = Transcription(**kwargs)
-        new_transcription.full_clean()
-        new_transcription.save()
-
-    return count
-
-
 @admin.action(permissions=["reopen"], description="Change status to Needs Review")
 def change_status_to_needs_review(
     modeladmin: admin.ModelAdmin,
@@ -313,7 +264,7 @@ def change_status_to_needs_review(
         None
     """
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
-    count = _change_status(request, eligible)
+    count = _change_status(request.user, eligible)
 
     if count == 1:
         asset = queryset.first()
@@ -353,7 +304,7 @@ def change_status_to_in_progress(
         None
     """
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
-    count = _change_status(request, eligible, submit=False)
+    count = _change_status(request.user, eligible, submit=False)
 
     if count == 1:
         asset = queryset.first()
