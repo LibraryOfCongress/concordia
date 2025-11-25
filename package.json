@@ -10,7 +10,7 @@
         "@duetds/date-picker": "^1.4.0",
         "@fortawesome/fontawesome-free": "^7.1.0",
         "@popperjs/core": "^2.11.8",
-        "@sentry/browser": "^10.10.0",
+        "@sentry/browser": "^10.27.0",
         "@sentry/core": "^10.3.0",
         "@sentry/tracing": "^7.120.4",
         "bootstrap": "^5.3.8",
