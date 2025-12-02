@@ -92,6 +92,11 @@ def site_report() -> None:
     tags, users, and transcription activity into SiteReport rows. It creates a
     site-wide TOTAL report, then per-campaign and per-topic reports, and
     finally a RETIRED_TOTAL rollup for retired campaigns.
+
+    The ``assets_started`` metric is derived from ``assets_total`` and
+    ``assets_not_started``, so publish/unpublish changes alone do not affect
+    the calculated starts as long as total and not-started counts remain
+    consistent.
     """
     structured_logger.debug(
         "Starting site report generation task.",
@@ -143,10 +148,10 @@ def site_report() -> None:
         report_name=SiteReport.ReportName.TOTAL, before=timezone.now()
     )
     assets_started = SiteReport.calculate_assets_started(
+        previous_assets_total=getattr(previous, "assets_total", 0),
         previous_assets_not_started=getattr(previous, "assets_not_started", 0),
-        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_total=assets_total,
         current_assets_not_started=report["assets_not_started"],
-        current_assets_published=assets_published,
     )
 
     site_report = SiteReport()
@@ -327,10 +332,10 @@ def topic_report(topic: Topic) -> None:
 
     previous = SiteReport.objects.previous_in_series(topic=topic, before=timezone.now())
     assets_started = SiteReport.calculate_assets_started(
+        previous_assets_total=getattr(previous, "assets_total", 0),
         previous_assets_not_started=getattr(previous, "assets_not_started", 0),
-        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_total=assets_total,
         current_assets_not_started=report["assets_not_started"],
-        current_assets_published=assets_published,
     )
 
     structured_logger.debug(
@@ -488,10 +493,10 @@ def campaign_report(campaign: Campaign) -> None:
         campaign=campaign, before=timezone.now()
     )
     assets_started = SiteReport.calculate_assets_started(
+        previous_assets_total=getattr(previous, "assets_total", 0),
         previous_assets_not_started=getattr(previous, "assets_not_started", 0),
-        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_total=assets_total,
         current_assets_not_started=report["assets_not_started"],
-        current_assets_published=assets_published,
     )
 
     structured_logger.debug(
@@ -609,10 +614,10 @@ def retired_total_report() -> None:
         report_name=SiteReport.ReportName.RETIRED_TOTAL, before=timezone.now()
     )
     assets_started = SiteReport.calculate_assets_started(
+        previous_assets_total=getattr(previous, "assets_total", 0),
         previous_assets_not_started=getattr(previous, "assets_not_started", 0),
-        previous_assets_published=getattr(previous, "assets_published", 0),
+        current_assets_total=total_site_report.assets_total,
         current_assets_not_started=total_site_report.assets_not_started,
-        current_assets_published=total_site_report.assets_published,
     )
 
     total_site_report.assets_started = assets_started

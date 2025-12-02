@@ -13,13 +13,19 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
     def _dt(self, days_ago):
         return timezone.now() - timezone.timedelta(days=days_ago)
 
-    def test_recompute_all_calls_all_upserts(self):
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
+    def test_recompute_all_calls_all_upserts(self, mock_localdate):
+        # Fix "today" to a stable mid-month date.
+        today = date(2024, 3, 15)
+        mock_localdate.return_value = today
+
         # Earliest SiteReport in the current month so only one month is walked.
         sr = SiteReport.objects.create(report_name=SiteReport.ReportName.TOTAL)
-        SiteReport.objects.filter(pk=sr.pk).update(created_on=self._dt(2))
+        tz = timezone.get_current_timezone()
+        SiteReport.objects.filter(pk=sr.pk).update(
+            created_on=timezone.make_aware(datetime(2024, 3, 10, 12, 0, 0), tz)
+        )
 
-        # Seed one MONTHLY and one QUARTERLY row so the later stages run.
-        today = timezone.localdate()
         fy = KeyMetricsReport.get_fiscal_year_for_date(today)
         fq = KeyMetricsReport.get_fiscal_quarter_for_date(today)
 
@@ -56,12 +62,20 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         self.assertEqual(up_q.call_count, 4)
         self.assertEqual(up_y.call_count, 1)
 
-    def test_incremental_refresh_and_creates(self):
+    @mock.patch("concordia.tasks.reports.key_metrics.timezone.localdate")
+    def test_incremental_refresh_and_creates(self, mock_localdate):
+        # Fix "today" to a stable mid-month date so the month logic is
+        # deterministic.
+        today = date(2024, 3, 15)
+        mock_localdate.return_value = today
+
         # Make one SiteReport this month so the month is considered.
         sr = SiteReport.objects.create(report_name=SiteReport.ReportName.TOTAL)
-        SiteReport.objects.filter(pk=sr.pk).update(created_on=self._dt(2))
+        tz = timezone.get_current_timezone()
+        SiteReport.objects.filter(pk=sr.pk).update(
+            created_on=timezone.make_aware(datetime(2024, 3, 10, 12, 0, 0), tz)
+        )
 
-        today = timezone.localdate()
         fy = KeyMetricsReport.get_fiscal_year_for_date(today)
         fq = KeyMetricsReport.get_fiscal_quarter_for_date(today)
 
@@ -74,11 +88,13 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             fiscal_quarter=fq,
             month=today.month,
         )
-        KeyMetricsReport.objects.filter(pk=monthly.pk).update(updated_on=self._dt(5))
+        KeyMetricsReport.objects.filter(pk=monthly.pk).update(
+            updated_on=timezone.make_aware(datetime(2024, 3, 1, 0, 0, 0), tz)
+        )
 
-        # Existing QUARTERLY row for the same quarter with older updated_on,
-        # so it should be refreshed. The other three quarters are missing and
-        # will be created.
+        # Existing QUARTERLY row for the same quarter; the other three quarters
+        # are missing and will be created. We keep updated_on equal to the
+        # MONTHLY row so only the missing quarters are upserted.
         quarter = KeyMetricsReport.objects.create(
             period_type=KeyMetricsReport.PeriodType.QUARTERLY,
             period_start=today.replace(day=1),
@@ -86,7 +102,9 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             fiscal_year=fy,
             fiscal_quarter=fq,
         )
-        KeyMetricsReport.objects.filter(pk=quarter.pk).update(updated_on=self._dt(5))
+        KeyMetricsReport.objects.filter(pk=quarter.pk).update(
+            updated_on=timezone.make_aware(datetime(2024, 3, 1, 0, 0, 0), tz)
+        )
 
         # No FY row yet so it will be created in the FY stage.
         with (
@@ -98,10 +116,10 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             up_q.return_value = mock.Mock(period_start=None, period_end=None)
             up_y.return_value = mock.Mock(period_start=None, period_end=None)
 
-            changed = build_key_metrics_reports.run(recompute_all=False)
+            changed = build_key_metrics_reports(recompute_all=False)
 
-        # One monthly refresh, three quarterly creates (no refresh since the mock
-        # does not bump monthly.updated_on), and one fiscal year create.
+        # One monthly refresh, three quarterly creates (no refresh since the
+        # mock does not bump monthly.updated_on), and one fiscal year create.
         self.assertEqual(changed, 5)
         self.assertEqual(up_m.call_count, 1)
         self.assertEqual(up_q.call_count, 3)
@@ -123,7 +141,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         # Pretend there are no snapshots by EOM for any month we check.
         mock_sr.objects.filter.return_value.exists.return_value = False
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
         self.assertEqual(changed, 0)
 
         # Ensure we logged the "no months" message.
@@ -151,7 +169,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_end=date(2023, 12, 31),
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
         self.assertGreaterEqual(changed, 1)
 
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
@@ -203,7 +221,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         upsert_quarter.return_value = None
         upsert_year.return_value = None
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
         self.assertEqual(changed, 2)
 
     @mock.patch("concordia.tasks.reports.key_metrics.structured_logger")
@@ -238,7 +256,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2024, 1, 1), period_end=date(2024, 3, 31)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
         # Four quarters upserted
         self.assertGreaterEqual(changed, 4)
         self.assertEqual(upsert_quarter.call_count, 4)
@@ -310,7 +328,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2024, 4, 1), period_end=date(2024, 6, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
         # Four refreshes (Q1..Q4)
         self.assertGreaterEqual(changed, 4)
         self.assertEqual(upsert_quarter.call_count, 4)
@@ -347,7 +365,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2026, 10, 1), period_end=date(2027, 9, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
         self.assertGreaterEqual(changed, 1)
 
         codes = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
@@ -399,7 +417,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2025, 10, 1), period_end=date(2026, 9, 30)
         )
 
-        changed1 = build_key_metrics_reports.run(recompute_all=False)
+        changed1 = build_key_metrics_reports(recompute_all=False)
         self.assertGreaterEqual(changed1, 1)
         codes1 = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_year_created", codes1)
@@ -439,7 +457,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2025, 10, 1), period_end=date(2026, 9, 30)
         )
 
-        changed2 = build_key_metrics_reports.run(recompute_all=False)
+        changed2 = build_key_metrics_reports(recompute_all=False)
         self.assertGreaterEqual(changed2, 1)
         codes2 = [kw.get("event_code") for _, kw in slog.info.call_args_list if kw]
         self.assertIn("key_metrics_year_refreshed", codes2)
@@ -483,7 +501,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
 
         mock_quarter.side_effect = quarter_stub
 
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
 
         # Only quarters (4) should have counted.
         self.assertEqual(changed, 4)
@@ -552,7 +570,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2024, 1, 1), period_end=date(2024, 3, 31)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 1)
         self.assertEqual(mock_quarter.call_count, 1)
@@ -591,7 +609,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2024, 10, 1), period_end=date(2025, 9, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
 
         self.assertEqual(changed, 1)
         self.assertEqual(mock_year.call_count, 1)
@@ -627,7 +645,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2024, 10, 1), period_end=date(2025, 9, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 1)
         self.assertEqual(mock_year.call_count, 1)
@@ -680,7 +698,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2023, 10, 1), period_end=date(2024, 9, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 1)
         self.assertEqual(mock_year.call_count, 1)
@@ -897,7 +915,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2024, 1, 1), period_end=date(2024, 3, 31)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 1)
         self.assertGreaterEqual(mock_upsert_quarter.call_count, 1)
@@ -1061,7 +1079,8 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             )
         )
 
-        # Ensure the quarterly stage iterates a fiscal year by having a MONTHLY row
+        # Ensure the quarterly stage iterates a fiscal year by having a MONTHLY
+        # row
         fy = KeyMetricsReport.get_fiscal_year_for_date(mock_localdate.return_value)
         KeyMetricsReport.objects.create(
             period_type=KeyMetricsReport.PeriodType.MONTHLY,
@@ -1073,7 +1092,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         )
 
         # upsert_quarter returns None -> branch falls through to 'continue'
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
 
         # No rows changed because monthly and FY are neutralized and quarter
         # upserts return None (hitting the continue path each time).
@@ -1147,7 +1166,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         # upsert_quarter is mocked to return None, so when the code reaches the
         # monthly_newer_exists refresh path for Q2 it will take the "is None"
         # branch and continue without incrementing rows_changed.
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         # No rows changed: month and year upserts return None, and Q2 refresh
         # returned None (so branch continued). Only one refresh attempt expected.
@@ -1195,7 +1214,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         )
 
         # Month/quarter upserts are mocked to None; FY upsert also None.
-        changed = build_key_metrics_reports.run(recompute_all=True)
+        changed = build_key_metrics_reports(recompute_all=True)
 
         # Nothing should be counted since FY upsert returned None and the code
         # immediately continued the loop without incrementing or logging.
@@ -1261,7 +1280,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
         )
 
         # FY upsert returns None so the branch is skipped and loop continues.
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 0)
         self.assertEqual(mock_upsert_year.call_count, 1)
@@ -1308,7 +1327,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2023, 10, 1), period_end=date(2024, 9, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 1)
         self.assertEqual(mock_upsert_year.call_count, 1)
@@ -1364,7 +1383,7 @@ class BuildKeyMetricsReportsTaskTests(TestCase):
             period_start=date(2023, 10, 1), period_end=date(2024, 9, 30)
         )
 
-        changed = build_key_metrics_reports.run(recompute_all=False)
+        changed = build_key_metrics_reports(recompute_all=False)
 
         self.assertEqual(changed, 1)
         self.assertEqual(mock_upsert_year.call_count, 1)
