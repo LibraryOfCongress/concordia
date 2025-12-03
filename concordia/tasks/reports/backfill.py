@@ -47,9 +47,13 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
 
     * By default, rows that already have a non-null ``assets_started`` value
       are skipped (``skip_existing=True``), so the task can be re-run to
-      resume where it left off.
+      resume where it left off. In this mode, only series that still contain
+      at least one snapshot with ``assets_started`` set to ``NULL`` are
+      processed.
     * To recompute all rows, for example after changing the formula, call the
-      task with ``skip_existing=False``.
+      task with ``skip_existing=False``. In this mode, any series that has at
+      least one snapshot is processed, even if all snapshots already have
+      non-null ``assets_started`` values.
 
     Args:
         skip_existing: If true, skip rows where ``assets_started`` is already
@@ -148,7 +152,8 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
                 current.save(update_fields=["assets_started"])
                 changed += 1
 
-                # Per-row progress log for monitoring while the one-off task runs.
+                # Per-row progress log for monitoring while the one-off task
+                # runs.
                 structured_logger.info(
                     "Backfilled assets_started for SiteReport.",
                     event_code="assets_started_backfill_row",
@@ -191,39 +196,43 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         return changed
 
     # Site-wide TOTAL
-    if SiteReport.objects.filter(
+    total_base_qs = SiteReport.objects.filter(
         report_name=SiteReport.ReportName.TOTAL,
         campaign__isnull=True,
         topic__isnull=True,
-        assets_started__isnull=True,
-    ).exists():
-        total_qs = SiteReport.objects.filter(
-            report_name=SiteReport.ReportName.TOTAL,
-            campaign__isnull=True,
-            topic__isnull=True,
-        ).order_by("created_on", "pk")
+    )
+    total_exists_qs = total_base_qs
+    if skip_existing:
+        total_exists_qs = total_exists_qs.filter(assets_started__isnull=True)
+
+    if total_exists_qs.exists():
+        total_qs = total_base_qs.order_by("created_on", "pk")
         updated_count += process_series_queryset(total_qs, series_label="TOTAL")
 
     # Site-wide RETIRED_TOTAL
-    if SiteReport.objects.filter(
-        report_name=SiteReport.ReportName.RETIRED_TOTAL,
-        assets_started__isnull=True,
-    ).exists():
-        retired_total_qs = SiteReport.objects.filter(
-            report_name=SiteReport.ReportName.RETIRED_TOTAL
-        ).order_by("created_on", "pk")
+    retired_base_qs = SiteReport.objects.filter(
+        report_name=SiteReport.ReportName.RETIRED_TOTAL
+    )
+    retired_exists_qs = retired_base_qs
+    if skip_existing:
+        retired_exists_qs = retired_exists_qs.filter(assets_started__isnull=True)
+
+    if retired_exists_qs.exists():
+        retired_total_qs = retired_base_qs.order_by("created_on", "pk")
         updated_count += process_series_queryset(
             retired_total_qs, series_label="RETIRED_TOTAL"
         )
 
     # Per-campaign (includes retired campaigns; their historical reports remain)
-    campaign_ids = (
-        SiteReport.objects.filter(campaign__isnull=False, assets_started__isnull=True)
-        .values_list("campaign_id", flat=True)
-        .distinct()
-    )
+    campaign_base_qs = SiteReport.objects.filter(campaign__isnull=False)
+    if skip_existing:
+        campaign_ids_source = campaign_base_qs.filter(assets_started__isnull=True)
+    else:
+        campaign_ids_source = campaign_base_qs
+
+    campaign_ids = campaign_ids_source.values_list("campaign_id", flat=True).distinct()
     for campaign_id in campaign_ids.iterator():
-        campaign_series = SiteReport.objects.filter(campaign_id=campaign_id).order_by(
+        campaign_series = campaign_base_qs.filter(campaign_id=campaign_id).order_by(
             "created_on", "pk"
         )
         updated_count += process_series_queryset(
@@ -231,13 +240,15 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         )
 
     # Per-topic
-    topic_ids = (
-        SiteReport.objects.filter(topic__isnull=False, assets_started__isnull=True)
-        .values_list("topic_id", flat=True)
-        .distinct()
-    )
+    topic_base_qs = SiteReport.objects.filter(topic__isnull=False)
+    if skip_existing:
+        topic_ids_source = topic_base_qs.filter(assets_started__isnull=True)
+    else:
+        topic_ids_source = topic_base_qs
+
+    topic_ids = topic_ids_source.values_list("topic_id", flat=True).distinct()
     for topic_id in topic_ids.iterator():
-        topic_series = SiteReport.objects.filter(topic_id=topic_id).order_by(
+        topic_series = topic_base_qs.filter(topic_id=topic_id).order_by(
             "created_on", "pk"
         )
         updated_count += process_series_queryset(
