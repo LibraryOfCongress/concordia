@@ -36,6 +36,10 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
       when no earlier data is available.
     * If there are gaps in days, the previous value is taken from the most
       recent prior report in that series.
+    * Per-row values are derived from ``assets_total`` and
+      ``assets_not_started``; publish/unpublish changes alone do not affect
+      ``assets_started`` as long as the total and not-started counts remain
+      consistent.
     * All results are floored at 0, since negative values indicate data
       removal and should not be treated as negative activity.
 
@@ -112,10 +116,10 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
                 calculated = 0
             else:
                 calculated = SiteReport.calculate_assets_started(
+                    previous_assets_total=previous.assets_total,
                     previous_assets_not_started=previous.assets_not_started,
-                    previous_assets_published=previous.assets_published,
+                    current_assets_total=current.assets_total,
                     current_assets_not_started=current.assets_not_started,
-                    current_assets_published=current.assets_published,
                 )
 
             # Resume behavior: optionally skip already-populated rows.

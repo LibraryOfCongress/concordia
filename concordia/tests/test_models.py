@@ -998,23 +998,32 @@ class SiteReportAndManagerTestCase(TestCase):
         return SiteReport.objects.get(pk=sr.pk)
 
     def test_calculate_assets_started(self):
-        # (ns_prev - ns_cur) + new_published; floor at 0
+        # Uses (assets_total - assets_not_started) deltas; floor at 0.
         v = SiteReport.calculate_assets_started(
+            previous_assets_total=100,
             previous_assets_not_started=100,
-            previous_assets_published=10,
+            current_assets_total=107,
             current_assets_not_started=92,
-            current_assets_published=17,
         )
         self.assertEqual(v, 15)
 
-        # None treated as 0; never negative
+        # None treated as 0.
         v2 = SiteReport.calculate_assets_started(
+            previous_assets_total=None,
             previous_assets_not_started=None,
-            previous_assets_published=50,
-            current_assets_not_started=200,
-            current_assets_published=10,
+            current_assets_total=200,
+            current_assets_not_started=190,
         )
-        self.assertEqual(v2, 0)
+        self.assertEqual(v2, 10)
+
+        # Negative deltas are floored at 0.
+        v3 = SiteReport.calculate_assets_started(
+            previous_assets_total=107,
+            previous_assets_not_started=92,
+            current_assets_total=100,
+            current_assets_not_started=90,
+        )
+        self.assertEqual(v3, 0)
 
     def test_series_navigation_and_sums(self):
         # Site-wide TOTAL series snapshots across three days

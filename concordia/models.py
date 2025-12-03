@@ -2057,41 +2057,45 @@ class SiteReport(models.Model):
     @staticmethod
     def calculate_assets_started(
         *,
+        previous_assets_total: Optional[int],
         previous_assets_not_started: Optional[int],
-        previous_assets_published: Optional[int],
+        current_assets_total: Optional[int],
         current_assets_not_started: Optional[int],
-        current_assets_published: Optional[int],
     ) -> int:
         """
         Calculate the daily "assets started" value between two reports.
 
-        Let:
-            ns_prev = previous_assets_not_started
-            ns_cur  = current_assets_not_started
-            p_prev  = previous_assets_published
-            p_cur   = current_assets_published
-            new_published = max(0, P_cur - P_prev)
+        Let, for each snapshot:
+            total_prev = previous_assets_total
+            ns_prev    = previous_assets_not_started
+            total_cur  = current_assets_total
+            ns_cur     = current_assets_not_started
+            started_prev = max(0, total_prev - ns_prev)
+            started_cur  = max(0, total_cur - ns_cur)
 
         Then:
-            assets_started = max(0, (ns_prev - ns_cur) + new_published)
+            assets_started = max(0, started_cur - started_prev)
 
-        Explanation:
-            New assets published during the period increase the pool of
-            "not started" assets and can mask true starts if you only use
-            ns_prev - ns_cur. Adding new_published compensates for newly
-            published assets so the result reflects actual user
-            starts (work that moved out of "not started").
+        This treats "started" as any asset that is in progress, waiting review,
+        or completed, regardless of published/unpublished status. Using
+        assets_total and assets_not_started makes the metric insensitive to
+        publish/unpublish changes: moving assets between published and
+        unpublished does not affect assets_started as long as their not-started
+        status and total count remain consistent.
 
-        All None inputs are treated as zero. The final result is floored
-        at zero to avoid negative values that can arise from administrative
-        actions such as assets being deleted.
+        All None inputs are treated as zero. The final result is floored at
+        zero to avoid negative values that can arise from administrative
+        actions such as deleting assets that were already started.
         """
+        total_prev = int(previous_assets_total or 0)
         ns_prev = int(previous_assets_not_started or 0)
+        total_cur = int(current_assets_total or 0)
         ns_cur = int(current_assets_not_started or 0)
-        p_prev = int(previous_assets_published or 0)
-        p_cur = int(current_assets_published or 0)
-        new_published = max(0, p_cur - p_prev)
-        return max(0, (ns_prev - ns_cur) + new_published)
+
+        started_prev = max(0, total_prev - ns_prev)
+        started_cur = max(0, total_cur - ns_cur)
+
+        return max(0, started_cur - started_prev)
 
     def previous_in_series(self) -> "SiteReport | None":
         """
