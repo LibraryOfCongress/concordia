@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-function getPages(queryString = window.location.search) {
+export function getPages(queryString = window.location.search) {
     $.ajax({
         type: 'GET',
         url: '/account/get_pages/' + queryString,
