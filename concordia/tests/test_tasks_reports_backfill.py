@@ -16,18 +16,21 @@ class BackfillAssetsStartedTaskTests(TestCase):
         # should be skipped in default mode.
         r1 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
+            assets_total=100,
             assets_not_started=100,
             assets_published=10,
             assets_started=None,
         )
         r2 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
+            assets_total=107,
             assets_not_started=92,
             assets_published=17,
             assets_started=None,
         )
         r3 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
+            assets_total=100,
             assets_not_started=90,
             assets_published=20,
             assets_started=5,
@@ -55,11 +58,13 @@ class BackfillAssetsStartedTaskTests(TestCase):
 
         prev = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
+            assets_total=100,
             assets_not_started=100,
             assets_published=10,
         )
         curr = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
+            assets_total=105,
             assets_not_started=90,
             assets_published=15,
         )
