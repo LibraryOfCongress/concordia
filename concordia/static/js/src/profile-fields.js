@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import getPages from './recent-pages.js';
+import {getPages} from './recent-pages.js';
 
 window.sortDateAscending = function () {
     var urlParameters = new URLSearchParams(window.location.search);
