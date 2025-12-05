@@ -3,10 +3,11 @@ from datetime import timedelta
 from django.test import TestCase
 from django.utils import timezone
 
-from concordia.models import Campaign, SiteReport, Transcription
+from concordia.models import Asset, Campaign, SiteReport, Transcription
 from concordia.tasks.reports.sitereport import (
     _daily_active_users,
     campaign_report,
+    retired_total_report,
     site_report,
 )
 from concordia.utils import get_anonymous_user
@@ -230,3 +231,123 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
                 and c.kwargs.get("topic") == empty_topic
             ]
             self.assertTrue(warn_calls)
+
+
+class SiteReportAssetsStartedRollupTests(CreateTestUsers, TestCase):
+    def test_total_assets_started_rolls_up_campaign_deltas_ignoring_retirements(
+        self,
+    ):
+        """
+        The TOTAL assets_started value should be derived from per-campaign
+        daily deltas for the same reporting day.
+
+        This protects the site-wide daily count from being suppressed when a
+        campaign retires and its already-started assets are removed from the
+        active asset tables.
+        """
+        from unittest import mock
+
+        active_campaign = create_campaign(slug="rollup-active-c")
+        retiring_campaign = create_campaign(slug="rollup-retiring-c")
+
+        active_project = create_project(
+            campaign=active_campaign, slug="rollup-active-p"
+        )
+        active_item = create_item(project=active_project, item_id="ra")
+        active_asset = create_asset(item=active_item, slug="rollup-active-a")
+
+        retiring_project = create_project(
+            campaign=retiring_campaign, slug="rollup-retiring-p"
+        )
+        retiring_item = create_item(project=retiring_project, item_id="rb")
+        retiring_asset = create_asset(item=retiring_item, slug="rollup-retiring-a")
+
+        # Day 1 snapshot: one not-started asset in the active campaign and one
+        # already-started asset in the campaign that will retire.
+        Asset.objects.filter(pk=active_asset.pk).update(
+            transcription_status="not_started"
+        )
+        Asset.objects.filter(pk=retiring_asset.pk).update(
+            transcription_status="in_progress"
+        )
+
+        base_now = timezone.now()
+        day1 = base_now - timedelta(days=2)
+        day2 = base_now - timedelta(days=1)
+
+        with mock.patch("django.utils.timezone.now", return_value=day1):
+            site_report()
+
+        # Between snapshots, the active campaign starts its asset.
+        Asset.objects.filter(pk=active_asset.pk).update(
+            transcription_status="in_progress"
+        )
+
+        # The other campaign is retired and its content is removed.
+        retiring_asset.delete()
+        retiring_item.delete()
+        retiring_project.delete()
+        retiring_campaign.status = Campaign.Status.RETIRED
+        retiring_campaign.save()
+
+        with mock.patch("django.utils.timezone.now", return_value=day2):
+            site_report()
+
+        total_day2 = (
+            SiteReport.objects.filter(
+                report_name=SiteReport.ReportName.TOTAL,
+                campaign__isnull=True,
+                topic__isnull=True,
+                created_on__date=day2.date(),
+            )
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+        active_day2 = (
+            SiteReport.objects.filter(
+                campaign=active_campaign, created_on__date=day2.date()
+            )
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+
+        self.assertIsNotNone(total_day2)
+        self.assertIsNotNone(active_day2)
+
+        self.assertEqual(active_day2.assets_started, 1)
+        self.assertEqual(total_day2.assets_started, 1)
+
+    def test_retired_total_assets_started_is_always_zero(self):
+        retired_campaign = create_campaign(slug="rollup-retired-c")
+        retired_campaign.status = Campaign.Status.RETIRED
+        retired_campaign.save()
+
+        r1 = SiteReport.objects.create(
+            campaign=retired_campaign,
+            assets_total=10,
+            assets_not_started=0,
+            assets_started=4,
+        )
+        r2 = SiteReport.objects.create(
+            campaign=retired_campaign,
+            assets_total=10,
+            assets_not_started=0,
+            assets_started=7,
+        )
+
+        now = timezone.now()
+        SiteReport.objects.filter(pk=r1.pk).update(created_on=now - timedelta(days=2))
+        SiteReport.objects.filter(pk=r2.pk).update(created_on=now - timedelta(days=1))
+
+        self.assertEqual(SiteReport.objects.get(pk=r2.pk).assets_started, 7)
+
+        retired_total_report()
+
+        retired_total = (
+            SiteReport.objects.filter(report_name=SiteReport.ReportName.RETIRED_TOTAL)
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+
+        self.assertIsNotNone(retired_total)
+        self.assertEqual(retired_total.assets_started, 0)
