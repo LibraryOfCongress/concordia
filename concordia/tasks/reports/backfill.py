@@ -1,12 +1,25 @@
+import datetime
 import time
 from logging import getLogger
 from typing import Iterable, Optional
+
+from django.db.models import Sum
 
 from concordia.decorators import locked_task
 from concordia.logging import ConcordiaLogger
 from concordia.models import SiteReport
 
 from ...celery import app as celery_app
+
+# Heartbeat / streaming tuning
+HEARTBEAT_EVERY_ROWS = 1000
+HEARTBEAT_EVERY_SECONDS = 10.0
+ITERATOR_CHUNK_SIZE = 2000
+
+# Matching window for associating campaign reports with a site-wide TOTAL
+# snapshot. Reports in a single daily run are created within minutes of
+# one another, but we use a wider band to make backfill resilient.
+TOTAL_ROLLUP_WINDOW_HOURS = 6
 
 logger = getLogger(__name__)
 structured_logger = ConcordiaLogger.get_logger(__name__)
@@ -34,12 +47,17 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
     * The first snapshot in each series assumes ``assets_started = 0``. This
       represents the launch of the site or the time before the first report
       when no earlier data is available.
-    * If there are gaps in days, the previous value is taken from the most
-      recent prior report in that series.
-    * Per-row values are derived from ``assets_total`` and
+    * Per-campaign and per-topic values are derived from ``assets_total`` and
       ``assets_not_started``; publish/unpublish changes alone do not affect
       ``assets_started`` as long as the total and not-started counts remain
       consistent.
+    * The site-wide TOTAL series is backfilled by rolling up per-campaign
+      ``assets_started`` values from the same daily reporting run. This avoids
+      undercounting caused by retirements changing site-wide totals between
+      snapshots.
+    * For rollup series whose membership can change over time (for example,
+      ``RETIRED_TOTAL``), the delta-based ``assets_started`` calculation is not
+      meaningful. We backfill a consistent zero value.
     * All results are floored at 0, since negative values indicate data
       removal and should not be treated as negative activity.
 
@@ -62,18 +80,12 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
     Returns:
         The number of ``SiteReport`` rows updated across all series.
     """
-
     structured_logger.info(
         "Starting backfill for assets_started across all series.",
         event_code="assets_started_backfill_start",
         skip_existing=skip_existing,
         task_id=getattr(self.request, "id", None),
     )
-
-    # Heartbeat / streaming tuning
-    HEARTBEAT_EVERY_ROWS = 1000
-    HEARTBEAT_EVERY_SECONDS = 10.0
-    ITERATOR_CHUNK_SIZE = 2000
 
     updated_count = 0
 
@@ -82,19 +94,23 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         *,
         series_label: str,
         force_zero_assets_started: bool = False,
+        rollup_total_from_campaigns: bool = False,
     ) -> int:
         """
         Process a single series in chronological order and backfill values.
 
         This helper walks one site-report series and computes
-        ``assets_started`` for each row based on the previous snapshot. It
-        saves updated rows and logs progress, including periodic heartbeat
-        messages for monitoring long-running scans.
+        ``assets_started`` for each row. It saves updated rows and logs progress,
+        including periodic heartbeat messages for monitoring long-running scans.
 
         For rollup series whose membership can change over time (for example,
         ``RETIRED_TOTAL``), the delta-based ``assets_started`` calculation is
         not meaningful. In those cases, callers should set
         ``force_zero_assets_started=True`` to backfill a consistent zero value.
+
+        For the site-wide TOTAL series, callers should set
+        ``rollup_total_from_campaigns=True`` to derive values by summing
+        per-campaign ``assets_started`` from the same daily reporting run.
 
         Args:
             qs: Queryset or iterable of ``SiteReport`` objects ordered by
@@ -104,6 +120,9 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
             force_zero_assets_started: If True, set ``assets_started`` to 0 for
                 every row in the series instead of computing deltas between
                 snapshots.
+            rollup_total_from_campaigns: If True, compute ``assets_started`` for
+                each row by rolling up per-campaign values within a time window
+                around the row's ``created_on``.
 
         Returns:
             The number of rows in the series that were updated.
@@ -122,11 +141,22 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
             series=series_label,
         )
 
+        window = datetime.timedelta(hours=TOTAL_ROLLUP_WINDOW_HOURS)
+
         for current in qs.iterator(chunk_size=ITERATOR_CHUNK_SIZE):
             scanned += 1
 
             if force_zero_assets_started:
                 calculated = 0
+            elif rollup_total_from_campaigns:
+                window_start = current.created_on - window
+                window_end = current.created_on + window
+                agg = SiteReport.objects.filter(
+                    campaign__isnull=False,
+                    created_on__gte=window_start,
+                    created_on__lte=window_end,
+                ).aggregate(total=Sum("assets_started"))
+                calculated = int(agg["total"] or 0)
             elif previous is None:
                 calculated = 0
             else:
@@ -140,7 +170,6 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
             # Resume behavior: optionally skip already-populated rows.
             if skip_existing and current.assets_started is not None:
                 previous = current
-                # Heartbeat while scanning even if we do not save
                 now_t = time.monotonic()
                 if (
                     scanned - last_hb_rows >= HEARTBEAT_EVERY_ROWS
@@ -163,8 +192,6 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
                 current.save(update_fields=["assets_started"])
                 changed += 1
 
-                # Per-row progress log for monitoring while the one-off task
-                # runs.
                 structured_logger.info(
                     "Backfilled assets_started for SiteReport.",
                     event_code="assets_started_backfill_row",
@@ -179,7 +206,6 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
 
             previous = current
 
-            # Heartbeat while scanning
             now_t = time.monotonic()
             if (
                 scanned - last_hb_rows >= HEARTBEAT_EVERY_ROWS
@@ -205,36 +231,6 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
             elapsed_seconds=round(time.monotonic() - series_start_t, 3),
         )
         return changed
-
-    # Site-wide TOTAL
-    total_base_qs = SiteReport.objects.filter(
-        report_name=SiteReport.ReportName.TOTAL,
-        campaign__isnull=True,
-        topic__isnull=True,
-    )
-    total_exists_qs = total_base_qs
-    if skip_existing:
-        total_exists_qs = total_exists_qs.filter(assets_started__isnull=True)
-
-    if total_exists_qs.exists():
-        total_qs = total_base_qs.order_by("created_on", "pk")
-        updated_count += process_series_queryset(total_qs, series_label="TOTAL")
-
-    # Site-wide RETIRED_TOTAL
-    retired_base_qs = SiteReport.objects.filter(
-        report_name=SiteReport.ReportName.RETIRED_TOTAL
-    )
-    retired_exists_qs = retired_base_qs
-    if skip_existing:
-        retired_exists_qs = retired_exists_qs.filter(assets_started__isnull=True)
-
-    if retired_exists_qs.exists():
-        retired_total_qs = retired_base_qs.order_by("created_on", "pk")
-        updated_count += process_series_queryset(
-            retired_total_qs,
-            series_label="RETIRED_TOTAL",
-            force_zero_assets_started=True,
-        )
 
     # Per-campaign (includes retired campaigns; their historical reports remain)
     campaign_base_qs = SiteReport.objects.filter(campaign__isnull=False)
@@ -266,6 +262,40 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         )
         updated_count += process_series_queryset(
             topic_series, series_label=f"TOPIC:{topic_id}"
+        )
+
+    # Site-wide TOTAL (roll up per-campaign assets_started)
+    total_base_qs = SiteReport.objects.filter(
+        report_name=SiteReport.ReportName.TOTAL,
+        campaign__isnull=True,
+        topic__isnull=True,
+    )
+    total_exists_qs = total_base_qs
+    if skip_existing:
+        total_exists_qs = total_exists_qs.filter(assets_started__isnull=True)
+
+    if total_exists_qs.exists():
+        total_qs = total_base_qs.order_by("created_on", "pk")
+        updated_count += process_series_queryset(
+            total_qs,
+            series_label="TOTAL",
+            rollup_total_from_campaigns=True,
+        )
+
+    # Site-wide RETIRED_TOTAL
+    retired_base_qs = SiteReport.objects.filter(
+        report_name=SiteReport.ReportName.RETIRED_TOTAL
+    )
+    retired_exists_qs = retired_base_qs
+    if skip_existing:
+        retired_exists_qs = retired_exists_qs.filter(assets_started__isnull=True)
+
+    if retired_exists_qs.exists():
+        retired_total_qs = retired_base_qs.order_by("created_on", "pk")
+        updated_count += process_series_queryset(
+            retired_total_qs,
+            series_label="RETIRED_TOTAL",
+            force_zero_assets_started=True,
         )
 
     structured_logger.info(
