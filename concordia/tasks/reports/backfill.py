@@ -81,6 +81,7 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         qs: Iterable[SiteReport],
         *,
         series_label: str,
+        force_zero_assets_started: bool = False,
     ) -> int:
         """
         Process a single series in chronological order and backfill values.
@@ -90,11 +91,19 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         saves updated rows and logs progress, including periodic heartbeat
         messages for monitoring long-running scans.
 
+        For rollup series whose membership can change over time (for example,
+        ``RETIRED_TOTAL``), the delta-based ``assets_started`` calculation is
+        not meaningful. In those cases, callers should set
+        ``force_zero_assets_started=True`` to backfill a consistent zero value.
+
         Args:
             qs: Queryset or iterable of ``SiteReport`` objects ordered by
                 ``created_on`` and primary key.
             series_label: Short label for logging, such as ``"TOTAL"`` or
                 ``"CAMPAIGN:<id>"``.
+            force_zero_assets_started: If True, set ``assets_started`` to 0 for
+                every row in the series instead of computing deltas between
+                snapshots.
 
         Returns:
             The number of rows in the series that were updated.
@@ -116,7 +125,9 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
         for current in qs.iterator(chunk_size=ITERATOR_CHUNK_SIZE):
             scanned += 1
 
-            if previous is None:
+            if force_zero_assets_started:
+                calculated = 0
+            elif previous is None:
                 calculated = 0
             else:
                 calculated = SiteReport.calculate_assets_started(
@@ -220,7 +231,9 @@ def backfill_assets_started_for_site_reports(self, skip_existing: bool = True) -
     if retired_exists_qs.exists():
         retired_total_qs = retired_base_qs.order_by("created_on", "pk")
         updated_count += process_series_queryset(
-            retired_total_qs, series_label="RETIRED_TOTAL"
+            retired_total_qs,
+            series_label="RETIRED_TOTAL",
+            force_zero_assets_started=True,
         )
 
     # Per-campaign (includes retired campaigns; their historical reports remain)
