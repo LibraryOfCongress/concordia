@@ -553,8 +553,12 @@ def retired_total_report() -> None:
     Generate and save the RETIRED_TOTAL SiteReport rollup.
 
     This aggregates the most recent SiteReport for each retired campaign into a
-    single rollup row, summing most fields directly and recalculating
-    assets_started using the retired-total series.
+    single rollup row, summing most fields directly.
+
+    assets_started is a daily-delta metric and is not meaningful for this
+    rollup because the rollup membership changes when campaigns retire, and
+    that causes every asset in a newly-retired campaign being counted
+    as having started on the day of the retirement.
     """
     structured_logger.debug(
         "Starting retired total report generation.",
@@ -564,12 +568,6 @@ def retired_total_report() -> None:
         SiteReport.objects.filter(campaign__status=Campaign.Status.RETIRED)
         .order_by("campaign_id", "-created_on")
         .distinct("campaign_id")
-    )
-    site_report_count = site_reports.count()
-    structured_logger.debug(
-        "Fetched site reports for retired campaigns aggregation.",
-        event_code="retired_total_reports_fetched",
-        report_count=site_report_count,
     )
 
     FIELDS = [
@@ -591,36 +589,24 @@ def retired_total_report() -> None:
         "tag_uses",
         "registered_contributors",
     ]
+
     total_site_report = SiteReport()
     total_site_report.report_name = SiteReport.ReportName.RETIRED_TOTAL
-    # You can't use aggregate with distinct(*fields), so the sum for each
-    # has to be done in Python
+
     for field in FIELDS:
         setattr(
             total_site_report,
             field,
-            sum(
-                [
-                    getattr(site_report, field) if getattr(site_report, field) else 0
-                    for site_report in site_reports
-                ]
-            ),
+            sum(getattr(sr, field) or 0 for sr in site_reports),
         )
 
-    # compute assets_started for RETIRED_TOTAL based on prior retired-total reports
-    # This is done different than the fields above because it isn't simply a sum of
-    # the component reports.
-    previous = SiteReport.objects.previous_in_series(
-        report_name=SiteReport.ReportName.RETIRED_TOTAL, before=timezone.now()
-    )
-    assets_started = SiteReport.calculate_assets_started(
-        previous_assets_total=getattr(previous, "assets_total", 0),
-        previous_assets_not_started=getattr(previous, "assets_not_started", 0),
-        current_assets_total=total_site_report.assets_total,
-        current_assets_not_started=total_site_report.assets_not_started,
-    )
+    # assets_started will always be zero for retired campaigns,
+    # since no assets could ever be started once a campaign is
+    # retired. Trying to calculate it like we do for other reports
+    # results in every single asset from a newly retired campaign
+    # being counted as having started
+    total_site_report.assets_started = 0
 
-    total_site_report.assets_started = assets_started
     total_site_report.save()
     structured_logger.debug(
         "Retired total report saved successfully.",
