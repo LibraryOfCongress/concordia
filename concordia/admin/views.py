@@ -396,15 +396,50 @@ class AdminBulkChangeAssetStatusView(FormView):
     def form_valid(self, form):
         rows = slurp_excel(self.request.FILES["spreadsheet_file"])
         total_in_sheet = len(rows)
-        asset_ids = list({row["asset__id"] for row in rows})
-        assets = Asset.objects.filter(id__in=asset_ids).prefetch_related(
+
+        # Normalize and validate statuses from spreadsheet rows
+        def normalize_status(status):
+            if status is not None:
+                v = str(status).strip().lower()
+                # accept canonical keys from TranscriptionStatus
+                valid = {
+                    TranscriptionStatus.NOT_STARTED,
+                    TranscriptionStatus.IN_PROGRESS,
+                    TranscriptionStatus.SUBMITTED,
+                    TranscriptionStatus.COMPLETED,
+                }
+                if v in valid:
+                    return v
+            return None
+
+        status_to_asset_ids = {
+            TranscriptionStatus.NOT_STARTED: set(),
+            TranscriptionStatus.IN_PROGRESS: set(),
+            TranscriptionStatus.SUBMITTED: set(),
+            TranscriptionStatus.COMPLETED: set(),
+        }
+        invalid_rows = 0
+        asset_ids_all = set()
+
+        for row in rows:
+            asset_id = row.get("asset__id")
+            status_raw = row.get("New Status", TranscriptionStatus.SUBMITTED)
+            status = normalize_status(status_raw)
+            if not asset_id:
+                invalid_rows += 1
+                continue
+            status_to_asset_ids[status].add(asset_id)
+            asset_ids_all.add(asset_id)
+
+        # Fetch matched assets once
+        assets_qs = Asset.objects.filter(id__in=asset_ids_all).prefetch_related(
             Prefetch(
                 "transcription_set",
                 queryset=Transcription.objects.order_by("-pk"),
                 to_attr="prefetched_transcriptions",
             )
         )
-        matched = assets.count()
+        matched = assets_qs.count()
 
         if matched == 0:
             messages.warning(
@@ -414,14 +449,28 @@ class AdminBulkChangeAssetStatusView(FormView):
                     f"Spreadsheet contained {total_in_sheet} rows."
                 ),
             )
+            return self.render_to_response(self.get_context_data(form=form))
 
-        updated_count = _change_status(self.request.user, assets)
+        # Group assets queryset per status
+        def assets_for(ids):
+            if not ids:
+                return Asset.objects.none()
+            return assets_qs.filter(id__in=ids)
+
+        updated_total = 0
+        # Apply changes per status group
+        for status, ids in status_to_asset_ids.items():
+            if not ids:
+                continue
+            updated_total += _change_status(
+                self.request.user, assets_for(ids), status=status
+            )
 
         messages.success(
             self.request,
             (
                 f"Processed spreadsheet with {total_in_sheet} rows. "
-                f"Updated {updated_count} assets."
+                f"Updated {updated_total} assets."
             ),
         )
         return self.render_to_response(self.get_context_data(form=form))

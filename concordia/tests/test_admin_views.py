@@ -528,17 +528,28 @@ class TestAdminBulkImportView(CreateTestUsers, TestCase):
 class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
     def setUp(self):
         item = create_item()
-        self.asset1 = create_asset(item=item)
-        self.asset2 = create_asset(item=item, slug="test-asset-2")
+        self.assets = [
+            create_asset(item=item),
+            create_asset(item=item, slug="test-asset-2"),
+            create_asset(item=item, slug="test-asset-3"),
+            create_asset(item=item, slug="test-asset-4"),
+        ]
+        # Seed with existing transcriptions
         self.accepted_transcription = create_transcription(
-            asset=self.asset1, accepted=now()
+            asset=self.assets[0], accepted=now()
         )
         self.rejected_transcription = create_transcription(
-            asset=self.asset2, rejected=now()
+            asset=self.assets[1], rejected=now()
+        )
+        self.submitted_transcription = create_transcription(asset=self.assets[2])
+        self.accepted_transcription2 = create_transcription(
+            asset=self.assets[3], accepted=now()
         )
         self.spreadsheet_data = [
-            {"asset__id": self.asset1.id},
-            {"asset__id": self.asset2.id},
+            {"asset__id": self.assets[0].id, "New Status": "submitted"},
+            {"asset__id": self.assets[1].id, "New Status": "completed"},
+            {"asset__id": self.assets[2].id, "New Status": "completed"},
+            {"asset__id": self.assets[3].id, "New Status": "in_progress"},
         ]
 
     def test_admin_bulk_change_asset_status(self):
@@ -556,17 +567,25 @@ class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
 
             path = reverse("admin:bulk-change")
             response = self.client.post(path, data=post_data)
-            self.asset1.refresh_from_db()
-            self.asset2.refresh_from_db()
+            for asset in self.assets:
+                asset.refresh_from_db()
             self.assertEqual(response.status_code, 200)
             slurp_mock.assert_called()
             self.assertEqual(
-                self.asset1.transcription_status,
+                self.assets[0].transcription_status,
                 TranscriptionStatus.SUBMITTED,
             )
             self.assertEqual(
-                self.asset2.transcription_status,
-                TranscriptionStatus.SUBMITTED,
+                self.assets[1].transcription_status,
+                TranscriptionStatus.COMPLETED,
+            )
+            self.assertEqual(
+                self.assets[2].transcription_status,
+                TranscriptionStatus.COMPLETED,
+            )
+            self.assertEqual(
+                self.assets[3].transcription_status,
+                TranscriptionStatus.IN_PROGRESS,
             )
 
 
