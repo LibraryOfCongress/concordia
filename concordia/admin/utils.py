@@ -35,7 +35,7 @@ def _change_status(
         kwargs = {
             "asset": asset,
         }
-        if latest_transcription is not None:
+        if latest_transcription:
             kwargs.update(
                 **{
                     "supersedes": latest_transcription,
@@ -46,9 +46,12 @@ def _change_status(
             kwargs["user"] = user
             kwargs["submitted"] = now()
         elif status == TranscriptionStatus.COMPLETED:
-            kwargs["user"] = latest_transcription.user
-            kwargs["accepted"] = now()
-            kwargs["reviewed_by"] = user
+            if latest_transcription:
+                kwargs["user"] = latest_transcription.user
+                kwargs["accepted"] = now()
+                kwargs["reviewed_by"] = user
+            else:
+                continue
         elif status == TranscriptionStatus.IN_PROGRESS:
             if (
                 latest_transcription
