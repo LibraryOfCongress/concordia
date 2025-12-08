@@ -26,6 +26,7 @@ from concordia.tests.utils import (
     create_site_report,
     create_transcription,
 )
+from concordia.utils import get_anonymous_user
 from importer.tests.utils import create_import_asset
 
 
@@ -545,11 +546,28 @@ class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
         self.accepted_transcription2 = create_transcription(
             asset=self.assets[3], accepted=now()
         )
+        anon = get_anonymous_user()
         self.spreadsheet_data = [
-            {"asset__id": self.assets[0].id, "New Status": "submitted"},
-            {"asset__id": self.assets[1].id, "New Status": "completed"},
-            {"asset__id": self.assets[2].id, "New Status": "completed"},
-            {"asset__id": self.assets[3].id, "New Status": "in_progress"},
+            {
+                "asset__id": self.assets[0].id,
+                "New Status": "submitted",
+                "user": anon.id,
+            },
+            {
+                "asset__id": self.assets[1].id,
+                "New Status": "completed",
+                "user": anon.id,
+            },
+            {
+                "asset__id": self.assets[2].id,
+                "New Status": "completed",
+                "user": anon.id,
+            },
+            {
+                "asset__id": self.assets[3].id,
+                "New Status": "in_progress",
+                "user": anon.id,
+            },
         ]
 
     def test_admin_bulk_change_asset_status(self):

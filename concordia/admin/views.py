@@ -9,6 +9,7 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required, user_passes_test
+from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Prefetch, Subquery
@@ -41,7 +42,7 @@ from .forms import (
     AdminProjectBulkImportForm,
     ClearCacheForm,
 )
-from .utils import _change_status
+from .utils import _bulk_change_status
 
 logger = logging.getLogger(__name__)
 
@@ -412,24 +413,26 @@ class AdminBulkChangeAssetStatusView(FormView):
                     return v
             return None
 
-        status_to_asset_ids = {
-            TranscriptionStatus.NOT_STARTED: set(),
-            TranscriptionStatus.IN_PROGRESS: set(),
-            TranscriptionStatus.SUBMITTED: set(),
-            TranscriptionStatus.COMPLETED: set(),
-        }
+        normalized_rows = []
         invalid_rows = 0
         asset_ids_all = set()
 
         for row in rows:
             asset_id = row.get("asset__id")
             status_raw = row.get("New Status", TranscriptionStatus.SUBMITTED)
+            user_id = row.get("user", None)
             status = normalize_status(status_raw)
-            if not asset_id:
+            if asset_id:
+                asset_ids_all.add(asset_id)
+                normalized_row = {
+                    "asset__id": asset_id,
+                    "status": status,
+                }
+                if user_id:
+                    normalized_row["user"] = User.objects.get(id=user_id)
+                normalized_rows.append(normalized_row)
+            else:
                 invalid_rows += 1
-                continue
-            status_to_asset_ids[status].add(asset_id)
-            asset_ids_all.add(asset_id)
 
         # Fetch matched assets once
         assets_qs = Asset.objects.filter(id__in=asset_ids_all).prefetch_related(
@@ -457,14 +460,7 @@ class AdminBulkChangeAssetStatusView(FormView):
                 return Asset.objects.none()
             return assets_qs.filter(id__in=ids)
 
-        updated_total = 0
-        # Apply changes per status group
-        for status, ids in status_to_asset_ids.items():
-            if not ids:
-                continue
-            updated_total += _change_status(
-                self.request.user, assets_for(ids), status=status
-            )
+        updated_total = _bulk_change_status(self.request.user, normalized_rows)
 
         messages.success(
             self.request,
