@@ -16,7 +16,7 @@ from ..models import (
     Transcription,
     TranscriptionStatus,
 )
-from .utils import _change_status
+from .utils import _bulk_change_status
 
 logger = getLogger(__name__)
 
@@ -264,7 +264,11 @@ def change_status_to_needs_review(
         None
     """
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
-    count = _change_status(request.user, eligible)
+    rows = [
+        {"asset__id": asset.id, "status": TranscriptionStatus.SUBMITTED}
+        for asset in eligible
+    ]
+    count = _bulk_change_status(request.user, rows)
 
     if count == 1:
         asset = queryset.first()
@@ -304,7 +308,11 @@ def change_status_to_in_progress(
         None
     """
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
-    count = _change_status(request.user, eligible, submit=False)
+    rows = [
+        {"asset__id": asset.id, "status": TranscriptionStatus.IN_PROGRESS}
+        for asset in eligible
+    ]
+    count = _bulk_change_status(request.user, rows)
 
     if count == 1:
         asset = queryset.first()

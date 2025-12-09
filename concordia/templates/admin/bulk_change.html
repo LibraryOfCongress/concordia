@@ -24,6 +24,11 @@
 {% block content %}
     <div id="content" class="colM">
         <div>
+            <ol>
+                <li>The spreadsheet should be in xlsx (not xls or csv) format.</li>
+                <li>The spreadsheet should have a header row. One of the columns headers should be "asset__id", and another should be "New Status".</li>
+                <li>If the "user" column is set, that value will be used as the submitting user. Otherwise, the anonymouse user will be used.</li>
+            </ol>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form.as_table }}
