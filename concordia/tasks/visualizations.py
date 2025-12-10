@@ -184,7 +184,7 @@ def populate_daily_activity_visualization_cache(self) -> None:
         event_code="daily_activity_vis_start",
     )
 
-    yesterday = timezone.now().date() - timedelta(days=1)
+    yesterday = timezone.localdate() - timedelta(days=1)
     start_date = yesterday - timedelta(days=27)
     date_range = [start_date + timedelta(days=i) for i in range(28)]
     date_strings = [d.strftime("%Y-%m-%d") for d in date_range]
@@ -193,9 +193,12 @@ def populate_daily_activity_visualization_cache(self) -> None:
         report_name=SiteReport.ReportName.TOTAL,
         created_on__date__in=date_range,
     )
-    report_lookup = {report.created_on.date(): report for report in reports}
 
     # Find the most recent SiteReport BEFORE the first of our dates, if any
+    report_lookup = {
+        timezone.localtime(report.created_on).date(): report for report in reports
+    }
+
     prev_report = (
         SiteReport.objects.filter(
             report_name=SiteReport.ReportName.TOTAL,
