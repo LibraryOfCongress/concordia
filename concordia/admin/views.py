@@ -415,17 +415,17 @@ class AdminBulkChangeAssetStatusView(FormView):
 
         normalized_rows = []
         invalid_rows = 0
-        asset_ids_all = set()
+        slugs_all = set()
 
         for row in rows:
-            asset_id = row.get("asset__id")
+            slug = row.get("asset__slug")
             status_raw = row.get("New Status", TranscriptionStatus.SUBMITTED)
             user_id = row.get("user", None)
             status = normalize_status(status_raw)
-            if asset_id:
-                asset_ids_all.add(asset_id)
+            if slug and status_raw:
+                slugs_all.add(slug)
                 normalized_row = {
-                    "asset__id": asset_id,
+                    "slug": slug,
                     "status": status,
                 }
                 if user_id:
@@ -435,7 +435,7 @@ class AdminBulkChangeAssetStatusView(FormView):
                 invalid_rows += 1
 
         # Fetch matched assets once
-        assets_qs = Asset.objects.filter(id__in=asset_ids_all).prefetch_related(
+        assets_qs = Asset.objects.filter(slug__in=slugs_all).prefetch_related(
             Prefetch(
                 "transcription_set",
                 queryset=Transcription.objects.order_by("-pk"),
@@ -454,19 +454,17 @@ class AdminBulkChangeAssetStatusView(FormView):
             )
             return self.render_to_response(self.get_context_data(form=form))
 
-        # Group assets queryset per status
-        def assets_for(ids):
-            if not ids:
-                return Asset.objects.none()
-            return assets_qs.filter(id__in=ids)
-
         updated_total = _bulk_change_status(self.request.user, normalized_rows)
+
+        unmatched = len(slugs_all) - matched
 
         messages.success(
             self.request,
             (
                 f"Processed spreadsheet with {total_in_sheet} rows. "
-                f"Updated {updated_total} assets."
+                f"Updated {updated_total} assets. "
+                f"{invalid_rows} invalid rows. "
+                f"{unmatched} unmatched asset slugs. "
             ),
         )
         return self.render_to_response(self.get_context_data(form=form))

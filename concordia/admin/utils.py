@@ -78,19 +78,19 @@ def _bulk_change_status(
         asset_rows: iterable of dicts like:
             {"asset": Asset, "status": TranscriptionStatus.SUBMITTED, "user": User}
     """
-    asset_ids = [row["asset__id"] for row in rows if row.get("asset__id")]
-    assets = Asset.objects.filter(id__in=asset_ids).prefetch_related(
+    slugs = [row["slug"] for row in rows if row.get("slug")]
+    assets = Asset.objects.filter(slug__in=slugs).prefetch_related(
         Prefetch(
             "transcription_set",
             queryset=Transcription.objects.order_by("-pk"),
             to_attr="prefetched_transcriptions",
         )
     )
-    asset_map = {asset.id: asset for asset in assets}
+    asset_map = {asset.slug: asset for asset in assets}
 
     updated_total = 0
     for row in rows:
-        asset = asset_map.get(row.get("asset__id"))
+        asset = asset_map.get(row.get("slug"))
         if asset:
             updated_total += _change_status(
                 request_user, asset, row["status"], row.get("user")

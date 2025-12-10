@@ -549,22 +549,22 @@ class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
         anon = get_anonymous_user()
         self.spreadsheet_data = [
             {
-                "asset__id": self.assets[0].id,
+                "asset__slug": self.assets[0].slug,
                 "New Status": "submitted",
                 "user": anon.id,
             },
             {
-                "asset__id": self.assets[1].id,
+                "asset__slug": self.assets[1].slug,
                 "New Status": "completed",
                 "user": anon.id,
             },
             {
-                "asset__id": self.assets[2].id,
+                "asset__slug": self.assets[2].slug,
                 "New Status": "completed",
                 "user": anon.id,
             },
             {
-                "asset__id": self.assets[3].id,
+                "asset__slug": self.assets[3].slug,
                 "New Status": "in_progress",
                 "user": anon.id,
             },
