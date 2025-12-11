@@ -265,7 +265,7 @@ def change_status_to_needs_review(
     """
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
     rows = [
-        {"asset__slug": asset.slug, "status": TranscriptionStatus.SUBMITTED}
+        {"slug": asset.slug, "status": TranscriptionStatus.SUBMITTED}
         for asset in eligible
     ]
     count = _bulk_change_status(request.user, rows)
@@ -309,7 +309,7 @@ def change_status_to_in_progress(
     """
     eligible = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
     rows = [
-        {"asset__slug": asset.slug, "status": TranscriptionStatus.IN_PROGRESS}
+        {"slug": asset.slug, "status": TranscriptionStatus.IN_PROGRESS}
         for asset in eligible
     ]
     count = _bulk_change_status(request.user, rows)
