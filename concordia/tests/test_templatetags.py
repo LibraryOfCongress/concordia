@@ -2,11 +2,13 @@ from django.http import QueryDict
 from django.template import Context, Template
 from django.templatetags.static import static
 from django.test import TestCase, override_settings
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 
 from concordia.models import TranscriptionStatus
 from concordia.templatetags.concordia_filtering_tags import transcription_status_filters
+from concordia.templatetags.concordia_text_tags import reprchar
 from concordia.templatetags.custom_math import multiply
+from concordia.templatetags.reject_filter import reject
 from concordia.templatetags.truncation import (
     WordBreakTruncator,
     truncatechars_on_word_break,
@@ -94,6 +96,64 @@ class TestTemplateTags(TestCase):
         ).render(Context({"data": data}))
         self.assertEqual(out, "bar=baz&amp;bar=foo&amp;baz=taz")
 
+    def test_reprchar_variants(self):
+        cases = [
+            ("A", "A"),
+            ("\n", "\\n"),
+            ("\x00", "\\x00"),
+            ("\u200b", "\\u200b"),
+            ("\\", "\\\\"),
+        ]
+        for ch, expected in cases:
+            self.assertEqual(reprchar(ch), expected)
+
+
+class RejectFilterTests(TestCase):
+    def test_returns_input_when_falsy(self):
+        self.assertEqual(reject("", "x"), "")
+        self.assertEqual(reject([], "x"), [])
+        self.assertIsNone(reject(None, "x"))
+        self.assertEqual(reject((), "x"), ())
+
+    def test_string_single_reject(self):
+        self.assertEqual(
+            reject("error warn marked-safe", "marked-safe"),
+            "error warn",
+        )
+
+    def test_string_multiple_rejects(self):
+        self.assertEqual(
+            reject("error warn marked-safe", "marked-safe,warn"),
+            "error",
+        )
+
+    def test_string_no_match(self):
+        self.assertEqual(reject("one two", "three"), "one two")
+
+    def test_string_empty_args(self):
+        self.assertEqual(reject("one two", ""), "one two")
+
+    def test_string_whitespace_split_and_join(self):
+        self.assertEqual(reject("a   b\tc", "b"), "a c")
+
+    def test_string_case_sensitivity(self):
+        self.assertEqual(reject("A a", "a"), "A")
+
+    def test_iterable_list(self):
+        self.assertEqual(
+            reject(["ok", "deprecated", "x", "hidden"], "deprecated,hidden"),
+            ["ok", "x"],
+        )
+
+    def test_iterable_tuple_and_duplicates(self):
+        self.assertEqual(reject(("a", "b", "c", "b"), "b"), ["a", "c"])
+
+    def test_iterable_no_match(self):
+        self.assertEqual(reject(["one", "two"], "three"), ["one", "two"])
+
+    def test_iterable_empty_args(self):
+        self.assertEqual(reject(["one", "two"], ""), ["one", "two"])
+
 
 @override_settings(
     STATICFILES_STORAGE="django.contrib.staticfiles.storage.StaticFilesStorage"
@@ -106,10 +166,7 @@ class VisualizationTagsTests(TestCase):
             '<div class="visualization-container"><section>'
             '<canvas id="daily-activity"></canvas></section></div>'
         )
-        expected_script = '<script type="module" src="{}"></script>'.format(
-            static("js/visualizations/daily-activity.js")
-        )
-        self.assertHTMLEqual(result, expected_section + expected_script)
+        self.assertHTMLEqual(result, expected_section)
 
     def test_with_attrs_and_escaping(self):
         # Attributes that include characters needing HTML escaping
@@ -125,15 +182,16 @@ class VisualizationTagsTests(TestCase):
             f"</section>"
             f"</div>"
         )
-        expected_script = '<script type="module" src="{}"></script>'.format(
-            static("js/visualizations/chart1.js")
-        )
-        self.assertHTMLEqual(result, expected_section + expected_script)
+        self.assertHTMLEqual(result, expected_section)
 
     def test_name_escaping_in_id_and_script_src(self):
         # Name contains characters needing HTML escaping
         name = 'x"><script>alert(1)</script>'
-        result = concordia_visualization(name)
+        script_src = static(f"js/visualizations/{name}.js")
+        script_html = format_html(
+            '<script type="module" src="{}"></script>', script_src
+        )
+        result = concordia_visualization(name) + script_html
 
         # The id attribute must have the name escaped
         escaped_id = escape(name)

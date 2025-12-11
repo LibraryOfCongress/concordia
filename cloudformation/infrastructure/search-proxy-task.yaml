@@ -77,6 +77,19 @@ Resources:
             Port: 80
             Protocol: HTTP
             VpcId: !Ref VpcId
+            Matcher:
+                HttpCode: '200,301' # Add this line for success codes
+            Tags:
+                - Key: Project
+                  Value: Concordia
+                - Key: Department
+                  Value: OCIO
+                - Key: ArcherID
+                  Value: LIB-361
+                - Key: Environment
+                  Value: Development
+                - Key: StackManaged
+                  Value: crowd-dev-searchproxy
 
     SubdomainListenerRule:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -111,10 +124,14 @@ Resources:
                     - TaskRoleArn
                     - Ref: EnvName
             ContainerDefinitions:
-                - Name: searchproxy
+                - Name: sigv4proxy
+                  Image: public.ecr.aws/aws-observability/aws-sigv4-proxy:1.10
                   Cpu: 256
                   Memory: 512
-                  Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/search-proxy:latest'
+                  Essential: true
+                  PortMappings:
+                      - ContainerPort: 80
+                        Protocol: tcp
                   LogConfiguration:
                       LogDriver: awslogs
                       Options:
@@ -128,8 +145,45 @@ Resources:
                                 - EnvironmentMapping
                                 - OpensearchEndpoint
                                 - Ref: EnvName
-                  PortMappings:
-                      - ContainerPort: 80
+                  Command:
+                      - --name
+                      - es
+                      - --region
+                      - !Ref AWS::Region
+                      - --host
+                      - !Select
+                        - 1
+                        - !Split
+                          - '://'
+                          - !FindInMap [
+                                EnvironmentMapping,
+                                OpensearchEndpoint,
+                                !Ref EnvName,
+                            ]
+                      - --port
+                      - '0.0.0.0:80'
+                      - --sign-host
+                      - !Select
+                        - 1
+                        - !Split
+                          - '://'
+                          - !FindInMap [
+                                EnvironmentMapping,
+                                OpensearchEndpoint,
+                                !Ref EnvName,
+                            ]
+                      - --no-verify-ssl
+            Tags:
+                - Key: Project
+                  Value: Concordia
+                - Key: Department
+                  Value: OCIO
+                - Key: ArcherID
+                  Value: LIB-361
+                - Key: Environment
+                  Value: Development
+                - Key: StackManaged
+                  Value: crowd-dev-searchproxy
 
     DashboardService:
         Type: AWS::ECS::Service
@@ -154,6 +208,18 @@ Resources:
                               - Ref: EnvName
             TaskDefinition: !Ref DashboardTask
             LoadBalancers:
-                - ContainerName: 'searchproxy'
+                - ContainerName: 'sigv4proxy'
                   ContainerPort: 80
                   TargetGroupArn: !Ref DashboardTargetGroup
+            EnableExecuteCommand: true
+            Tags:
+                - Key: Project
+                  Value: Concordia
+                - Key: Department
+                  Value: OCIO
+                - Key: ArcherID
+                  Value: LIB-361
+                - Key: Environment
+                  Value: Development
+                - Key: StackManaged
+                  Value: crowd-dev-searchproxy

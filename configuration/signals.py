@@ -6,7 +6,31 @@ from configuration.utils import cache_configuration_value
 
 
 @receiver(post_save, sender=Configuration)
-def update_cached_configuration_value(sender, *, instance, **kwargs):
+def update_cached_configuration_value(
+    sender: type[Configuration], *, instance: Configuration, **kwargs
+) -> None:
+    """
+    Post-save signal handler that updates the cached configuration value.
+
+    Behavior:
+        - Parse the instance value using `Configuration.get_value()`.
+        - If parsing succeeds, write the parsed value to the cache via
+          `cache_configuration_value`.
+        - If parsing raises any exception, skip caching to avoid persisting an
+          invalid value.
+
+    Signals:
+        Connected to `django.db.models.signals.post_save` for
+        `configuration.models.Configuration`.
+
+    Args:
+        sender (type[Configuration]): The model class that sent the signal.
+        instance (Configuration): The saved instance whose parsed value should
+            be cached.
+
+    Returns:
+        None
+    """
     try:
         value = instance.get_value()
     except Exception:

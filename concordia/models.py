@@ -1,9 +1,12 @@
-from __future__ import annotations  # Necessary until Python 3.12
-
+import calendar
+import csv
 import datetime
+import io
+import json
 import os.path
 import time
 import uuid
+from decimal import Decimal
 from itertools import chain
 from logging import getLogger
 from typing import Optional, Tuple, Union
@@ -16,15 +19,18 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import (
+    Avg,
     Case,
     Count,
     ExpressionWrapper,
     F,
     JSONField,
     Q,
+    Sum,
     Value,
     When,
 )
@@ -55,6 +61,14 @@ THRESHOLD = 2
 
 
 def resource_file_upload_path(instance, filename):
+    """
+    Return the upload path for a ResourceFile instance.
+
+    If the instance already has a primary key and a stored path, that path is
+    reused so the file is not moved on subsequent saves. Otherwise, a dated
+    path is generated under ``cm-uploads/resources/`` using the lowercased
+    filename.
+    """
     if instance.id and instance.path:
         return instance.path
     path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
@@ -62,17 +76,31 @@ def resource_file_upload_path(instance, filename):
 
 
 class ConcordiaUser(User):
-    # This class is a simple proxy model to add
-    # additional user functionality to, without changing
-    # the base User model.
+    """
+    Proxy model adding Concordia-specific helpers and rate-limit tracking.
+
+    This avoids changing the base ``auth.User`` model while still attaching
+    project-specific behavior such as email reconfirmation flow and review
+    rate limiting.
+    """
+
     class Meta:
         proxy = True
 
     @property
     def email_reconfirmation_cache_key(self):
+        """
+        Return the cache key used to store the pending reconfirmation email.
+        """
         return settings.EMAIL_RECONFIRMATION_KEY.format(id=self.id)
 
     def set_email_for_reconfirmation(self, email):
+        """
+        Store a pending reconfirmation email address in the cache.
+
+        The value is stored under :attr:`email_reconfirmation_cache_key` for
+        the duration configured by ``EMAIL_RECONFIRMATION_TIMEOUT``.
+        """
         cache.set(
             self.email_reconfirmation_cache_key,
             email,
@@ -80,12 +108,34 @@ class ConcordiaUser(User):
         )
 
     def get_email_for_reconfirmation(self):
+        """
+        Return the cached reconfirmation email address, if present.
+
+        Returns:
+            str | None: The pending reconfirmation email, or None if no value
+            is cached.
+        """
         return cache.get(self.email_reconfirmation_cache_key)
 
     def delete_email_for_reconfirmation(self):
+        """
+        Remove any cached reconfirmation email address for this user.
+        """
         cache.delete(self.email_reconfirmation_cache_key)
 
     def get_email_reconfirmation_key(self):
+        """
+        Build a signed reconfirmation token for the cached email address.
+
+        The token encodes the username and pending email address using
+        Django's :mod:`signing` utilities.
+
+        Returns:
+            str: A signed string suitable for use in reconfirmation URLs.
+
+        Raises:
+            ValueError: If no email address has been cached for this user.
+        """
         email = self.get_email_for_reconfirmation()
         if email:
             return signing.dumps(obj={"username": self.get_username(), "email": email})
@@ -93,9 +143,34 @@ class ConcordiaUser(User):
             raise ValueError("No email cached for reconfirmation")
 
     def validate_reconfirmation_email(self, email):
+        """
+        Check whether the supplied email matches the cached reconfirmation one.
+
+        Args:
+            email (str): Email address to validate.
+
+        Returns:
+            bool: True if the email matches the cached value, otherwise False.
+        """
         return email == self.get_email_for_reconfirmation()
 
     def review_incidents(self, recent_accepts, threshold=THRESHOLD):
+        """
+        Count review-rate incidents for this user within a queryset.
+
+        An incident is counted when this user records ``threshold`` or more
+        accepts within any rolling 60-second window among the provided
+        ``recent_accepts`` queryset.
+
+        Args:
+            recent_accepts (QuerySet): Transcription queryset filtered to rows
+                with non-null ``accepted`` timestamps.
+            threshold (int): Minimum number of accepts in a 60-second window
+                required to count as one incident.
+
+        Returns:
+            int: Number of detected review incidents.
+        """
         accepts = recent_accepts.filter(reviewed_by=self).values_list(
             "accepted", flat=True
         )
@@ -115,6 +190,20 @@ class ConcordiaUser(User):
         return incidents
 
     def transcribe_incidents(self, transcriptions):
+        """
+        Count transcription-speed incidents for this user.
+
+        An incident is counted when the user submits more than one distinct
+        asset's transcription within a 60-second window.
+
+        Args:
+            transcriptions (QuerySet): Transcription queryset to inspect. It
+                should already be filtered to this user and the desired time
+                range.
+
+        Returns:
+            int: Number of detected transcription incidents.
+        """
         transcriptions = transcriptions.filter(user=self).order_by("submitted")
         incidents = 0
         for transcription in transcriptions:
@@ -131,9 +220,31 @@ class ConcordiaUser(User):
 
     @property
     def transcription_accepted_cache_key(self):
+        """
+        Return the cache key used to track this user's recent accept timestamps.
+        """
         return settings.TRANSCRIPTION_ACCEPTED_TRACKING_KEY.format(user_id=self.id)
 
     def check_and_track_accept_limit(self, transcription):
+        """
+        Enforce and update the per-minute accept-rate limit for this user.
+
+        For non-superusers, this loads the recent acceptance timestamps from
+        the cache, discards values older than one minute, and checks the
+        resulting count against the ``review_rate_limit`` configuration
+        value. If recording another acceptance would exceed that limit, a
+        :class:`RateLimitExceededError` is raised. Otherwise, the current
+        timestamp is appended and written back to the cache.
+
+        Args:
+            transcription (Transcription): The transcription being accepted.
+                (The argument is not inspected, but kept for call-site
+                clarity.)
+
+        Raises:
+            RateLimitExceededError: If the user would exceed the configured
+                rate limit.
+        """
         if not self.is_superuser:
             key = self.transcription_accepted_cache_key
             now = timezone.now()
@@ -199,6 +310,10 @@ STATUS_COUNT_KEYS = {
 
 
 class MediaType:
+    """
+    Enumeration of supported asset media types.
+    """
+
     IMAGE = "IMG"
     AUDIO = "AUD"
     VIDEO = "VID"
@@ -208,14 +323,34 @@ class MediaType:
 
 class PublicationQuerySet(models.QuerySet):
     def published(self):
+        """
+        Return queryset filtered to published objects.
+        """
         return self.filter(published=True)
 
     def unpublished(self):
+        """
+        Return queryset filtered to unpublished objects.
+        """
         return self.filter(published=False)
 
 
 class UnlistedPublicationQuerySet(PublicationQuerySet):
     def annotated(self):
+        """
+        Return campaigns/topics annotated with asset counts and completion data.
+
+        The returned queryset includes:
+
+        - ``asset_count``: Number of published assets reachable through the
+          associated projects and items.
+        - Per-status counts based on :data:`STATUS_COUNT_KEYS`, such as
+          ``completed_count`` and ``submitted_count``.
+        - ``completed_percent`` and ``needs_review_percent``: Rounded
+          percentages of assets in the completed or needs-review state,
+          clamped so that 100 percent is only returned if all assets are in
+          that state.
+        """
         return (
             self.annotate(
                 asset_count=Count(
@@ -557,7 +692,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
-    title = models.CharField(max_length=700)
+    title = models.CharField(max_length=1000)
     item_url = models.URLField(max_length=255)
     item_id = models.CharField(
         max_length=100, help_text="Unique item ID assigned by the upstream source"
@@ -785,7 +920,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def can_rollback(
         self,
-    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+    ) -> Tuple[bool, Union[str, "Transcription"], Optional["Transcription"]]:
         """
         Determine whether the latest transcription on this asset can be rolled back.
 
@@ -856,10 +991,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             .first()
         )
         if transcription_to_rollback_to is None:
-            # We didn't find one, which means there's no eligible
+            # We did not find one, which means there is no eligible
             # transcription to rollback to, because everything before
             # is either a rollforward or the source of a rollforward
-            # (or there just isn't an earlier transcription at all)
+            # (or there just is not an earlier transcription at all)
             self.logger.debug(
                 "No eligible transcription found for rollback.",
                 event_code="rollback_check_failed",
@@ -890,30 +1025,31 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         )
         return True, transcription_to_rollback_to, original_latest_transcription
 
-    def rollback_transcription(self, user: User) -> Transcription:
+    def rollback_transcription(self, user: User) -> "Transcription":
         """
         Perform a rollback of the latest transcription on this asset.
 
         This creates a new transcription that copies the text of the most recent
-        eligible prior transcription (as determined by `can_rollback`) and marks it
-        as rolled back. It also updates the original latest transcription to reflect
-        that it has been superseded.
+        eligible prior transcription (as determined by ``can_rollback``) and marks
+        it as rolled back. It also updates the original latest transcription to
+        reflect that it has been superseded.
 
-        If rollback is not possible, raises a `ValueError`.
+        If rollback is not possible, raises a ``ValueError``.
 
         The new transcription will:
-            - Have `rolled_back=True`.
-            - Set its `source` to the transcription it is rolled back to.
-            - Set `supersedes` to the current latest transcription.
+            - Have ``rolled_back=True``.
+            - Set its ``source`` to the transcription it is rolled back to.
+            - Set ``supersedes`` to the current latest transcription.
 
         Args:
             user (User): The user performing the rollback.
 
         Returns:
-            transcription (Transcription): The newly created rollback transcription.
+            Transcription: The newly created rollback transcription.
 
         Raises:
-            ValueError: If rollback is not possible due to invalid or missing history.
+            ValueError: If rollback is not possible due to invalid or missing
+                history.
         """
         results = self.can_rollback()
         if results[0] is not True:
@@ -961,12 +1097,13 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def can_rollforward(
         self,
-    ) -> Tuple[bool, Union[str, Transcription], Optional[Transcription]]:
+    ) -> Tuple[bool, Union[str, "Transcription"], Optional["Transcription"]]:
         """
         Determine whether a previous rollback on this asset can be rolled forward.
 
         This checks whether the most recent transcription is a rollback transcription
-        and whether the transcription it replaced (its `supersedes`) can be restored.
+        and whether the transcription it replaced (its ``supersedes``) can be
+        restored.
 
         This method handles cases where multiple rollforwards were applied,
         walking backward through the transcription chain to find the appropriate
@@ -974,10 +1111,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         A rollforward is only possible if:
         - The latest transcription is a rollback.
-        - The rollback's superseded transcription still exists and can be restored.
+        - The rollback's superseded transcription still exists and can be
+          restored.
 
         This method does not perform the rollforward, only checks feasibility.
-
 
         Returns:
             result (tuple): A (bool, value, latest) tuple describing rollforward
@@ -991,8 +1128,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         """
         # original_latest_transcription holds the actual latest transcription
         # latest_transcription starts by holding the actual latest transcription,
-        # but if it's a rolled forward transcription, we use it to find the most
-        # recent non-rolled-forward transcription and store that in latest_transcription
+        # but if it is a rolled forward transcription, we use it to find the most
+        # recent non-rolled-forward transcription and store that in
+        # latest_transcription
         original_latest_transcription = latest_transcription = (
             self.latest_transcription()
         )
@@ -1019,7 +1157,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         # Rollforwards can be chained through multiple rollback/forward cycles,
         # so we may need to walk back the supersedes chain to find the original.
         if latest_transcription.rolled_forward:
-            # We need to find the latest transcription that wasn't rolled forward
+            # We need to find the latest transcription that was not rolled forward
             rolled_forward_count = 0
             try:
                 while latest_transcription.rolled_forward:
@@ -1059,7 +1197,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 )
             # latest_transcription is now the most recent non-rolled-forward
             # transcription, but we need to go back fruther based on the number
-            # of rolled-forward transcriptions we've seen to get to the actual
+            # of rolled-forward transcriptions we have seen to get to the actual
             # rollback transcription we need to rollforward from
             try:
                 while rolled_forward_count >= 1:
@@ -1124,8 +1262,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 None,
             )
 
-        # If that replaced transcription doesn't exist, we can't do anything
-        # This shouldn't be possible normally, but if a transcription history
+        # If that replaced transcription does not exist, we cannot do anything
+        # This should not be possible normally, but if a transcription history
         # is manually edited, you could end up in this state.
         if not transcription_to_rollforward:
             self.logger.debug(
@@ -1134,14 +1272,16 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 reason_code="no_superseded_transcription",
                 reason=(
                     "Can not rollforward transcription on an asset if the latest "
-                    "rollback transcription did not supersede a previous transcription."
+                    "rollback transcription did not supersede a previous "
+                    "transcription."
                 ),
             )
             return (
                 False,
                 (
                     "Can not rollforward transcription on an asset if the latest "
-                    "rollback transcription did not supersede a previous transcription"
+                    "rollback transcription did not supersede a previous "
+                    "transcription"
                 ),
                 None,
             )
@@ -1155,27 +1295,27 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
         return True, transcription_to_rollforward, original_latest_transcription
 
-    def rollforward_transcription(self, user: User) -> Transcription:
+    def rollforward_transcription(self, user: User) -> "Transcription":
         """
          Perform a rollforward of the most recent rollback transcription.
 
-        This creates a new transcription that restores the text from the rollback's
-        superseded transcription and marks it as a rollforward. A rollforward is only
-        possible if the latest transcription is a rollback and the replaced
-        transcription still exists.
+        This creates a new transcription that restores the text from the
+        rollback's superseded transcription and marks it as a rollforward. A
+        rollforward is only possible if the latest transcription is a rollback
+        and the replaced transcription still exists.
 
-        If rollforward is not possible, raises a `ValueError`.
+        If rollforward is not possible, raises a ``ValueError``.
 
         The new transcription will:
-            - Have `rolled_forward=True`.
-            - Set its `source` to the transcription being rolled forward to.
-            - Set `supersedes` to the current latest transcription.
+            - Have ``rolled_forward=True``.
+            - Set its ``source`` to the transcription being rolled forward to.
+            - Set ``supersedes`` to the current latest transcription.
 
         Args:
             user (User): The user initiating the rollforward.
 
         Returns:
-            transcription (Transcription): The newly created rollforward transcription.
+            Transcription: The newly created rollforward transcription.
 
         Raises:
             ValueError: If rollforward is not possible, such as when no rollback
@@ -1184,9 +1324,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         Return Behavior:
             - If rollforward is possible:
                 - Creates a new transcription restoring the original text.
-                - Marks it with `rolled_forward=True`.
+                - Marks it with ``rolled_forward=True``.
             - If rollforward is not possible:
-                - Raises `ValueError` with a descriptive message.
+                - Raises ``ValueError`` with a descriptive message.
         """
         results = self.can_rollforward()
         if results[0] is not True:
@@ -1423,6 +1563,23 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 
 def update_userprofileactivity_table(user, campaign_id, field, increment=1):
+    """
+    Update per-user activity counters for a campaign and the user's profile.
+
+    This function updates or creates a ``UserProfileActivity`` row for the given
+    user and campaign, adjusts the requested counter field by ``increment``,
+    and recalculates the number of distinct assets the user has contributed to
+    in that campaign. It also updates the corresponding ``UserProfile`` record
+    to keep global counters in sync.
+
+    Args:
+        user: The Django user whose activity should be updated.
+        campaign_id: Primary key of the campaign to update activity for.
+        field: Name of the integer field to increment (for example,
+            ``"transcribe_count"`` or ``"review_count"``).
+        increment: Amount to add to the chosen field. Defaults to ``1``.
+
+    """
     structured_logger.info(
         "Updating user profile activity table.",
         event_code="userprofileactivity_update_start",
@@ -1485,6 +1642,19 @@ def update_userprofileactivity_table(user, campaign_id, field, increment=1):
 
 
 def _update_useractivity_cache(user_id, campaign_id, attr_name):
+    """
+    Update the in-memory cache of user activity for a campaign.
+
+    The cache stores a mapping of ``user_id`` to a tuple
+    ``(transcribe_count, review_count)`` for each campaign. This helper
+    increments the requested attribute and persists the updated mapping.
+
+    Args:
+        user_id: ID of the user whose cached counters should be updated.
+        campaign_id: ID of the related campaign.
+        attr_name: Name of the activity type to increment, either
+            ``"transcribe"`` or ``"review"``.
+    """
     key = f"userprofileactivity_{campaign_id}"
     updates = cache.get(key, {})
     transcribe_count, review_count = updates.get(user_id, (0, 0))
@@ -1507,7 +1677,11 @@ def _update_useractivity_cache(user_id, campaign_id, attr_name):
 
 class AssetTranscriptionReservation(models.Model):
     """
-    Records a user's reservation to transcribe a particular asset
+    Record a user's reservation to transcribe a particular asset.
+
+    The reservation token encodes both a short reservation identifier and the
+    user information. Convenience methods slice the stored token to return
+    each component.
     """
 
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
@@ -1525,6 +1699,13 @@ class AssetTranscriptionReservation(models.Model):
 
 
 class SimplePage(models.Model):
+    """
+    Simple, CMS-like content page addressable by a URL path.
+
+    These records back lightweight informational pages that can be edited
+    via the Django admin instead of being hard-coded in templates.
+    """
+
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
@@ -1543,6 +1724,13 @@ class SimplePage(models.Model):
 
 
 class Banner(models.Model):
+    """
+    Site-wide banner for alerts or announcements.
+
+    Banners can link out to supporting pages and use a limited set of
+    alert-style color classes.
+    """
+
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
@@ -1579,6 +1767,13 @@ class Banner(models.Model):
 
 
 class CarouselSlide(models.Model):
+    """
+    Configurable slide for the homepage carousel.
+
+    Each slide can show an image, text overlay, and call-to-action URL, with
+    simple ordering and publication controls.
+    """
+
     objects = PublicationQuerySet.as_manager()
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
@@ -1605,6 +1800,185 @@ class CarouselSlide(models.Model):
         return f"CarouselSlide: {self.headline}"
 
 
+class SiteReportManager(models.Manager):
+    """
+    Manager providing series-aware helpers for SiteReport.
+
+    A "series" is the set of SiteReport rows that belong to the same logical
+    reporting stream:
+
+      - Site-wide TOTAL:          report_name=TOTAL, campaign=None, topic=None
+      - Site-wide RETIRED_TOTAL:  report_name=RETIRED_TOTAL
+      - Per-campaign:             campaign=<campaign>, topic=None
+      - Per-topic:                topic=<topic>, campaign=None
+
+    These helpers avoid duplicating series filtering logic in tasks.
+    """
+
+    def _series_filter(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+    ) -> Q:
+        """
+        Build a Q filter for a single SiteReport series based on the inputs.
+
+        Args:
+            report_name: One of the SiteReport.ReportName values for site-wide
+                series (TOTAL, RETIRED_TOTAL). Ignored for per-campaign/topic.
+            campaign: Campaign instance for per-campaign series.
+            topic: Topic instance for per-topic series.
+
+        Returns:
+            Q: A Django Q object representing the series filter.
+        """
+        if campaign is not None:
+            return Q(campaign=campaign, topic__isnull=True)
+        if topic is not None:
+            return Q(topic=topic, campaign__isnull=True)
+        if report_name == SiteReport.ReportName.TOTAL:
+            return Q(
+                report_name=SiteReport.ReportName.TOTAL,
+                campaign__isnull=True,
+                topic__isnull=True,
+            )
+        if report_name == SiteReport.ReportName.RETIRED_TOTAL:
+            return Q(report_name=SiteReport.ReportName.RETIRED_TOTAL)
+        # Fallback: no rows (prevents accidental wide queries)
+        return Q(pk__in=[])  # pragma: no cover
+
+    def previous_in_series(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+        before: Optional[datetime.datetime] = None,
+    ) -> Optional["SiteReport"]:
+        """
+        Return the latest SiteReport in the same series strictly before 'before'.
+
+        Args:
+            report_name: Series selector for site-wide reports (TOTAL/RETIRED_TOTAL).
+            campaign: Series selector for per-campaign reports.
+            topic: Series selector for per-topic reports.
+            before: A timezone-aware datetime; defaults to now() if omitted.
+
+        Returns:
+            SiteReport or None: The most recent prior report in the series.
+        """
+        if before is None:
+            before = timezone.now()
+        q = self._series_filter(report_name=report_name, campaign=campaign, topic=topic)
+        return (
+            self.filter(q, created_on__lt=before).order_by("-created_on", "-pk").first()
+        )
+
+    def series_filter_for_instance(self, instance: "SiteReport") -> Q:
+        """
+        Build a Q filter that selects the same logical 'series' as the given
+        SiteReport instance (site-wide TOTAL, RETIRED_TOTAL,
+        per-campaign, or per-topic).
+        """
+        if instance.campaign_id is not None:
+            return Q(campaign=instance.campaign, topic__isnull=True)
+        if instance.topic_id is not None:
+            return Q(topic=instance.topic, campaign__isnull=True)
+        if instance.report_name == SiteReport.ReportName.TOTAL:
+            return Q(
+                report_name=SiteReport.ReportName.TOTAL,
+                campaign__isnull=True,
+                topic__isnull=True,
+            )
+        if instance.report_name == SiteReport.ReportName.RETIRED_TOTAL:
+            return Q(report_name=SiteReport.ReportName.RETIRED_TOTAL)
+        return Q(pk__in=[])
+
+    def previous_for_instance(self, instance: "SiteReport") -> "SiteReport | None":
+        """
+        Return the previous SiteReport within the same series (strictly earlier).
+        """
+        q = self.series_filter_for_instance(instance)
+        return (
+            self.filter(q, created_on__lt=instance.created_on)
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+
+    def next_for_instance(self, instance: "SiteReport") -> "SiteReport | None":
+        """
+        Return the next SiteReport within the same series (strictly later).
+        """
+        q = self.series_filter_for_instance(instance)
+        return (
+            self.filter(q, created_on__gt=instance.created_on)
+            .order_by("created_on", "pk")
+            .first()
+        )
+
+    def last_on_or_before_date_for_series(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+        on_or_before_date: datetime.date,
+    ) -> Optional["SiteReport"]:
+        """
+        Return the latest SiteReport within the series with
+        created_on.date() <= on_or_before_date.
+        """
+        q = self._series_filter(report_name=report_name, campaign=campaign, topic=topic)
+        return (
+            self.filter(q, created_on__date__lte=on_or_before_date)
+            .order_by("-created_on", "-pk")
+            .first()
+        )
+
+    def first_on_or_after_date_for_series(
+        self,
+        *,
+        report_name: Optional[str] = None,
+        campaign: Optional["Campaign"] = None,
+        topic: Optional["Topic"] = None,
+        on_or_after_date: datetime.date,
+        on_or_before_date: Optional[datetime.date] = None,
+    ) -> Optional["SiteReport"]:
+        """
+        Return the earliest SiteReport within the series with
+        created_on.date() >= on_or_after_date (and optionally
+        <= on_or_before_date).
+        """
+        q = self._series_filter(report_name=report_name, campaign=campaign, topic=topic)
+        filters = {"created_on__date__gte": on_or_after_date}
+        if on_or_before_date is not None:
+            filters["created_on__date__lte"] = on_or_before_date
+        return self.filter(q, **filters).order_by("created_on", "pk").first()
+
+    def sum_assets_started_for_series_between_dates(
+        self,
+        *,
+        report_name: str,
+        start_date: datetime.date,
+        end_date: datetime.date,
+    ) -> int:
+        """
+        Sum `assets_started` for a site-wide series
+        (TOTAL or RETIRED_TOTAL) inclusive of both dates.
+        Treat NULLs as zeros.
+        """
+        agg = self.filter(
+            report_name=report_name,
+            campaign__isnull=True,
+            topic__isnull=True,
+            created_on__date__gte=start_date,
+            created_on__date__lte=end_date,
+        ).aggregate(total=Sum("assets_started"))
+        return int(agg["total"] or 0)
+
+
 class SiteReport(models.Model):
     class ReportName(models.TextChoices):
         TOTAL = "Active and completed campaigns", "Active and completed campaigns"
@@ -1625,6 +1999,7 @@ class SiteReport(models.Model):
     assets_waiting_review = models.IntegerField(blank=True, null=True)
     assets_completed = models.IntegerField(blank=True, null=True)
     assets_unpublished = models.IntegerField(blank=True, null=True)
+    assets_started = models.IntegerField(blank=True, null=True)
     items_published = models.IntegerField(blank=True, null=True)
     items_unpublished = models.IntegerField(blank=True, null=True)
     projects_published = models.IntegerField(blank=True, null=True)
@@ -1640,6 +2015,8 @@ class SiteReport(models.Model):
     users_activated = models.IntegerField(blank=True, null=True)
     registered_contributors = models.IntegerField(blank=True, null=True)
     daily_active_users = models.IntegerField(blank=True, null=True)
+
+    objects = SiteReportManager()
 
     class Meta:
         ordering = ("-created_on",)
@@ -1659,6 +2036,7 @@ class SiteReport(models.Model):
         "assets_waiting_review",
         "assets_completed",
         "assets_unpublished",
+        "assets_started",
         "items_published",
         "items_unpublished",
         "projects_published",
@@ -1676,8 +2054,1017 @@ class SiteReport(models.Model):
         "daily_active_users",
     ]
 
+    @staticmethod
+    def calculate_assets_started(
+        *,
+        previous_assets_total: Optional[int],
+        previous_assets_not_started: Optional[int],
+        current_assets_total: Optional[int],
+        current_assets_not_started: Optional[int],
+    ) -> int:
+        """
+        Calculate the daily "assets started" value between two reports.
+
+        Let, for each snapshot:
+            total_prev = previous_assets_total
+            ns_prev    = previous_assets_not_started
+            total_cur  = current_assets_total
+            ns_cur     = current_assets_not_started
+            started_prev = max(0, total_prev - ns_prev)
+            started_cur  = max(0, total_cur - ns_cur)
+
+        Then:
+            assets_started = max(0, started_cur - started_prev)
+
+        This treats "started" as any asset that is in progress, waiting review,
+        or completed, regardless of published/unpublished status. Using
+        assets_total and assets_not_started makes the metric insensitive to
+        publish/unpublish changes: moving assets between published and
+        unpublished does not affect assets_started as long as their not-started
+        status and total count remain consistent.
+
+        All None inputs are treated as zero. The final result is floored at
+        zero to avoid negative values that can arise from administrative
+        actions such as deleting assets that were already started.
+        """
+        total_prev = int(previous_assets_total or 0)
+        ns_prev = int(previous_assets_not_started or 0)
+        total_cur = int(current_assets_total or 0)
+        ns_cur = int(current_assets_not_started or 0)
+
+        started_prev = max(0, total_prev - ns_prev)
+        started_cur = max(0, total_cur - ns_cur)
+
+        return max(0, started_cur - started_prev)
+
+    def previous_in_series(self) -> "SiteReport | None":
+        """
+        Return the previous SiteReport within this object's series.
+        """
+        return SiteReport.objects.previous_for_instance(self)
+
+    def next_in_series(self) -> "SiteReport | None":
+        """
+        Return the next SiteReport within this object's series.
+        """
+        return SiteReport.objects.next_for_instance(self)
+
+    def to_debug_dict(self) -> dict:
+        """
+        Return a JSON-serializable dictionary of this site report suitable for
+        copy/paste debugging. Includes core identifiers, related object info
+        (if available), and all numeric counters.
+
+        Related objects are expanded into small dicts with common attributes
+        when present (id, title, slug, status). Missing attributes are omitted.
+        """
+        data: dict = {
+            "id": self.id,
+            "created_on": self.created_on,
+            "report_name": self.report_name,
+        }
+
+        if self.campaign_id:
+            campaign_info = {"id": self.campaign_id}
+            for attr in ("title", "slug", "status"):
+                value = getattr(self.campaign, attr, None)
+                if value is not None:
+                    campaign_info[attr] = value
+            data["campaign"] = campaign_info
+
+        if self.topic_id:
+            topic_info = {"id": self.topic_id}
+            for attr in ("title", "slug"):
+                value = getattr(self.topic, attr, None)
+                if value is not None:
+                    topic_info[attr] = value
+            data["topic"] = topic_info
+
+        # Numeric counters (explicit list to keep ordering predictable)
+        counters = {
+            "assets_total": self.assets_total,
+            "assets_published": self.assets_published,
+            "assets_not_started": self.assets_not_started,
+            "assets_in_progress": self.assets_in_progress,
+            "assets_waiting_review": self.assets_waiting_review,
+            "assets_completed": self.assets_completed,
+            "assets_unpublished": self.assets_unpublished,
+            "assets_started": self.assets_started,
+            "items_published": self.items_published,
+            "items_unpublished": self.items_unpublished,
+            "projects_published": self.projects_published,
+            "projects_unpublished": self.projects_unpublished,
+            "anonymous_transcriptions": self.anonymous_transcriptions,
+            "transcriptions_saved": self.transcriptions_saved,
+            "daily_review_actions": self.daily_review_actions,
+            "distinct_tags": self.distinct_tags,
+            "tag_uses": self.tag_uses,
+            "campaigns_published": self.campaigns_published,
+            "campaigns_unpublished": self.campaigns_unpublished,
+            "users_registered": self.users_registered,
+            "users_activated": self.users_activated,
+            "registered_contributors": self.registered_contributors,
+            "daily_active_users": self.daily_active_users,
+        }
+        data["counters"] = counters
+        return data
+
+    def to_debug_json(self) -> str:
+        """
+        Return a pretty-printed JSON string of `to_debug_dict()` with ISO
+        datetimes.
+        """
+        return json.dumps(
+            self.to_debug_dict(), cls=DjangoJSONEncoder, indent=2, sort_keys=True
+        )
+
+
+class KeyMetricsReport(models.Model):
+    """
+    Site-wide Key Metrics report persisted for three period types:
+
+    - MONTHLY: per calendar month (with special handling for the very first
+      month)
+    - QUARTERLY: fiscal quarter rollup (Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr-Jun,
+      Q4=Jul-Sep)
+    - FISCAL_YEAR: fiscal year rollup (Oct 1 - Sep 30)
+
+    Monthly numbers are computed from SiteReport as follows:
+
+    - For cumulative counters (for example, assets_published, assets_completed,
+      transcriptions_saved, users_activated, anonymous_transcriptions,
+      tag_uses): the monthly value is the non-negative difference between the
+      combined site-wide TOTAL + RETIRED_TOTAL values at the end of the month
+      and the baseline snapshot. Baseline is the latest snapshot strictly
+      before the first day of the month; if none exists, baseline is the first
+      snapshot within the month (yielding the delta within that month).
+    - For assets_started: the monthly value is the sum of the daily
+      ``assets_started`` field across the month for the TOTAL and
+      RETIRED_TOTAL site-wide series.
+
+    Quarterly and fiscal-year numbers are rollups from the monthly rows:
+
+    - For count metrics: sum of the months in the period.
+    - For avg_visit_seconds: arithmetic mean of the months that have a value.
+      If no month has a value, the rollup is NULL.
+
+    Manual fields are stored here too so CMs can edit them in the admin and
+    have them included when exporting CSVs. If unset they remain NULL and are
+    rendered as empty strings in exports. Manual fields only roll up if at
+    least one of the rolled up reports' value is not NULL, so manual values in
+    "higher" reports will not be set to NULL if none of the "lower" reports
+    have values. This allows manual values to be set only in quarterly and/or
+    yearly reports instead of every month.
+    """
+
+    class PeriodType(models.TextChoices):
+        MONTHLY = "MONTHLY", "Monthly"
+        QUARTERLY = "QUARTERLY", "Quarterly"
+        FISCAL_YEAR = "FISCAL_YEAR", "Fiscal year"
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    period_type = models.CharField(max_length=20, choices=PeriodType.choices)
+    period_start = models.DateField()  # inclusive
+    period_end = models.DateField()  # inclusive
+
+    fiscal_year = models.IntegerField()
+    fiscal_quarter = models.IntegerField(blank=True, null=True)  # 1..4 for quarters
+    month = models.IntegerField(blank=True, null=True)  # 1..12 for monthly
+
+    # Derived from SiteReport metrics
+    assets_published = models.IntegerField(blank=True, null=True)
+    assets_started = models.IntegerField(blank=True, null=True)
+    assets_completed = models.IntegerField(blank=True, null=True)
+    users_activated = models.IntegerField(blank=True, null=True)
+    anonymous_transcriptions = models.IntegerField(blank=True, null=True)
+    transcriptions_saved = models.IntegerField(blank=True, null=True)
+    tag_uses = models.IntegerField(blank=True, null=True)
+
+    # Manual metrics
+    crowd_emails_and_libanswers_sent = models.IntegerField(blank=True, null=True)
+    crowd_visits = models.IntegerField(blank=True, null=True)
+    crowd_page_views = models.IntegerField(blank=True, null=True)
+    crowd_unique_visitors = models.IntegerField(blank=True, null=True)
+    avg_visit_seconds = models.DecimalField(
+        max_digits=8, decimal_places=2, blank=True, null=True
+    )
+    transcriptions_added_to_loc_gov = models.IntegerField(blank=True, null=True)
+    datasets_added_to_loc_gov = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["period_type", "period_start", "period_end"]),
+            models.Index(fields=["period_type", "fiscal_year"]),
+            models.Index(fields=["period_type", "fiscal_year", "fiscal_quarter"]),
+            models.Index(fields=["period_type", "fiscal_year", "month"]),
+        ]
+        unique_together = (("period_type", "period_start", "period_end"),)
+        ordering = ("period_start", "period_end", "period_type")
+
+    CSV_METRIC_COLUMNS: tuple[tuple[str, str], ...] = (
+        # Derived metrics (from SiteReport)
+        ("assets_published", "Assets published"),
+        ("assets_started", "Assets started"),
+        ("assets_completed", "Assets completed"),
+        ("users_activated", "User accounts activated"),
+        ("anonymous_transcriptions", "Anonymous transcriptions"),
+        ("transcriptions_saved", "Transcriptions saved"),
+        ("tag_uses", "Tag uses"),
+        # Manual metrics
+        ("crowd_emails_and_libanswers_sent", "Crowd emails & LibAnswers sent"),
+        ("crowd_visits", "Crowd.loc.gov visits"),
+        ("crowd_page_views", "Crowd.loc.gov page views"),
+        ("crowd_unique_visitors", "Crowd.loc.gov unique visitors"),
+        ("avg_visit_seconds", "Avg. crowd.loc.gov visit (in seconds)"),
+        ("transcriptions_added_to_loc_gov", "Transcriptions added to loc.gov"),
+        ("datasets_added_to_loc_gov", "Datasets added to loc.gov"),
+    )
+
+    MANUAL_FIELDS: tuple[str, ...] = (
+        "crowd_emails_and_libanswers_sent",
+        "crowd_visits",
+        "crowd_page_views",
+        "crowd_unique_visitors",
+        "avg_visit_seconds",
+        "transcriptions_added_to_loc_gov",
+        "datasets_added_to_loc_gov",
+    )
+
+    CALCULATED_FIELDS: tuple[str, ...] = (
+        "assets_published",
+        "assets_started",
+        "assets_completed",
+        "users_activated",
+        "anonymous_transcriptions",
+        "transcriptions_saved",
+        "tag_uses",
+    )
+
+    def __str__(self) -> str:
+        """
+        Return a human-friendly name for the report.
+
+        Formats:
+        - Fiscal year: ``"FY2024 Report"``
+        - Quarter: ``"FY2023 Q2 Report"``
+        - Monthly: ``"FY2022M06 Report (June 2022)"``
+        """
+        if self.period_type == self.PeriodType.FISCAL_YEAR:
+            return f"FY{self.fiscal_year} Report"
+
+        if self.period_type == self.PeriodType.QUARTERLY and self.fiscal_quarter:
+            return f"FY{self.fiscal_year} Q{self.fiscal_quarter} Report"
+
+        if self.period_type == self.PeriodType.MONTHLY and self.month:
+            # Calendar year for this month within the fiscal year
+            calendar_year = (
+                self.fiscal_year - 1 if self.month >= 10 else self.fiscal_year
+            )
+            month_name = calendar.month_name[self.month]
+            return (
+                f"FY{self.fiscal_year}M{self.month:02d} Report "
+                f"({month_name} {calendar_year})"
+            )
+
+        # Fallback if fields are incomplete
+        return (
+            "KeyMetricsReport "
+            f"{self.period_type} {self.period_start}-{self.period_end}"
+        )
+
+    @staticmethod
+    def get_fiscal_year_for_date(d: datetime.date) -> int:
+        """Return the fiscal year for a date (Oct 1-Sep 30)."""
+        return d.year + 1 if d.month >= 10 else d.year
+
+    @staticmethod
+    def get_fiscal_quarter_for_date(d: datetime.date) -> int:
+        """Return the fiscal quarter for a date (Q1=Oct-Dec, ..., Q4=Jul-Sep)."""
+        if 10 <= d.month <= 12:
+            return 1
+        if 1 <= d.month <= 3:
+            return 2
+        if 4 <= d.month <= 6:
+            return 3
+        return 4
+
+    @staticmethod
+    def month_bounds(d: datetime.date) -> tuple[datetime.date, datetime.date]:
+        """Return (first_day, last_day) for the month containing d, in local time."""
+        first = d.replace(day=1)
+        if first.month == 12:
+            next_month_first = first.replace(year=first.year + 1, month=1, day=1)
+        else:
+            next_month_first = first.replace(month=first.month + 1, day=1)
+        last = next_month_first - datetime.timedelta(days=1)
+        return first, last
+
+    @classmethod
+    def _monthly_from_sitereports(
+        cls, *, month_start: datetime.date, month_end: datetime.date
+    ) -> dict[str, int | Decimal | None]:
+        """
+        Compute monthly site-wide metrics from SiteReport.
+
+        The month is defined by [month_start, month_end]. Snapshot-delta
+        metrics are computed as the non-negative difference between:
+
+        ``(total_eom + retired_eom)`` and
+        ``(total_baseline + retired_baseline)``
+
+        where baseline is the latest snapshot strictly before month_start. If
+        none exists, baseline is the first snapshot within the month.
+
+        assets_started is computed as the sum of daily ``assets_started``
+        across the month for TOTAL + RETIRED_TOTAL.
+        """
+        # Identify the current (EOM) snapshots by series
+        total_eom = SiteReport.objects.last_on_or_before_date_for_series(
+            report_name=SiteReport.ReportName.TOTAL,
+            on_or_before_date=month_end,
+        )
+        retired_eom = SiteReport.objects.last_on_or_before_date_for_series(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL,
+            on_or_before_date=month_end,
+        )
+
+        # If there is literally no snapshot by month_end for both series,
+        # we cannot produce a month.
+        if total_eom is None and retired_eom is None:
+            return {}
+
+        # Find baselines (strictly before the month start). If missing, fall back
+        # to the first snapshot within the month.
+        total_baseline = SiteReport.objects.previous_in_series(
+            report_name=SiteReport.ReportName.TOTAL,
+            before=datetime.datetime.combine(
+                month_start, datetime.time.min, tzinfo=timezone.get_current_timezone()
+            ),
+        )
+        if total_baseline is None and total_eom is not None:
+            total_baseline = SiteReport.objects.first_on_or_after_date_for_series(
+                report_name=SiteReport.ReportName.TOTAL,
+                on_or_after_date=month_start,
+                on_or_before_date=month_end,
+            )
+
+        retired_baseline = SiteReport.objects.previous_in_series(
+            report_name=SiteReport.ReportName.RETIRED_TOTAL,
+            before=datetime.datetime.combine(
+                month_start, datetime.time.min, tzinfo=timezone.get_current_timezone()
+            ),
+        )
+        if retired_baseline is None and retired_eom is not None:
+            retired_baseline = SiteReport.objects.first_on_or_after_date_for_series(
+                report_name=SiteReport.ReportName.RETIRED_TOTAL,
+                on_or_after_date=month_start,
+                on_or_before_date=month_end,
+            )
+
+        def val(obj: Optional[SiteReport], field: str) -> int:
+            """
+            Safely extract an integer field from a SiteReport.
+
+            Missing objects or missing fields are treated as zero.
+            """
+            if obj is None:
+                return 0
+            return int(getattr(obj, field, 0) or 0)
+
+        def delta(field: str) -> int:
+            cur_total = val(total_eom, field) + val(retired_eom, field)
+            base_total = val(total_baseline, field) + val(retired_baseline, field)
+            return max(0, cur_total - base_total)
+
+        # Snapshot-delta fields
+        assets_published = delta("assets_published")
+        assets_completed = delta("assets_completed")
+        users_activated = delta("users_activated")
+        anonymous_transcriptions = delta("anonymous_transcriptions")
+        transcriptions_saved = delta("transcriptions_saved")
+        tag_uses = delta("tag_uses")
+
+        # assets_started is the sum across the month for TOTAL and RETIRED_TOTAL
+        total_started = SiteReport.objects.sum_assets_started_for_series_between_dates(
+            report_name=SiteReport.ReportName.TOTAL,
+            start_date=month_start,
+            end_date=month_end,
+        )
+        retired_started = (
+            SiteReport.objects.sum_assets_started_for_series_between_dates(
+                report_name=SiteReport.ReportName.RETIRED_TOTAL,
+                start_date=month_start,
+                end_date=month_end,
+            )
+        )
+        assets_started = int(total_started + retired_started)
+
+        return {
+            "assets_published": assets_published,
+            "assets_started": assets_started,
+            "assets_completed": assets_completed,
+            "users_activated": users_activated,
+            "anonymous_transcriptions": anonymous_transcriptions,
+            "transcriptions_saved": transcriptions_saved,
+            "tag_uses": tag_uses,
+        }
+
+    @classmethod
+    def upsert_month(cls, *, year: int, month: int) -> Optional["KeyMetricsReport"]:
+        """
+        Create or update the MONTHLY report for the given (year, month).
+
+        Returns the saved instance, or None if the month cannot be computed
+        (no end-of-month snapshots exist in either series).
+        """
+        month_start = datetime.date(year, month, 1)
+        _, month_end = cls.month_bounds(month_start)
+
+        values = cls._monthly_from_sitereports(
+            month_start=month_start, month_end=month_end
+        )
+        if not values:
+            return None  # Nothing computable for this month.
+
+        fiscal_year = cls.get_fiscal_year_for_date(month_end)
+        obj, _ = cls.objects.get_or_create(
+            period_type=cls.PeriodType.MONTHLY,
+            period_start=month_start,
+            period_end=month_end,
+            defaults={
+                "fiscal_year": fiscal_year,
+                "fiscal_quarter": cls.get_fiscal_quarter_for_date(month_end),
+                "month": month,
+            },
+        )
+        # Update derived fields; keep manual fields as-is.
+        for key, value in values.items():
+            setattr(obj, key, value)
+        obj.fiscal_year = fiscal_year
+        obj.fiscal_quarter = cls.get_fiscal_quarter_for_date(month_end)
+        obj.month = month
+        obj.save()
+        return obj
+
+    @classmethod
+    def upsert_quarter(
+        cls, *, fiscal_year: int, fiscal_quarter: int
+    ) -> Optional["KeyMetricsReport"]:
+        """
+        Create or update the QUARTERLY report by rolling up existing monthly rows.
+
+        If no monthly rows exist for the quarter, returns None. We sum all
+        monthly rows present in the quarter; partial quarters are allowed (for
+        example, at the very beginning of history).
+        """
+        if fiscal_quarter not in (1, 2, 3, 4):
+            raise ValueError("fiscal_quarter must be 1..4")
+
+        # Determine the calendar months for the fiscal quarter
+        if fiscal_quarter == 1:
+            month_specs = [
+                (fiscal_year - 1, 10),
+                (fiscal_year - 1, 11),
+                (fiscal_year - 1, 12),
+            ]
+        elif fiscal_quarter == 2:
+            month_specs = [(fiscal_year, 1), (fiscal_year, 2), (fiscal_year, 3)]
+        elif fiscal_quarter == 3:
+            month_specs = [(fiscal_year, 4), (fiscal_year, 5), (fiscal_year, 6)]
+        else:
+            month_specs = [(fiscal_year, 7), (fiscal_year, 8), (fiscal_year, 9)]
+
+        monthly_queryset = cls.objects.filter(
+            period_type=cls.PeriodType.MONTHLY,
+            fiscal_year=fiscal_year,
+            month__in=[m for (_, m) in month_specs],
+        )
+        if not monthly_queryset.exists():
+            return None
+
+        rollup_sums = monthly_queryset.aggregate(
+            # Derived (always recompute)
+            assets_published=Sum("assets_published"),
+            assets_started=Sum("assets_started"),
+            assets_completed=Sum("assets_completed"),
+            users_activated=Sum("users_activated"),
+            anonymous_transcriptions=Sum("anonymous_transcriptions"),
+            transcriptions_saved=Sum("transcriptions_saved"),
+            tag_uses=Sum("tag_uses"),
+            # Manual (only set if aggregate is not None)
+            crowd_emails_and_libanswers_sent=Sum("crowd_emails_and_libanswers_sent"),
+            crowd_visits=Sum("crowd_visits"),
+            crowd_page_views=Sum("crowd_page_views"),
+            crowd_unique_visitors=Sum("crowd_unique_visitors"),
+            transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
+            datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
+        )
+        avg_series = monthly_queryset.exclude(avg_visit_seconds__isnull=True).aggregate(
+            avg=Avg("avg_visit_seconds")
+        )
+        average_visit_seconds = avg_series["avg"]
+
+        # Quarter bounds (full quarter)
+        quarter_start = datetime.date(month_specs[0][0], month_specs[0][1], 1)
+        _, quarter_end = cls.month_bounds(
+            datetime.date(month_specs[-1][0], month_specs[-1][1], 1)
+        )
+
+        report, _ = cls.objects.get_or_create(
+            period_type=cls.PeriodType.QUARTERLY,
+            period_start=quarter_start,
+            period_end=quarter_end,
+            defaults={
+                "fiscal_year": fiscal_year,
+                "fiscal_quarter": fiscal_quarter,
+            },
+        )
+
+        derived_fields = (
+            "assets_published",
+            "assets_started",
+            "assets_completed",
+            "users_activated",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "tag_uses",
+        )
+        for field_name in derived_fields:
+            setattr(report, field_name, int(rollup_sums[field_name] or 0))
+
+        manual_fields = (
+            "crowd_emails_and_libanswers_sent",
+            "crowd_visits",
+            "crowd_page_views",
+            "crowd_unique_visitors",
+            "transcriptions_added_to_loc_gov",
+            "datasets_added_to_loc_gov",
+        )
+        for field_name in manual_fields:
+            if rollup_sums[field_name] is not None:
+                setattr(report, field_name, int(rollup_sums[field_name]))
+
+        if average_visit_seconds is not None:
+            report.avg_visit_seconds = average_visit_seconds
+
+        report.fiscal_year = fiscal_year
+        report.fiscal_quarter = fiscal_quarter
+        report.month = None
+        report.save()
+        return report
+
+    @classmethod
+    def upsert_fiscal_year(cls, *, fiscal_year: int) -> Optional["KeyMetricsReport"]:
+        """
+        Create or update the FISCAL_YEAR report by rolling up monthly rows.
+
+        Returns None if no monthly rows exist for the fiscal year.
+        """
+        monthly_qs = cls.objects.filter(
+            period_type=cls.PeriodType.MONTHLY, fiscal_year=fiscal_year
+        )
+        if not monthly_qs.exists():
+            return None
+
+        sums = monthly_qs.aggregate(
+            # Derived (always recompute)
+            assets_published=Sum("assets_published"),
+            assets_started=Sum("assets_started"),
+            assets_completed=Sum("assets_completed"),
+            users_activated=Sum("users_activated"),
+            anonymous_transcriptions=Sum("anonymous_transcriptions"),
+            transcriptions_saved=Sum("transcriptions_saved"),
+            tag_uses=Sum("tag_uses"),
+            # Manual (only set if aggregate is not None)
+            crowd_emails_and_libanswers_sent=Sum("crowd_emails_and_libanswers_sent"),
+            crowd_visits=Sum("crowd_visits"),
+            crowd_page_views=Sum("crowd_page_views"),
+            crowd_unique_visitors=Sum("crowd_unique_visitors"),
+            transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
+            datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
+        )
+        avg_series = monthly_qs.exclude(avg_visit_seconds__isnull=True).aggregate(
+            avg=Avg("avg_visit_seconds")
+        )
+        avg_visit_seconds = avg_series["avg"]
+
+        # FY period bounds: Oct 1 .. Sep 30
+        start = datetime.date(fiscal_year - 1, 10, 1)
+        end = datetime.date(fiscal_year, 9, 30)
+
+        obj, _ = cls.objects.get_or_create(
+            period_type=cls.PeriodType.FISCAL_YEAR,
+            period_start=start,
+            period_end=end,
+            defaults={"fiscal_year": fiscal_year},
+        )
+
+        derived_fields = (
+            "assets_published",
+            "assets_started",
+            "assets_completed",
+            "users_activated",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "tag_uses",
+        )
+        for field in derived_fields:
+            setattr(obj, field, int(sums[field] or 0))
+
+        manual_fields = (
+            "crowd_emails_and_libanswers_sent",
+            "crowd_visits",
+            "crowd_page_views",
+            "crowd_unique_visitors",
+            "transcriptions_added_to_loc_gov",
+            "datasets_added_to_loc_gov",
+        )
+        for field in manual_fields:
+            if sums[field] is not None:
+                setattr(obj, field, int(sums[field]))
+
+        if avg_visit_seconds is not None:
+            obj.avg_visit_seconds = avg_visit_seconds
+
+        obj.fiscal_year = fiscal_year
+        obj.fiscal_quarter = None
+        obj.month = None
+        obj.save()
+        return obj
+
+    def csv_filename(self) -> str:
+        """
+        Build a descriptive filename for this report CSV.
+        """
+        if self.period_type == self.PeriodType.MONTHLY:
+            return (
+                f"key_metrics_monthly_fy{self.fiscal_year}_"
+                f"m{self.month:02d}_{self.period_start}_{self.period_end}.csv"
+            )
+        if self.period_type == self.PeriodType.QUARTERLY:
+            return (
+                f"key_metrics_quarterly_fy{self.fiscal_year}_"
+                f"q{self.fiscal_quarter}_{self.period_start}_{self.period_end}.csv"
+            )
+        # FISCAL_YEAR
+        return (
+            f"key_metrics_fiscal_year_fy{self.fiscal_year}_"
+            f"{self.period_start}_{self.period_end}.csv"
+        )
+
+    def _format_value_for_csv(self, field_name: str, value) -> str | int | float:
+        """
+        Convert model values to CSV-friendly outputs.
+
+        Rules:
+        - Calculated numeric fields: default to 0 if NULL.
+        - Manual fields: default to empty string if NULL.
+        - avg_visit_seconds (Decimal) renders as a string with up to 2 decimals;
+          empty string if NULL.
+        """
+        if field_name in self.MANUAL_FIELDS:
+            if value is None:
+                return ""
+            if field_name == "avg_visit_seconds":
+                if isinstance(value, Decimal):
+                    quantized = value.quantize(Decimal("0.01"))
+                    return f"{quantized}"
+                return f"{value}"
+            return int(value)
+        if field_name in self.CALCULATED_FIELDS:
+            return int(value or 0)
+        # Should not be reached (we only export metrics), but be safe.
+        return "" if value is None else value
+
+    def _calendar_year_for_month_in_fy(self, month: int, fiscal_year: int) -> int:
+        """
+        Return the calendar year for a month number interpreted in FY context.
+        """
+        return fiscal_year - 1 if 10 <= month <= 12 else fiscal_year
+
+    def _fy_abbrev(self, fiscal_year: int) -> str:
+        """
+        Return an "FY##" abbreviation for a fiscal year number.
+
+        Example:
+            2024 -> "FY24".
+        """
+        return f"FY{fiscal_year % 100:02d}"
+
+    def _month_label(self, fiscal_year: int, month: int) -> str:
+        """
+        Return the month name label (for example, "June").
+        """
+        return calendar.month_name[month]
+
+    def _format_cell(self, field_name: str, value):
+        """
+        Format a single cell for CSV using the existing per-field rules.
+        """
+        return self._format_value_for_csv(field_name, value)
+
+    def _csv_matrix_monthly(self) -> tuple[list[str], list[list[str | int | float]]]:
+        """
+        Build the CSV header and rows for a MONTHLY report.
+
+        MONTHLY CSV:
+        - Headers: ``["Metric", "<Month>"]`` (month name only)
+        - Rows: one per metric.
+        """
+        headers = ["Metric", self._month_label(self.fiscal_year, int(self.month))]
+
+        rows: list[list[str | int | float]] = []
+        for field_name, label in self.CSV_METRIC_COLUMNS:
+            value = getattr(self, field_name)
+            rows.append([label, self._format_cell(field_name, value)])
+        return headers, rows
+
+    def _quarter_month_specs(self) -> list[tuple[int, int]]:
+        """
+        Return [(year, month), ...] for months in this object's quarter.
+
+        Months are interpreted in the fiscal-year (FY) context.
+        """
+        fy = int(self.fiscal_year)
+        fq = int(self.fiscal_quarter)
+        if fq == 1:
+            return [(fy - 1, 10), (fy - 1, 11), (fy - 1, 12)]
+        if fq == 2:
+            return [(fy, 1), (fy, 2), (fy, 3)]
+        if fq == 3:
+            return [(fy, 4), (fy, 5), (fy, 6)]
+        return [(fy, 7), (fy, 8), (fy, 9)]
+
+    def _csv_matrix_quarterly(self) -> tuple[list[str], list[list[str | int | float]]]:
+        """
+        Build the CSV header and rows for a QUARTERLY report.
+
+        QUARTERLY CSV:
+
+        Headers:
+            ["Metric", "<M1>", "<M2>", "<M3>", "FY## Q# totals",
+             "FY## Lifetime totals"]
+
+        - Month columns include only months that have MONTHLY rows.
+        - Month labels are month names only ("June", "September", ...).
+
+        Lifetime for a quarter:
+            sum(all prior fiscal-year reports) + sum(quarters in current FY with
+            quarter < current quarter). Manual fields are blank if all inputs
+            are blank.
+        """
+        # Which months exist for this quarter?
+        specs = self._quarter_month_specs()
+        months_in_quarter = [m for (_y, m) in specs]
+        monthly_rows = (
+            KeyMetricsReport.objects.filter(
+                period_type=self.PeriodType.MONTHLY,
+                fiscal_year=self.fiscal_year,
+                month__in=months_in_quarter,
+            )
+            .only("fiscal_year", "month", *[f for f, _ in self.CSV_METRIC_COLUMNS])
+            .order_by("month")
+        )
+        month_map: dict[int, KeyMetricsReport] = {r.month: r for r in monthly_rows}
+        present_months = [m for m in months_in_quarter if m in month_map]
+        month_headers = [self._month_label(self.fiscal_year, m) for m in present_months]
+
+        fy_abbrev = self._fy_abbrev(self.fiscal_year)
+        quarter_totals_label = f"{fy_abbrev} Q{int(self.fiscal_quarter)} totals"
+        lifetime_totals_label = f"{fy_abbrev} Lifetime totals"
+
+        headers = [
+            "Metric",
+            *month_headers,
+            quarter_totals_label,
+            lifetime_totals_label,
+        ]
+
+        # Pre-fetch prior FY rows and prior quarters in current FY for lifetime calc
+        prior_fy_rows = KeyMetricsReport.objects.filter(
+            period_type=self.PeriodType.FISCAL_YEAR,
+            fiscal_year__lt=self.fiscal_year,
+        ).only(*[f for f, _ in self.CSV_METRIC_COLUMNS])
+
+        prior_quarter_rows = KeyMetricsReport.objects.filter(
+            period_type=self.PeriodType.QUARTERLY,
+            fiscal_year=self.fiscal_year,
+            fiscal_quarter__lt=self.fiscal_quarter,
+        ).only(*[f for f, _ in self.CSV_METRIC_COLUMNS])
+
+        rows: list[list[str | int | float]] = []
+        for field_name, label in self.CSV_METRIC_COLUMNS:
+            # Month cells
+            per_month_values: list[str | int | float] = []
+            quarter_numeric_sum = 0
+            saw_manual_value_in_quarter = False
+
+            for m in present_months:
+                mv = getattr(month_map[m], field_name, None)
+                cell = self._format_cell(field_name, mv)
+                per_month_values.append(cell)
+
+                if field_name in self.CALCULATED_FIELDS:
+                    quarter_numeric_sum += int(mv or 0)
+                else:
+                    if mv is not None:
+                        saw_manual_value_in_quarter = True
+                        quarter_numeric_sum += int(mv)
+
+            if field_name in self.CALCULATED_FIELDS:
+                quarter_total_cell: str | int = int(quarter_numeric_sum)
+            else:
+                quarter_total_cell = (
+                    int(quarter_numeric_sum) if saw_manual_value_in_quarter else ""
+                )
+
+            # Lifetime = prior FY totals + prior quarters this FY
+            lifetime_numeric_sum = 0
+            saw_manual_value_lifetime = False
+
+            # Prior FY rows
+            for fy_row in prior_fy_rows:
+                v = getattr(fy_row, field_name, None)
+                if field_name in self.CALCULATED_FIELDS:
+                    lifetime_numeric_sum += int(v or 0)
+                else:
+                    if v is not None:
+                        saw_manual_value_lifetime = True
+                        lifetime_numeric_sum += int(v)
+
+            # Prior quarters in current FY
+            for q_row in prior_quarter_rows:
+                v = getattr(q_row, field_name, None)
+                if field_name in self.CALCULATED_FIELDS:
+                    lifetime_numeric_sum += int(v or 0)
+                else:
+                    if v is not None:
+                        saw_manual_value_lifetime = True
+                        lifetime_numeric_sum += int(v)
+
+            if field_name in self.CALCULATED_FIELDS:
+                lifetime_total_cell: str | int = int(lifetime_numeric_sum)
+            else:
+                lifetime_total_cell = (
+                    int(lifetime_numeric_sum) if saw_manual_value_lifetime else ""
+                )
+
+            rows.append(
+                [label, *per_month_values, quarter_total_cell, lifetime_total_cell]
+            )
+
+        return headers, rows
+
+    def _csv_matrix_fiscal_year(
+        self,
+    ) -> tuple[list[str], list[list[str | int | float]]]:
+        """
+        Build the CSV header and rows for a FISCAL_YEAR report.
+
+        Headers:
+
+        - "Metric"
+        - "FY## Q1 totals" (if Q1 present)
+        - "Q2 totals" (if present)
+        - "Q3 totals" (if present)
+        - "Q4 totals" (if present)
+        - "FY## totals"
+        - "FY## Lifetime totals"
+
+        Lifetime for a fiscal year:
+            sum of all FY rows up to and including this FY. Manual fields are
+            blank if all inputs are blank.
+        """
+        # Quarter rows present in this FY
+        quarter_rows = (
+            KeyMetricsReport.objects.filter(
+                period_type=self.PeriodType.QUARTERLY,
+                fiscal_year=self.fiscal_year,
+            )
+            .only("fiscal_quarter", *[f for f, _ in self.CSV_METRIC_COLUMNS])
+            .order_by("fiscal_quarter")
+        )
+        quarter_map: dict[int, KeyMetricsReport] = {
+            r.fiscal_quarter: r for r in quarter_rows
+        }
+        present_quarters = [q for q in (1, 2, 3, 4) if q in quarter_map]
+
+        # Build quarter headers per spec
+        headers = ["Metric"]
+        if 1 in present_quarters:
+            headers.append(f"{self._fy_abbrev(self.fiscal_year)} Q1 totals")
+        for quarter_number in (2, 3, 4):
+            if quarter_number in present_quarters:
+                headers.append(f"Q{quarter_number} totals")
+
+        fiscal_year_abbrev = self._fy_abbrev(self.fiscal_year)
+        headers.extend(
+            [f"{fiscal_year_abbrev} totals", f"{fiscal_year_abbrev} Lifetime totals"]
+        )
+
+        # Order quarters to match headers
+        header_quarter_order: list[int] = []
+        if 1 in present_quarters:
+            header_quarter_order.append(1)
+        for quarter_number in (2, 3, 4):
+            if quarter_number in present_quarters:
+                header_quarter_order.append(quarter_number)
+
+        # Lifetime basis: all FY rows <= this FY
+        lifetime_fy_rows = KeyMetricsReport.objects.filter(
+            period_type=self.PeriodType.FISCAL_YEAR,
+            fiscal_year__lte=self.fiscal_year,
+        ).only(*[f for f, _ in self.CSV_METRIC_COLUMNS])
+
+        rows: list[list[str | int | float]] = []
+        for field_name, label in self.CSV_METRIC_COLUMNS:
+            per_quarter_values: list[str | int | float] = []
+            year_numeric_sum = 0
+            saw_manual_value_in_year = False
+
+            for q in header_quarter_order:
+                q_value = getattr(quarter_map[q], field_name, None)
+                cell = self._format_cell(field_name, q_value)
+                per_quarter_values.append(cell)
+
+                if field_name in self.CALCULATED_FIELDS:
+                    year_numeric_sum += int(q_value or 0)
+                else:
+                    if q_value is not None:
+                        saw_manual_value_in_year = True
+                        year_numeric_sum += int(q_value)
+
+            if field_name in self.CALCULATED_FIELDS:
+                year_total_cell: str | int = int(year_numeric_sum)
+            else:
+                year_total_cell = (
+                    int(year_numeric_sum) if saw_manual_value_in_year else ""
+                )
+
+            # Lifetime across FY rows <= current FY
+            lifetime_numeric_sum = 0
+            saw_manual_value_in_lifetime = False
+            for fy_row in lifetime_fy_rows:
+                v = getattr(fy_row, field_name, None)
+                if field_name in self.CALCULATED_FIELDS:
+                    lifetime_numeric_sum += int(v or 0)
+                else:
+                    if v is not None:
+                        saw_manual_value_in_lifetime = True
+                        lifetime_numeric_sum += int(v)
+
+            if field_name in self.CALCULATED_FIELDS:
+                lifetime_total_cell: str | int = int(lifetime_numeric_sum)
+            else:
+                lifetime_total_cell = (
+                    int(lifetime_numeric_sum) if saw_manual_value_in_lifetime else ""
+                )
+
+            rows.append(
+                [label, *per_quarter_values, year_total_cell, lifetime_total_cell]
+            )
+
+        return headers, rows
+
+    def render_csv(self) -> bytes:
+        """
+        Render this report as a CSV pivot.
+
+        Rows:
+            Metrics in CSV_METRIC_COLUMNS order.
+
+        Columns:
+            - MONTHLY:     Metric | <Month>
+            - QUARTERLY:   Metric | months present | FY## Q# totals |
+                            FY## Lifetime totals
+            - FISCAL_YEAR: Metric | ("FY## Q1 totals" if present) | Q2 totals |
+                            Q3 totals | Q4 totals | FY## totals |
+                            FY## Lifetime totals
+        """
+        if self.period_type == self.PeriodType.MONTHLY:
+            headers, rows = self._csv_matrix_monthly()
+        elif self.period_type == self.PeriodType.QUARTERLY:
+            headers, rows = self._csv_matrix_quarterly()
+        else:
+            headers, rows = self._csv_matrix_fiscal_year()
+
+        buffer = io.StringIO(newline="")
+        writer = csv.writer(buffer)
+        writer.writerow(headers)
+        writer.writerows(rows)
+        return buffer.getvalue().encode("utf-8")
+
 
 class UserProfileActivity(models.Model):
+    """
+    Per-campaign activity summary for a single user.
+
+    This model stores campaign-scoped counts such as how many assets a user
+    has touched and how many transcriptions or reviews they have performed.
+    """
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
     campaign = models.ForeignKey(
         Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
@@ -1713,6 +3100,13 @@ class UserProfileActivity(models.Model):
 
 
 class CampaignRetirementProgress(models.Model):
+    """
+    Track progress while retiring a campaign and deleting related content.
+
+    This model stores counts of projects, items, and assets processed for a
+    retiring campaign, along with a log of removal operations.
+    """
+
     campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE)
     project_total = models.IntegerField(default=0)
     projects_removed = models.IntegerField(default=0)
@@ -1728,8 +3122,15 @@ class CampaignRetirementProgress(models.Model):
     def __str__(self):
         return f"Removal progress for {self.campaign}"
 
+    class Meta:
+        verbose_name_plural = "campaign retirement progress"
+
 
 class TutorialCard(models.Model):
+    """
+    Through model for ordering cards within a CardFamily tutorial.
+    """
+
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
@@ -1739,6 +3140,13 @@ class TutorialCard(models.Model):
 
 
 class Guide(models.Model):
+    """
+    Guide entry grouping SimplePage or link-based content.
+
+    Guides back the sidebar and inline help sections that surface how-to
+    documentation for contributors.
+    """
+
     title = models.CharField(max_length=80)
     page = models.ForeignKey(
         SimplePage, on_delete=models.SET_NULL, blank=True, null=True
@@ -1754,20 +3162,24 @@ class Guide(models.Model):
 
 def validated_get_or_create(klass, **kwargs):
     """
-    Similar to :meth:`~django.db.models.query.QuerySet.get_or_create` but uses
-    the methodical get/save including a full_clean() call to avoid problems with
-    models which have validation requirements which are not completely enforced
-    by the underlying database.
+    Create or return an object using full model validation.
 
-    For example, with a django-model-translation we always want to go through
-    the setattr route rather than inserting into the database so translated
-    fields will be mapped according to the active language. This avoids normally
-    impossible situations such as creating a record where `title` is defined but
-    `title_en` is not.
+    This works like ``QuerySet.get_or_create()``, but always constructs the
+    object via attribute assignment and ``full_clean()`` before saving.
 
-    Originally from https://github.com/acdha/django-bittersweet
+    This is helpful for models with validation that is not fully enforced at
+    the database level, or when using integrations like django-model-translation
+    where fields must be set through normal attribute access.
+
+    Args:
+        klass: The model class to query or create.
+        **kwargs: Lookup fields, plus optional ``defaults`` dict, as in
+            ``get_or_create()``.
+
+    Returns:
+        tuple[Model, bool]: A ``(obj, created)`` tuple like
+        ``get_or_create()``.
     """
-
     defaults = kwargs.pop("defaults", {})
 
     try:
@@ -1785,6 +3197,14 @@ def validated_get_or_create(klass, **kwargs):
 
 
 class NextAsset(models.Model):
+    """
+    Abstract base class for "next asset" queues.
+
+    These lightweight records cache the next transcribable or reviewable
+    assets selected for a campaign or topic, so they can be fetched quickly
+    without recomputing complex queries.
+    """
+
     id = models.UUIDField(  # noqa: A003
         primary_key=True, default=uuid.uuid4, editable=False
     )
@@ -1803,6 +3223,10 @@ class NextAsset(models.Model):
 
 
 class NextTranscribableAsset(NextAsset):
+    """
+    Abstract base for cached transcribable asset queues.
+    """
+
     transcription_status = models.CharField(
         editable=False,
         max_length=20,
@@ -1816,6 +3240,13 @@ class NextTranscribableAsset(NextAsset):
 
 
 class NextReviewableAsset(NextAsset):
+    """
+    Abstract base for cached reviewable asset queues.
+
+    Stores the IDs of prior transcribers to help avoid assigning reviewers
+    to assets they have already worked on.
+    """
+
     transcriber_ids = ArrayField(
         base_field=models.IntegerField(),
         blank=True,
@@ -1827,9 +3258,27 @@ class NextReviewableAsset(NextAsset):
 
 
 class NextCampaignAssetManager(models.Manager):
+    """
+    Base manager for "next asset" campaign queues.
+
+    Subclasses should set ``target_count`` to control how many entries
+    should be prepopulated per campaign.
+    """
+
     target_count = None  # Override in subclass
 
     def needed_for_campaign(self, campaign_id, target_count=None):
+        """
+        Return how many additional entries are needed for a campaign.
+
+        Args:
+            campaign_id: The campaign primary key.
+            target_count: Optional override for the per-campaign queue size.
+                If omitted, ``self.target_count`` is used.
+
+        Returns:
+            int: Number of additional entries required to reach the target.
+        """
         if target_count is None:
             if self.target_count is None:
                 raise NotImplementedError(
@@ -1843,9 +3292,27 @@ class NextCampaignAssetManager(models.Manager):
 
 
 class NextTopicAssetManager(models.Manager):
+    """
+    Base manager for "next asset" topic queues.
+
+    Subclasses should set ``target_count`` to control how many entries
+    should be prepopulated per topic.
+    """
+
     target_count = None  # Override in subclass
 
     def needed_for_topic(self, topic_id, target_count=None):
+        """
+        Return how many additional entries are needed for a topic.
+
+        Args:
+            topic_id: The topic primary key.
+            target_count: Optional override for the per-topic queue size.
+                If omitted, ``self.target_count`` is used.
+
+        Returns:
+            int: Number of additional entries required to reach the target.
+        """
         if target_count is None:
             if self.target_count is None:
                 raise NotImplementedError(
@@ -1859,11 +3326,11 @@ class NextTopicAssetManager(models.Manager):
 
 
 class NextTranscribableCampaignAssetManager(NextCampaignAssetManager):
-    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+    target_count = getattr(settings, "NEXT_TRANSCRIBABLE_ASSET_COUNT", 100)
 
 
 class NextTranscribableTopicAssetManager(NextTopicAssetManager):
-    target_count = getattr(settings, "NEXT_TRANSCRIBABE_ASSET_COUNT", 100)
+    target_count = getattr(settings, "NEXT_TRANSCRIBABLE_ASSET_COUNT", 100)
 
 
 class NextReviewableCampaignAssetManager(NextCampaignAssetManager):
@@ -1875,6 +3342,10 @@ class NextReviewableTopicAssetManager(NextTopicAssetManager):
 
 
 class NextTranscribableCampaignAsset(NextTranscribableAsset):
+    """
+    Cached transcribable asset entry for a campaign-wide queue.
+    """
+
     asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -1886,6 +3357,10 @@ class NextTranscribableCampaignAsset(NextTranscribableAsset):
 
 
 class NextTranscribableTopicAsset(NextTranscribableAsset):
+    """
+    Cached transcribable asset entry for a topic-scoped queue.
+    """
+
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
@@ -1898,6 +3373,10 @@ class NextTranscribableTopicAsset(NextTranscribableAsset):
 
 
 class NextReviewableCampaignAsset(NextReviewableAsset):
+    """
+    Cached reviewable asset entry for a campaign-wide queue.
+    """
+
     asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -1912,6 +3391,10 @@ class NextReviewableCampaignAsset(NextReviewableAsset):
 
 
 class NextReviewableTopicAsset(NextReviewableAsset):
+    """
+    Cached reviewable asset entry for a topic-scoped queue.
+    """
+
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
 
@@ -1927,6 +3410,13 @@ class NextReviewableTopicAsset(NextReviewableAsset):
 
 
 class ProjectTopic(models.Model):
+    """
+    Link table connecting projects and topics with optional status filtering.
+
+    url_filter can be used to restrict which asset transcription status is
+    shown when browsing the project through a given topic.
+    """
+
     project = models.ForeignKey("Project", on_delete=models.CASCADE)
     topic = models.ForeignKey("Topic", on_delete=models.CASCADE)
 

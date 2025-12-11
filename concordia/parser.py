@@ -1,12 +1,13 @@
 import html
-import logging
 from html.parser import HTMLParser
 
 import defusedxml.ElementTree as ET
 import requests
 from django.core.cache import cache
 
-logger = logging.getLogger(__name__)
+from concordia.logging import ConcordiaLogger
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 class OGImageParser(HTMLParser):
@@ -32,11 +33,15 @@ def extract_og_image(url):
         parser.feed(html.unescape(response.text))
         cache.set(cache_key, parser.og_image, timeout=24 * 60 * 60)
         return parser.og_image
-    except requests.RequestException as e:
-        logger.warning(
+    except requests.RequestException:
+        structured_logger.warning(
             "Failed to fetch image for blog post: %s",
-            e,
-            exc_info=True,
+            event_code="post_image_fetch_failed",
+            reason=(
+                "Failed to fetch Open Graph image from the "
+                "given URL due to a network or HTTP error"
+            ),
+            reason_code="ogi_req_fail_fetch",
         )
 
 
@@ -59,32 +64,36 @@ def fetch_blog_posts():
         )
         response.raise_for_status()
         root = ET.fromstring(response.content)
-    except requests.exceptions.HTTPError as e:
-        logger.warning(
+    except requests.exceptions.HTTPError:
+        structured_logger.warning(
             "HTTP error when fetching blog posts, but handled: %s",
-            e,
-            exc_info=True,
+            event_code="handled_post_fetch_http_error",
+            reason="The RSS feed returned an HTTP error response (e.g. 4xx or 5xx)",
+            reason_code="blog_http_error",
         )
         return []
-    except requests.exceptions.ConnectionError as e:
-        logger.warning(
+    except requests.exceptions.ConnectionError:
+        structured_logger.warning(
             "Connection error when fetching blog posts: %s",
-            e,
-            exc_info=True,
+            event_code="blog_post_fetch_connection_error",
+            reason="Network connection failed while trying to reach the RSS feed.",
+            reason_code="blog_conn_error",
         )
         return []
-    except requests.exceptions.Timeout as e:
-        logger.warning(
+    except requests.exceptions.Timeout:
+        structured_logger.warning(
             "Timeout when fetching blog posts: %s",
-            e,
-            exc_info=True,
+            event_code="blog_post_fetch_timeout",
+            reason="The request to fetch RSS feed exceeded the timeout threshold.",
+            reason_code="blog_timeout",
         )
         return []
-    except requests.exceptions.RequestException as e:
-        logger.warning(
+    except requests.exceptions.RequestException:
+        structured_logger.warning(
             "Request exception when fetching blog posts: %s",
-            e,
-            exc_info=True,
+            event_code="blog_post_fetch_request_exception",
+            reason="General request failure when fetching or parsing RSS feed content.",
+            reason_code="blog_req_error",
         )
         return []
 

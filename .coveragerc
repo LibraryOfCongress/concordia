@@ -24,3 +24,4 @@ omit =
     */tests/*
     */settings*.py
     */static/*
+    concordia/api/*

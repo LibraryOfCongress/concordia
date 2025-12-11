@@ -34,8 +34,13 @@
         {% endblock prefetch %}
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         {% block head_content %}
-            {% include "fragments/import-map.html" %}
+            {% if LOCAL_DEV %}
+                <script type="module" src="http://localhost:5173/static/src/main.js"></script>
+            {% else %}
+                <script type="module" src="{% static 'js/main.js' %}"></script>
+            {% endif %}
         {% endblock head_content %}
+        {% block extra_scripts %}{% endblock %}
         {% comment %}
     Adobe's tag manager requires this script to be placed at the top even though it's bad
 for performance:
@@ -278,8 +283,6 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
             window.STATIC_URL = "{% get_static_prefix %}";
         </script>
 
-        {% include "fragments/common-scripts.html" %}
-
         {% block body_scripts %}{% endblock body_scripts %}
 
         <script type="text/javascript">
@@ -291,41 +294,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                 _satellite.pageBottom();
             }
         </script>
-
-        <script type="module">
-            import { setTutorialHeight } from "{% static 'js/modules/quick-tips.js' %}";
-
-            function clearCache() {
-                for(var i in localStorage) {
-                    if (i.startsWith("campaign-")) {
-                        localStorage.removeItem(i);
-                    }
-                }
-            }
-
-            if (typeof(Storage) !== "undefined") {
-                {% if campaign %}
-                    const keyName = "campaign-{{ campaign.slug }}";
-                    if (keyName) {
-                        const campaign = localStorage.getItem(keyName);
-                        if (!campaign) {
-                            {% if not user.is_authenticated %}
-                                clearCache();
-                            {% endif %}
-                            {% if asset %}
-                                setTutorialHeight();
-                                $(function () {
-                                    $('#tutorial-popup').modal('show');
-                                    $('#tutorial-popup').trigger('shown-on-load');
-                                })
-                                localStorage.setItem(keyName, "true");
-                            {% endif %}
-                        }
-                    }
-                {% elif not user.is_authenticated %}
-                    clearCache();
-                {% endif %}
-            }
-        </script>
+        <div id="tutorial-data" aria-hidden="true" hidden data-campaign-slug="{{ campaign.slug }}" data-user-authenticated="{{ user.is_authenticated|yesno:"true,false" }}" data-has-asset="{{ asset|yesno:"true,false" }}">
+        </div>
     </body>
 </html>
