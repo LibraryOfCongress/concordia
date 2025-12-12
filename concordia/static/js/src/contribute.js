@@ -1,3 +1,4 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
 import {Modal} from 'bootstrap';
 import {selectLanguage} from './ocr.js';
 import {reserveAssetForEditing} from './asset-reservation.js';
@@ -197,7 +198,10 @@ function setupPage() {
     var $ocrSection = $('#ocr-section');
     var $ocrForm = $('#ocr-transcription-form');
     var $ocrModal = $('#ocr-transcription-modal');
-    var $languageModal = $('#language-selection-modal');
+    var languageModalElement = document.getElementById(
+        'language-selection-modal',
+    );
+    var languageModal = Modal.getOrCreateInstance(languageModalElement);
     var $ocrLoading = $('#ocr-loading');
     var rollbackButton = document.getElementById(
         'rollback-transcription-button',
@@ -751,7 +755,7 @@ function setupPage() {
     if ($ocrForm) {
         $ocrForm
             .on('submit', function () {
-                $languageModal.modal('hide');
+                languageModal.hide();
                 $ocrLoading.removeAttr('hidden');
             })
             .on('form-submit-success', function (event, extra) {
