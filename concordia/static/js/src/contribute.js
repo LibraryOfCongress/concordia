@@ -52,7 +52,9 @@ $(document).on('keydown', function (event) {
         !event.target.tagName.match(/(INPUT|TEXTAREA)/i) // eslint-disable-line  unicorn/prefer-regexp-test, unicorn/better-regex
     ) {
         // Either the F1 or ? keys were pressed outside of a text field so we'll show help:
-        $('#keyboard-help-modal').modal('show');
+        Modal.getOrCreateInstance(
+            document.getElementById('keyboard-help-modal'),
+        ).show();
         return false;
     } else if (event.which == 73 && event.ctrlKey) {
         // Control-I == switch to the image viewer
