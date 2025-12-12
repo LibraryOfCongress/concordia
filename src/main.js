@@ -25,6 +25,18 @@ OpenSeadragon.setString(
     "{% static 'openseadragon/build/openseadragon/images/' %}",
 );
 
+if (window.OpenSeadragon?.Filters && !OpenSeadragon.Filters) {
+    OpenSeadragon.Filters = window.OpenSeadragon.Filters;
+}
+
+if (
+    window.OpenSeadragon?.Viewer?.prototype.setFilterOptions &&
+    !OpenSeadragon.Viewer.prototype.setFilterOptions
+) {
+    OpenSeadragon.Viewer.prototype.setFilterOptions =
+        window.OpenSeadragon.Viewer.prototype.setFilterOptions;
+}
+
 if (setTutorialHeight) {
     window.setTutorialHeight = setTutorialHeight;
 }
