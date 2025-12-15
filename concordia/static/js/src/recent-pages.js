@@ -11,8 +11,7 @@ export function getPages(queryString = window.location.search) {
             recentPages.innerHTML = data.content;
             $('#recent-pages').html(recentPages);
         },
-        error: function (xhr, status, error) {
-            console.error('getPages error:', status, error);
+        error: function () {
             $('#recent-pages').html('<p>Failed to load pages.</p>');
         },
     });
@@ -26,4 +25,12 @@ $(document).on('submit', '.date-filter', function (event) {
     const parameters = new URLSearchParams(new FormData(this));
 
     getPages('?' + parameters.toString());
+});
+
+$(document).on('click', '#current-filters a', function (event) {
+    event.preventDefault();
+
+    const href = $(this).attr('href'); // e.g. "?tab=recent"
+
+    getPages(href);
 });
