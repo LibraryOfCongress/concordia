@@ -14,8 +14,9 @@ function selectLanguage() {
     langModal.show();
 }
 
-document
-    .getElementById('select-language-button')
-    .addEventListener('click', selectLanguage);
+const selectLanguageButton = document.getElementById('select-language-button');
+if (selectLanguageButton) {
+    selectLanguageButton.addEventListener('click', selectLanguage);
+}
 
 export {selectLanguage};
