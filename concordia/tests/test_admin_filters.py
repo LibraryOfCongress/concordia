@@ -4,9 +4,9 @@ from django.utils import timezone
 
 from concordia.admin import (
     CardAdmin,
+    HelpfulLinkAdmin,
     ItemAdmin,
     ProjectAdmin,
-    ResourceAdmin,
     SiteReportAdmin,
     TranscriptionAdmin,
 )
@@ -26,10 +26,10 @@ from concordia.admin_site import ConcordiaAdminSite
 from concordia.models import (
     Campaign,
     Card,
+    HelpfulLink,
     Item,
     NextTranscribableCampaignAsset,
     Project,
-    Resource,
     SiteReport,
     Transcription,
 )
@@ -38,9 +38,9 @@ from concordia.tests.utils import (
     create_asset,
     create_card,
     create_card_family,
+    create_helpful_link,
     create_item,
     create_project,
-    create_resource,
     create_site_report,
     create_topic,
     create_transcription,
@@ -218,19 +218,19 @@ class TranscriptionFilterTests(CreateTestUsers, TestCase):
 class TopicListFilterTests(TestCase):
     def setUp(self):
         self.topic = create_topic()
-        self.resource1 = create_resource(topic=self.topic)
-        self.resource2 = create_resource()
+        self.helpful_link_1 = create_helpful_link(topic=self.topic)
+        self.helpful_link_2 = create_helpful_link()
 
-    def test_resource_topic_list_filter(self):
-        topic_filter = TopicListFilter(None, {}, Resource, ResourceAdmin)
-        resources = topic_filter.queryset(None, Resource.objects.all())
-        self.assertEqual(resources.count(), 2)
+    def test_helpfullink_topic_list_filter(self):
+        topic_filter = TopicListFilter(None, {}, HelpfulLink, HelpfulLinkAdmin)
+        helpful_links = topic_filter.queryset(None, HelpfulLink.objects.all())
+        self.assertEqual(helpful_links.count(), 2)
 
         topic_filter = TopicListFilter(
-            None, {"topic__id__exact": (self.topic.id,)}, Resource, ResourceAdmin
+            None, {"topic__id__exact": (self.topic.id,)}, HelpfulLink, HelpfulLinkAdmin
         )
-        resources = topic_filter.queryset(None, Resource.objects.all())
-        self.assertEqual(resources.count(), 1)
+        helpful_links = topic_filter.queryset(None, HelpfulLink.objects.all())
+        self.assertEqual(helpful_links.count(), 1)
 
 
 class NextAssetCampaignListFilterTests(TestCase):

@@ -12,13 +12,13 @@ from concordia.models import (
     Card,
     CardFamily,
     CarouselSlide,
+    ConcordiaFile,
     Guide,
+    HelpfulLink,
     Item,
     MediaType,
     Project,
     ResearchCenter,
-    Resource,
-    ResourceFile,
     SimplePage,
     SiteReport,
     Tag,
@@ -270,20 +270,20 @@ def create_guide(*, do_save=True, **kwargs):
     return guide
 
 
-def create_resource(*, title="Test Resource", do_save=True, **kwargs):
-    resource = Resource(title=title, **kwargs)
+def create_helpful_link(*, title="Test Helpful Link", do_save=True, **kwargs):
+    link = HelpfulLink(title=title, **kwargs)
     if do_save:
-        resource.save()
-    return resource
+        link.save()
+    return link
 
 
-def create_resource_file(
-    *, name="Test Resource File", resource="file.pdf", do_save=True, **kwargs
+def create_concordia_file(
+    *, name="Test Concordia File", uploaded_file="file.pdf", do_save=True, **kwargs
 ):
-    resource_file = ResourceFile(name=name, resource=resource, **kwargs)
+    concordia_file = ConcordiaFile(name=name, uploaded_file=uploaded_file, **kwargs)
     if do_save:
-        resource_file.save()
-    return resource_file
+        concordia_file.save()
+    return concordia_file
 
 
 def create_user_profile_activity(

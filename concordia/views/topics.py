@@ -140,7 +140,7 @@ class TopicDetailView(APIDetailView):
         Serialize context for API consumers.
 
         Extends the base serializer with a `related_links` list derived from the
-        topic's associated resources.
+        topic's associated helpful links.
 
         Args:
             context (dict[str, object]): Fully built template context.
@@ -155,8 +155,8 @@ class TopicDetailView(APIDetailView):
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
             {"title": title, "url": url}
-            for title, url, sequence in self.object.resource_set.values_list(
-                "title", "resource_url"
+            for title, url, sequence in self.object.helpfullink_set.values_list(
+                "title", "link_url"
             )
         ]
         return ctx
