@@ -222,7 +222,7 @@ class SiteReportCampaignListFilter(SiteReportCampaignListBaseFilter):
         return Campaign.objects.values_list("id", "title")
 
 
-class ResourceCampaignListFilter(CampaignListFilter):
+class HelpfulLinkCampaignListFilter(CampaignListFilter):
     title = "Campaign Sorted"
     parameter_name = "campaign__id__exact"
     status_filter_parameter = "campaign__status"
@@ -337,7 +337,7 @@ class ProjectCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
 
 
-class ResourceCampaignStatusListFilter(CampaignStatusListFilter):
+class HelpfulLinkCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
 
 

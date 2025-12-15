@@ -35,7 +35,9 @@ from ..models import (
     Card,
     CardFamily,
     CarouselSlide,
+    ConcordiaFile,
     Guide,
+    HelpfulLink,
     Item,
     KeyMetricsReport,
     NextReviewableCampaignAsset,
@@ -44,8 +46,6 @@ from ..models import (
     NextTranscribableTopicAsset,
     Project,
     ProjectTopic,
-    Resource,
-    ResourceFile,
     SimplePage,
     SiteReport,
     Tag,
@@ -74,6 +74,8 @@ from .filters import (
     AssetCampaignStatusListFilter,
     AssetProjectListFilter,
     CardCampaignListFilter,
+    HelpfulLinkCampaignListFilter,
+    HelpfulLinkCampaignStatusListFilter,
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter,
@@ -83,8 +85,6 @@ from .filters import (
     ProjectCampaignListFilter,
     ProjectCampaignStatusListFilter,
     RejectedFilter,
-    ResourceCampaignListFilter,
-    ResourceCampaignStatusListFilter,
     SiteReportCampaignListFilter,
     SiteReportSortedCampaignListFilter,
     SubmittedFilter,
@@ -528,15 +528,15 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         )
 
 
-@admin.register(Resource)
-class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    list_display = ("campaign", "topic", "sequence", "title", "resource_url")
+@admin.register(HelpfulLink)
+class HelpfulLinkAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    list_display = ("campaign", "topic", "sequence", "title", "link_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (
-        "resource_type",
-        ResourceCampaignStatusListFilter,
+        "link_type",
+        HelpfulLinkCampaignStatusListFilter,
         TopicListFilter,
-        ResourceCampaignListFilter,
+        HelpfulLinkCampaignListFilter,
     )
 
     def formfield_for_foreignkey(
@@ -564,23 +564,23 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-@admin.register(ResourceFile)
-class ResourceFileAdmin(admin.ModelAdmin):
+@admin.register(ConcordiaFile)
+class ConcordiaFileAdmin(admin.ModelAdmin):
     # Bulk delete bypasses file deletion, so we do not want any bulk actions
     actions = None
-    list_display = ("name", "resource_url", "updated_on")
-    readonly_fields = ("resource_url", "updated_on")
+    list_display = ("name", "file_url", "updated_on")
+    readonly_fields = ("file_url", "updated_on")
 
-    def resource_url(self, obj: ResourceFile) -> str:
+    def file_url(self, obj: ConcordiaFile) -> str:
         """
-        Return the public URL for this resource without any query string.
+        Return the public URL for this file without any query string.
 
         Boto3 storage backends often append query parameters that are not
         needed for public files. This helper strips them so the URL is
         easier to copy and read.
 
         Args:
-            obj (ResourceFile): Resource file instance.
+            obj (ConcordiaFile): File instance.
 
         Returns:
             str: Public URL without query parameters.
@@ -590,12 +590,12 @@ class ResourceFileAdmin(admin.ModelAdmin):
         # do not want the querystring, so we remove it.
         # This looks hacky, but seems to be the least hacky way to do
         # this without a third-party library.
-        return obj.resource.url.split("?")[0]
+        return obj.uploaded_file.url.split("?")[0]
 
     def get_fields(
         self,
         request: HttpRequest,
-        obj: ResourceFile | None = None,
+        obj: ConcordiaFile | None = None,
     ) -> tuple[str, ...]:
         """
         Control which fields are shown on the change and add views.
@@ -605,7 +605,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
         Args:
             request (HttpRequest): Current admin request.
-            obj (ResourceFile | None): Resource file being edited, or
+            obj (ConcordiaFile | None): File being edited, or
                 `None` when adding a new one.
 
         Returns:
@@ -614,11 +614,11 @@ class ResourceFileAdmin(admin.ModelAdmin):
         if obj:
             return (
                 "name",
-                "resource_url",
-                "resource",
+                "file_url",
+                "uploaded_file",
                 "updated_on",
             )
-        return ("name", "resource")
+        return ("name", "uploaded_file")
 
 
 class TopicProjectInline(admin.TabularInline):

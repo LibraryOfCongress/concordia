@@ -16,13 +16,13 @@ from concordia.models import (
     Campaign,
     CardFamily,
     ConcordiaUser,
+    HelpfulLink,
     KeyMetricsReport,
     MediaType,
     NextReviewableCampaignAsset,
     NextReviewableTopicAsset,
     NextTranscribableCampaignAsset,
     NextTranscribableTopicAsset,
-    Resource,
     SiteReport,
     Topic,
     Transcription,
@@ -46,10 +46,10 @@ from .utils import (
     create_card,
     create_card_family,
     create_carousel_slide,
+    create_concordia_file,
     create_guide,
+    create_helpful_link,
     create_item,
-    create_resource,
-    create_resource_file,
     create_simple_page,
     create_tag,
     create_tag_collection,
@@ -674,65 +674,67 @@ class CardFamilyTestCase(TestCase):
             self.assertEqual(mocked_handler.call_count, 1)
 
 
-class ResourceTestCase(TestCase):
+class HelpfulLinkTestCase(TestCase):
     def setUp(self):
-        self.resource = create_resource()
+        self.helpful_link = create_helpful_link()
 
     def test_str(self):
-        self.assertEqual(self.resource.title, str(self.resource))
+        self.assertEqual(self.helpful_link.title, str(self.helpful_link))
 
     def test_queryset(self):
-        self.assertEqual(Resource.objects.related_links().count(), 1)
-        create_resource(
-            resource_type=Resource.ResourceType.COMPLETED_TRANSCRIPTION_LINK
+        self.assertEqual(HelpfulLink.objects.related_links().count(), 1)
+        create_helpful_link(
+            link_type=HelpfulLink.HelpfulLinkType.COMPLETED_TRANSCRIPTION_LINK
         )
-        self.assertEqual(Resource.objects.completed_transcription_links().count(), 1)
+        self.assertEqual(HelpfulLink.objects.completed_transcription_links().count(), 1)
 
 
-class ResourceFileTestCase(TestCase):
+class ConcordiaFileTestCase(TestCase):
     def setUp(self):
-        self.resource_file = create_resource_file()
+        self.concordia_file = create_concordia_file()
 
     def test_str(self):
-        self.assertEqual(self.resource_file.name, str(self.resource_file))
+        self.assertEqual(self.concordia_file.name, str(self.concordia_file))
 
     def test_delete(self):
         with (
-            mock.patch.object(self.resource_file.resource, "delete") as delete_mock,
             mock.patch.object(
-                self.resource_file.resource, "storage", autospec=True
+                self.concordia_file.uploaded_file, "delete"
+            ) as delete_mock,
+            mock.patch.object(
+                self.concordia_file.uploaded_file, "storage", autospec=True
             ) as storage_mock,
         ):
             storage_mock.exists.return_value = True
-            self.resource_file.delete()
+            self.concordia_file.delete()
             self.assertTrue(delete_mock.called)
 
-        resource_file2 = create_resource_file()
+        concordia_file2 = create_concordia_file()
         with (
-            mock.patch.object(resource_file2.resource, "delete") as delete_mock,
+            mock.patch.object(concordia_file2.uploaded_file, "delete") as delete_mock,
             mock.patch.object(
-                resource_file2.resource, "storage", autospec=True
+                concordia_file2.uploaded_file, "storage", autospec=True
             ) as storage_mock,
         ):
             storage_mock.exists.return_value = False
-            resource_file2.delete()
+            concordia_file2.delete()
             self.assertFalse(delete_mock.called)
 
-    def test_resource_file_upload_path(self):
+    def test_concordia_file_upload_path(self):
         current_year = date.today().year
 
-        path = resource_file_upload_path(self.resource_file, "SHOULDNTBEUSED.PDF")
+        path = resource_file_upload_path(self.concordia_file, "SHOULDNTBEUSED.PDF")
         self.assertEqual(path, "file.pdf")
 
-        self.resource_file.path = None
+        self.concordia_file.path = None
 
-        path = resource_file_upload_path(self.resource_file, "TEST.PDF")
+        path = resource_file_upload_path(self.concordia_file, "TEST.PDF")
         self.assertEqual(path, f"cm-uploads/resources/{current_year}/test.pdf")
 
-        path = resource_file_upload_path(self.resource_file, "TEST%%s.PDF")
+        path = resource_file_upload_path(self.concordia_file, "TEST%%s.PDF")
         self.assertEqual(path, f"cm-uploads/resources/{current_year}/test%s.pdf")
 
-        path = resource_file_upload_path(self.resource_file, "%%YTEST.PDF")
+        path = resource_file_upload_path(self.concordia_file, "%%YTEST.PDF")
         self.assertEqual(path, f"cm-uploads/resources/{current_year}/%ytest.pdf")
 
 
