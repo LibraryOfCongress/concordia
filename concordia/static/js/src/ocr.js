@@ -1,10 +1,22 @@
-import $ from 'jquery';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import {Modal} from 'bootstrap';
 
 function selectLanguage() {
-    $('#ocr-transcription-modal').modal('hide');
-    $('#language-selection-modal').modal('show');
+    const ocrModalElement = document.getElementById('ocr-transcription-modal');
+    const langModalElement = document.getElementById(
+        'language-selection-modal',
+    );
+
+    const ocrModal = Modal.getOrCreateInstance(ocrModalElement);
+    const langModal = Modal.getOrCreateInstance(langModalElement);
+
+    ocrModal.hide();
+    langModal.show();
 }
 
-$('#select-language-button').on('click', selectLanguage);
+const selectLanguageButton = document.getElementById('select-language-button');
+if (selectLanguageButton) {
+    selectLanguageButton.addEventListener('click', selectLanguage);
+}
 
 export {selectLanguage};
