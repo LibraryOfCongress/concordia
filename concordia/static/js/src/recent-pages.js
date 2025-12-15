@@ -7,13 +7,23 @@ export function getPages(queryString = window.location.search) {
         dataType: 'json',
         success: function (data) {
             var recentPages = document.createElement('div');
-            recentPages.setAttribute('class', 'col-md');
+            recentPages.className = 'col-md';
             recentPages.innerHTML = data.content;
             $('#recent-pages').html(recentPages);
+        },
+        error: function (xhr, status, error) {
+            console.error('getPages error:', status, error);
+            $('#recent-pages').html('<p>Failed to load pages.</p>');
         },
     });
 }
 
-$('#recent-tab').on('click', function () {
-    getPages();
+$('#recent-tab').on('click', () => getPages(window.location.search));
+
+$(document).on('submit', '.date-filter', function (event) {
+    event.preventDefault();
+
+    const parameters = new URLSearchParams(new FormData(this));
+
+    getPages('?' + parameters.toString());
 });
