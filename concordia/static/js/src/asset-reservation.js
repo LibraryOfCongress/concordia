@@ -94,25 +94,27 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
 }
 
 window.addEventListener('beforeunload', function () {
-    let payload = {
-        release: true,
-        csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
-    };
+    if (assetReservationData.reserveAssetUrl) {
+        let payload = {
+            release: true,
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+        };
 
-    // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
-    if ('sendBeacon' in navigator) {
-        navigator.sendBeacon(
-            assetReservationData.reserveAssetUrl,
-            new Blob([$.param(payload)], {
-                type: 'application/x-www-form-urlencoded',
-            }),
-        );
-    } else {
-        $.ajax({
-            url: assetReservationData.reserveAssetUrl,
-            type: 'POST',
-            data: payload,
-        });
+        // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
+        if ('sendBeacon' in navigator) {
+            navigator.sendBeacon(
+                assetReservationData.reserveAssetUrl,
+                new Blob([$.param(payload)], {
+                    type: 'application/x-www-form-urlencoded',
+                }),
+            );
+        } else {
+            $.ajax({
+                url: assetReservationData.reserveAssetUrl,
+                type: 'POST',
+                data: payload,
+            });
+        }
     }
 });
 
