@@ -91,8 +91,10 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 });
             }
         });
+}
 
-    window.addEventListener('beforeunload', function () {
+window.addEventListener('beforeunload', function () {
+    if (assetReservationData.reserveAssetUrl) {
         let payload = {
             release: true,
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
@@ -101,16 +103,20 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
         if ('sendBeacon' in navigator) {
             navigator.sendBeacon(
-                reservationURL,
+                assetReservationData.reserveAssetUrl,
                 new Blob([$.param(payload)], {
                     type: 'application/x-www-form-urlencoded',
                 }),
             );
         } else {
-            $.ajax({url: reservationURL, type: 'POST', data: payload});
+            $.ajax({
+                url: assetReservationData.reserveAssetUrl,
+                type: 'POST',
+                data: payload,
+            });
         }
-    });
-}
+    }
+});
 
 function reserveAssetForEditing() {
     if (assetReservationData.reserveAssetUrl) {
