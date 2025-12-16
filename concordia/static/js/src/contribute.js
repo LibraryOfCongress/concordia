@@ -203,7 +203,10 @@ function setupPage() {
     var languageModalElement = document.getElementById(
         'language-selection-modal',
     );
-    var languageModal = Modal.getOrCreateInstance(languageModalElement);
+    var languageModal;
+    if (languageModalElement) {
+        languageModal = Modal.getOrCreateInstance(languageModalElement);
+    }
     var $ocrLoading = $('#ocr-loading');
     var rollbackButton = document.getElementById(
         'rollback-transcription-button',
