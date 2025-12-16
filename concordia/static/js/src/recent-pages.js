@@ -3,7 +3,7 @@ import $ from 'jquery';
 export function getPages(queryString = window.location.search) {
     $.ajax({
         type: 'GET',
-        url: '/account/get_pages/' + queryString,
+        url: '/account/get_pages' + queryString,
         dataType: 'json',
         success: function (data) {
             var recentPages = document.createElement('div');
@@ -17,7 +17,7 @@ export function getPages(queryString = window.location.search) {
     });
 }
 
-$('#recent-tab').on('click', () => getPages(window.location.search));
+$(document).on('click', '#recent-tab', () => getPages(window.location.search));
 
 $(document).on('submit', '.date-filter', function (event) {
     event.preventDefault();
@@ -56,7 +56,7 @@ $(document).on('click', '.dropdown-menu a.dropdown-item', function (event) {
 
     for (const [key, value] of linkParameters.entries()) {
         if (key.startsWith('delete:')) {
-            currentParameters.delete(key.replace('delete', ''));
+            currentParameters.delete(key.replace('delete:', ''));
         } else {
             currentParameters.set(key, value);
         }
