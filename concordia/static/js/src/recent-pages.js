@@ -1,18 +1,28 @@
 import $ from 'jquery';
 
+let currentRequest;
+
 export function getPages(queryString = window.location.search) {
-    $.ajax({
+    if (currentRequest) {
+        // Cancel previous before starting a new one
+        currentRequest.abort();
+    }
+    currentRequest = $.ajax({
         type: 'GET',
         url: '/account/get_pages' + queryString,
         dataType: 'json',
         success: function (data) {
             var recentPages = document.createElement('div');
             recentPages.className = 'col-md';
-            recentPages.innerHTML = data.content;
+            recentPages.innerHTML = data.content; // render data into the DOM
             $('#recent-pages').html(recentPages);
         },
         error: function () {
             $('#recent-pages').html('<p>Failed to load pages.</p>');
+        },
+        complete: function () {
+            // clear the reference
+            currentRequest = undefined;
         },
     });
 }
