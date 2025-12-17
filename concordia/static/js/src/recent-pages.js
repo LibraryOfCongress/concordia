@@ -45,7 +45,7 @@ function finalizePageUpdate(currentParameters) {
     history.replaceState(undefined, '', newQuery + window.location.hash);
 }
 
-$(document).on('click', '.dropdown-menu a.dropdown-item', function (event) {
+$(document).on('click', '.dropdown-menu a.filter-link', function (event) {
     event.preventDefault();
 
     const href = $(this).attr('href') || '';
