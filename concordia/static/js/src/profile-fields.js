@@ -11,21 +11,25 @@ window.sortDateDescending = function () {
     urlParameters.set('order_by', 'date-descending');
     getPages('?' + urlParameters.toString());
 };
-$(document).ready(function () {
-    let profilePage = document.getElementById('profile-page');
-    let activeTab = profilePage?.dataset.activeTab;
-    if (activeTab === 'recent') {
-        getPages();
-    }
-    if (window.location.hash != '') {
-        $('a[href="' + window.location.hash + '"]').click();
-        if (window.location.hash == '#recent') {
+
+if (!window._profileFieldsInitialized) {
+    window._profileFieldsInitialized = true;
+
+    $(document).ready(function () {
+        let profilePage = document.getElementById('profile-page');
+        let activeTab = profilePage?.dataset.activeTab;
+        if (activeTab === 'recent') {
             getPages();
         }
-    }
-});
-// Disable form submissions, if there are invalid fields
-(function () {
+        if (window.location.hash != '') {
+            $('a[href="' + window.location.hash + '"]').click();
+            if (window.location.hash == '#recent') {
+                getPages();
+            }
+        }
+    });
+
+    // Disable form submissions, if there are invalid fields
     window.addEventListener(
         'load',
         function () {
@@ -44,4 +48,4 @@ $(document).ready(function () {
         },
         false,
     );
-})();
+}
