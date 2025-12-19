@@ -92,6 +92,12 @@ if (!window._recentPagesHandlersInitialized) {
             finalizePageUpdate(currentParameters);
         },
     );
+
+    $(document).ready(function () {
+        if (window.location.pathname.includes('/account/profile')) {
+            getPages(window.location.search);
+        }
+    });
 }
 
 function finalizePageUpdate(currentParameters) {
@@ -103,9 +109,3 @@ function finalizePageUpdate(currentParameters) {
     // Update the URL in the address bar without reloading
     history.replaceState(undefined, '', newQuery + window.location.hash);
 }
-
-$(document).ready(function () {
-    if (window.location.pathname.includes('/account/profile')) {
-        getPages(window.location.search);
-    }
-});
