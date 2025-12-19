@@ -12,6 +12,17 @@ export function getPages(queryString = window.location.search) {
         url: '/account/get_pages' + queryString,
         dataType: 'json',
         success: function (data) {
+            // Clean up old elements
+            const dropdownElements = document.querySelectorAll(
+                '[data-bs-toggle="dropdown"]',
+            );
+            for (const dropdownElement of dropdownElements) {
+                const instance = dropdownElement._bs_dropdown;
+                if (instance && typeof instance.dispose === 'function') {
+                    instance.dispose();
+                }
+            }
+
             var recentPages = document.createElement('div');
             recentPages.className = 'col-md';
             recentPages.innerHTML = data.content; // render data into the DOM
