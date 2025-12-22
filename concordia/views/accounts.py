@@ -1,4 +1,6 @@
+import gc
 import logging
+import tracemalloc
 import uuid
 from smtplib import SMTPException
 from typing import Any, Optional, Type
@@ -344,6 +346,9 @@ def get_pages(request: HttpRequest) -> JsonResponse:
         }
         ```
     """
+    tracemalloc.start()
+    gc.collect()
+
     structured_logger.debug(
         "Fetching recent pages.",
         event_code="recent_pages_entry",
@@ -353,6 +358,7 @@ def get_pages(request: HttpRequest) -> JsonResponse:
         activity=request.GET.get("activity"),
     )
     asset_list = _get_pages(request)
+
     paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
 
     page_number = int(request.GET.get("page", "1"))
@@ -360,7 +366,9 @@ def get_pages(request: HttpRequest) -> JsonResponse:
         "paginator": paginator,
         "page_obj": paginator.get_page(page_number),
         "is_paginated": True,
-        "recent_campaigns": Campaign.objects.filter(project__item__asset__in=asset_list)
+        "recent_campaigns": Campaign.objects.filter(
+            project__item__asset__in=asset_list.values("pk")
+        )
         .distinct()
         .order_by("title")
         .values("pk", "title"),
@@ -377,14 +385,25 @@ def get_pages(request: HttpRequest) -> JsonResponse:
     data["content"] = loader.render_to_string(
         "fragments/recent-pages.html", context, request=request
     )
+
+    # Capture memory stats
+    current, peak = tracemalloc.get_traced_memory()
+    current_mb = current / 1024 / 1024
+    peak_mb = peak / 1024 / 1024
+
+    # For immediate visibility
     structured_logger.debug(
         "Recent pages rendered.",
         event_code="recent_pages_success",
         user=request.user,
-        assets=len(asset_list),
+        assets=asset_list.count(),
         num_pages=paginator.num_pages,
         page=page_number,
+        memory_current_mb=round(current_mb, 2),
+        memory_peak_mb=round(peak_mb, 2),
     )
+
+    tracemalloc.stop()
     return JsonResponse(data)
 
 

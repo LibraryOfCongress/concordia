@@ -314,7 +314,7 @@ LOGGING = {
         },
         "structlog_file": {
             "class": "logging.handlers.TimedRotatingFileHandler",
-            "level": "INFO",
+            "level": "DEBUG",
             "formatter": "structlog_json",
             "filename": f"{SITE_ROOT_DIR}/logs/concordia-json.log",
             "when": "H",
@@ -323,7 +323,7 @@ LOGGING = {
         },
         "structlog_console": {
             "class": "logging.StreamHandler",
-            "level": "INFO",
+            "level": "DEBUG",
             "formatter": "structlog_console",
         },
     },
@@ -334,12 +334,12 @@ LOGGING = {
         "aws_xray_sdk": {"handlers": ["file"], "level": "INFO", "propagate": True},
         "structlog": {
             "handlers": ["structlog_file"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": True,
         },
         "django_structlog": {
             "handlers": ["structlog_file"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
     },
