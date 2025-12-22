@@ -360,7 +360,9 @@ def get_pages(request: HttpRequest) -> JsonResponse:
         "paginator": paginator,
         "page_obj": paginator.get_page(page_number),
         "is_paginated": True,
-        "recent_campaigns": Campaign.objects.filter(project__item__asset__in=asset_list)
+        "recent_campaigns": Campaign.objects.filter(
+            project__item__asset__in=asset_list.values("pk")
+        )
         .distinct()
         .order_by("title")
         .values("pk", "title"),
@@ -381,7 +383,7 @@ def get_pages(request: HttpRequest) -> JsonResponse:
         "Recent pages rendered.",
         event_code="recent_pages_success",
         user=request.user,
-        assets=len(asset_list),
+        assets=asset_list.count(),
         num_pages=paginator.num_pages,
         page=page_number,
     )
