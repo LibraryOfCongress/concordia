@@ -417,6 +417,9 @@ class AdminBulkChangeAssetStatusView(FormView):
         invalid_rows = 0
         slugs_all = set()
 
+        user_ids = {row.get("user") for row in rows if row.get("user")}
+        users = {u.id: u for u in User.objects.filter(id__in=user_ids)}
+
         for row in rows:
             slug = row.get("asset__slug")
             status_raw = row.get("New Status", TranscriptionStatus.SUBMITTED)
@@ -429,7 +432,7 @@ class AdminBulkChangeAssetStatusView(FormView):
                     "status": status,
                 }
                 if user_id:
-                    normalized_row["user"] = User.objects.get(id=user_id)
+                    normalized_row["user"] = users.get(user_id)
                 normalized_rows.append(normalized_row)
             else:
                 invalid_rows += 1
