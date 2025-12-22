@@ -18,14 +18,8 @@ if (!window._profileFieldsInitialized) {
     $(document).ready(function () {
         let profilePage = document.getElementById('profile-page');
         let activeTab = profilePage?.dataset.activeTab;
-        if (activeTab === 'recent') {
+        if (activeTab === 'recent' || window.location.hash === '#recent') {
             getPages();
-        }
-        if (window.location.hash != '') {
-            $('a[href="' + window.location.hash + '"]').click();
-            if (window.location.hash == '#recent') {
-                getPages();
-            }
         }
     });
 

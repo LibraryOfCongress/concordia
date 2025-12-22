@@ -41,9 +41,12 @@ export function getPages(queryString = window.location.search) {
 if (!window._recentPagesHandlersInitialized) {
     window._recentPagesHandlersInitialized = true;
 
-    $(document).on('click', '#recent-tab', () =>
-        getPages(window.location.search),
-    );
+    $(document).on('click', '#recent-tab', function () {
+        if (!this.dataset.loaded) {
+            this.dataset.loaded = 'true';
+            getPages(window.location.search);
+        }
+    });
 
     $(document).on('submit', '.date-filter', function (event) {
         event.preventDefault();
@@ -103,12 +106,6 @@ if (!window._recentPagesHandlersInitialized) {
             finalizePageUpdate(currentParameters);
         },
     );
-
-    $(document).ready(function () {
-        if (window.location.pathname.includes('/account/profile')) {
-            getPages(window.location.search);
-        }
-    });
 }
 
 function finalizePageUpdate(currentParameters) {
