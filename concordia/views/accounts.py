@@ -392,7 +392,7 @@ def get_pages(request: HttpRequest) -> JsonResponse:
     peak_mb = peak / 1024 / 1024
 
     # For immediate visibility
-    structured_logger.debug(
+    structured_logger.info(
         "Recent pages rendered.",
         event_code="recent_pages_success",
         user=request.user,

@@ -83,6 +83,19 @@ if (!window._recentPagesHandlersInitialized) {
         finalizePageUpdate(currentParameters);
     });
 
+    // Intercept clicks and load via AJAX instead of full page reload
+    $(document).on('click', '.pagination a.page-link', function (event) {
+        event.preventDefault();
+
+        const href = $(this).attr('href') || '';
+        const qs = href.startsWith('?') ? href : '?' + href;
+
+        getPages(qs);
+
+        // Update the URL in the address bar
+        history.replaceState(undefined, '', qs + window.location.hash);
+    });
+
     $(document).on(
         'submit',
         'nav[aria-label="Page Jump"] form',
