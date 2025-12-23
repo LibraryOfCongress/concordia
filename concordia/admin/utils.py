@@ -36,7 +36,6 @@ def _change_status(
     )
 
     kwargs = {
-        "reviewed_by": request_user,
         "asset": asset,
         "user": transcription_user or get_anonymous_user(),
     }
@@ -51,6 +50,7 @@ def _change_status(
     if status == TranscriptionStatus.SUBMITTED:
         kwargs["submitted"] = now()
     elif status == TranscriptionStatus.COMPLETED:
+        kwargs["reviewed_by"] = request_user
         kwargs["accepted"] = now()
     elif status == TranscriptionStatus.IN_PROGRESS:
         if (
@@ -58,6 +58,7 @@ def _change_status(
             and latest_transcription.status == TranscriptionStatus.COMPLETED
         ):
             kwargs["rejected"] = now()
+        kwargs["reviewed_by"] = request_user
     elif status == TranscriptionStatus.NOT_STARTED:
         return 0
 
