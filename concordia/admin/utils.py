@@ -85,7 +85,7 @@ def _bulk_change_status(
         asset_rows: iterable of dicts like:
             {"asset": Asset, "status": TranscriptionStatus.SUBMITTED, "user": User}
     """
-    slugs = [row["slug"] for row in rows if row.get("slug")]
+    slugs = {row["slug"] for row in rows if row.get("slug")}
     assets = Asset.objects.filter(slug__in=slugs).prefetch_related(
         Prefetch(
             "transcription_set",
