@@ -35,6 +35,9 @@ def _change_status(
         asset.prefetched_transcriptions[0] if asset.prefetched_transcriptions else None
     )
 
+    if status == TranscriptionStatus.NOT_STARTED:
+        return 0
+
     kwargs = {
         "asset": asset,
         "user": transcription_user or get_anonymous_user(),
@@ -59,8 +62,6 @@ def _change_status(
         ):
             kwargs["rejected"] = now()
         kwargs["reviewed_by"] = request_user
-    elif status == TranscriptionStatus.NOT_STARTED:
-        return 0
 
     transcription = Transcription(**kwargs)
     transcription.full_clean()
