@@ -395,7 +395,11 @@ class AdminBulkChangeAssetStatusView(FormView):
     form_class = AdminAssetsBulkChangeStatusForm
 
     def form_valid(self, form):
-        rows = slurp_excel(self.request.FILES["spreadsheet_file"])
+        try:
+            rows = slurp_excel(self.request.FILES["spreadsheet_file"])
+        except Exception as e:
+            messages.error(self.request, f"Could not read spreadsheet: {e}")
+            return self.render_to_response(self.get_context_data(form=form))
         total_in_sheet = len(rows)
 
         # Normalize and validate statuses from spreadsheet rows
@@ -425,7 +429,7 @@ class AdminBulkChangeAssetStatusView(FormView):
             status_raw = row.get("New Status", TranscriptionStatus.SUBMITTED)
             user_id = row.get("user", None)
             status = normalize_status(status_raw)
-            if slug and status_raw:
+            if slug and status is not None:
                 slugs_all.add(slug)
                 normalized_row = {
                     "slug": slug,
@@ -456,6 +460,8 @@ class AdminBulkChangeAssetStatusView(FormView):
                 ),
             )
             return self.render_to_response(self.get_context_data(form=form))
+        matched_slugs = set(assets_qs.values_list("slug", flat=True))
+        normalized_rows = [r for r in normalized_rows if r["slug"] in matched_slugs]
 
         updated_total = _bulk_change_status(self.request.user, normalized_rows)
 

@@ -31,9 +31,17 @@ def _change_status(
     Returns:
         int: 1 if asset was updated, otherwise 0
     """
-    latest_transcription = (
-        asset.prefetched_transcriptions[0] if asset.prefetched_transcriptions else None
-    )
+    if hasattr(asset, "prefetched_transcriptions"):
+        latest_transcription = (
+            asset.prefetched_transcriptions[0]
+            if asset.prefetched_transcriptions
+            else None
+        )
+    else:
+        latest_transcription = asset.transcription_set.order_by("-pk").first()
+
+    if status == TranscriptionStatus.NOT_STARTED:
+        return 0
 
     kwargs = {
         "reviewed_by": request_user,
@@ -58,8 +66,6 @@ def _change_status(
             and latest_transcription.status == TranscriptionStatus.COMPLETED
         ):
             kwargs["rejected"] = now()
-    elif status == TranscriptionStatus.NOT_STARTED:
-        return 0
 
     transcription = Transcription(**kwargs)
     transcription.full_clean()
@@ -78,7 +84,7 @@ def _bulk_change_status(
         asset_rows: iterable of dicts like:
             {"asset": Asset, "status": TranscriptionStatus.SUBMITTED, "user": User}
     """
-    slugs = [row["slug"] for row in rows if row.get("slug")]
+    slugs = {row["slug"] for row in rows if row.get("slug")}
     assets = Asset.objects.filter(slug__in=slugs).prefetch_related(
         Prefetch(
             "transcription_set",
@@ -93,7 +99,7 @@ def _bulk_change_status(
         asset = asset_map.get(row.get("slug"))
         if asset:
             updated_total += _change_status(
-                request_user, asset, row["status"], row.get("user")
+                request_user, asset, row.get("status", None), row.get("user", None)
             )
 
     return updated_total
