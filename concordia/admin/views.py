@@ -395,7 +395,12 @@ class AdminBulkChangeAssetStatusView(FormView):
     form_class = AdminAssetsBulkChangeStatusForm
 
     def form_valid(self, form):
-        rows = slurp_excel(self.request.FILES["spreadsheet_file"])
+        try:
+            rows = slurp_excel(self.request.FILES["spreadsheet_file"])
+        except Exception as e:
+            messages.error(self.request, f"Could not read spreadsheet: {e}")
+
+            return self.render_to_response(self.get_context_data(form=form))
         total_in_sheet = len(rows)
 
         # Normalize and validate statuses from spreadsheet rows
