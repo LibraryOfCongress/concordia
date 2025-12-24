@@ -3,6 +3,11 @@ import $ from 'jquery';
 let currentRequest;
 
 export function getPages(queryString = window.location.search) {
+    // Show indicator
+    $('#recent-pages').html(
+        '<p class="text-center py-3"><span class="spinner-border spinner-border-sm"></span>Loading...</p>',
+    );
+
     if (currentRequest) {
         // Cancel previous before starting a new one
         currentRequest.abort();
@@ -26,7 +31,9 @@ export function getPages(queryString = window.location.search) {
             var recentPages = document.createElement('div');
             recentPages.className = 'col-md';
             recentPages.innerHTML = data.content; // render data into the DOM
-            $('#recent-pages').html(recentPages);
+            $('#recent-pages').fadeOut(100, function () {
+                $(this).html(recentPages).fadeIn(150);
+            });
         },
         error: function () {
             $('#recent-pages').html('<p>Failed to load pages.</p>');
