@@ -110,7 +110,8 @@ def _get_pages(request: HttpRequest) -> QuerySet:
     if campaign_id is not None:
         assets = assets.filter(item__project__campaign__pk=campaign_id)
 
-    return assets
+    MAX_RESULTS = 5400
+    return assets[:MAX_RESULTS]
 
 
 def calculate_asset_stats(asset_qs: QuerySet, ctx: dict) -> None:
