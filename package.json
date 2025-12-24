@@ -15,7 +15,7 @@
         "@sentry/tracing": "^7.120.4",
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.0",
-        "chroma-js": "^3.1.2",
+        "chroma-js": "^3.2.0",
         "codemirror": "^5.65.19",
         "gulp": "^5.0.1",
         "gulp-rename": "^2.1.0",
