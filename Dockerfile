@@ -105,7 +105,8 @@ COPY . /app
 # Front-end build and asset pipeline:
 # - update npm to a known major version
 # - install JS dependencies (production-only) and build assets via gulp
-RUN npm install --silent --global npm@10 && /usr/local/bin/npm install --silent --omit=dev && npx gulp build
+# /usr/bin/npm is the version installed by the NodeSource install of nodejs/npm
+RUN npm install --silent --global npm@10 && /usr/bin/npm install --silent --omit=dev && npx gulp build
 # Additional JS build step (kept as-is).
 RUN npm run build
 
