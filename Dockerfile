@@ -40,7 +40,8 @@ RUN curl -fso /etc/ssl/certs/LOC-ROOT-CA-1.crt http://crl.loc.gov/LOC-ROOT-CA-1.
 # - registers the NodeSource repository for the selected Node.js major line
 #
 # Note: When installing Node.js from NodeSource, the `nodejs` package includes
-# npm, so there is no separate `npm` APT package to install here.
+# npm (and npm comes with node-gyp), so there is no separate `npm` or
+# `node-gyp` APT package to install here.
 #
 # References: NodeSource "Repository Manual Installation" guide. https://github.com/nodesource/distributions/wiki/Repository-Manual-Installation
 RUN \
@@ -76,7 +77,7 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     # Tesseract
     tesseract-ocr tesseract-ocr-all \
     # Node.js runtime (from NodeSource) and build tooling for native addons.
-    nodejs node-gyp && apt-get -qy autoremove && apt-get -qy autoclean
+    nodejs && apt-get -qy autoremove && apt-get -qy autoclean
 
 # Generate and configure a UTF-8 locale for consistent string handling.
 RUN locale-gen en_US.UTF-8
