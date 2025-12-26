@@ -114,9 +114,9 @@
             <th>
                 <div data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Current Status <span class="fa fa-chevron-down"></span></div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
-                    <a class="dropdown-item border-bottom border-primary{% if 'in_progress' in status_list %} fw-bold{% endif %}" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
-                    <a class="dropdown-item border-bottom border-primary{% if 'submitted' in status_list %} fw-bold{% endif %}" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
-                    <a class="dropdown-item{% if 'completed' in status_list %} fw-bold{% endif %}" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'in_progress' in status_list %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'submitted' in status_list %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
+                    <a class="dropdown-item{% if 'completed' in status_list %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
                 </div>
             </th>
         </tr>
