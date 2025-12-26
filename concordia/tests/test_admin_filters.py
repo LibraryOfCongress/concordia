@@ -54,19 +54,19 @@ class NullableTimestampFilterTest(CreateTestUsers, TestCase):
 
     def test_lookups(self):
         f = SubmittedFilter(
-            None, {"submitted": "null"}, Transcription, TranscriptionAdmin
+            None, {"submitted": ("null",)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 0)
 
         f = SubmittedFilter(
-            None, {"submitted": "not-null"}, Transcription, TranscriptionAdmin
+            None, {"submitted": ("not-null",)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
 
         f = SubmittedFilter(
-            None, {"submitted": timezone.now()}, Transcription, TranscriptionAdmin
+            None, {"submitted": (timezone.now(),)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
@@ -86,7 +86,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
             "/admin/concordia/card/?campaign=%s" % self.campaign.id
         )
         f = CardCampaignListFilter(
-            request, {"campaign": self.campaign.id}, Card, CardAdmin
+            request, {"campaign": (self.campaign.id,)}, Card, CardAdmin
         )
         cards = f.queryset(None, Card.objects.all())
         self.assertEqual(cards.count(), 0)
@@ -103,7 +103,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         )
         f = ProjectCampaignListFilter(
             request,
-            {"campaign__id__exact": self.campaign.id},
+            {"campaign__id__exact": (self.campaign.id,)},
             Project,
             ProjectAdmin,
         )
@@ -112,7 +112,10 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
 
         request = RequestFactory().get("/admin/concordia/project/?campaign__status=1")
         f = ProjectCampaignListFilter(
-            request, {"campaign__status": Campaign.Status.ACTIVE}, Project, ProjectAdmin
+            request,
+            {"campaign__status": (Campaign.Status.ACTIVE,)},
+            Project,
+            ProjectAdmin,
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
@@ -126,7 +129,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         site_report_admin = SiteReportAdmin(SiteReport, ConcordiaAdminSite())
         f = SiteReportCampaignListFilter(
             request,
-            {param: self.campaign.id},
+            {param: (self.campaign.id,)},
             SiteReport,
             site_report_admin,
         )
@@ -171,7 +174,7 @@ class ItemFilterTests(CreateTestUsers, TestCase):
         )
         f = ItemProjectListFilter(
             request,
-            {"project__campaign__id__exact": self.project.campaign.pk},
+            {"project__campaign__id__exact": (self.project.campaign.pk,)},
             Item,
             ItemAdmin,
         )
@@ -189,7 +192,7 @@ class ProjectFilterTests(TestCase):
         self.assertEqual(projects.count(), 1)
 
         f = ProjectCampaignStatusListFilter(
-            None, {"campaign__status": Campaign.Status.ACTIVE}, Project, ProjectAdmin
+            None, {"campaign__status": (Campaign.Status.ACTIVE,)}, Project, ProjectAdmin
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
@@ -206,7 +209,7 @@ class TranscriptionFilterTests(CreateTestUsers, TestCase):
         self.assertEqual(transcriptions.count(), 1)
 
         f = OcrGeneratedFilter(
-            "No", {"ocr_generated": False}, Transcription, TranscriptionAdmin
+            "No", {"ocr_generated": (False,)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
@@ -224,7 +227,7 @@ class TopicListFilterTests(TestCase):
         self.assertEqual(resources.count(), 2)
 
         topic_filter = TopicListFilter(
-            None, {"topic__id__exact": self.topic.id}, Resource, ResourceAdmin
+            None, {"topic__id__exact": (self.topic.id,)}, Resource, ResourceAdmin
         )
         resources = topic_filter.queryset(None, Resource.objects.all())
         self.assertEqual(resources.count(), 1)
@@ -289,7 +292,7 @@ class SupersededListFilterTests(CreateTestUsers, TestCase):
 
     def test_queryset_superseded_yes(self):
         f = SupersededListFilter(
-            None, {"superseded": "yes"}, Transcription, TranscriptionAdmin
+            None, {"superseded": ("yes",)}, Transcription, TranscriptionAdmin
         )
         qs = f.queryset(None, Transcription.objects.all())
         self.assertQuerySetEqual(
@@ -300,7 +303,7 @@ class SupersededListFilterTests(CreateTestUsers, TestCase):
 
     def test_queryset_superseded_no(self):
         f = SupersededListFilter(
-            None, {"superseded": "no"}, Transcription, TranscriptionAdmin
+            None, {"superseded": ("no",)}, Transcription, TranscriptionAdmin
         )
         qs = f.queryset(None, Transcription.objects.all())
         ids = set(qs.values_list("id", flat=True))
@@ -314,7 +317,7 @@ class SupersededListFilterTests(CreateTestUsers, TestCase):
 
     def test_queryset_ignores_unknown_value(self):
         f = SupersededListFilter(
-            None, {"superseded": "maybe"}, Transcription, TranscriptionAdmin
+            None, {"superseded": ("maybe",)}, Transcription, TranscriptionAdmin
         )
         qs = f.queryset(None, Transcription.objects.all())
         ids = set(qs.values_list("id", flat=True))

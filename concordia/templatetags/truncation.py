@@ -2,7 +2,7 @@ import unicodedata
 
 from django import template
 from django.template.defaultfilters import stringfilter
-from django.utils.text import Truncator
+from django.utils.text import Truncator, add_truncation_text
 
 register = template.Library()
 
@@ -25,8 +25,7 @@ class WordBreakTruncator(Truncator):
                 If not provided, the default from `add_truncation_text` is used.
 
         Returns:
-            str: The original string if under the limit; otherwise the string
-            truncated at the most recent word break with the truncation text
+            str: The truncation marker
             appended.
         """
         self._setup()
@@ -35,7 +34,7 @@ class WordBreakTruncator(Truncator):
 
         # Calculate the length to truncate to (max length - end_text length).
         truncate_len = length
-        for char in self.add_truncation_text("", truncate):
+        for char in add_truncation_text("", truncate):
             if not unicodedata.combining(char):
                 truncate_len -= 1
                 if truncate_len == 0:
@@ -71,7 +70,7 @@ class WordBreakTruncator(Truncator):
                 end_index = i
             if s_len > length:
                 # Return the truncated string at the prior word boundary.
-                return self.add_truncation_text(
+                return add_truncation_text(
                     " ".join(text[: end_index or 0].split()[:-1]), truncate
                 )
 

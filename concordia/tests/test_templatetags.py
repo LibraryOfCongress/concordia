@@ -156,7 +156,13 @@ class RejectFilterTests(TestCase):
 
 
 @override_settings(
-    STATICFILES_STORAGE="django.contrib.staticfiles.storage.StaticFilesStorage"
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    },
+    STATICFILES_STORAGE="django.contrib.staticfiles.storage.StaticFilesStorage",
 )
 class VisualizationTagsTests(TestCase):
     def test_without_attrs_renders_section_and_script(self):
