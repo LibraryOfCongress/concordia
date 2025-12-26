@@ -3,7 +3,6 @@
         "@axe-core/cli": "^4.11.0",
         "@puppeteer/browsers": "^2.10.13",
         "child_process": "^1.0.2",
-        "fancy-log": "^2.0.0",
         "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
     "dependencies": {
@@ -17,6 +16,7 @@
         "chart.js": "^4.5.0",
         "chroma-js": "^3.1.2",
         "codemirror": "^5.65.19",
+        "fancy-log": "^2.0.0",
         "gulp": "^5.0.1",
         "gulp-rename": "^2.1.0",
         "gulp-sass": "^6.0.1",
