@@ -64,6 +64,7 @@ RUN \
 # - --force-confnew ensures updated config files are accepted when prompted.
 # - autoremove/autoclean reduce image size after installing packages.
 RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
+    build-essential \
     git \
     libmemcached-dev \
     # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
