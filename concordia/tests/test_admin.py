@@ -18,11 +18,11 @@ from concordia.admin import (
     AssetAdmin,
     CampaignAdmin,
     CampaignRetirementProgressAdmin,
+    ConcordiaFileAdmin,
     ConcordiaUserAdmin,
     ItemAdmin,
     KeyMetricsReportAdmin,
     ProjectAdmin,
-    ResourceFileAdmin,
     SiteReportAdmin,
     TagAdmin,
     TranscriptionAdmin,
@@ -31,10 +31,10 @@ from concordia.models import (
     Asset,
     Campaign,
     CampaignRetirementProgress,
+    ConcordiaFile,
     Item,
     KeyMetricsReport,
     Project,
-    ResourceFile,
     SiteReport,
     Tag,
     Transcription,
@@ -201,45 +201,45 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertContains(response, "Next review campaign")
 
 
-class ResourceAdminTest(TestCase, CreateTestUsers):
+class HelpfulLinkAdminTest(TestCase, CreateTestUsers):
     def setUp(self):
         self.super_user = self.create_super_user()
 
-    def test_resource_admin(self):
+    def test_helpfullink_admin(self):
         self.client.force_login(self.super_user)
-        response = self.client.get(reverse("admin:concordia_resource_add"))
+        response = self.client.get(reverse("admin:concordia_helpfullink_add"))
         self.assertEqual(response.status_code, 200)
 
 
-class ResourceFileAdminTest(TestCase, CreateTestUsers):
+class ConcordiaFileAdminTest(TestCase, CreateTestUsers):
     def setUp(self):
         self.site = AdminSite()
         self.staff_user = self.create_staff_user()
         self.super_user = self.create_super_user()
-        self.resource_file_admin = ResourceFileAdmin(
-            model=ResourceFile, admin_site=self.site
+        self.concordia_file_admin = ConcordiaFileAdmin(
+            model=ConcordiaFile, admin_site=self.site
         )
         self.request_factory = RequestFactory()
 
-    def test_resource_url(self):
-        class MockResource:
+    def test_link_url(self):
+        class MockFile:
             url = "http://example.com?arg=true"
 
-        class MockResourceFile:
-            resource = MockResource()
+        class MockConcordiaFile:
+            uploaded_file = MockFile()
 
-        result = self.resource_file_admin.resource_url(MockResourceFile())
+        result = self.concordia_file_admin.file_url(MockConcordiaFile())
         self.assertEqual(result, "http://example.com")
 
     def test_get_fields(self):
         request = self.request_factory.get("/")
-        result = self.resource_file_admin.get_fields(request)
+        result = self.concordia_file_admin.get_fields(request)
         self.assertNotIn("path", result)
-        self.assertNotIn("resource_url", result)
+        self.assertNotIn("file_url", result)
 
-        result = self.resource_file_admin.get_fields(request, object())
+        result = self.concordia_file_admin.get_fields(request, object())
         self.assertNotIn("path", result)
-        self.assertIn("resource_url", result)
+        self.assertIn("file_url", result)
 
 
 class ProjectAdminTest(TestCase, CreateTestUsers):

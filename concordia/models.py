@@ -62,7 +62,7 @@ THRESHOLD = 2
 
 def resource_file_upload_path(instance, filename):
     """
-    Return the upload path for a ResourceFile instance.
+    Return the upload path for a ConcordiaFile instance.
 
     If the instance already has a primary key and a stored path, that path is
     reused so the file is not moved on subsequent saves. Otherwise, a dated
@@ -577,29 +577,38 @@ class Topic(models.Model):
         return reverse("topic-detail", kwargs={"slug": self.slug})
 
 
-class ResourceTypeQuerySet(models.QuerySet):
+class HelpfulLinkTypeQuerySet(models.QuerySet):
     def related_links(self):
-        return self.filter(resource_type=Resource.ResourceType.RELATED_LINK)
+        return self.filter(link_type=HelpfulLink.HelpfulLinkType.RELATED_LINK)
 
     def completed_transcription_links(self):
         return self.filter(
-            resource_type=Resource.ResourceType.COMPLETED_TRANSCRIPTION_LINK
+            link_type=HelpfulLink.HelpfulLinkType.COMPLETED_TRANSCRIPTION_LINK
         )
 
 
-class Resource(MetricsModelMixin("resource"), models.Model):
-    class ResourceType(models.IntegerChoices):
+class HelpfulLink(MetricsModelMixin("resource"), models.Model):
+    """
+    This model was previously known as `Resource`. It was renamed to avoid
+    conflict with the same name being used on loc.gov.
+
+    The original table and row names have been maintained.
+    """
+
+    class HelpfulLinkType(models.IntegerChoices):
         RELATED_LINK = 1
         COMPLETED_TRANSCRIPTION_LINK = 2
 
-    objects = ResourceTypeQuerySet.as_manager()
+    objects = HelpfulLinkTypeQuerySet.as_manager()
 
     sequence = models.PositiveIntegerField(default=1)
     title = models.CharField(blank=False, max_length=255)
-    resource_type = models.IntegerField(
-        choices=ResourceType.choices, default=ResourceType.RELATED_LINK
+    link_type = models.IntegerField(
+        choices=HelpfulLinkType.choices,
+        default=HelpfulLinkType.RELATED_LINK,
+        db_column="resource_type",
     )
-    resource_url = models.URLField()
+    link_url = models.URLField(db_column="resource_url")
 
     campaign = models.ForeignKey(
         Campaign, on_delete=models.CASCADE, blank=True, null=True
@@ -608,19 +617,30 @@ class Resource(MetricsModelMixin("resource"), models.Model):
 
     class Meta:
         ordering = ("sequence",)
+        db_table = "concordia_resource"
 
     def __str__(self):
         return self.title
 
 
-class ResourceFile(models.Model):
+class ConcordiaFile(models.Model):
+    """
+    This model was previously known as `ResourceFile`. I twas renamed to avoid
+    conflict with the same name being used on loc.gov.
+
+    The original table and row names have been maintained.
+    """
+
     name = models.CharField(blank=False, max_length=255)
     path = models.CharField(blank=True, default="", max_length=255)
-    resource = models.FileField(upload_to=resource_file_upload_path)
+    uploaded_file = models.FileField(
+        upload_to=resource_file_upload_path, db_column="resource"
+    )
     updated_on = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
+        db_table = "concordia_resourcefile"
 
     def __str__(self):
         return self.name
@@ -628,14 +648,14 @@ class ResourceFile(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.id and not self.path:
-            self.path = self.resource.name
+            self.path = self.uploaded_file.name
             self.save()
 
     def delete(self, *args, **kwargs):
-        storage = self.resource.storage
+        storage = self.uploaded_file.storage
 
-        if storage.exists(self.resource.name):
-            self.resource.delete(save=False)
+        if storage.exists(self.uploaded_file.name):
+            self.uploaded_file.delete(save=False)
 
         super().delete(*args, **kwargs)
 
