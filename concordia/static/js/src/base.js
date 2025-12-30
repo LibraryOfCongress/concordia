@@ -187,6 +187,45 @@ if (screenfull.isEnabled) {
         });
 }
 
+function appendAccountItem(link, $menu) {
+    if (link.type !== 'post') {
+        $('<a>')
+            .addClass('dropdown-item')
+            .attr('href', link.url)
+            .text(link.title)
+            .appendTo($menu);
+        return;
+    }
+
+    const csrfToken = Cookies.get('csrftoken');
+    const formId =
+        'nav-post-' + link.title.toLowerCase().replaceAll(/[^\da-z]+/g, '-');
+
+    const $form = $('<form>')
+        .attr({id: formId, method: 'post', action: link.url})
+        .css('display', 'none')
+        .appendTo(document.body);
+
+    // Django expects the hidden field name "csrfmiddlewaretoken"
+    $('<input>')
+        .attr({type: 'hidden', name: 'csrfmiddlewaretoken', value: csrfToken})
+        .appendTo($form);
+
+    if (link.fields) {
+        for (const [name, value] of Object.entries(link.fields)) {
+            $('<input>')
+                .attr({type: 'hidden', name: name, value: value})
+                .appendTo($form);
+        }
+    }
+
+    $('<button>')
+        .addClass('dropdown-item')
+        .attr({type: 'submit', form: formId})
+        .text(link.title)
+        .appendTo($menu);
+}
+
 $.ajax({
     url: '/account/ajax-status/',
     method: 'GET',
@@ -220,11 +259,7 @@ $.ajax({
             .attr('aria-labelledby', 'topnav-account-dropdown-toggle')
             .appendTo($accountDropdown);
         for (const link of data.links) {
-            $('<a>')
-                .addClass('dropdown-item')
-                .attr('href', link.url)
-                .text(link.title)
-                .appendTo($accountDropdownMenu);
+            appendAccountItem(link, $accountDropdownMenu);
         }
     }
 });

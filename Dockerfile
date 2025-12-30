@@ -107,7 +107,7 @@ COPY . /app
 # - update npm to a known major version
 # - install JS dependencies (production-only) and build assets via gulp
 RUN npm install --silent --global npm@10 && npm install --silent --omit=dev && npx gulp build
-# Additional JS build step (kept as-is).
+# Additional JS build step for Vite.
 RUN npm run build
 
 # Install Python dependencies into the system environment using Pipenv and
