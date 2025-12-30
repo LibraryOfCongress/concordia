@@ -1,3 +1,11 @@
+<div id="campaign-data"
+     aria-hidden="true"
+     role="none"
+     hidden
+     data-campaign-slug="{{ campaign.slug|default:'' }}"
+     data-user-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+     data-has-asset="{{ asset|yesno:'true,false' }}">
+</div>
 <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
