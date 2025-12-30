@@ -1,14 +1,33 @@
+from collections.abc import Iterable
 from itertools import islice
+from uuid import UUID
 
 from importer.models import VerifyAssetImageJob
 from importer.tasks.images import batch_verify_asset_images_task
 
-BATCH_SIZE = 100
+BATCH_SIZE: int = 100
 
 
-def create_verify_asset_image_job_batch(asset_pks, batch):
-    # asset_pks: list of asset ids to generate jobs for
-    # batch: uuid to group jobs together as a batch; unrelated to the batch size
+def create_verify_asset_image_job_batch(
+    asset_pks: Iterable[int],
+    batch: UUID,
+) -> tuple[int, str]:
+    """
+    Create verification jobs in chunks and enqueue a single batch task.
+
+    Iterates through the provided asset primary keys in chunks of
+    `BATCH_SIZE`, creating `VerifyAssetImageJob` rows via `bulk_create`.
+    After all jobs are created, schedules the Celery task that verifies
+    the images for the given batch. Returns the number of jobs created
+    and the admin URL prefiltered to the batch.
+
+    Args:
+        asset_pks (Iterable[int]): Asset primary keys to generate jobs for.
+        batch (UUID): Identifier to group jobs; unrelated to chunk size.
+
+    Returns:
+        tuple[int, str]: A pair of `(job_count, batch_admin_url)`.
+    """
 
     job_count = 0
     # Make sure asset_pks is an iterator, for proper use with islice
