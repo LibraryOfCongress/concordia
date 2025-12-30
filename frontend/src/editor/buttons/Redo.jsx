@@ -1,5 +1,16 @@
 import React from 'react';
 
+/**
+ * Redo button for the transcription editor.
+ *
+ * Presentational only. Disabled when no redo is available.
+ *
+ * @param {Object} props
+ * @param {boolean} props.redoAvailable
+ *   True when a redo operation can be performed.
+ * @param {() => void} props.onClick
+ *   Click handler invoked to trigger redo.
+ */
 export default function EditorButtonRedo({redoAvailable, onClick}) {
     return (
         <button

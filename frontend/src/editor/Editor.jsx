@@ -4,6 +4,27 @@ import TranscriptionTextarea from './TranscriptionTextarea';
 import EditorStatusMessages from './StatusMessages';
 import EditorButtons from './Buttons';
 
+/**
+ * Editor panel for the React transcription page.
+ *
+ * Renders the header, textarea and action buttons. Manages save, submit,
+ * accept, reject, undo and redo flows against the API, then emits updates
+ * to the parent via `onTranscriptionUpdate`.
+ *
+ * Status mapping:
+ * - "not_started" or "in_progress" -> editable with submit option visible
+ * - "submitted" -> review controls visible
+ *
+ * This code is functional but not final. The API surface and UX may change.
+ */
+
+/**
+ * Submit a draft transcription for review.
+ *
+ * @param {number} transcriptionId
+ * @returns {Promise<Object>} JSON payload from the API
+ * @throws {Error} when the response is not OK
+ */
 async function submitTranscription(transcriptionId) {
     const response = await fetch(
         `/api/transcriptions/${transcriptionId}/submit`,
@@ -19,6 +40,14 @@ async function submitTranscription(transcriptionId) {
     return await response.json();
 }
 
+/**
+ * Review a submitted transcription.
+ *
+ * @param {number} transcriptionId
+ * @param {'accept'|'reject'} action
+ * @returns {Promise<Object>} JSON payload from the API
+ * @throws {Error} when the response is not OK
+ */
 async function reviewTranscription(transcriptionId, action) {
     const response = await fetch(
         `/api/transcriptions/${transcriptionId}/review`,
@@ -35,14 +64,50 @@ async function reviewTranscription(transcriptionId, action) {
     return await response.json();
 }
 
+/**
+ * Accept helper.
+ *
+ * @param {number} transcriptionId
+ * @returns {Promise<Object>}
+ */
 async function acceptTranscription(transcriptionId) {
     return await reviewTranscription(transcriptionId, 'accept');
 }
 
+/**
+ * Reject helper.
+ *
+ * @param {number} transcriptionId
+ * @returns {Promise<Object>}
+ */
 async function rejectTranscription(transcriptionId) {
     return await reviewTranscription(transcriptionId, 'reject');
 }
 
+/**
+ * Editor container component.
+ *
+ * Orchestrates UI state, calls API endpoints for save, submit, accept,
+ * reject, undo and redo, then forwards the updated payload upstream.
+ *
+ * @param {Object} props
+ * @param {number} props.assetId
+ *   Asset id used for API calls.
+ * @param {Object|null} props.transcription
+ *   Current transcription object, or null when none exists.
+ * @param {'not_started'|'in_progress'|'submitted'} props.transcriptionStatus
+ *   Current workflow status for the asset.
+ * @param {number} props.registeredContributors
+ *   Count of registered contributors for the asset.
+ * @param {boolean} props.undoAvailable
+ *   Whether an undo target exists.
+ * @param {boolean} props.redoAvailable
+ *   Whether a redo target exists.
+ * @param {(updated:Object) => void} props.onTranscriptionUpdate
+ *   Callback fired with the API response after any change.
+ * @param {(text:string) => void} props.onTranscriptionTextChange
+ *   Callback fired when the textarea value changes.
+ */
 export default function Editor(props) {
     const {
         assetId,
