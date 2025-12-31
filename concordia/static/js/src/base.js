@@ -233,31 +233,27 @@ $.ajax({
     cache: true,
 }).done(function (data) {
     if (!data.username) {
+        $('.anonymous-only').removeClass('d-none');
+        $('.anonymous-only').addClass('d-lg-flex');
+        $('.authenticated-only').addClass('d-none');
         return;
     }
 
-    $('.anonymous-only').remove();
-    $('.authenticated-only').removeAttr('hidden');
-    if (data.links) {
-        var $accountDropdown = $('#topnav-account-dropdown');
-        $('<a>')
-            .addClass('nav-link fw-bold')
-            .attr({
-                id: 'topnav-account-dropdown-toggle',
-                'data-bs-toggle': 'dropdown',
-                'aria-haspopup': 'true',
-                'aria-expanded': 'false',
-            })
-            .text(data.username + ' ')
-            .prependTo($accountDropdown);
+    $('.anonymous-only').addClass('d-none');
+    $('.anonymous-only').removeClass('d-lg-flex');
+    $('.authenticated-only').removeClass('d-none');
+
+    var $toggle = $('#topnav-account-dropdown-toggle');
+    var $accountDropdownMenu = $('#topnav-account-dropdown-menu');
+    if (data.username) {
+        $toggle.empty().text(data.username + ' ');
         $('<span>')
             .addClass('fa fa-chevron-down text-primary')
-            .appendTo('#topnav-account-dropdown-toggle');
-        var $accountDropdownMenu = $('<div>');
-        $accountDropdownMenu
-            .addClass('dropdown-menu')
-            .attr('aria-labelledby', 'topnav-account-dropdown-toggle')
-            .appendTo($accountDropdown);
+            .appendTo($toggle);
+    }
+
+    if (data.links && $accountDropdownMenu.length > 0) {
+        $accountDropdownMenu.empty();
         for (const link of data.links) {
             appendAccountItem(link, $accountDropdownMenu);
         }
