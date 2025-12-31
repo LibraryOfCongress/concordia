@@ -91,6 +91,7 @@ def ajax_session_status(request: HttpRequest) -> JsonResponse:
         links = [
             {
                 "title": "Profile",
+                "type": "link",
                 "url": request.build_absolute_uri(reverse("user-profile")),
             }
         ]
@@ -98,13 +99,16 @@ def ajax_session_status(request: HttpRequest) -> JsonResponse:
             links.append(
                 {
                     "title": "Admin Area",
+                    "type": "link",
                     "url": request.build_absolute_uri(reverse("admin:index")),
                 }
             )
         links.append(
             {
                 "title": "Logout",
+                "type": "post",
                 "url": request.build_absolute_uri(reverse("logout")),
+                "fields": {"next": "/"},
             }
         )
 
