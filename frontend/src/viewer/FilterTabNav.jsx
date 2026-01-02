@@ -1,3 +1,28 @@
+/**
+ * Tab navigation for image filters: Brightness, Invert, Contrast.
+ *
+ * Purpose:
+ * - Provide three Bootstrap tab buttons that toggle filter panes.
+ * - Expose stable button ids for external binding:
+ *   #viewer-gamma, #viewer-invert, #viewer-threshold.
+ *
+ * Integration:
+ * - Buttons use data-bs-toggle="tab" and data-bs-target to switch panes:
+ *   #gamma-filter, #invert-filter, #threshold-filter.
+ * - Parent markup must include a .tab-content with matching pane ids.
+ *
+ * Accessibility:
+ * - role="tablist" on the <ul>, role="presentation" on list items, role="tab" on
+ *   buttons.
+ * - The first tab is marked active by default.
+ *
+ * Usage:
+ * <FilterTabNav />
+ */
+
+/**
+ * @returns {JSX.Element}
+ */
 export default function FilterTabNav() {
     return (
         <ul
