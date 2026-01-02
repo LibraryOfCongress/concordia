@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import boto3
 import requests
+from celery import Task
 from django.conf import settings
 from flags.state import flag_enabled
 from requests.exceptions import HTTPError
@@ -29,9 +30,21 @@ logger = getLogger(__name__)
     retry_kwargs={"max_retries": 3},
     rate_limit=1,
 )
-def download_asset_task(self, import_asset_pk):
-    # We'll use the containing objects' slugs to construct the storage path so
-    # we might as well use select_related to save extra queries:
+def download_asset_task(self: Task, import_asset_pk: int) -> None:
+    """
+    Download and persist an asset image for the given ImportItemAsset.
+
+    Looks up the ImportItemAsset with related objects to reduce queries, then
+    delegates to ``download_asset``. Retries on ``HTTPError`` per task config.
+
+    Args:
+        import_asset_pk: Primary key of the ImportItemAsset to process.
+
+    Raises:
+        models.ImportItemAsset.DoesNotExist: If the job row does not exist.
+        ImageImportFailure: If the download or verification fails.
+    """
+    # Use select_related since slugs from the container objects form the path.
     qs = models.ImportItemAsset.objects.select_related(
         "import_item__item__project__campaign"
     )
@@ -45,20 +58,28 @@ def download_asset_task(self, import_asset_pk):
         )
         raise
 
-    return download_asset(self, import_asset)
+    download_asset(self, import_asset)
 
 
 @update_task_status
-def download_asset(self, job):
+def download_asset(self: Task, job: "models.ImportItemAsset") -> None:
     """
-    Download the URL specified for an Asset and save it to working
-    storage
+    Download the image for the given job and save it to working storage.
+
+    The URL is taken from ``job.url`` when present, otherwise from
+    ``job.asset.download_url``. The extension is inferred from the URL path
+    and normalized so ``jpeg`` becomes ``jpg``. On success the asset's
+    ``storage_image`` field is updated.
+
+    Args:
+        job: ImportItemAsset containing the target asset and optional URL.
+
+    Raises:
+        ImageImportFailure: If the download, upload or checksum check fails.
     """
     asset = job.asset
-    if hasattr(job, "url"):
-        download_url = job.url
-    else:
-        download_url = asset.download_url
+    download_url: str = job.url if hasattr(job, "url") else asset.download_url
+
     file_extension = (
         os.path.splitext(urlparse(download_url).path)[1].lstrip(".").lower()
     )
@@ -69,8 +90,8 @@ def download_asset(self, job):
 
     storage_image = download_and_store_asset_image(download_url, asset_image_filename)
     logger.info(
-        "Download and storage of asset image %s complete. Setting storage_image "
-        "on asset %s (%s)",
+        "Download and storage of asset image %s complete. Setting "
+        "storage_image on asset %s (%s)",
         storage_image,
         asset,
         asset.id,
@@ -79,12 +100,29 @@ def download_asset(self, job):
     asset.save()
 
 
-def download_and_store_asset_image(download_url, asset_image_filename):
+def download_and_store_asset_image(download_url: str, asset_image_filename: str) -> str:
+    """
+    Stream a remote image to a temp file, upload it to storage, then verify.
+
+    The file is streamed and hashed with MD5, uploaded to ``ASSET_STORAGE``,
+    then the object metadata is fetched via S3 ``head_object`` and the ETag is
+    compared to the computed MD5. When the ``IMPORT_IMAGE_CHECKSUM`` flag is
+    enabled a mismatch raises ``ImageImportFailure``. When disabled a warning
+    is logged.
+
+    Args:
+        download_url: HTTP(S) URL of the image to fetch.
+        asset_image_filename: Destination key or path in storage.
+
+    Returns:
+        The storage key that was written.
+
+    Raises:
+        ImageImportFailure: On HTTP errors, I/O errors or checksum mismatch.
+    """
     try:
         hasher = hashlib.md5(usedforsecurity=False)
-        # We'll download the remote file to a temporary file
-        # and after that completes successfully will upload it
-        # to the defined ASSET_STORAGE.
+        # Download the remote file to a temp file then upload to storage.
         with NamedTemporaryFile(mode="x+b") as temp_file:
             resp = requests.get(download_url, stream=True, timeout=30)
             resp.raise_for_status()
@@ -93,11 +131,8 @@ def download_and_store_asset_image(download_url, asset_image_filename):
                 temp_file.write(chunk)
                 hasher.update(chunk)
 
-            # Rewind the tempfile back to the first byte so we can
-            # save it to storage
             temp_file.flush()
             temp_file.seek(0)
-
             ASSET_STORAGE.save(asset_image_filename, temp_file)
     except Exception as exc:
         logger.exception(
@@ -112,6 +147,7 @@ def download_and_store_asset_image(download_url, asset_image_filename):
         Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=asset_image_filename
     )
     etag = response.get("ETag")[1:-1]  # trim quotes around hash
+
     if filehash != etag:
         if flag_enabled("IMPORT_IMAGE_CHECKSUM"):
             logger.error(
@@ -122,8 +158,8 @@ def download_and_store_asset_image(download_url, asset_image_filename):
                 filehash,
             )
             raise ImageImportFailure(
-                f"ETag {etag} for {asset_image_filename} did not match calculated "
-                f"md5 hash {filehash}"
+                f"ETag {etag} for {asset_image_filename} did not match "
+                f"calculated md5 hash {filehash}"
             )
         else:
             logger.warning(
@@ -135,6 +171,8 @@ def download_and_store_asset_image(download_url, asset_image_filename):
             )
     else:
         logger.info(
-            "Checksums for %s matched. Upload successful.", asset_image_filename
+            "Checksums for %s matched. Upload successful.",
+            asset_image_filename,
         )
+
     return asset_image_filename

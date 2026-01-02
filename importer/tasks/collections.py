@@ -1,8 +1,11 @@
 from logging import getLogger
+from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
+from celery import Task
 from django.core.cache import cache
+from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
@@ -18,13 +21,33 @@ logger = getLogger(__name__)
 
 
 @app.task(bind=True)
-def import_collection_task(self, import_job_pk, redownload=False):
+def import_collection_task(
+    self: Task, import_job_pk: int, redownload: bool = False
+) -> None:
+    """
+    Celery entrypoint to import all items from a P1 collection or search URL.
+
+    Looks up the ``ImportJob`` and delegates to ``import_collection``.
+
+    Args:
+        import_job_pk: Primary key of the ImportJob.
+        redownload: If true, force re-download of assets when creating tasks.
+    """
     import_job = models.ImportJob.objects.get(pk=import_job_pk)
-    return import_collection(self, import_job, redownload)
+    import_collection(self, import_job, redownload)
 
 
 @update_task_status
-def import_collection(self, import_job, redownload=False):
+def import_collection(
+    self: Task, import_job: models.ImportJob, redownload: bool = False
+) -> None:
+    """
+    Enqueue item import tasks for every item in a normalized collection URL.
+
+    Args:
+        import_job: The ImportJob that initiated the collection import.
+        redownload: If true, force re-download of assets.
+    """
     item_info = get_collection_items(normalize_collection_url(import_job.url))
     for _, item_url in item_info:
         create_item_import_task.delay(import_job.pk, item_url, redownload)
@@ -34,12 +57,24 @@ def import_collection(self, import_job, redownload=False):
 
 
 def requests_retry_session(
-    retries=3,
-    backoff_factor=60 * 60,
-    status_forcelist=(429, 500, 502, 503, 504),
-    session=None,
-):
-    session = session or requests.Session()
+    retries: int = 3,
+    backoff_factor: float = 60 * 60,
+    status_forcelist: tuple[int, ...] = (429, 500, 502, 503, 504),
+    session: Optional[Session] = None,
+) -> Session:
+    """
+    Build a ``requests.Session`` with retry behavior for transient failures.
+
+    Args:
+        retries: Total number of retry attempts.
+        backoff_factor: Multiplier for exponential backoff in seconds.
+        status_forcelist: HTTP status codes that trigger a retry.
+        session: Optional existing session to configure.
+
+    Returns:
+        A ``requests.Session`` with retry adapters mounted.
+    """
+    sess = session or requests.Session()
     retry = Retry(
         total=retries,
         read=retries,
@@ -48,18 +83,24 @@ def requests_retry_session(
         status_forcelist=status_forcelist,
     )
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    return session
+    sess.mount("http://", adapter)
+    sess.mount("https://", adapter)
+    return sess
 
 
-def normalize_collection_url(original_url):
+def normalize_collection_url(original_url: str) -> str:
     """
-    Given a P1 collection/search URL, produce a normalized version which is safe
-    to import. This will replace parameters related to our response format and
-    pagination requirements but otherwise leave the query string unmodified.
-    """
+    Normalize a P1 collection or search URL for import.
 
+    Rewrites query params needed for JSON output and pagination. Leaves other
+    filters intact.
+
+    Args:
+        original_url: The source collection or search URL.
+
+    Returns:
+        A normalized URL with ``fo=json`` and without conflicting params.
+    """
     parsed_url = urlsplit(original_url)
 
     new_qs = [("fo", "json")]
@@ -73,14 +114,20 @@ def normalize_collection_url(original_url):
     )
 
 
-def get_collection_items(collection_url):
+def get_collection_items(collection_url: str) -> list[tuple[str, str]]:
     """
-    :param collection_url: URL of a loc.gov collection or search results page
-    :return: list of (item_id, item_url) tuples
-    """
+    Walk a P1 collection or search endpoint and collect item IDs and URLs.
 
-    items = []
-    current_page_url = collection_url
+    Caches each page response for 48 hours to reduce repeated network calls.
+
+    Args:
+        collection_url: URL of a loc.gov collection or search results page.
+
+    Returns:
+        A list of ``(item_id, item_url)`` tuples discovered across pages.
+    """
+    items: list[tuple[str, str]] = []
+    current_page_url: Optional[str] = collection_url
 
     while current_page_url:
         resp = cache.get(current_page_url)
