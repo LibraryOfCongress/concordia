@@ -1,6 +1,8 @@
 from logging import getLogger
+from typing import Any, Optional, Sequence
+from uuid import UUID
 
-from celery import chord
+from celery import Task, chord
 from PIL import Image
 from requests.exceptions import HTTPError
 
@@ -24,40 +26,44 @@ logger = getLogger(__name__)
     retry_kwargs={"max_retries": 3},
     rate_limit=1,
 )
-def redownload_image_task(self, asset_pk):
+def redownload_image_task(self: Task, asset_pk: int) -> None:
     """
-    Given an existing asset object with a download_url,
-    download the image and save it to asset storage, replacing
-    any existing image for that asset
+    Re-download an asset's image and persist it to storage, replacing any
+    existing image.
+
+    Looks up the Asset, creates a DownloadAssetImageJob to track work, then
+    delegates to download_asset.
+
+    Args:
+        asset_pk: Primary key of the Asset to re-download.
     """
     asset = Asset.objects.get(pk=asset_pk)
     logger.info("Redownloading %s to %s", asset.download_url, asset.get_absolute_url())
-    return download_asset(self, None, asset)
+
+    # Create a tracking job so download_asset can run under update_task_status.
+    job = models.DownloadAssetImageJob.objects.create(asset=asset, batch=None)
+    download_asset(self, job)
 
 
 @app.task()
 def batch_verify_asset_images_task_callback(
-    results, batch, concurrency, failures_detected
-):
+    results: Sequence[bool],
+    batch: UUID,
+    concurrency: int,
+    failures_detected: bool,
+) -> None:
     """
-    Callback task triggered after completing a group of VerifyAssetImageJobs.
+    Callback after a chord of VerifyAssetImageJobs completes.
 
-    Checks whether any verification failures occurred during the current batch
-    unless a failure was previously detected. If any failure is identified,
-    sets the ``failures_detected`` flag to ``True``.
+    If no prior failure was noted and any result is False, mark failures as
+    detected. In all cases enqueue the next verification batch.
 
-    Regardless of outcome, schedules the next batch of VerifyAssetImageJobs.
-
-    :param results: List of verification task outcomes (booleans).
-    :type results: list[bool]
-    :param batch: Identifier of the batch being processed.
-    :type batch: UUID
-    :param concurrency: Number of tasks processed concurrently per batch.
-    :type concurrency: int
-    :param failures_detected: Flag indicating if failures occurred previously.
-    :type failures_detected: bool
+    Args:
+        results: Verification outcomes for this chord (True or False).
+        batch: Identifier for the active batch.
+        concurrency: Number of jobs to run in the next batch.
+        failures_detected: Whether a failure was already seen.
     """
-
     # We only care if there are any failures, not exactly which or how many, since we
     # automatically create a DownliadImageAssetJob for each failure already, so here
     # we skip this check if we already have a detected failure
@@ -74,30 +80,26 @@ def batch_verify_asset_images_task_callback(
 
 
 @app.task(bind=True)
-def batch_verify_asset_images_task(self, batch, concurrency=2, failures_detected=False):
+def batch_verify_asset_images_task(
+    self: Task, batch: UUID, concurrency: int = 2, failures_detected: bool = False
+) -> None:
     """
-    Process VerifyAssetImageJob instances for the provided batch in concurrent groups.
+    Process VerifyAssetImageJobs in groups of size concurrency.
 
-    Jobs are processed concurrently in groups defined by ``concurrency``. Each job
-    triggers an individual verification task.
+    After processing:
+    - If any failure was detected, start a DownloadAssetImageJob batch.
+    - Otherwise, end cleanly.
 
-    After all VerifyAssetImageJobs for the batch have been processed:
-
-    - If any failures occurred (``failures_detected`` is ``True``), automatically
-      trigger batch processing of DownloadAssetImageJobs.
-    - If no failures occurred, gracefully complete without further actions.
-
-    :param batch: Identifier of the batch to process.
-    :type batch: UUID
-    :param concurrency: Number of jobs processed concurrently. Defaults to ``2``.
-    :type concurrency: int, optional
-    :param failures_detected: Flag indicating if failures occurred in prior job batches.
-        Defaults to ``False``.
-    :type failures_detected: bool, optional
+    Args:
+        batch: Identifier for the batch to process.
+        concurrency: Number of jobs to process at once. Defaults to 2.
+        failures_detected: Whether earlier groups reported a failure.
+            Defaults to False.
     """
     logger.info(
         "Processing next %s VerifyAssetImageJobs for batch %s", concurrency, batch
     )
+
     jobs_to_process = models.VerifyAssetImageJob.objects.filter(
         batch=batch, completed__isnull=True, failed__isnull=True
     ).order_by("created")
@@ -106,8 +108,8 @@ def batch_verify_asset_images_task(self, batch, concurrency=2, failures_detected
         logger.info("No VerifyAssetImageJobs remain for batch %s", batch)
         if failures_detected:
             logger.info(
-                "Failures in VerifyAssetImageJobs in batch %s detected, so starting "
-                "DownloadAssetImageJob batch",
+                "Failures in VerifyAssetImageJobs in batch %s detected, so "
+                "starting DownloadAssetImageJob batch",
                 batch,
             )
             batch_download_asset_images_task(batch, concurrency)
@@ -136,31 +138,27 @@ def batch_verify_asset_images_task(self, batch, concurrency=2, failures_detected
     retry_kwargs={"max_retries": 3},
     rate_limit=1,
 )
-def verify_asset_image_task(self, asset_pk, batch=None, create_job=False):
+def verify_asset_image_task(
+    self: Task, asset_pk: int, batch: Optional[UUID] = None, create_job: bool = False
+) -> bool:
     """
-    Verify an asset's storage image, ensuring its existence and integrity.
+    Verify that an asset's storage image exists and is readable.
 
-    Retrieves the asset by its primary key and either creates or fetches an existing
-    ``VerifyAssetImageJob`` to track verification. If the asset's image fails
-    verification, the job status is updated accordingly.
+    Creates or retrieves a VerifyAssetImageJob, runs verification and updates
+    status. Retries on HTTPError using exponential backoff.
 
-    This task automatically retries upon encountering ``HTTPError`` exceptions,
-    applying exponential backoff.
+    Args:
+        asset_pk: Primary key of the Asset to verify.
+        batch: Identifier for the verification batch, if any.
+        create_job: If True, create a new job; otherwise fetch an existing one.
 
-    :param asset_pk: Primary key of the asset to verify.
-    :type asset_pk: int
-    :param batch: Identifier of the batch associated with this verification, if any.
-        Defaults to ``None``.
-    :type batch: UUID, optional
-    :param create_job: If ``True``, a new ``VerifyAssetImageJob`` is created instead of
-        retrieving an existing one.
-    :type create_job: bool, optional
+    Returns:
+        True if verification succeeds, False otherwise.
 
-    :raises Asset.DoesNotExist: If the specified asset cannot be found.
-    :raises VerifyAssetImageJob.DoesNotExist: If no existing job is found when expected.
-
-    :return: ``True`` if verification succeeds, otherwise ``False``.
-    :rtype: bool
+    Raises:
+        Asset.DoesNotExist: When the Asset cannot be found.
+        models.VerifyAssetImageJob.DoesNotExist: When fetching a job that does
+            not exist.
     """
     try:
         asset = Asset.objects.get(pk=asset_pk)
@@ -181,8 +179,8 @@ def verify_asset_image_task(self, asset_pk, batch=None, create_job=False):
             )
         except models.VerifyAssetImageJob.DoesNotExist:
             logger.exception(
-                "Uncompleted VerifyAssetImageJob for asset %s and batch %s "
-                "could not be found while attempting to spawn verify_asset_image task",
+                "Uncompleted VerifyAssetImageJob for asset %s and batch %s could not "
+                "be found while attempting to spawn verify_asset_image task",
                 asset,
                 batch,
             )
@@ -194,7 +192,14 @@ def verify_asset_image_task(self, asset_pk, batch=None, create_job=False):
     return result
 
 
-def create_download_asset_image_job(asset, batch):
+def create_download_asset_image_job(asset: Asset, batch: Optional[UUID]) -> None:
+    """
+    Ensure a DownloadAssetImageJob exists for the given asset and batch.
+
+    Args:
+        asset: Asset to download.
+        batch: Batch identifier or None.
+    """
     existing_job = models.DownloadAssetImageJob.objects.filter(
         asset=asset, batch=batch
     ).first()
@@ -204,23 +209,20 @@ def create_download_asset_image_job(asset, batch):
 
 
 @update_task_status
-def verify_asset_image(task, job):
+def verify_asset_image(task: Task, job: Any) -> bool:
     """
-    Verify the existence and integrity of an Asset's storage image.
+    Verify the presence and integrity of an Asset's storage image.
 
-    Checks if the asset has a storage image set and verifies that the image
-    exists in the configured storage. Then, confirms that the image file isn't
-    corrupt by attempting to open and validate its contents.
-
-    If any of these checks fail, updates the job status accordingly and creates
-    a ``DownloadAssetImageJob`` to rectify the problem.
-
-    Returns:
-        bool: ``True`` if verification succeeds, ``False`` otherwise.
+    Checks that a storage image is set, the object exists in storage, and that
+    the image bytes are not corrupt. On failure, updates job status and creates
+    a DownloadAssetImageJob.
 
     Args:
-        task (celery.Task): Celery task instance executing this verification.
-        job (VerifyAssetImageJob): Job instance representing this verification task.
+        task: Celery task instance.
+        job: VerifyAssetImageJob instance.
+
+    Returns:
+        True if verification succeeds, False otherwise.
     """
     asset = job.asset
 
@@ -268,45 +270,42 @@ def verify_asset_image(task, job):
 
 
 @app.task()
-def batch_download_asset_images_task_callback(results, batch, concurrency):
+def batch_download_asset_images_task_callback(
+    results: Sequence[Any], batch: UUID, concurrency: int
+) -> None:
     """
-    Callback to trigger additional DownloadAssetImageJobs after a batch completes.
+    Callback after a chord of DownloadAssetImageJobs completes.
 
-    This callback is automatically called after a group of DownloadAssetImageJobs
-    finishes processing. Results are ignored, as they are not relevant to further
-    processing. It immediately schedules the next batch of downloads, if any remain.
+    Results are ignored. Enqueue the next download batch.
 
-    :param results: Results from the completed download tasks (ignored).
-    :type results: list
-    :param batch: Identifier for the batch being processed.
-    :type batch: UUID
-    :param concurrency: Number of concurrent download tasks for the next batch.
-    :type concurrency: int
+    Args:
+        results: Ignored chord results.
+        batch: Identifier for the batch.
+        concurrency: Number of jobs to run in the next batch.
     """
-
-    # We don't care about the results of these tasks,
-    # so we simply call the original task again
+    # We do not care about the results of these tasks, so we simply call the
+    # original task again to continue processing the batch.
     batch_download_asset_images_task.delay(batch, concurrency)
 
 
 @app.task(bind=True)
-def batch_download_asset_images_task(self, batch, concurrency=10):
+def batch_download_asset_images_task(
+    self: Task, batch: UUID, concurrency: int = 10
+) -> None:
     """
-    Process DownloadAssetImageJobs associated with a given batch in concurrent groups.
+    Process DownloadAssetImageJobs in groups of size concurrency.
 
-    Retrieves pending jobs linked to the provided ``batch`` identifier, processing them
-    concurrently in groups of size defined by ``concurrency``. After each group
-    finishes, recursively schedules the next group until all jobs are processed.
+    Retrieves pending jobs for the batch, runs up to concurrency tasks, then
+    schedules the next group via a chord callback until none remain.
 
-    :param batch: Identifier for the batch of jobs to process.
-    :type batch: UUID
-    :param concurrency: Number of concurrent tasks to execute per group. Defaults to
-        ``10``.
-    :type concurrency: int, optional
+    Args:
+        batch: Identifier for the batch to process.
+        concurrency: Number of concurrent tasks per group. Defaults to 10.
     """
     logger.info(
         "Processing next %s DownloadAssetImageJobs for batch %s", concurrency, batch
     )
+
     jobs_to_process = models.DownloadAssetImageJob.objects.filter(
         batch=batch, completed__isnull=True, failed__isnull=True
     ).order_by("created")
@@ -320,10 +319,9 @@ def batch_download_asset_images_task(self, batch, concurrency=10):
         for job in jobs_to_process[:concurrency]
     ]
 
-    # We use a chord so when the tasks finish it calls this function
-    # again to start the remaining jobs until no more remain
-    # Our callback just calls this task again, but we need it because
-    # chords send results as the first parameter, which this task doesn't accept
+    # Use a chord so when the tasks finish it calls the callback to start the
+    # remaining jobs until no more remain. The callback just re-invokes this
+    # task with the same batch and concurrency.
     chord(task_groups)(batch_download_asset_images_task_callback.s(batch, concurrency))
 
 
@@ -336,34 +334,24 @@ def batch_download_asset_images_task(self, batch, concurrency=10):
     retry_kwargs={"max_retries": 3},
     rate_limit=1,
 )
-def download_asset_image_task(self, asset_pk, batch=None, create_job=False):
+def download_asset_image_task(
+    self: Task, asset_pk: int, batch: Optional[UUID] = None, create_job: bool = False
+) -> None:
     """
-    Download an asset's image and create a corresponding DownloadAssetImageJob.
+    Download an asset's image and track it via DownloadAssetImageJob.
 
-    Retrieves the asset by its primary key and creatres or fetches an existing
-    ``DownloadAssetImageJob`` to track the download process. Then, calls the
-    ``download_asset`` function to handle the actual retrieval.
+    Creates or retrieves a job and delegates to download_asset. Retries on
+    HTTPError using exponential backoff.
 
-    This task automatically retries upon encountering ``HTTPError`` exceptions,
-    applying exponential backoff.
+    Args:
+        asset_pk: Primary key of the Asset to download.
+        batch: Identifier for the batch, if any.
+        create_job: If True, create a new job; otherwise fetch an existing one.
 
-    :param asset_pk: Primary key of the asset to download.
-    :type asset_pk: int
-    :param batch: Identifier of the batch associated with this download, if any.
-        Defaults to ``None``.
-    :type batch: UUID, optional
-    :param create_job: If ``True``, a new ``DownloadAssetImageJob`` is created instead
-        of retrieving an existing one.
-    :type create_job: bool, optional
-
-
-    :raises Asset.DoesNotExist: If the specified asset cannot be found.
-    :raises DownloadAssetImageJob.DoesNotExist: If no existing job is found
-        when expected.
-
-    :return: The result of the ``download_asset`` function, typically a status
-        indicator.
-    :rtype: Any
+    Raises:
+        Asset.DoesNotExist: When the Asset cannot be found.
+        models.DownloadAssetImageJob.DoesNotExist: When fetching a job that
+            does not exist.
     """
     try:
         asset = Asset.objects.get(pk=asset_pk)
@@ -374,6 +362,7 @@ def download_asset_image_task(self, asset_pk, batch=None, create_job=False):
             asset_pk,
         )
         raise
+
     if create_job:
         job = models.DownloadAssetImageJob.objects.create(asset=asset, batch=batch)
     else:
