@@ -1,8 +1,8 @@
 {% if user.is_authenticated %}
     <div>
-        <input name="radioButtons" type="radio" id="show-all" {% if do_filter %}onclick="filterAssets(false, '{{ all_url }}?{{ sublevel_qs }}')"{% else %}checked{% endif %}>
-        <label>Show all</label>
-        <input name="radioButtons" type="radio" id="filter-assets" {% if do_filter %}checked{% else %}onclick="filterAssets(true, '{{ filtered_url }}?{{ sublevel_qs }}')"{% endif %} class="ml-1">
-        <label>Show pages I can review</label>
+        <input name="radioButtons" type="radio" id="show-all" {% if not do_filter %}checked{% endif %} data-url="{{ all_url}}{% if sublevel_qs %}?{{ sublevel_qs }}{% endif %}">
+        <label for="show-all">Show all</label>
+        <input name="radioButtons" type="radio" id="filter-assets" {% if do_filter %}checked{% endif %} class="ml-1" data-url="{{ filtered_url}}{% if sublevel_qs %}?{{ sublevel_qs }}{% endif %}">
+        <label for="filter-assets">Show pages I can review</label>
     </div>
 {% endif %}

@@ -34,15 +34,15 @@
                 <div class="hero-text">{{ topic.description|safe }}</div>
             </div>
             <div class="col-md-3">
-                {% if topic.resource_set.all|length %}
+                {% if topic.helpfullink_set.all|length %}
                     <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light border">
                         <h4 class="mb-3">Helpful Links</h4>
                         <ul class="list-unstyled m-0">
-                            {% for resource in topic.resource_set.all %}
-                                {% if 'loc.gov' in resource.resource_url   %}
-                                    <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank" rel=noopener>{{ resource.title }}</a></li>
+                            {% for link in topic.helpfullink_set.all %}
+                                {% if 'loc.gov' in link.link_url   %}
+                                    <li class="mb-3"><a href="{{ link.link_url }}" target="_blank" rel=noopener>{{ link.title }}</a></li>
                                 {% else %}
-                                    <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank" rel=noopener>{{ resource.title }} <i class="fa fa-external-link-alt"></i></a></li>
+                                    <li class="mb-3"><a href="{{ link.link_url }}" target="_blank" rel=noopener>{{ link.title }} <i class="fa fa-external-link-alt"></i></a></li>
                                 {% endif %}
                             {% endfor %}
                         </ul>

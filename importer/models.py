@@ -1,8 +1,5 @@
-"""
-See the module-level docstring for implementation details
-"""
-
 from logging import getLogger
+from uuid import UUID
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
@@ -15,10 +12,16 @@ from importer import tasks
 
 logger = getLogger(__name__)
 
-# FIXME: these classes should have names which more accurately represent what they do
-
 
 class TaskStatusModel(models.Model):
+    """
+    Abstract base model that tracks task lifecycle and outcomes.
+
+    Subclasses get standard timestamp fields, a free-form status, failure
+    bookkeeping (reason, history, retry count), and the last Celery task ID
+    that processed the record.
+    """
+
     class FailureReason(models.TextChoices):
         IMAGE = "Image"
         RETRIES = "Retries"
@@ -77,10 +80,24 @@ class TaskStatusModel(models.Model):
     class Meta:
         abstract = True
 
-    def retry_if_possible(self):
+    def retry_if_possible(self) -> bool:
+        """
+        Attempt to schedule a retry for this task if policy allows.
+
+        Subclasses should override this to implement their own logic.
+
+        Returns:
+            bool: True if a retry was scheduled, otherwise False.
+        """
         return False
 
-    def update_failure_history(self, do_save=True):
+    def update_failure_history(self, do_save: bool = True) -> None:
+        """
+        Append the current failure details to the failure history.
+
+        Args:
+            do_save (bool): If True, save the model after updating.
+        """
         self.failure_history.append(
             {
                 "failed": self.failed,
@@ -91,7 +108,14 @@ class TaskStatusModel(models.Model):
         if do_save:
             self.save()
 
-    def update_status(self, status, do_save=True):
+    def update_status(self, status: str, do_save: bool = True) -> None:
+        """
+        Append the previous status to the history and set a new status.
+
+        Args:
+            status (str): The new status value to set.
+            do_save (bool): If True, save the model after updating.
+        """
         self.status_history.append(
             {
                 "status": self.status,
@@ -102,7 +126,17 @@ class TaskStatusModel(models.Model):
         if do_save:
             self.save()
 
-    def reset_for_retry(self):
+    def reset_for_retry(self) -> bool:
+        """
+        Reset failure fields and prepare the record for retry.
+
+        When the instance is currently marked as failed, move the failure
+        details into history, clear failure markers, increment retry count,
+        and set a transitional status.
+
+        Returns:
+            bool: True if the record was reset, otherwise False.
+        """
         if self.failed:
             logger.info(
                 "Resetting task %s for retrying",
@@ -130,6 +164,14 @@ class TaskStatusModel(models.Model):
 
 
 class BatchedJob(TaskStatusModel):
+    """
+    Abstract base model for jobs grouped into batches.
+
+    The optional `batch` UUID groups related jobs for scheduling and
+    admin filtering. Use `batch_admin_url` or `get_batch_admin_url`
+    to link to the admin list filtered by the batch.
+    """
+
     # Allows grouping jobs by batch.
     # `batch` is used by the task system to group jobs
     # and run them in smaller groups rather than spawning
@@ -143,7 +185,20 @@ class BatchedJob(TaskStatusModel):
         abstract = True
 
     @classmethod
-    def get_batch_admin_url(cls, batch):
+    def get_batch_admin_url(cls, batch: UUID | str | None) -> str:
+        """
+        Build the admin changelist URL filtered to the provided batch.
+
+        Args:
+            batch (UUID | str | None): Batch identifier to filter by. Must be
+                provided.
+
+        Returns:
+            str: Admin changelist URL with the batch query string applied.
+
+        Raises:
+            ValueError: If `batch` is falsy.
+        """
         if not batch:
             raise ValueError("A batch value must be provided.")
 
@@ -155,7 +210,14 @@ class BatchedJob(TaskStatusModel):
         return f"{admin_url}?batch={batch}"
 
     @property
-    def batch_admin_url(self):
+    def batch_admin_url(self) -> str | None:
+        """
+        Convenience property to get the admin URL for this instance's batch.
+
+        Returns:
+            str | None: Admin URL filtered by the instance's batch, or None
+            when no batch is set.
+        """
         # Allows getting the batch url from an instance, automatically
         # using self.batch rather than needing to call the class method
         # get_batch_admin_url if you have an instance
@@ -164,7 +226,7 @@ class BatchedJob(TaskStatusModel):
 
 class ImportJob(TaskStatusModel):
     """
-    Represents a request by a user to import item(s) from a remote URL
+    Represents a request by a user to import item(s) from a remote URL.
     """
 
     created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
@@ -173,7 +235,7 @@ class ImportJob(TaskStatusModel):
 
     url = models.URLField(verbose_name="Source URL for the entire job")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "ImportJob(created_by=%s, project=%s, url=%s)" % (
             self.created_by.username if self.created_by else None,
             self.project.title,
@@ -183,7 +245,7 @@ class ImportJob(TaskStatusModel):
 
 class ImportItem(TaskStatusModel):
     """
-    Record of the task status for each Item being imported
+    Record of the task status for each Item being imported.
     """
 
     job = models.ForeignKey(ImportJob, on_delete=models.CASCADE, related_name="items")
@@ -195,13 +257,13 @@ class ImportItem(TaskStatusModel):
     class Meta:
         unique_together = (("job", "item"),)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "ImportItem(job=%s, url=%s)" % (self.job, self.url)
 
 
 class ImportItemAsset(TaskStatusModel):
     """
-    Record of the task status for each Asset being imported
+    Record of the task status for each Asset being imported.
     """
 
     import_item = models.ForeignKey(
@@ -216,17 +278,33 @@ class ImportItemAsset(TaskStatusModel):
     class Meta:
         unique_together = (("import_item", "sequence_number"), ("import_item", "asset"))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "ImportItemAsset(import_item=%s, url=%s)" % (self.import_item, self.url)
 
-    def retry_if_possible(self):
+    def retry_if_possible(self) -> bool:
+        """
+        Attempt to schedule a retry when the failure was an image error.
+
+        Uses two configuration values:
+
+        - `asset_image_import_max_retries`: Maximum number of retries allowed.
+        - `asset_image_import_max_retry_delay`: Delay (minutes) before retry.
+
+        When eligible and reset succeeds, schedules a Celery task via
+        `download_asset_task.apply_async(...)`.
+
+        Returns:
+            bool: True if a retry was scheduled, otherwise False.
+        """
         if self.failure_reason == TaskStatusModel.FailureReason.IMAGE:
             max_retries = configuration_value("asset_image_import_max_retries")
             retry_delay = configuration_value("asset_image_import_max_retry_delay")
             if self.retry_count < max_retries and retry_delay > 0:
                 if self.reset_for_retry():
-                    return tasks.assets.download_asset_task.apply_async(
-                        (self.pk,), countdown=retry_delay * 60  # Convert to seconds
+                    return bool(
+                        tasks.assets.download_asset_task.apply_async(
+                            (self.pk,), countdown=retry_delay * 60
+                        )
                     )
                 else:
                     logger.warning(
@@ -256,9 +334,13 @@ class ImportItemAsset(TaskStatusModel):
 
 
 class VerifyAssetImageJob(BatchedJob):
+    """
+    Job that verifies a previously downloaded asset image.
+    """
+
     asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"VerifyAssetImageJob for {self.asset}"
 
     class Meta:
@@ -266,9 +348,13 @@ class VerifyAssetImageJob(BatchedJob):
 
 
 class DownloadAssetImageJob(BatchedJob):
+    """
+    Job that downloads an asset image for later verification.
+    """
+
     asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"DownloadAssetImageJob for {self.asset}"
 
     class Meta:
