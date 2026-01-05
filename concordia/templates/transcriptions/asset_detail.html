@@ -71,11 +71,7 @@
                             <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-bs-placement="top" data-bs-trigger="focus click hover" title="When to use OCR"  data-bs-toggle="modal" data-bs-target="#ocr-help-modal">
                                 <span class="underline-link fw-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                             </a>
-                            {% if user.is_authenticated %}
-                                <a role="button" data-bs-placement="top" data-bs-trigger="click" title="Transcribe with OCR" data-bs-toggle="modal" data-bs-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                            {% else %}
-                                <a role="button" data-bs-placement="top" title='Log in to use "Transcribe with OCR"' id="ocr-transcription-link" class="btn btn-primary mx-1 disabled" disabled>Transcribe with OCR</a>
-                            {% endif %}
+                            <a role="button" data-bs-placement="top" data-bs-trigger="click" title="Transcribe with OCR" id="ocr-transcription-link" class="btn btn-primary mx-1" aria-disabled="true" href="#" tabindex="0" data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">Transcribe with OCR</a>
                         </div>
                     {% endif %}
                 </div>
