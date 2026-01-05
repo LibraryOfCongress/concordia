@@ -1,3 +1,35 @@
+"""
+Experimental API endpoints backing the React transcription page.
+
+Status
+------
+This module is in active development and not yet in its final form. Interfaces
+and behavior may change without deprecation.
+
+Intended Use
+------------
+These endpoints exist to support the React app's transcription page during
+ongoing development and trial rollout.
+
+Duplication and Future Plan
+---------------------------
+To enable rapid iteration, this module currently duplicates substantial logic
+from existing Django views (e.g., validation, submission/review workflows,
+rollback/rollforward and serialization). When the React transcription page is
+ready for production, one of the following will occur:
+
+1. Shared logic will be factored into reusable helpers imported by both these
+   endpoints and the legacy views; or
+2. The legacy views that these endpoints duplicate will be removed.
+
+Until then, expect overlap and keep changes synchronized across both places.
+
+Note
+----
+The React app still requires significant development work. Treat these endpoints
+as provisional and subject to change.
+"""
+
 import re
 from time import time
 from typing import Optional
@@ -36,6 +68,14 @@ api = NinjaAPI(version=None, urls_namespace="api")
 
 
 class AssetOut(CamelSchema):
+    """
+    Serialized representation of an Asset for API responses.
+
+    Fields mirror what the web client needs to render the asset view,
+    including navigation context, image URLs, tagging, tutorial cards,
+    available languages and undo/redo availability.
+    """
+
     id: int  # noqa: A003
     title: str
     item_id: str
@@ -61,6 +101,11 @@ class AssetOut(CamelSchema):
 
 
 class ReviewIn(CamelSchema):
+    """
+    Request Parameters:
+        action (str): Review action, either `"accept"` or `"reject"`.
+    """
+
     action: str  # "accept" or "reject"
 
 
@@ -68,7 +113,8 @@ class TranscriptionIn(CamelSchema):
     """
     Request Parameters:
         text (str): The transcription text to save.
-        supersedes (Optional[int]): The ID of the transcription being superseded.
+        supersedes (Optional[int]): The ID of the transcription being
+            superseded.
     """
 
     text: str
@@ -79,7 +125,8 @@ class OcrTranscriptionIn(CamelSchema):
     """
     Request Parameters:
         language (str): The ISO 639-3 code of the OCR language to use.
-        supersedes (Optional[int]): The ID of the transcription being superseded.
+        supersedes (Optional[int]): The ID of the transcription being
+            superseded.
     """
 
     language: str
@@ -87,6 +134,11 @@ class OcrTranscriptionIn(CamelSchema):
 
 
 class TranscriptionOut(CamelSchema):
+    """
+    Serialized representation of a Transcription event/result returned
+    by API endpoints that create or mutate transcriptions.
+    """
+
     id: int  # noqa: A003
     text: str
     sent: float
@@ -96,7 +148,17 @@ class TranscriptionOut(CamelSchema):
     redo_available: bool
 
 
-def serialize_asset(asset, request):
+def serialize_asset(asset: Asset, request: HttpRequest) -> AssetOut:
+    """
+    Build the `AssetOut` payload for a single asset.
+
+    Args:
+        asset (Asset): Published asset instance to serialize.
+        request (HttpRequest): Current request, used for absolute URLs.
+
+    Returns:
+        AssetOut: Serialized asset suitable for API responses.
+    """
     item = asset.item
     project = item.project
     campaign = project.campaign
@@ -218,7 +280,7 @@ def serialize_asset(asset, request):
     )
 
 
-assets = Router(tags=["assets"])
+assets: Router = Router(tags=["assets"])
 
 
 @assets.get(
@@ -227,12 +289,24 @@ assets = Router(tags=["assets"])
     by_alias=True,
 )
 def asset_detail_by_slugs(
-    request,
+    request: HttpRequest,
     campaign_slug: str,
     project_slug: str,
     item_id: str,
     asset_slug: str,
-):
+) -> AssetOut:
+    """
+    Resolve and return a published asset using slugs and item_id.
+
+    Path Parameters:
+        campaign_slug (str): Campaign slug.
+        project_slug (str): Project slug.
+        item_id (str): Item identifier within the project.
+        asset_slug (str): Asset slug.
+
+    Returns:
+        AssetOut: Serialized asset record.
+    """
     asset = get_object_or_404(
         Asset.objects.published()
         .select_related("item__project__campaign")
@@ -247,8 +321,8 @@ def asset_detail_by_slugs(
 
 
 @assets.get("/{asset_id}", response=AssetOut, by_alias=True)
-def asset_detail(request, asset_id: int):
-    """GET /assets/{asset_id}/ – basic asset record."""
+def asset_detail(request: HttpRequest, asset_id: int) -> AssetOut:
+    """GET /assets/{asset_id}/ - basic asset record."""
     asset = get_object_or_404(
         Asset.objects.published().select_related("item__project__campaign"), pk=asset_id
     )
@@ -256,7 +330,9 @@ def asset_detail(request, asset_id: int):
 
 
 @assets.post("/{asset_id}/transcriptions", response=TranscriptionOut, by_alias=True)
-def create_transcription(request, asset_id: int, payload: TranscriptionIn):
+def create_transcription(
+    request: HttpRequest, asset_id: int, payload: TranscriptionIn
+) -> TranscriptionOut:
     """
     Create a new draft transcription for the given asset.
 
@@ -367,7 +443,9 @@ def create_transcription(request, asset_id: int, payload: TranscriptionIn):
 
 @assets.post("/{asset_id}/transcriptions/ocr", response=TranscriptionOut, by_alias=True)
 @atomic
-def create_ocr_transcription(request, asset_id: int, payload: OcrTranscriptionIn):
+def create_ocr_transcription(
+    request: HttpRequest, asset_id: int, payload: OcrTranscriptionIn
+) -> TranscriptionOut:
     """
     Create and save a new OCR-generated transcription for an asset.
     """
@@ -477,9 +555,12 @@ def create_ocr_transcription(request, asset_id: int, payload: OcrTranscriptionIn
     by_alias=True,
 )
 @atomic
-def rollback(request: HttpRequest, asset_id: int):
+def rollback(request: HttpRequest, asset_id: int) -> TranscriptionOut:
     """
     Restores the asset's transcription to the previous version in its history.
+
+    Raises:
+        HttpError: If no previous transcription exists to roll back to.
     """
     asset = get_object_or_404(Asset, pk=asset_id)
     user = request.user if not request.user.is_anonymous else get_anonymous_user()
@@ -521,9 +602,12 @@ def rollback(request: HttpRequest, asset_id: int):
     by_alias=True,
 )
 @atomic
-def rollforward(request: HttpRequest, asset_id: int):
+def rollforward(request: HttpRequest, asset_id: int) -> TranscriptionOut:
     """
     Restores the asset's transcription to the next version in its history.
+
+    Raises:
+        HttpError: If no future transcription exists to restore.
     """
     asset = get_object_or_404(Asset, pk=asset_id)
     user = request.user if not request.user.is_anonymous else get_anonymous_user()
@@ -559,11 +643,11 @@ def rollforward(request: HttpRequest, asset_id: int):
     )
 
 
-transcriptions = Router(tags=["transcriptions"])
+transcriptions: Router = Router(tags=["transcriptions"])
 
 
 @transcriptions.post("/{pk}/submit", response=TranscriptionOut, by_alias=True)
-def submit_transcription(request: HttpRequest, pk: int):
+def submit_transcription(request: HttpRequest, pk: int) -> TranscriptionOut:
     """
     Submit a transcription for review (API version of legacy view).
     """
@@ -628,15 +712,25 @@ def submit_transcription(request: HttpRequest, pk: int):
     response=TranscriptionOut,
     by_alias=True,
 )
-def review_transcription(request: HttpRequest, pk: int, payload: ReviewIn):
+def review_transcription(
+    request: HttpRequest, pk: int, payload: ReviewIn
+) -> TranscriptionOut:
     """
     Accept or reject a submitted transcription.
+
+    Request Parameters:
+        action (str): `"accept"` to accept or `"reject"` to reject.
+
+    Raises:
+        HttpError: If the action is invalid, the transcription was already
+            reviewed, the user attempts a self-accept, or the review rate
+            limit is exceeded.
     """
     transcription = get_object_or_404(Transcription, pk=pk)
     asset = transcription.asset
     user = request.user if not request.user.is_anonymous else get_anonymous_user()
 
-    # Temporary workaround to allow self-accepts
+    # Temporary workaround to allow self-accepts for testing
     if payload.action == "accept" and transcription.user.pk == user.pk:
         user = ConcordiaUser.objects.latest("date_joined")
     # End workaround

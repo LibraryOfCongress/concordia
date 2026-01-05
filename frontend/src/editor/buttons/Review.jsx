@@ -1,5 +1,20 @@
 import React from 'react';
 
+/**
+ * Review action buttons for the transcription editor.
+ *
+ * Renders two primary buttons:
+ * - "Edit" triggers the reject flow so a reviewer can make changes
+ * - "Accept" confirms the transcription is accurate
+ *
+ * @param {Object} props
+ * @param {boolean} props.isReviewing
+ *   True while a review API call is active which disables the buttons.
+ * @param {() => void} props.onAccept
+ *   Handler to accept the current transcription.
+ * @param {() => void} props.onReject
+ *   Handler to send the transcription back for edits.
+ */
 export default function EditorButtonsReview({isReviewing, onAccept, onReject}) {
     return (
         <>
