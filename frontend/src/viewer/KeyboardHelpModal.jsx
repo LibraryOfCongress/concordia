@@ -1,11 +1,25 @@
 import KeyboardShortcutRow from './KeyboardShortcutRow';
 
+/*
+KeyboardHelpModal
+
+Bootstrap modal that lists viewer keyboard shortcuts. Rows are rendered
+with KeyboardShortcutRow.
+
+Usage:
+- Trigger with data-bs-target="#keyboard-help-modal"
+- Presentational only
+
+Accessibility:
+- Uses role="dialog" and Bootstrap aria attributes
+- Close button has aria-label
+*/
 export default function KeyboardHelpModal() {
     return (
         <div
             id="keyboard-help-modal"
             className="modal"
-            tabindex="-1"
+            tabIndex={-1}
             role="dialog"
         >
             <div className="modal-dialog modal-dialog-centered" role="document">
@@ -37,7 +51,6 @@ export default function KeyboardHelpModal() {
                                     ]}
                                     description="Scroll the viewport down"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[
                                         {text: 'a', wrap: true},
@@ -45,7 +58,6 @@ export default function KeyboardHelpModal() {
                                     ]}
                                     description="Scroll the viewport left"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[
                                         {text: 'd', wrap: true},
@@ -53,12 +65,10 @@ export default function KeyboardHelpModal() {
                                     ]}
                                     description="Scroll the viewport right"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[{text: '0', wrap: true}]}
                                     description="Fit the entire image to the viewport"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[
                                         {text: '-', wrap: true},
@@ -68,7 +78,6 @@ export default function KeyboardHelpModal() {
                                     ]}
                                     description="Zoom the viewport out"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[
                                         {text: '=', wrap: true},
@@ -76,19 +85,16 @@ export default function KeyboardHelpModal() {
                                         {text: 'Shift+S', wrap: false},
                                         {text: 'Shift+Down arrow', wrap: false},
                                     ]}
-                                    description="Scroll the viewport in"
+                                    description="Zoom the viewport in"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[{text: 'r', wrap: true}]}
                                     description="Rotate the viewport clockwise"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[{text: 'R', wrap: true}]}
                                     description="Rotate the viewport counterclockwise"
                                 />
-
                                 <KeyboardShortcutRow
                                     keys={[{text: 'f', wrap: true}]}
                                     description="Flip the viewport horizontally"

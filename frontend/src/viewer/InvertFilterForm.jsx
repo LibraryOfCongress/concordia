@@ -1,3 +1,14 @@
+/**
+ * InvertFilterForm
+ *
+ * Simple on/off control for an invert color filter. Parent manages state and
+ * passes the current value plus a setter.
+ *
+ * @component
+ * @param {Object} props
+ * @param {boolean} props.invert - Current invert state
+ * @param {(value: boolean) => void} props.setInvert - Setter for invert state
+ */
 export default function InvertFilterForm({invert, setInvert}) {
     const handleChange = (e) => {
         setInvert(e.target.checked);
