@@ -59,12 +59,9 @@ jobs:
                   # Optional - x64 or x86 architecture, defaults to x64
                   architecture: 'x64'
 
-            - name: Install Python Dependencies and Retrieve Version Number
-              id: python-build
+            - name: Get version from Git
               run: |
-                  python3 -m pip install --upgrade pip
-
-                  # Get version main was tagged with in GitHub for this Release
+                  # Get latest version tag number (e.g. main was tagged with in GitHub for this Release)
                   FULL_VERSION_NUMBER="$(git describe --tags `git rev-list --tags --max-count=1`)"
                   echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
 
