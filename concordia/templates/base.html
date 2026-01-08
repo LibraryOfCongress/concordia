@@ -124,7 +124,8 @@ for performance:
                             </li>
                             <li id="topnav-account-dropdown" class="nav-item dropdown
                                                                     nav-dropdown authenticated-only">
-                                <a id="topnav-account-dropdown-toggle" class="nav-link fw-bold" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{{user}} account menu">
+                                <a id="topnav-account-dropdown-toggle" class="nav-link fw-bold" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{{ user.username }} account menu">
+                                    {{ user.username }}<span class="fa fa-chevron-down text-primary"></span>
                                 </a>
                                 <div id="topnav-account-dropdown-menu" class="dropdown-menu" aria-labelledby="topnav-account-dropdown-toggle"></div>
                             </li>
@@ -140,8 +141,6 @@ for performance:
                                 <a class="nav-link nav-secondary nav-link-register fw-bold"
                                    href="{% url 'registration_register' %}" rel="nofollow">Register</a>
                             </li>
-                        </ul>
-                        <ul class="nav-secondary authenticated-only list-unstyled d-none d-lg-flex d-print-none small ms-4 ps-3">
                         </ul>
                     </div>
                 </nav>
