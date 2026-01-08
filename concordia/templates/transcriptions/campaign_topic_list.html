@@ -88,19 +88,21 @@
         if (showMoreButton && campaignList){
             const items = Array.from(campaignList.children);
             const batchSize = 10;
-            let visibleCount = 10;
+            let expanded = false; // collapsed by default
 
             function updateVisibility() {
-                items.forEach((item, index) => {
-                    item.hidden = index >= visibleCount;
-                });
-
-                const remaining = items.length - visibleCount;
-
-                if (remaining <= 0) {
-                    showMoreButton.remove();
+                if (expanded) {
+                    // All
+                    items.forEach(item => item.hidden = false);
+                    showMoreButton.textContent = "Show Fewer Campaigns";
+                    showMoreButton.setAttribute("aria-expanded", "true");
                 } else {
-                    showMoreButton.textContext = `Show More Campaigns (${remaining})`;
+                    // Only first 10
+                    items.forEach((item, index) => {
+                        item.hidden = index >= batchSize;
+                    });
+                    const remaining = items.length - batchSize;
+                    showMoreButton.textContent = `Show More Campaigns (${remaining})`;
                     showMoreButton.setAttribute("aria-expanded", "false");
                 }
             }
@@ -109,8 +111,7 @@
             updateVisibility();
 
             showMoreButton.addEventListener("click", function(event){
-                visibleCount += batchSize;
-                showMoreButton.setAttribute("aria-expanded", "true");
+                expanded = !expanded; // toggle state
                 updateVisibility();
                 event.preventDefault();
             });
