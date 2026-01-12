@@ -183,7 +183,7 @@ delete the local container so it will be rebuilt the next time you run
     npx gulp build
     ```
 
-1. We also need to bundle the js files with vite. Similar to Gulp, you can use another terminal, start Vite to watch for issues when making changes to the bundled files:
+1. We also need to bundle the js files with Vite. Similar to Gulp, you can use another terminal, start Vite to watch for issues when making changes to the bundled files:
 
     ```bash
     npx vite
