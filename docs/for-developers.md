@@ -158,7 +158,7 @@ delete the local container so it will be rebuilt the next time you run
 
 ##### Install front end
 
-1. Install Node 12. If you're on MacOS, you can install it using brew:
+1. Install Node 20. If you're on MacOS, you can install it using brew:
 
     ```bash
     brew install node@12
@@ -181,6 +181,18 @@ delete the local container so it will be rebuilt the next time you run
 
     ```bash
     npx gulp build
+    ```
+
+1. We also need to bundle the js files with vite. Similar to Gulp, you can use another terminal, start Vite to watch for issues when making changes to the bundled files:
+
+    ```bash
+    npx vite
+    ```
+
+    If you only want to bundle them a single time without live updates:
+
+    ```bash
+    npx vite build
     ```
 
 1) You may need to manually create a logs directory.
