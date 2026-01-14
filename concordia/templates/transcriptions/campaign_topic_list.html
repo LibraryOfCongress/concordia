@@ -72,8 +72,8 @@
         </ul>
         {% with campaigns|length as campaigns_count %}
             {% if campaigns_count > 10 %}
-                <div class="align-items-center justify-content-center d-flex">
-                    <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
+                <div class="align-items-center justify-content-center d-flex mt-3">
+                    <button id="show-more" class="btn btn-primary" aria-expanded="false">Show More Campaigns ({{ campaigns_count|add:"-10" }})</button>
                 </div>
             {% endif %}
         {% endwith %}
@@ -85,12 +85,34 @@
     <script>
         let showMoreButton = document.getElementById("show-more");
         let campaignList = document.getElementById("campaign-list");
-        if (showMoreButton){
-            showMoreButton.addEventListener("click", function(event){
-                for (const child of campaignList.children){
-                    child.hidden = false;
+        if (showMoreButton && campaignList){
+            const items = Array.from(campaignList.children);
+            const batchSize = 10;
+            let expanded = false; // collapsed by default
+
+            function updateVisibility() {
+                if (expanded) {
+                    // All
+                    items.forEach(item => item.hidden = false);
+                    showMoreButton.textContent = "Show Fewer Campaigns";
+                    showMoreButton.setAttribute("aria-expanded", "true");
+                } else {
+                    // Only first 10
+                    items.forEach((item, index) => {
+                        item.hidden = index >= batchSize;
+                    });
+                    const remaining = items.length - batchSize;
+                    showMoreButton.textContent = `Show More Campaigns (${remaining})`;
+                    showMoreButton.setAttribute("aria-expanded", "false");
                 }
-                showMoreButton.parentElement.hidden = true;
+            }
+
+            // Initial state
+            updateVisibility();
+
+            showMoreButton.addEventListener("click", function(event){
+                expanded = !expanded; // toggle state
+                updateVisibility();
                 event.preventDefault();
             });
         }
