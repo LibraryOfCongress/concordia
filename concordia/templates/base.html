@@ -123,13 +123,11 @@ for performance:
                                    href="https://historyhub.history.gov/crowd-loc/" target="_blank">Discuss</a>
                             </li>
                             <li id="topnav-account-dropdown" class="nav-item dropdown
-                                                                    nav-dropdown authenticated-only" hidden>
-                            </li>
-                            <li class="nav-item anonymous-only">
-                                <a class="nav-link d-lg-none" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
-                            </li>
-                            <li class="nav-item anonymous-only">
-                                <a class="nav-link d-lg-none" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
+                                                                    nav-dropdown authenticated-only">
+                                <a id="topnav-account-dropdown-toggle" class="nav-link fw-bold" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{{ user.username }} account menu">
+                                    {{ user.username }}<span class="fa fa-chevron-down text-primary"></span>
+                                </a>
+                                <div id="topnav-account-dropdown-menu" class="dropdown-menu" aria-labelledby="topnav-account-dropdown-toggle"></div>
                             </li>
                         </ul>
 
