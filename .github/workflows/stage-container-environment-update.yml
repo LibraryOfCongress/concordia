@@ -1,4 +1,4 @@
-name: 'Deploy container environment stage'
+name: 'Deploy container environment update to stage'
 
 on:
     workflow_dispatch:
@@ -27,7 +27,7 @@ permissions:
 
 jobs:
     deploy:
-        name: Deploy Container Environment Update Stage
+        name: Deploy Container Environment Update
         runs-on: ubuntu-latest
         environment:
             name: stage
@@ -66,7 +66,7 @@ jobs:
                   echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
 
                   # Create image tag for image being being replaced/refreshed/updated
-                  echo "tag_old_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y-%m-%dT%H:%M:%S%z)" >> $GITHUB_ENV
+                  echo "tag_stale_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y-%m-%dT%H:%M:%S%z)" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -89,21 +89,15 @@ jobs:
 
                   # Add a new tag to existing concordia image
                   APP_MANIFEST="$(aws ecr batch-get-image --repository-name concordia --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
-                  aws ecr put-image --repository-name concordia --image-tag $version_number --image-manifest "$APP_MANIFEST"
-                  # for testing...?
-                  aws ecr describe-images --repository-name concordia --image-ids imageTag=$version_number
+                  aws ecr put-image --repository-name concordia --image-tag $tag_stale_image --image-manifest "$APP_MANIFEST"
 
                   # Add a new tag to existing concordia/celerybeat image
                   BEAT_MANIFEST="$(aws ecr batch-get-image --repository-name concordia/celerybeat --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
-                  aws ecr put-image --repository-name concordia/celerybeat --image-tag $version_number --image-manifest "$BEAT_MANIFEST"
-                  # for testing...?
-                  aws ecr describe-images --repository-name concordia/celerybeat --image-ids imageTag=$version_number
+                  aws ecr put-image --repository-name concordia/celerybeat --image-tag $tag_stale_image --image-manifest "$BEAT_MANIFEST"
 
                   # Add a new tag to existing concordia/importer image
                   IMPORT_MANIFEST="$(aws ecr batch-get-image --repository-name concordia/importer --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
-                  aws ecr put-image --repository-name concordia/importer --image-tag $version_number --image-manifest "$IMPORT_MANIFEST"
-                  # for testing...?
-                  aws ecr describe-images --repository-name concordia/importer --image-ids imageTag=$version_number
+                  aws ecr put-image --repository-name concordia/importer --image-tag $tag_stale_image --image-manifest "$IMPORT_MANIFEST"
 
             # - name: Build, tag and push docker images ECR
             #   env:
