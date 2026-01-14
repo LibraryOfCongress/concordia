@@ -80,46 +80,47 @@ jobs:
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v2
 
-            - name: Tag current image version
+            - name: Build, tag and push docker images ECR
+              env:
+                  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
+                  CLUSTER: ${{ secrets.CLUSTER }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
+              run: |
+                  docker build -t concordia .
+                  docker tag concordia:latest $REGISTRY/concordia:$version_number
+                  docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
+                  docker push $REGISTRY/concordia:$version_number
+                  docker push $REGISTRY/concordia:$IMAGE_TAG
+
+                  docker build -t concordia/importer --file importer/Dockerfile .
+                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
+                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/importer:$version_number
+                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
+
+                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
+                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/celerybeat:$version_number
+                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+
+                  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
+
+            - name: Tag existing images
               env:
                   IT_TAG: ${{ secrets.IT_IMAGE_TAG }}
               run: |
 
-                  # Add a new tag to existing concordia image
+                  # Add a new tag to existing concordia images to preserve the history of images after final deployment
+                  # Tag concordia
                   APP_MANIFEST="$(aws ecr batch-get-image --repository-name concordia --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
                   aws ecr put-image --repository-name concordia --image-tag $tag_stale_image --image-manifest "$APP_MANIFEST"
 
-                  # Add a new tag to existing concordia/celerybeat image
+                  # Tag concordia/celerybeat
                   BEAT_MANIFEST="$(aws ecr batch-get-image --repository-name concordia/celerybeat --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
                   aws ecr put-image --repository-name concordia/celerybeat --image-tag $tag_stale_image --image-manifest "$BEAT_MANIFEST"
 
-                  # Add a new tag to existing concordia/importer image
+                  # Tag concordia/importer
                   IMPORT_MANIFEST="$(aws ecr batch-get-image --repository-name concordia/importer --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
                   aws ecr put-image --repository-name concordia/importer --image-tag $tag_stale_image --image-manifest "$IMPORT_MANIFEST"
-
-            # - name: Build, tag and push docker images ECR
-            #   env:
-            #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-            #       IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
-            #       CLUSTER: ${{ secrets.CLUSTER }}
-            #       TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
-            #   run: |
-            #       docker build -t concordia .
-            #       docker tag concordia:latest $REGISTRY/concordia:$version_number
-            #       docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
-            #       docker push $REGISTRY/concordia:$version_number
-            #       docker push $REGISTRY/concordia:$IMAGE_TAG
-
-            #       docker build -t concordia/importer --file importer/Dockerfile .
-            #       docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
-            #       docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
-            #       docker push $REGISTRY/concordia/importer:$version_number
-            #       docker push $REGISTRY/concordia/importer:$IMAGE_TAG
-
-            #       docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
-            #       docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
-            #       docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
-            #       docker push $REGISTRY/concordia/celerybeat:$version_number
-            #       docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
-
-            #       aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
