@@ -66,7 +66,7 @@ jobs:
                   echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
 
                   # Create image tag for image being being replaced/refreshed/updated
-                  echo "tag_stale_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y-%m-%dT%H:%M:%S%z)" >> $GITHUB_ENV
+                  echo "tag_stale_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y-%m-%dT%H:%M:%S)" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -84,8 +84,6 @@ jobs:
               env:
                   IT_TAG: ${{ secrets.IT_IMAGE_TAG }}
               run: |
-                  # Your commands that require AWS credentials
-                  aws sts get-caller-identity
 
                   # Add a new tag to existing concordia image
                   APP_MANIFEST="$(aws ecr batch-get-image --repository-name concordia --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
