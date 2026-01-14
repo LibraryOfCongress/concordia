@@ -66,7 +66,7 @@ jobs:
                   echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
 
                   # Create image tag for image being being replaced/refreshed/updated
-                  echo "tag_stale_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y-%m-%dT%H:%M:%S)" >> $GITHUB_ENV
+                  echo "tag_stale_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y%m%dT%H%M%S)" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v4
