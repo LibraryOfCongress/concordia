@@ -2,21 +2,6 @@ name: 'Deploy container environment update to stage'
 
 on:
     workflow_dispatch:
-    push:
-        branches: [release]
-        paths-ignore:
-            - docs/**
-            - README.md
-            - .github/**
-            - cloudformation/**
-            - db_scripts/**
-            - jenkins/**
-            - search-proxy/**
-            - postgresql/**
-            - cloudformation/tests/**
-            - concordia/tests/**
-            - exporter/tests/**
-            - importer/tests/**
 
 env:
     AWS_REGION: us-east-1
