@@ -174,8 +174,11 @@ urlpatterns = [
     ),
     path("for-educators/", views.simple_pages.simple_page, name="for-educators"),
     path("for-staff/", views.simple_pages.simple_page, name="for-staff"),
-    path("resources/", views.simple_pages.simple_page, name="resources"),
+    path("resources/", RedirectView.as_view(pattern_name="guidelines", permanent=True, query_string=True),
+    ),
     path("service/", views.simple_pages.simple_page, name="service"),
+    path("guidelines/", views.simple_pages.simple_page, name="guidelines"),
+    path("programs/", views.simple_pages.simple_page, name="programs"),
     path(
         "latest/",
         RedirectView.as_view(pattern_name="about", permanent=True, query_string=True),
@@ -339,7 +342,7 @@ urlpatterns = [
         "api/visualization/<slug:name>/",
         views.visualizations.VisualizationDataView.as_view(),
         name="visualization",
-    ),
+    ),    
 ]
 
 if settings.DEBUG:
