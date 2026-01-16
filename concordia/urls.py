@@ -172,13 +172,38 @@ urlpatterns = [
         views.simple_pages.simple_page,
         name="simple-page-spanish",
     ),
-    path("for-educators/", views.simple_pages.simple_page, name="for-educators",),
-    path("for-staff/", views.simple_pages.simple_page, name="for-staff",),
-    path("resources/", RedirectView.as_view(pattern_name="guidelines", permanent=True, query_string=True), name="resources",
+    path(
+        "for-educators/",
+        views.simple_pages.simple_page,
+        name="for-educators",
     ),
-    path("service/", views.simple_pages.simple_page, name="service",),
-    path("guidelines/", views.simple_pages.simple_page, name="guidelines",),
-    path("programs/", views.simple_pages.simple_page, name="programs",),
+    path(
+        "for-staff/",
+        views.simple_pages.simple_page,
+        name="for-staff",
+    ),
+    path(
+        "resources/",
+        RedirectView.as_view(
+            pattern_name="guidelines", permanent=True, query_string=True
+        ),
+        name="resources",
+    ),
+    path(
+        "service/",
+        views.simple_pages.simple_page,
+        name="service",
+    ),
+    path(
+        "guidelines/",
+        views.simple_pages.simple_page,
+        name="guidelines",
+    ),
+    path(
+        "programs/",
+        views.simple_pages.simple_page,
+        name="programs",
+    ),
     path(
         "latest/",
         RedirectView.as_view(pattern_name="about", permanent=True, query_string=True),
@@ -342,7 +367,7 @@ urlpatterns = [
         "api/visualization/<slug:name>/",
         views.visualizations.VisualizationDataView.as_view(),
         name="visualization",
-    ),    
+    ),
 ]
 
 if settings.DEBUG:
