@@ -15,17 +15,19 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Campaign,
     CardFamily,
+    ConcordiaUser,
+    HelpfulLink,
     KeyMetricsReport,
     MediaType,
     NextReviewableCampaignAsset,
     NextReviewableTopicAsset,
     NextTranscribableCampaignAsset,
     NextTranscribableTopicAsset,
-    Resource,
     SiteReport,
     Topic,
     Transcription,
     TranscriptionStatus,
+    UserProfile,
     UserProfileActivity,
     _update_useractivity_cache,
     resource_file_upload_path,
@@ -44,9 +46,10 @@ from .utils import (
     create_card,
     create_card_family,
     create_carousel_slide,
+    create_concordia_file,
     create_guide,
-    create_resource,
-    create_resource_file,
+    create_helpful_link,
+    create_item,
     create_simple_page,
     create_tag,
     create_tag_collection,
@@ -156,6 +159,47 @@ class AssetTestCase(CreateTestUsers, TestCase):
             "rollback transcription did not supersede a previous transcription",
         ):
             asset.rollforward_transcription(self.anon)
+
+    def test_get_storage_path_handles_jpeg(self):
+        # Ensure ".jpeg" is normalized to ".jpg"
+        expected = self.asset.get_asset_image_filename("jpg")
+        self.assertEqual(self.asset.get_storage_path("anything.jpeg"), expected)
+
+
+class ItemModelTests(TestCase):
+    def test_thumbnail_link_prefers_image_url_when_present(self):
+        item = create_item()
+
+        class Img:
+            url = "http://example.test/media/thumb.jpg"
+
+        item.thumbnail_image = Img()
+        self.assertEqual(item.thumbnail_link, Img.url)
+
+    def test_thumbnail_link_falls_back_when_image_url_raises(self):
+        # If .url access raises ValueError, fall back to thumbnail_url
+        item = create_item()
+
+        class BadImg:
+            @property
+            def url(self):
+                raise ValueError("missing from storage")
+
+        item.thumbnail_image = BadImg()
+        item.thumbnail_url = "http://example.test/media/fallback.jpg"
+        self.assertEqual(item.thumbnail_link, item.thumbnail_url)
+
+    def test_thumbnail_link_returns_thumbnail_url_when_no_image(self):
+        item = create_item()
+        item.thumbnail_image = None
+        item.thumbnail_url = "http://example.test/media/fallback.jpg"
+        self.assertEqual(item.thumbnail_link, item.thumbnail_url)
+
+    def test_thumbnail_link_returns_none_when_no_image_or_url(self):
+        item = create_item()
+        item.thumbnail_image = None
+        item.thumbnail_url = None
+        self.assertIsNone(item.thumbnail_link)
 
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
@@ -302,6 +346,109 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
             users[0],
             (self.transcription1.user.id, self.transcription1.user.username, 3, 6),
         )
+
+    def test_review_incidents_returns_empty_when_counts_zero(self):
+        reviewer = self.create_user(username="rev-zero")
+        asset = self.transcription1.asset
+
+        t1 = create_transcription(
+            asset=asset,
+            user=self.create_user(username="u-a"),
+            reviewed_by=reviewer,
+            accepted=timezone.now() - timedelta(minutes=5),
+        )
+        create_transcription(
+            asset=asset,
+            user=self.create_user(username="u-b"),
+            reviewed_by=reviewer,
+            accepted=t1.accepted + timedelta(seconds=61),
+        )
+
+        out = Transcription.objects.review_incidents()
+        self.assertEqual(out, [])
+
+    def test_user_review_incidents_no_threshold_hit(self):
+        asset = self.transcription1.asset
+
+        reviewer = self.create_user("reviewer-1")
+        reviewer_proxy = ConcordiaUser.objects.get(pk=reviewer.pk)
+
+        base = timezone.now()
+        create_transcription(
+            asset=asset,
+            user=self.create_user("ri_u1"),
+            reviewed_by=reviewer_proxy,
+            accepted=base,
+        )
+        create_transcription(
+            asset=asset,
+            user=self.create_user("ri_u2"),
+            reviewed_by=reviewer_proxy,
+            accepted=base + timedelta(seconds=61),
+        )
+
+        recent = Transcription.objects.filter(accepted__isnull=False)
+        incidents = reviewer_proxy.review_incidents(recent)
+        self.assertEqual(incidents, 0)
+
+    def test_review_incidents_no_threshold_match_inner_loop_break(self):
+        # Two accepts for same reviewer but >60s apart:
+        a1 = create_asset(slug="rev-gap-a1", item=self.transcription1.asset.item)
+        a2 = create_asset(slug="rev-gap-a2", item=a1.item)
+        reviewer = self.create_user("reviewer-1")
+
+        t0 = timezone.now()
+        create_transcription(
+            asset=a1, user=self.create_user("u1"), reviewed_by=reviewer, accepted=t0
+        )
+        create_transcription(
+            asset=a2,
+            user=self.create_user("u2"),
+            reviewed_by=reviewer,
+            accepted=t0 + timedelta(seconds=61),
+        )
+
+        recent = Transcription.objects.filter(accepted__isnull=False)
+        reviewer_proxy = ConcordiaUser.objects.get(pk=reviewer.pk)
+
+        incidents = reviewer_proxy.review_incidents(recent)
+        self.assertEqual(incidents, 0)
+
+    def test_review_incidents_loops_until_threshold(self):
+        reviewer = self.create_user(username="test-reviewer-1")
+
+        # Three accepts within 60s so threshold=3 will require two inner
+        # iterations (count goes 1->2, not equal to threshold, then 2->3)
+        base = timezone.now()
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=reviewer,
+            accepted=base,
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=reviewer,
+            accepted=base + timedelta(seconds=20),
+        )
+        create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=reviewer,
+            accepted=base + timedelta(seconds=40),
+        )
+
+        recent_accepts = Transcription.objects.filter(
+            accepted__gte=base - timedelta(seconds=1)
+        )
+
+        reviewer_proxy = ConcordiaUser.objects.get(id=reviewer.id)
+
+        incidents = reviewer_proxy.review_incidents(
+            recent_accepts=recent_accepts, threshold=3
+        )
+        self.assertEqual(incidents, 1)
 
 
 class TranscriptionTestCase(CreateTestUsers, TestCase):
@@ -464,6 +611,33 @@ class UserProfileTestCase(CreateTestUsers, TestCase):
 
         signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
 
+    def test_update_userprofileactivity_table_updates_existing_and_profile(self):
+        # Avoid auto-profile creation so we control both branches
+        signals.post_save.disconnect(
+            create_user_profile, sender=settings.AUTH_USER_MODEL
+        )
+
+        user = self.create_test_user()
+        UserProfile.objects.create(user=user)
+
+        transcription = create_transcription(user=user)
+        campaign = transcription.asset.item.project.campaign
+        upa, _ = UserProfileActivity.objects.get_or_create(
+            user=user, campaign=campaign, defaults={"transcribe_count": 1}
+        )
+
+        update_userprofileactivity_table(user, campaign.id, "transcribe_count")
+
+        # F() increments apply on save; refresh to observe DB values
+        upa.refresh_from_db()
+        user.refresh_from_db()
+        user.profile.refresh_from_db()
+
+        self.assertEqual(upa.transcribe_count, 2)
+        self.assertEqual(user.profile.transcribe_count, 1)
+
+        signals.post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
+
 
 class CampaignTestCase(TestCase):
     def test_queryset(self):
@@ -500,65 +674,67 @@ class CardFamilyTestCase(TestCase):
             self.assertEqual(mocked_handler.call_count, 1)
 
 
-class ResourceTestCase(TestCase):
+class HelpfulLinkTestCase(TestCase):
     def setUp(self):
-        self.resource = create_resource()
+        self.helpful_link = create_helpful_link()
 
     def test_str(self):
-        self.assertEqual(self.resource.title, str(self.resource))
+        self.assertEqual(self.helpful_link.title, str(self.helpful_link))
 
     def test_queryset(self):
-        self.assertEqual(Resource.objects.related_links().count(), 1)
-        create_resource(
-            resource_type=Resource.ResourceType.COMPLETED_TRANSCRIPTION_LINK
+        self.assertEqual(HelpfulLink.objects.related_links().count(), 1)
+        create_helpful_link(
+            link_type=HelpfulLink.HelpfulLinkType.COMPLETED_TRANSCRIPTION_LINK
         )
-        self.assertEqual(Resource.objects.completed_transcription_links().count(), 1)
+        self.assertEqual(HelpfulLink.objects.completed_transcription_links().count(), 1)
 
 
-class ResourceFileTestCase(TestCase):
+class ConcordiaFileTestCase(TestCase):
     def setUp(self):
-        self.resource_file = create_resource_file()
+        self.concordia_file = create_concordia_file()
 
     def test_str(self):
-        self.assertEqual(self.resource_file.name, str(self.resource_file))
+        self.assertEqual(self.concordia_file.name, str(self.concordia_file))
 
     def test_delete(self):
         with (
-            mock.patch.object(self.resource_file.resource, "delete") as delete_mock,
             mock.patch.object(
-                self.resource_file.resource, "storage", autospec=True
+                self.concordia_file.uploaded_file, "delete"
+            ) as delete_mock,
+            mock.patch.object(
+                self.concordia_file.uploaded_file, "storage", autospec=True
             ) as storage_mock,
         ):
             storage_mock.exists.return_value = True
-            self.resource_file.delete()
+            self.concordia_file.delete()
             self.assertTrue(delete_mock.called)
 
-        resource_file2 = create_resource_file()
+        concordia_file2 = create_concordia_file()
         with (
-            mock.patch.object(resource_file2.resource, "delete") as delete_mock,
+            mock.patch.object(concordia_file2.uploaded_file, "delete") as delete_mock,
             mock.patch.object(
-                resource_file2.resource, "storage", autospec=True
+                concordia_file2.uploaded_file, "storage", autospec=True
             ) as storage_mock,
         ):
             storage_mock.exists.return_value = False
-            resource_file2.delete()
+            concordia_file2.delete()
             self.assertFalse(delete_mock.called)
 
-    def test_resource_file_upload_path(self):
+    def test_concordia_file_upload_path(self):
         current_year = date.today().year
 
-        path = resource_file_upload_path(self.resource_file, "SHOULDNTBEUSED.PDF")
+        path = resource_file_upload_path(self.concordia_file, "SHOULDNTBEUSED.PDF")
         self.assertEqual(path, "file.pdf")
 
-        self.resource_file.path = None
+        self.concordia_file.path = None
 
-        path = resource_file_upload_path(self.resource_file, "TEST.PDF")
+        path = resource_file_upload_path(self.concordia_file, "TEST.PDF")
         self.assertEqual(path, f"cm-uploads/resources/{current_year}/test.pdf")
 
-        path = resource_file_upload_path(self.resource_file, "TEST%%s.PDF")
+        path = resource_file_upload_path(self.concordia_file, "TEST%%s.PDF")
         self.assertEqual(path, f"cm-uploads/resources/{current_year}/test%s.pdf")
 
-        path = resource_file_upload_path(self.resource_file, "%%YTEST.PDF")
+        path = resource_file_upload_path(self.concordia_file, "%%YTEST.PDF")
         self.assertEqual(path, f"cm-uploads/resources/{current_year}/%ytest.pdf")
 
 
@@ -824,23 +1000,32 @@ class SiteReportAndManagerTestCase(TestCase):
         return SiteReport.objects.get(pk=sr.pk)
 
     def test_calculate_assets_started(self):
-        # (ns_prev - ns_cur) + new_published; floor at 0
+        # Uses (assets_total - assets_not_started) deltas; floor at 0.
         v = SiteReport.calculate_assets_started(
+            previous_assets_total=100,
             previous_assets_not_started=100,
-            previous_assets_published=10,
+            current_assets_total=107,
             current_assets_not_started=92,
-            current_assets_published=17,
         )
         self.assertEqual(v, 15)
 
-        # None treated as 0; never negative
+        # None treated as 0.
         v2 = SiteReport.calculate_assets_started(
+            previous_assets_total=None,
             previous_assets_not_started=None,
-            previous_assets_published=50,
-            current_assets_not_started=200,
-            current_assets_published=10,
+            current_assets_total=200,
+            current_assets_not_started=190,
         )
-        self.assertEqual(v2, 0)
+        self.assertEqual(v2, 10)
+
+        # Negative deltas are floored at 0.
+        v3 = SiteReport.calculate_assets_started(
+            previous_assets_total=107,
+            previous_assets_not_started=92,
+            current_assets_total=100,
+            current_assets_not_started=90,
+        )
+        self.assertEqual(v3, 0)
 
     def test_series_navigation_and_sums(self):
         # Site-wide TOTAL series snapshots across three days

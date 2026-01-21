@@ -1,19 +1,22 @@
 {
     "devDependencies": {
-        "@axe-core/cli": "^4.10.2",
-        "@puppeteer/browsers": "^2.10.5",
+        "@axe-core/cli": "^4.11.0",
+        "@puppeteer/browsers": "^2.10.13",
         "child_process": "^1.0.2",
-        "fancy-log": "^2.0.0",
         "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
-        "@fortawesome/fontawesome-free": "^6.7.2",
+        "@fortawesome/fontawesome-free": "^7.1.0",
         "@popperjs/core": "^2.11.8",
+        "@sentry/browser": "^10.10.0",
+        "@sentry/core": "^10.3.0",
+        "@sentry/tracing": "^7.120.4",
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.0",
         "chroma-js": "^3.1.2",
         "codemirror": "^5.65.19",
+        "fancy-log": "^2.0.0",
         "gulp": "^5.0.1",
         "gulp-rename": "^2.1.0",
         "gulp-sass": "^6.0.1",
@@ -25,11 +28,13 @@
         "prettier": "^2.8.8",
         "remarkable": "^2.0.1",
         "sass": "^1.78.0",
-        "screenfull": "^5.1.0",
+        "screenfull": "^6.0.0",
         "split.js": "^1.6.2",
-        "urijs": "^1.19.11"
+        "urijs": "^1.19.11",
+        "vite": "^7.3.0"
     },
     "name": "concordia",
+    "private": true,
     "version": "1.0.0",
     "directories": {
         "doc": "docs"
@@ -44,6 +49,9 @@
     },
     "homepage": "https://github.com/LibraryOfCongress/concordia",
     "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
         "postinstall": "cp node_modules/chroma-js/dist/chroma.min.cjs node_modules/chroma-js/dist/chroma.min.js"
     }
 }

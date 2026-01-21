@@ -1,13 +1,16 @@
 from django.contrib import admin
+from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 
-from ..models import Campaign, Project, Topic
+from ..models import Campaign, Project, Topic, Transcription
 
 
 class NullableTimestampFilter(admin.SimpleListFilter):
     """
-    Base class for Admin list filters which define whether a datetime field has
-    a value or is null
+    Base class for admin list filters that test if a datetime field is set.
+
+    Provides "null" and "not-null" choices based on a configured
+    `parameter_name` that points to a `DateTimeField` or similar attribute.
     """
 
     # Title displayed on the list filter URL
@@ -30,18 +33,30 @@ class NullableTimestampFilter(admin.SimpleListFilter):
 
 
 class SubmittedFilter(NullableTimestampFilter):
+    """
+    Filter transcriptions by whether the `submitted` timestamp is set.
+    """
+
     title = "Submitted"
     parameter_name = "submitted"
     lookup_labels = ("Pending", "Submitted")
 
 
 class AcceptedFilter(NullableTimestampFilter):
+    """
+    Filter transcriptions by whether the `accepted` timestamp is set.
+    """
+
     title = "Accepted"
     parameter_name = "accepted"
     lookup_labels = ("Pending", "Accepted")
 
 
 class RejectedFilter(NullableTimestampFilter):
+    """
+    Filter transcriptions by whether the `rejected` timestamp is set.
+    """
+
     title = "Rejected"
     parameter_name = "rejected"
     lookup_labels = ("Pending", "Rejected")
@@ -49,7 +64,11 @@ class RejectedFilter(NullableTimestampFilter):
 
 class CampaignListFilter(admin.SimpleListFilter):
     """
-    Base class for admin campaign filters
+    Base class for campaign filters used in admin changelists.
+
+    Filters by a campaign identifier stored in `parameter_name` and
+    optionally narrows results by campaign status when a related status
+    query parameter is present.
     """
 
     title = "Campaign"
@@ -69,7 +88,10 @@ class CampaignListFilter(admin.SimpleListFilter):
 
 class CardCampaignListFilter(admin.SimpleListFilter):
     """
-    Allow CMs to filter cards by campaign
+    Filter cards by the campaign that owns their card family.
+
+    Shows only campaigns with a non-null `card_family` and restricts
+    cards to those within the selected campaign's family.
     """
 
     title = _("campaign")
@@ -94,7 +116,9 @@ class CardCampaignListFilter(admin.SimpleListFilter):
 
 class TopicListFilter(admin.SimpleListFilter):
     """
-    Base class for admin topic filters
+    Base class for topic filters used in admin changelists.
+
+    Filters by topic identifier using the configured `parameter_name`.
     """
 
     title = "Topic"
@@ -132,6 +156,14 @@ class UserProfileActivityCampaignListFilter(CampaignListFilter):
 
 
 class SiteReportCampaignListBaseFilter(CampaignListFilter):
+    """
+    Base filter for site report campaigns that supports empty-campaign rows.
+
+    Extends `CampaignListFilter` to optionally include an explicit "no
+    campaign" choice controlled by `include_empty_choice` and the
+    `lookup_kwarg_isnull` query parameter.
+    """
+
     lookup_kwarg_isnull = "campaign__isnull"
     include_empty_choice = True
 
@@ -190,7 +222,7 @@ class SiteReportCampaignListFilter(SiteReportCampaignListBaseFilter):
         return Campaign.objects.values_list("id", "title")
 
 
-class ResourceCampaignListFilter(CampaignListFilter):
+class HelpfulLinkCampaignListFilter(CampaignListFilter):
     title = "Campaign Sorted"
     parameter_name = "campaign__id__exact"
     status_filter_parameter = "campaign__status"
@@ -226,6 +258,13 @@ class NextAssetCampaignListFilter(CampaignListFilter):
 
 
 class CampaignProjectListFilter(admin.SimpleListFilter):
+    """
+    Base class for project filters grouped by campaign.
+
+    Provides a project dropdown whose choices can be narrowed by a related
+    campaign filter, then filters the changelist using `project_ref`.
+    """
+
     title = "ProjectRedux"
     parameter_name = "project"
     related_filter_parameter = ""
@@ -268,7 +307,12 @@ class TranscriptionProjectListFilter(CampaignProjectListFilter):
 
 
 class CampaignStatusListFilter(admin.SimpleListFilter):
-    """Base class for campaign status list filters"""
+    """
+    Base class for campaign status filters.
+
+    Filters changelist rows by campaign status using the configured
+    `parameter_name` and the `Campaign.Status` choices.
+    """
 
     title = "Campaign status"
 
@@ -293,7 +337,7 @@ class ProjectCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
 
 
-class ResourceCampaignStatusListFilter(CampaignStatusListFilter):
+class HelpfulLinkCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
 
 
@@ -314,6 +358,13 @@ class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
 
 
 class BooleanFilter(admin.SimpleListFilter):
+    """
+    Base class for simple yes/no boolean filters.
+
+    Provides "Yes" and "No" choices and filters using the configured
+    `parameter_name`.
+    """
+
     def lookups(self, request, model_admin):
         return [
             (True, _("Yes")),
@@ -335,3 +386,32 @@ class OcrGeneratedFilter(BooleanFilter):
 class OcrOriginatedFilter(BooleanFilter):
     title = "OCR Originated"
     parameter_name = "ocr_originated"
+
+
+class SupersededListFilter(admin.SimpleListFilter):
+    """
+    Filter transcriptions by whether they have been superseded.
+
+    Uses an `Exists` subquery on the `Transcription.supersedes` relation to
+    efficiently determine superseded rows.
+    """
+
+    title = "superseded"
+    parameter_name = "superseded"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Superseded"), ("no", "Not superseded"))
+
+    def queryset(self, request, queryset):
+        # Uses Exists to make joining cheaper
+        superseded_exists = Transcription.objects.filter(supersedes=OuterRef("pk"))
+        val = self.value()
+        if val == "yes":
+            return queryset.annotate(_is_superseded=Exists(superseded_exists)).filter(
+                _is_superseded=True
+            )
+        if val == "no":
+            return queryset.annotate(_is_superseded=Exists(superseded_exists)).filter(
+                _is_superseded=False
+            )
+        return queryset

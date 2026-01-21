@@ -16,7 +16,7 @@ from concordia.models import (
     Transcription,
 )
 from concordia.signals.handlers import on_transcription_save
-from concordia.tasks import (
+from concordia.tasks.reservations import (
     delete_old_tombstoned_reservations,
     expire_inactive_asset_reservations,
     tombstone_old_active_asset_reservations,

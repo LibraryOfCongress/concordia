@@ -1,6 +1,7 @@
 import io
 import logging
 import zipfile
+from typing import Any
 
 from django.contrib import admin, messages
 from django.contrib.admin.models import CHANGE, LogEntry
@@ -9,7 +10,8 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.db.models import Exists, OuterRef, QuerySet
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
 from django.template.response import TemplateResponse
@@ -33,7 +35,9 @@ from ..models import (
     Card,
     CardFamily,
     CarouselSlide,
+    ConcordiaFile,
     Guide,
+    HelpfulLink,
     Item,
     KeyMetricsReport,
     NextReviewableCampaignAsset,
@@ -42,8 +46,6 @@ from ..models import (
     NextTranscribableTopicAsset,
     Project,
     ProjectTopic,
-    Resource,
-    ResourceFile,
     SimplePage,
     SiteReport,
     Tag,
@@ -53,7 +55,7 @@ from ..models import (
     UserAssetTagCollection,
     UserProfileActivity,
 )
-from ..tasks import retire_campaign
+from ..tasks.retirement import retire_campaign
 from ..views.campaigns import ReportCampaignView
 from .actions import (
     anonymize_action,
@@ -72,6 +74,8 @@ from .filters import (
     AssetCampaignStatusListFilter,
     AssetProjectListFilter,
     CardCampaignListFilter,
+    HelpfulLinkCampaignListFilter,
+    HelpfulLinkCampaignStatusListFilter,
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter,
@@ -81,11 +85,10 @@ from .filters import (
     ProjectCampaignListFilter,
     ProjectCampaignStatusListFilter,
     RejectedFilter,
-    ResourceCampaignListFilter,
-    ResourceCampaignStatusListFilter,
     SiteReportCampaignListFilter,
     SiteReportSortedCampaignListFilter,
     SubmittedFilter,
+    SupersededListFilter,
     TagCampaignListFilter,
     TagCampaignStatusListFilter,
     TopicListFilter,
@@ -114,6 +117,13 @@ logger = logging.getLogger(__name__)
 
 
 class ConcordiaUserAdmin(UserAdmin):
+    """
+    Customize the Django admin for `User` objects.
+
+    Adds transcription and review counters to the changelist and provides
+    CSV and Excel export actions.
+    """
+
     list_display = (
         "username",
         "email",
@@ -123,18 +133,37 @@ class ConcordiaUserAdmin(UserAdmin):
         "review_count",
     )
 
-    def get_queryset(self, request):
+    def get_queryset(
+        self,
+        request: HttpRequest,
+    ) -> QuerySet[User]:
+        """
+        Build the queryset used for the user changelist.
+
+        Adds a `select_related` on the related profile to reduce per-row
+        database queries when rendering counts.
+
+        Args:
+            request (HttpRequest): Current admin request.
+
+        Returns:
+            QuerySet[User]: Queryset with related profiles preloaded.
+        """
         qs = super().get_queryset(request).select_related("profile")
         return qs
 
     @admin.display(
-        description="Transcription Count", ordering="profile__transcribe_count"
+        description="Transcription Count",
+        ordering="profile__transcribe_count",
     )
-    def transcription_count(self, obj):
+    def transcription_count(self, obj: User) -> int:
         return obj.profile.transcribe_count
 
-    @admin.display(description="Review Count", ordering="profile__review_count")
-    def review_count(self, obj):
+    @admin.display(
+        description="Review Count",
+        ordering="profile__review_count",
+    )
+    def review_count(self, obj: User) -> int:
         return obj.profile.review_count
 
     EXPORT_FIELDS = (
@@ -156,7 +185,21 @@ class ConcordiaUserAdmin(UserAdmin):
         "profile__review_count": "review count",
     }
 
-    def export_users_as_csv(self, request, queryset):
+    def export_users_as_csv(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[User],
+    ) -> HttpResponse:
+        """
+        Export selected users as a CSV file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[User]): Selected users to export.
+
+        Returns:
+            HttpResponse: Response that streams a CSV download.
+        """
         return export_to_csv_action(
             self,
             request,
@@ -165,7 +208,21 @@ class ConcordiaUserAdmin(UserAdmin):
             extra_verbose_names=self.EXTRA_VERBOSE_NAMES,
         )
 
-    def export_users_as_excel(self, request, queryset):
+    def export_users_as_excel(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[User],
+    ) -> HttpResponse:
+        """
+        Export selected users as an Excel file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[User]): Selected users to export.
+
+        Returns:
+            HttpResponse: Response that streams an Excel download.
+        """
         return export_to_excel_action(
             self,
             request,
@@ -191,8 +248,10 @@ class BannerAdmin(admin.ModelAdmin):
 
 class CustomListDisplayFieldsMixin:
     """
-    Mixin which provides some custom text formatters for list display fields
-    used on multiple models
+    Provide reusable list display helpers for admin changelists.
+
+    This mixin defines helpers that truncate long text and render selected
+    fields using HTML formatting.
     """
 
     @admin.display(description="Description")
@@ -209,6 +268,13 @@ class CustomListDisplayFieldsMixin:
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    """
+    Admin configuration for `Campaign` objects.
+
+    Adds filters, publishing actions, export links and a custom retirement
+    workflow.
+    """
+
     form = CampaignAdminForm
 
     list_display = (
@@ -269,7 +335,28 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     actions = (publish_action, unpublish_action, verify_assets_action)
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(
+        self,
+        request: HttpRequest,
+        obj: Campaign | None = None,
+        **kwargs: Any,
+    ):
+        """
+        Build the model form used to edit a campaign.
+
+        Updates some field labels to be clearer for staff users before
+        returning the base form from `ModelAdmin`.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            obj (Campaign | None): Campaign being edited, or `None` when
+                creating a new one.
+            **kwargs (Any): Extra keyword arguments passed to
+                `ModelAdmin.get_form`.
+
+        Returns:
+            forms.ModelForm: Form class used by the admin for this model.
+        """
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["display_on_homepage"].label = "Display on homepage"
         form.base_fields["next_transcription_campaign"].label = (
@@ -279,6 +366,13 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return form
 
     def get_urls(self):
+        """
+        Add custom admin URLs for campaign exports, reports and retirement.
+
+        Returns:
+            list: List of URL patterns including the default admin URLs and
+            the custom campaign URLs.
+        """
         urls = super().get_urls()
 
         app_label = self.model._meta.app_label
@@ -328,7 +422,27 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     @method_decorator(
         permission_required("concordia.delete_import_item_asset", raise_exception=True)
     )
-    def retire(self, request, campaign_slug):
+    def retire(
+        self,
+        request: HttpRequest,
+        campaign_slug: str,
+    ) -> HttpResponse:
+        """
+        Start the retirement process for a campaign.
+
+        This view shows a confirmation page that lists how many projects,
+        items, assets and transcriptions will be removed. When the request
+        is `POST`, it enqueues the retirement task and redirects to the
+        progress object in the admin.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            campaign_slug (str): Slug of the campaign being retired.
+
+        Returns:
+            HttpResponse: Confirmation page or redirect to the progress
+            object.
+        """
         try:
             campaign = Campaign.objects.filter(slug=campaign_slug)[0]
         except IndexError:
@@ -387,7 +501,24 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             request, "admin/concordia/campaign/retire.html", context
         )
 
-    def log_retirement(self, request, obj, object_repr):
+    def log_retirement(
+        self,
+        request: HttpRequest,
+        obj: Campaign,
+        object_repr: str,
+    ) -> LogEntry:
+        """
+        Create an admin log entry for a campaign retirement.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            obj (Campaign): Campaign that is being retired.
+            object_repr (str): Text representation of the campaign used in
+                the log entry.
+
+        Returns:
+            LogEntry: The created log entry instance.
+        """
         return LogEntry.objects.log_action(
             user_id=request.user.pk,
             content_type_id=get_content_type_for_model(obj).pk,
@@ -397,47 +528,97 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         )
 
 
-@admin.register(Resource)
-class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    list_display = ("campaign", "topic", "sequence", "title", "resource_url")
+@admin.register(HelpfulLink)
+class HelpfulLinkAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    list_display = ("campaign", "topic", "sequence", "title", "link_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (
-        "resource_type",
-        ResourceCampaignStatusListFilter,
+        "link_type",
+        HelpfulLinkCampaignStatusListFilter,
         TopicListFilter,
-        ResourceCampaignListFilter,
+        HelpfulLinkCampaignListFilter,
     )
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    def formfield_for_foreignkey(
+        self,
+        db_field: Any,
+        request: HttpRequest,
+        **kwargs: Any,
+    ) -> Any:
+        """
+        Customize the form field for foreign key relations.
+
+        Orders campaigns alphabetically when selecting a campaign.
+
+        Args:
+            db_field (Any): Model field being rendered.
+            request (HttpRequest): Current admin request.
+            **kwargs (Any): Extra keyword arguments for the base
+                implementation.
+
+        Returns:
+            Any: Form field instance for the foreign key.
+        """
         if db_field.name == "campaign":
             kwargs["queryset"] = Campaign.objects.order_by("title")
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-@admin.register(ResourceFile)
-class ResourceFileAdmin(admin.ModelAdmin):
-    # Bulk delete bypasses file deletion, so we don't want any bulk actions
+@admin.register(ConcordiaFile)
+class ConcordiaFileAdmin(admin.ModelAdmin):
+    # Bulk delete bypasses file deletion, so we do not want any bulk actions
     actions = None
-    list_display = ("name", "resource_url", "updated_on")
-    readonly_fields = ("resource_url", "updated_on")
+    list_display = ("name", "file_url", "updated_on")
+    readonly_fields = ("file_url", "updated_on")
 
-    def resource_url(self, obj):
-        # Boto3 adds a querystring parameters to the URL to allow access
+    def file_url(self, obj: ConcordiaFile) -> str:
+        """
+        Return the public URL for this file without any query string.
+
+        Boto3 storage backends often append query parameters that are not
+        needed for public files. This helper strips them so the URL is
+        easier to copy and read.
+
+        Args:
+            obj (ConcordiaFile): File instance.
+
+        Returns:
+            str: Public URL without query parameters.
+        """
+        # Boto3 adds querystring parameters to the URL to allow access
         # to private files. In this case, all files are public, and we
-        # we don't want the querystring, so we remove it.
+        # do not want the querystring, so we remove it.
         # This looks hacky, but seems to be the least hacky way to do
         # this without a third-party library.
-        return obj.resource.url.split("?")[0]
+        return obj.uploaded_file.url.split("?")[0]
 
-    def get_fields(self, request, obj=None):
+    def get_fields(
+        self,
+        request: HttpRequest,
+        obj: ConcordiaFile | None = None,
+    ) -> tuple[str, ...]:
+        """
+        Control which fields are shown on the change and add views.
+
+        When editing an existing object some fields are read only, but
+        when creating a new one only editable fields are shown.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            obj (ConcordiaFile | None): File being edited, or
+                `None` when adding a new one.
+
+        Returns:
+            tuple[str, ...]: Field names to display in the form.
+        """
         if obj:
             return (
                 "name",
-                "resource_url",
-                "resource",
+                "file_url",
+                "uploaded_file",
                 "updated_on",
             )
-        return ("name", "resource")
+        return ("name", "uploaded_file")
 
 
 class TopicProjectInline(admin.TabularInline):
@@ -500,13 +681,29 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     actions = (publish_action, unpublish_action, verify_assets_action)
 
-    def lookup_allowed(self, key, value):
+    def lookup_allowed(self, key: str, value: str) -> bool:
+        """
+        Allow filtering by campaign id in the changelist.
+
+        Args:
+            key (str): Lookup parameter key.
+            value (str): Lookup parameter value.
+
+        Returns:
+            bool: True if the lookup is allowed.
+        """
         if key in ("campaign__id__exact"):
             return True
         else:
             return super().lookup_allowed(key, value)
 
     def get_urls(self):
+        """
+        Add custom URLs for project item import and CSV export.
+
+        Returns:
+            list: Custom URL patterns combined with the default admin URLs.
+        """
         urls = super().get_urls()
 
         app_label = self.model._meta.app_label
@@ -543,7 +740,27 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     @method_decorator(
         permission_required("concordia.change_item", raise_exception=True)
     )
-    def item_import_view(self, request, object_id):
+    def item_import_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+    ) -> HttpResponse:
+        """
+        Display and process the admin item import form for a project.
+
+        When the request is `GET`, this view shows a form where staff can
+        paste a URL for the import. When the request is `POST` and the form
+        is valid, it queues an item import job and redisplays the form with
+        basic job information.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            object_id (str): Primary key of the project being imported
+                into.
+
+        Returns:
+            HttpResponse: Rendered admin page for the import form.
+        """
         project = get_object_or_404(Project, pk=object_id)
 
         if request.method == "POST":
@@ -613,13 +830,42 @@ class ItemAdmin(admin.ModelAdmin):
 
     actions = (publish_item_action, unpublish_item_action, verify_assets_action)
 
-    def lookup_allowed(self, key, value):
+    def lookup_allowed(self, key: str, value: str) -> bool:
+        """
+        Allow filtering by campaign id in the changelist.
+
+        Args:
+            key (str): Lookup parameter key.
+            value (str): Lookup parameter value.
+
+        Returns:
+            bool: True if the lookup is allowed.
+        """
         if key in ("project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
 
-    def get_deleted_objects(self, objs, request):
+    def get_deleted_objects(
+        self,
+        objs: list[Item],
+        request: HttpRequest,
+    ):
+        """
+        Summarize the impact of deleting the given items.
+
+        This override includes counts of related assets and transcriptions
+        and enforces delete permissions for related models.
+
+        Args:
+            objs (list[Item]): Items selected for deletion.
+            request (HttpRequest): Current admin request.
+
+        Returns:
+            tuple[list[str], dict[str, int], set[str], list]:
+                Deleted object labels, counts per model, permissions that
+                are still needed and a list of protected objects.
+        """
         if len(objs) < 30:
             deleted_objects = [str(obj) for obj in objs]
         else:
@@ -649,12 +895,30 @@ class ItemAdmin(admin.ModelAdmin):
 
         return (deleted_objects, model_count, perms_needed, protected)
 
-    def get_queryset(self, request):
+    def get_queryset(
+        self,
+        request: HttpRequest,
+    ):
+        """
+        Optimize the queryset used on the item changelist.
+
+        Adds related project and campaign so list-display columns do not
+        trigger extra database queries.
+        """
         qs = super().get_queryset(request)
         qs = qs.select_related("project", "project__campaign")
         return qs
 
-    def campaign_title(self, obj):
+    def campaign_title(self, obj: Item) -> str:
+        """
+        Return the campaign title for the item's project.
+
+        Args:
+            obj (Item): Item instance.
+
+        Returns:
+            str: Title of the related campaign.
+        """
         return obj.project.campaign.title
 
 
@@ -723,22 +987,60 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     ordering = ("item__item_id", "sequence")
     change_list_template = "admin/concordia/asset/change_list.html"
 
-    def get_queryset(self, request):
+    def get_queryset(
+        self,
+        request: HttpRequest,
+    ):
+        """
+        Optimize the queryset used on the asset changelist.
+
+        Selects related items so fields displayed in the changelist do not
+        trigger per-row database queries.
+        """
         qs = super().get_queryset(request)
         return qs.select_related("item").order_by("item__item_id", "sequence")
 
-    def lookup_allowed(self, key, value):
+    def lookup_allowed(self, key: str, value: str) -> bool:
+        """
+        Allow filtering by project and campaign id on the changelist.
+
+        Args:
+            key (str): Lookup parameter key.
+            value (str): Lookup parameter value.
+
+        Returns:
+            bool: True if the lookup is allowed.
+        """
         if key in ("item__project__id__exact", "item__project__campaign__id__exact"):
             return True
         else:
             return super().lookup_allowed(key, value)
 
-    def response_action(self, request, queryset):
+    def response_action(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[Asset],
+    ) -> HttpResponse:
+        """
+        Run the selected action and optionally redirect to a `next` URL.
+
+        After the base implementation runs the action, this override checks
+        for a `next` parameter in `POST` and, if it is a safe URL, redirects
+        to it instead of the default changelist.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[Asset]): Selected assets for the action.
+
+        Returns:
+            HttpResponse: Default admin response or a redirect to the
+            `next` URL.
+        """
         # Let Django run the chosen action(s) normally
         response = super().response_action(request, queryset)
 
         # If a "next" came from our form, redirect there,
-        # after confirming it's either a relative path
+        # after confirming it is either a relative path
         # that starts with "/" or is an absolute URL
         # pointing to our hostname
         next_url = request.POST.get("next")
@@ -753,23 +1055,63 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         # Otherwise, return whatever Django gave us
         return response
 
-    def item_id(self, obj):
+    def item_id(self, obj: Asset) -> str:
         return obj.item.item_id
 
     @admin.display(description="Media URL")
-    def truncated_storage_image(self, obj):
+    def truncated_storage_image(self, obj: Asset) -> str:
         return format_html(
             '<a target="_blank" href="{}">{}</a>',
             obj.storage_image.url,
             truncatechars(obj.get_existing_storage_image_filename(), 100),
         )
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(
+        self,
+        request: HttpRequest,
+        obj: Asset | None = None,
+    ) -> tuple[str, ...]:
+        """
+        Mark some fields as read only after an asset has been created.
+
+        The item and campaign cannot be changed on existing assets but
+        remain editable when creating a new asset.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            obj (Asset | None): Asset being edited, or `None` when adding.
+
+        Returns:
+            tuple[str, ...]: Names of fields that should be read only.
+        """
         if obj:
             return self.readonly_fields + ("item", "campaign")
         return self.readonly_fields
 
-    def change_view(self, request, object_id, extra_context=None, **kwargs):
+    def change_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+        extra_context: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        """
+        Render the asset change form with extra status and transcription data.
+
+        This override injects a form for bulk status changes and a list of
+        related transcriptions into the template context.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            object_id (str): Primary key of the asset being edited.
+            extra_context (dict[str, Any] | None): Extra template context,
+                if any.
+            **kwargs (Any): Extra keyword arguments passed to the base
+                implementation.
+
+        Returns:
+            HttpResponse: Response from the admin change view.
+        """
         extra_context = extra_context or {}
         asset = None
         if object_id:
@@ -779,11 +1121,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             # desired_actions filtering code here significantly
             if current_status == "submitted":
                 current_status = "needs_review"
-            # We need the name of the action (e.g., 'change_status_to_in_progress')
-            # and the description to show in the form
-            # (e.g., "Change status to In Progress")
-            # We filter out any action matching the current status,
-            # since that's unneeded and potentially confusing
+            # We need the name of the action (for example,
+            # 'change_status_to_in_progress') and the description to show
+            # in the form (for example, "Change status to In Progress").
+            # We filter out any action matching the current status, since
+            # that is unneeded and potentially confusing.
             desired_actions = [
                 (name, data[2])
                 for name, data in self.get_actions(request).items()
@@ -802,7 +1144,16 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             request, object_id, extra_context=extra_context, **kwargs
         )
 
-    def has_reopen_permission(self, request):
+    def has_reopen_permission(self, request: HttpRequest) -> bool:
+        """
+        Check whether the user has the custom `reopen` permission.
+
+        Args:
+            request (HttpRequest): Current admin request.
+
+        Returns:
+            bool: True if the user has permission to reopen assets.
+        """
         opts = self.opts
         codename = get_permission_codename("reopen", opts)
         return request.user.has_perm(f"{opts.app_label}.{codename}")
@@ -818,12 +1169,36 @@ class TagAdmin(admin.ModelAdmin):
 
     actions = ("export_tags_as_csv",)
 
-    def lookup_allowed(self, key, value):
+    def lookup_allowed(self, key: str, value: str) -> bool:
+        """
+        Allow filtering by campaign id when viewing tags.
+
+        Args:
+            key (str): Lookup parameter key.
+            value (str): Lookup parameter value.
+
+        Returns:
+            bool: True if the lookup is allowed.
+        """
         if key in ["userassettagcollection__asset__item__project__campaign__id__exact"]:
             return True
         return super().lookup_allowed(key, value)
 
-    def export_tags_as_csv(self, request, queryset):
+    def export_tags_as_csv(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[Tag],
+    ) -> HttpResponse:
+        """
+        Export tag usage details as a CSV file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[Tag]): Selected tags to export.
+
+        Returns:
+            HttpResponse: Response that streams a CSV download.
+        """
         tags = queryset.prefetch_related(
             "userassettagcollection", "userassettagcollection__asset"
         ).order_by("userassettagcollection__asset_id")
@@ -881,6 +1256,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "accepted",
         "rejected",
         "reviewed_by",
+        "superseded",
     )
     list_display_links = ("id", "asset")
 
@@ -888,6 +1264,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         SubmittedFilter,
         AcceptedFilter,
         RejectedFilter,
+        SupersededListFilter,
         OcrGeneratedFilter,
         OcrOriginatedFilter,
         TranscriptionCampaignStatusListFilter,
@@ -928,22 +1305,114 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "ocr_originated",
     )
 
-    def lookup_allowed(self, key, value):
-        if key in ("asset__item__project__campaign__id__exact",):
-            return True
-        else:
-            return super().lookup_allowed(key, value)
+    show_full_result_count = False
+
+    def get_queryset(
+        self,
+        request: HttpRequest,
+    ) -> QuerySet[Transcription]:
+        """
+        Optimize the queryset used on the transcription changelist.
+
+        Selects related asset and user records and annotates a boolean flag
+        so the superseded column can be rendered without extra queries.
+
+        Args:
+            request (HttpRequest): Current admin request.
+
+        Returns:
+            QuerySet[Transcription]: Optimized queryset for the changelist.
+        """
+        qs = super().get_queryset(request)
+        # Make FK columns cheaper to render
+        qs = qs.select_related("asset", "user", "reviewed_by")
+
+        # Annotate a boolean so the "Superseded?" column is O(1) per row
+        return qs.annotate(
+            is_superseded=Exists(
+                Transcription.objects.filter(supersedes=OuterRef("pk"))
+            )
+        )
 
     @admin.display(description="Text")
-    def truncated_text(self, obj):
+    def truncated_text(self, obj: Transcription) -> str:
+        """
+        Return a shortened version of the transcription text.
+
+        Args:
+            obj (Transcription): Transcription instance.
+
+        Returns:
+            str: Text truncated to a reasonable length for display.
+        """
         return truncatechars(obj.text, 100)
 
-    def export_to_csv(self, request, queryset):
+    @admin.display(boolean=True, description="Superseded?")
+    def superseded(self, obj: Transcription) -> bool:
+        """
+        Indicate whether this transcription has been superseded.
+
+        Uses the `is_superseded` annotation added in `get_queryset` so the
+        column can be rendered without extra queries.
+
+        Args:
+            obj (Transcription): Transcription instance.
+
+        Returns:
+            bool: True if a later transcription supersedes this one.
+        """
+        # Uses the annotation from get_queryset; no per-row queries.
+        return bool(getattr(obj, "is_superseded", False))
+
+    def lookup_allowed(self, key: str, value: str) -> bool:
+        """
+        Allow filtering by campaign id in the transcription admin.
+
+        Args:
+            key (str): Lookup parameter key.
+            value (str): Lookup parameter value.
+
+        Returns:
+            bool: True if the lookup is allowed.
+        """
+        if key in ("asset__item__project__campaign__id__exact",):
+            return True
+        return super().lookup_allowed(key, value)
+
+    def export_to_csv(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[Transcription],
+    ) -> HttpResponse:
+        """
+        Export selected transcriptions as a CSV file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[Transcription]): Transcriptions to export.
+
+        Returns:
+            HttpResponse: Response that streams a CSV download.
+        """
         return export_to_csv_action(
             self, request, queryset, field_names=self.EXPORT_FIELDS
         )
 
-    def export_to_excel(self, request, queryset):
+    def export_to_excel(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[Transcription],
+    ) -> HttpResponse:
+        """
+        Export selected transcriptions as an Excel file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[Transcription]): Transcriptions to export.
+
+        Returns:
+            HttpResponse: Response that streams an Excel download.
+        """
         return export_to_excel_action(
             self, request, queryset, field_names=self.EXPORT_FIELDS
         )
@@ -1028,7 +1497,16 @@ class SiteReportAdmin(admin.ModelAdmin):
     )
 
     @admin.display(description="Report type")
-    def report_type(self, obj):
+    def report_type(self, obj: "SiteReport") -> str:
+        """
+        Describe what kind of report this SiteReport represents.
+
+        Args:
+            obj (SiteReport): Site report instance.
+
+        Returns:
+            str: Human readable description of the report source.
+        """
         if obj.report_name:
             return f"Report name: {obj.report_name}"
         elif obj.campaign:
@@ -1039,9 +1517,15 @@ class SiteReportAdmin(admin.ModelAdmin):
             return f"SiteReport: <{obj.id}>"
 
     @admin.display(description="SiteReport as JSON")
-    def report_json(self, obj: "SiteReport"):
+    def report_json(self, obj: "SiteReport") -> str:
         """
-        Pretty-printed JSON of this SiteReport for debugging.
+        Render a pretty printed JSON representation of this report.
+
+        Args:
+            obj (SiteReport): Site report instance.
+
+        Returns:
+            str: HTML snippet that shows the report JSON in a `<pre>` block.
         """
         return format_html(
             "<pre style='white-space:pre-wrap;word-break:break-word;margin:0'>{}</pre>",
@@ -1049,7 +1533,17 @@ class SiteReportAdmin(admin.ModelAdmin):
         )
 
     @admin.display(description="Previous in series")
-    def previous_in_series_link(self, obj: "SiteReport"):
+    def previous_in_series_link(self, obj: "SiteReport") -> str:
+        """
+        Link to the previous report in this series, if any.
+
+        Args:
+            obj (SiteReport): Site report instance.
+
+        Returns:
+            str: HTML anchor tag for the previous report or a dash when
+            none exists.
+        """
         prev_obj = obj.previous_in_series()
         if not prev_obj:
             return "—"
@@ -1061,7 +1555,17 @@ class SiteReportAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">{}</a>', url, label)
 
     @admin.display(description="Next in series")
-    def next_in_series_link(self, obj: "SiteReport"):
+    def next_in_series_link(self, obj: "SiteReport") -> str:
+        """
+        Link to the next report in this series, if any.
+
+        Args:
+            obj (SiteReport): Site report instance.
+
+        Returns:
+            str: HTML anchor tag for the next report or a dash when
+            none exists.
+        """
         next_obj = obj.next_in_series()
         if not next_obj:
             return "—"
@@ -1072,12 +1576,40 @@ class SiteReportAdmin(admin.ModelAdmin):
         label = f"{next_obj.created_on:%Y-%m-%d %H:%M:%S} (id {next_obj.pk})"
         return format_html('<a href="{}">{}</a>', url, label)
 
-    def export_to_csv(self, request, queryset):
+    def export_to_csv(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[SiteReport],
+    ) -> HttpResponse:
+        """
+        Export selected site reports as a CSV file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[SiteReport]): Site reports to export.
+
+        Returns:
+            HttpResponse: Response that streams a CSV download.
+        """
         return export_to_csv_action(
             self, request, queryset, field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES
         )
 
-    def export_to_excel(self, request, queryset):
+    def export_to_excel(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[SiteReport],
+    ) -> HttpResponse:
+        """
+        Export selected site reports as an Excel file.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[SiteReport]): Site reports to export.
+
+        Returns:
+            HttpResponse: Response that streams an Excel download.
+        """
         return export_to_excel_action(
             self, request, queryset, field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES
         )
@@ -1159,7 +1691,16 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
     )
 
     @admin.display(description="Completion percentage")
-    def completion(self, obj):
+    def completion(self, obj: CampaignRetirementProgress) -> str:
+        """
+        Compute a human readable completion percentage for display.
+
+        Args:
+            obj (CampaignRetirementProgress): Progress instance.
+
+        Returns:
+            str: Percentage text such as `"100%"`.
+        """
         if obj.complete:
             return "100%"
         total = obj.project_total + obj.item_total + obj.asset_total
@@ -1411,9 +1952,15 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
     )
 
     @admin.display(description="Download CSV")
-    def download_csv_link(self, obj: "KeyMetricsReport"):
+    def download_csv_link(self, obj: "KeyMetricsReport") -> str:
         """
         Provide a link to download this report as a CSV file.
+
+        Args:
+            obj (KeyMetricsReport): Report instance.
+
+        Returns:
+            str: HTML anchor tag for the CSV download.
         """
         url = reverse(
             f"admin:{obj._meta.app_label}_{obj._meta.model_name}_download_csv",
@@ -1423,7 +1970,10 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         """
-        Register a custom admin view to serve the CSV for an object.
+        Register a custom admin view to serve CSV files for reports.
+
+        Returns:
+            list: Custom URL patterns combined with the default admin URLs.
         """
         urls = super().get_urls()
         opts = self.model._meta
@@ -1436,9 +1986,23 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    def download_csv_view(self, request, object_id: str):
+    def download_csv_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+    ) -> HttpResponse:
         """
         Serve the CSV for a single KeyMetricsReport instance.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            object_id (str): Primary key of the report to download.
+
+        Returns:
+            HttpResponse: CSV download response.
+
+        Raises:
+            Http404: If the report cannot be found.
         """
         obj = self.get_object(request, object_id)
         if obj is None:
@@ -1449,9 +2013,20 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
         return response
 
     @admin.action(description="Download CSVs of selected reports as a ZIP")
-    def download_selected_as_zip(self, request, queryset):
+    def download_selected_as_zip(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[KeyMetricsReport],
+    ) -> HttpResponse:
         """
         Stream a ZIP file containing one CSV per selected report.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet[KeyMetricsReport]): Reports to export.
+
+        Returns:
+            HttpResponse: ZIP download response.
         """
         memory_file = io.BytesIO()
         with zipfile.ZipFile(

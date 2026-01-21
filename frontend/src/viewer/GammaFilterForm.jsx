@@ -1,3 +1,25 @@
+/**
+ * Gamma filter controls for the viewer.
+ *
+ * Purpose:
+ * - Provide synchronized number and range inputs to adjust gamma.
+ * - Offer step up/down buttons and a Reset filter control.
+ *
+ * Behavior:
+ * - Value is clamped to [0, 5] and rounded to two decimals.
+ * - onSubmit is prevented; onReset sets gamma to 1.0.
+ * - Exposed ids for external hooks:
+ *   #gamma-filter, #gamma-form, #gamma, #gamma-range, #gamma-up, #gamma-down.
+ *
+ * Accessibility:
+ * - Visually hidden labels for inputs.
+ * - Buttons include hidden Increase and Decrease text.
+ *
+ * Props:
+ * @param {number} gamma - Current gamma value.
+ * @param {(value:number)=>void} setGamma - Setter invoked on change.
+ * @returns {JSX.Element}
+ */
 export default function GammaFilterForm({gamma, setGamma}) {
     const handleNumberChange = (e) => {
         const value = parseFloat(e.target.value);

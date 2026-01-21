@@ -4,9 +4,9 @@ from django.utils import timezone
 
 from concordia.admin import (
     CardAdmin,
+    HelpfulLinkAdmin,
     ItemAdmin,
     ProjectAdmin,
-    ResourceAdmin,
     SiteReportAdmin,
     TranscriptionAdmin,
 )
@@ -19,16 +19,17 @@ from concordia.admin.filters import (
     ProjectCampaignStatusListFilter,
     SiteReportCampaignListFilter,
     SubmittedFilter,
+    SupersededListFilter,
     TopicListFilter,
 )
 from concordia.admin_site import ConcordiaAdminSite
 from concordia.models import (
     Campaign,
     Card,
+    HelpfulLink,
     Item,
     NextTranscribableCampaignAsset,
     Project,
-    Resource,
     SiteReport,
     Transcription,
 )
@@ -37,9 +38,9 @@ from concordia.tests.utils import (
     create_asset,
     create_card,
     create_card_family,
+    create_helpful_link,
     create_item,
     create_project,
-    create_resource,
     create_site_report,
     create_topic,
     create_transcription,
@@ -53,19 +54,19 @@ class NullableTimestampFilterTest(CreateTestUsers, TestCase):
 
     def test_lookups(self):
         f = SubmittedFilter(
-            None, {"submitted": "null"}, Transcription, TranscriptionAdmin
+            None, {"submitted": ("null",)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 0)
 
         f = SubmittedFilter(
-            None, {"submitted": "not-null"}, Transcription, TranscriptionAdmin
+            None, {"submitted": ("not-null",)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
 
         f = SubmittedFilter(
-            None, {"submitted": timezone.now()}, Transcription, TranscriptionAdmin
+            None, {"submitted": (timezone.now(),)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
@@ -85,7 +86,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
             "/admin/concordia/card/?campaign=%s" % self.campaign.id
         )
         f = CardCampaignListFilter(
-            request, {"campaign": self.campaign.id}, Card, CardAdmin
+            request, {"campaign": (self.campaign.id,)}, Card, CardAdmin
         )
         cards = f.queryset(None, Card.objects.all())
         self.assertEqual(cards.count(), 0)
@@ -102,7 +103,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         )
         f = ProjectCampaignListFilter(
             request,
-            {"campaign__id__exact": self.campaign.id},
+            {"campaign__id__exact": (self.campaign.id,)},
             Project,
             ProjectAdmin,
         )
@@ -111,7 +112,10 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
 
         request = RequestFactory().get("/admin/concordia/project/?campaign__status=1")
         f = ProjectCampaignListFilter(
-            request, {"campaign__status": Campaign.Status.ACTIVE}, Project, ProjectAdmin
+            request,
+            {"campaign__status": (Campaign.Status.ACTIVE,)},
+            Project,
+            ProjectAdmin,
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
@@ -125,7 +129,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         site_report_admin = SiteReportAdmin(SiteReport, ConcordiaAdminSite())
         f = SiteReportCampaignListFilter(
             request,
-            {param: self.campaign.id},
+            {param: (self.campaign.id,)},
             SiteReport,
             site_report_admin,
         )
@@ -170,7 +174,7 @@ class ItemFilterTests(CreateTestUsers, TestCase):
         )
         f = ItemProjectListFilter(
             request,
-            {"project__campaign__id__exact": self.project.campaign.pk},
+            {"project__campaign__id__exact": (self.project.campaign.pk,)},
             Item,
             ItemAdmin,
         )
@@ -188,7 +192,7 @@ class ProjectFilterTests(TestCase):
         self.assertEqual(projects.count(), 1)
 
         f = ProjectCampaignStatusListFilter(
-            None, {"campaign__status": Campaign.Status.ACTIVE}, Project, ProjectAdmin
+            None, {"campaign__status": (Campaign.Status.ACTIVE,)}, Project, ProjectAdmin
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
@@ -205,7 +209,7 @@ class TranscriptionFilterTests(CreateTestUsers, TestCase):
         self.assertEqual(transcriptions.count(), 1)
 
         f = OcrGeneratedFilter(
-            "No", {"ocr_generated": False}, Transcription, TranscriptionAdmin
+            "No", {"ocr_generated": (False,)}, Transcription, TranscriptionAdmin
         )
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
@@ -214,19 +218,19 @@ class TranscriptionFilterTests(CreateTestUsers, TestCase):
 class TopicListFilterTests(TestCase):
     def setUp(self):
         self.topic = create_topic()
-        self.resource1 = create_resource(topic=self.topic)
-        self.resource2 = create_resource()
+        self.helpful_link_1 = create_helpful_link(topic=self.topic)
+        self.helpful_link_2 = create_helpful_link()
 
-    def test_resource_topic_list_filter(self):
-        topic_filter = TopicListFilter(None, {}, Resource, ResourceAdmin)
-        resources = topic_filter.queryset(None, Resource.objects.all())
-        self.assertEqual(resources.count(), 2)
+    def test_helpfullink_topic_list_filter(self):
+        topic_filter = TopicListFilter(None, {}, HelpfulLink, HelpfulLinkAdmin)
+        helpful_links = topic_filter.queryset(None, HelpfulLink.objects.all())
+        self.assertEqual(helpful_links.count(), 2)
 
         topic_filter = TopicListFilter(
-            None, {"topic__id__exact": self.topic.id}, Resource, ResourceAdmin
+            None, {"topic__id__exact": (self.topic.id,)}, HelpfulLink, HelpfulLinkAdmin
         )
-        resources = topic_filter.queryset(None, Resource.objects.all())
-        self.assertEqual(resources.count(), 1)
+        helpful_links = topic_filter.queryset(None, HelpfulLink.objects.all())
+        self.assertEqual(helpful_links.count(), 1)
 
 
 class NextAssetCampaignListFilterTests(TestCase):
@@ -260,3 +264,61 @@ class NextAssetCampaignListFilterTests(TestCase):
         self.assertEqual(len(lookups), 1)
         self.assertEqual(lookups[0][0], self.campaign.id)
         self.assertEqual(lookups[0][1], self.campaign.title)
+
+
+class SupersededListFilterTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.user = self.create_user(username="tester")
+        self.base = create_transcription(user=self.user, text="base")
+        self.superseding = create_transcription(
+            user=self.user,
+            supersedes=self.base,
+            text="superseding",
+            asset=self.base.asset,
+        )
+        asset2 = create_asset(item=self.base.asset.item, slug="asset-2")
+        self.independent = create_transcription(
+            user=self.user, text="independent", asset=asset2
+        )
+
+    def test_lookups(self):
+        request = RequestFactory().get("/admin/concordia/transcription/")
+        f = SupersededListFilter(request, {}, Transcription, TranscriptionAdmin)
+        lookups = dict(f.lookups(request, TranscriptionAdmin(Transcription, None)))
+        self.assertIn("yes", lookups)
+        self.assertIn("no", lookups)
+        self.assertEqual(lookups["yes"], "Superseded")
+        self.assertEqual(lookups["no"], "Not superseded")
+
+    def test_queryset_superseded_yes(self):
+        f = SupersededListFilter(
+            None, {"superseded": ("yes",)}, Transcription, TranscriptionAdmin
+        )
+        qs = f.queryset(None, Transcription.objects.all())
+        self.assertQuerySetEqual(
+            qs.order_by("id").values_list("id", flat=True),
+            [self.base.id],
+            transform=lambda x: x,
+        )
+
+    def test_queryset_superseded_no(self):
+        f = SupersededListFilter(
+            None, {"superseded": ("no",)}, Transcription, TranscriptionAdmin
+        )
+        qs = f.queryset(None, Transcription.objects.all())
+        ids = set(qs.values_list("id", flat=True))
+        self.assertEqual(ids, {self.superseding.id, self.independent.id})
+
+    def test_queryset_no_param_returns_all(self):
+        f = SupersededListFilter(None, {}, Transcription, TranscriptionAdmin)
+        qs = f.queryset(None, Transcription.objects.all())
+        ids = set(qs.values_list("id", flat=True))
+        self.assertEqual(ids, {self.base.id, self.superseding.id, self.independent.id})
+
+    def test_queryset_ignores_unknown_value(self):
+        f = SupersededListFilter(
+            None, {"superseded": ("maybe",)}, Transcription, TranscriptionAdmin
+        )
+        qs = f.queryset(None, Transcription.objects.all())
+        ids = set(qs.values_list("id", flat=True))
+        self.assertEqual(ids, {self.base.id, self.superseding.id, self.independent.id})

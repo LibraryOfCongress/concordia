@@ -3,11 +3,11 @@ import mimetypes
 import os
 import re
 from logging import getLogger
-from typing import Optional
+from typing import Any, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
 import requests
-from celery import group
+from celery import Task, group
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -24,7 +24,7 @@ from .assets import download_asset_task
 from .decorators import update_task_status
 
 #: P1 has generic search / item pages and a number of top-level format-specific
-#: “context portals” which expose the same JSON interface.
+#: "context portals" which expose the same JSON interface.
 #: jq 'to_entries[] | select(.value.type == "context-portal") | .key' < manifest.json
 ACCEPTED_P1_URL_PREFIXES = [
     "collections",
@@ -55,14 +55,25 @@ logger = getLogger(__name__)
     retry_kwargs={"max_retries": 3},
     rate_limit=2,
 )
-def create_item_import_task(self, import_job_pk, item_url, redownload=False):
+def create_item_import_task(
+    self: Task, import_job_pk: int, item_url: str, redownload: bool = False
+) -> Any:
     """
-    Create an ImportItem record using the provided import job and URL by
-    requesting the metadata from the URL
+    Create an ImportItem for the given job and item URL, then enqueue its
+    import.
 
-    Enqueues the actual import for the item once we have the metadata
+    Fetches item metadata from the remote URL, ensures the Item and
+    ImportItem exist, skips fully-imported items when not redownloading, and
+    finally schedules ``import_item_task``.
+
+    Args:
+        import_job_pk: Primary key of the ImportJob.
+        item_url: Absolute item URL on loc.gov.
+        redownload: Reprocess an existing item even if it has all assets.
+
+    Returns:
+        The AsyncResult returned by ``import_item_task.delay``.
     """
-
     import_job = models.ImportJob.objects.get(pk=import_job_pk)
 
     # Load the Item record with metadata from the remote URL:
@@ -80,16 +91,16 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
     )
 
     if not item_created and redownload is False:
-        # Item has already been imported and we're not redownloading
-        # all items
+        # Item has already been imported and we are not redownloading all items.
         asset_urls, item_resource_url = get_asset_urls_from_item_resources(
             item.metadata.get("resources", [])
         )
         if item.asset_set.count() >= len(asset_urls):
-            # The item has all of its assets, so we can skip it
-            logger.warning("Not reprocessing existing item with all asssets: %s", item)
+            # The item has all of its assets, so we can skip it.
+            logger.warning("Not reprocessing existing item with all assets: %s", item)
             import_item.update_status(
-                f"Not reprocessing existing item with all assets: {item}", do_save=False
+                f"Not reprocessing existing item with all assets: {item}",
+                do_save=False,
             )
             import_item.completed = import_item.last_started = now()
             import_item.task_id = self.request.id
@@ -97,37 +108,70 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
             import_item.save()
             return
         else:
-            # The item is missing one or more of its assets, so we will reprocess it
-            # to import the missing asssets
+            # The item is missing one or more of its assets, so reprocess it.
             logger.warning("Reprocessing existing item %s that is missing assets", item)
 
     import_item.item.metadata.update(item_data)
-
     thumbnail_url = populate_item_from_data(import_item.item, item_data["item"])
 
-    item.full_clean()
-    item.save()
+    try:
+        item.full_clean()
+        item.save()
+    except Exception as exc:
+        # We create the import jobs here, so we cannot rely on the decorator to
+        # update status. Update the ImportItem status manually then re-raise.
+        logger.exception("Unhandled exception when importing item %s", item)
+        new_status = "{}\n\nUnhandled exception: {}".format(
+            import_item.status, exc
+        ).strip()
+        import_item.update_status(new_status, do_save=False)
+        import_item.failed = now()
+        import_item.task_id = self.request.id
+        import_item.save()
+        raise
+
     download_and_set_item_thumbnail(item, thumbnail_url)
 
     return import_item_task.delay(import_item.pk)
 
 
 @app.task(bind=True)
-def import_item_task(self, import_item_pk):
+def import_item_task(self: Task, import_item_pk: int) -> Any:
+    """
+    Enqueue downloads for all assets of a previously created ImportItem.
+
+    Args:
+        import_item_pk: Primary key of the ImportItem to process.
+
+    Returns:
+        The result of the celery group that downloads assets.
+    """
     i = models.ImportItem.objects.select_related("item").get(pk=import_item_pk)
     return import_item(self, i)
 
 
 @update_task_status
-def import_item(self, import_item):
+def import_item(self: Task, import_item: Any) -> Any:
+    """
+    Create Asset rows for an ImportItem, create ImportItemAsset rows, then
+    enqueue downloads for all assets.
+
+    Wrapped with ``update_task_status`` to keep job fields updated.
+
+    Args:
+        self: Celery Task instance.
+        import_item: ImportItem instance being processed.
+
+    Returns:
+        A celery group result for the scheduled download tasks.
+    """
     # Using transaction.atomic here ensures the data is available in the
-    # database for the download_asset_task calls. If we don't do this, some
-    # of the tasks could execute before the transaction is committed, causing
-    # those tasks to fail since the ImportItemAsset it needs won't be in the database
+    # database for the download_asset_task calls. If we do not do this some
+    # tasks could execute before the transaction is committed, causing failures.
     with transaction.atomic():
-        item_assets = []
-        import_assets = []
-        item_resource_url = None
+        item_assets: List[Asset] = []
+        import_assets: List[Any] = []
+        item_resource_url: Optional[str] = None
 
         asset_urls, item_resource_url = get_asset_urls_from_item_resources(
             import_item.item.metadata.get("resources", [])
@@ -158,8 +202,8 @@ def import_item(self, import_item):
                     [relative_asset_file_path, f"{sequence}.{file_extension}"]
                 ),
             )
-            # Previously, any asset that raised a validation error was just ignored.
-            # We don't want that--we want to see if an asset fails validation
+            # Previously any asset that raised a validation error was ignored.
+            # We want validation errors to fail the import.
             try:
                 item_asset.full_clean()
             except ValidationError as exc:
@@ -189,16 +233,22 @@ def import_item(self, import_item):
         import_item.save()
 
     download_asset_group = group(download_asset_task.s(i.pk) for i in import_assets)
-
     return download_asset_group()
 
 
 # End tasks
 
 
-def import_item_count_from_url(import_url):
+def import_item_count_from_url(import_url: str) -> Tuple[str, int]:
     """
-    Given a loc.gov URL, return count of files from the resources section
+    Return a tuple of status string and asset count for a loc.gov item URL.
+
+    Args:
+        import_url: Absolute item URL.
+
+    Returns:
+        A pair of ``(status_message, count)``. On error returns a message and
+        count 0.
     """
     try:
         resp = requests.get(import_url, params={"fo": "json"}, timeout=30)
@@ -210,15 +260,20 @@ def import_item_count_from_url(import_url):
         return f"Unhandled exception importing {import_url} {exc}", 0
 
 
-def get_item_info_from_result(result):
+def get_item_info_from_result(
+    result: dict,
+) -> Optional[Tuple[str, str]]:
     """
-    Given a P1 result, return the item ID and URL if it represents a collection
-    item
+    Extract an item_id and item_url from a P1 search result.
 
-    :return: (item_id, item_url) tuple or None if the URL does not represent a
-             supported item type
+    Skips results with unsupported formats or without an image_url.
+
+    Args:
+        result: A single result object from the P1 JSON response.
+
+    Returns:
+        ``(item_id, item_url)`` when supported, otherwise None.
     """
-
     ignored_formats = {"collection", "web page"}
 
     item_id = result["id"]
@@ -231,7 +286,7 @@ def get_item_info_from_result(result):
             original_format,
             extra={"data": {"result": result}},
         )
-        return
+        return None
 
     image_url = result.get("image_url")
     if not image_url:
@@ -240,7 +295,7 @@ def get_item_info_from_result(result):
             item_id,
             extra={"data": {"result": result}},
         )
-        return
+        return None
 
     item_url = result["url"]
 
@@ -252,32 +307,46 @@ def get_item_info_from_result(result):
             item_url,
             extra={"data": {"result": result}},
         )
-        return
+        return None
 
     return m.group(1), item_url
 
 
-def get_item_id_from_item_url(item_url):
+def get_item_id_from_item_url(item_url: str) -> str:
     """
-    extracts item id from the item url and returns it
-    :param item_url: item url
-    :return: item id
+    Extract the item_id component from a loc.gov item URL.
+
+    Args:
+        item_url: Absolute item URL.
+
+    Returns:
+        The item_id string.
     """
     if item_url.endswith("/"):
         item_id = item_url.split("/")[-2]
     else:
         item_id = item_url.split("/")[-1]
-
     return item_id
 
 
 def import_items_into_project_from_url(
-    requesting_user, project, import_url, redownload=False
-):
+    requesting_user: Any, project: Any, import_url: str, redownload: bool = False
+) -> Any:
     """
-    Given a loc.gov URL, return the task ID for the import task
-    """
+    Create an ImportJob for the given URL and enqueue item or collection import.
 
+    Determines whether the URL is an item or a collection/search URL and
+    schedules the appropriate task.
+
+    Args:
+        requesting_user: User creating the ImportJob.
+        project: Project that will own the imported Items.
+        import_url: loc.gov item or collection/search URL.
+        redownload: Reprocess existing items even if they have all assets.
+
+    Returns:
+        The created ImportJob instance.
+    """
     parsed_url = urlparse(import_url)
 
     m = re.match(
@@ -299,7 +368,7 @@ def import_items_into_project_from_url(
         create_item_import_task.delay(import_job.pk, import_url, redownload)
     else:
         # Both collections and search results return the same format JSON
-        # reponse so we can use the same code to process them:
+        # response so we can use the same code to process them.
         from .collections import import_collection_task
 
         import_collection_task.delay(import_job.pk, redownload)
@@ -307,17 +376,26 @@ def import_items_into_project_from_url(
     return import_job
 
 
-def populate_item_from_data(item, item_info):
+def populate_item_from_data(item: Item, item_info: dict) -> Optional[str]:
     """
-    Populates a Concordia.Item from the data retrieved from a loc.gov URL
-    """
+    Populate an Item from a loc.gov item JSON fragment.
 
+    Sets title and description when present. Chooses a JPG thumbnail URL if
+    available, stores it on the Item, and returns the resolved URL.
+
+    Args:
+        item: The Item instance to update.
+        item_info: The ``item`` object from the P1 response.
+
+    Returns:
+        The resolved thumbnail URL when found, otherwise None.
+    """
     for k in ("title", "description"):
         v = item_info.get(k)
         if v:
             setattr(item, k, v)
 
-    # FIXME: this was never set before so we don't have selection logic:
+    # FIXME: this was never set before so we do not have selection logic.
     thumb_urls = [i for i in item_info["image_url"] if ".jpg" in i]
     if thumb_urls:
         item.thumbnail_url = urljoin(item.item_url, thumb_urls[0])
@@ -329,34 +407,41 @@ def populate_item_from_data(item, item_info):
 
     if thumb_urls:
         resolved = urljoin(item.item_url, thumb_urls[0])
-        # TODO: remove setting thumbnail_url once field is removed
+        # TODO: remove setting thumbnail_url once field is removed.
         item.thumbnail_url = resolved
         return resolved
+    return None
 
 
-def get_asset_urls_from_item_resources(resources):
+def get_asset_urls_from_item_resources(
+    resources: List[dict],
+) -> Tuple[List[str], str]:
     """
-    Given a loc.gov JSON response, return the list of asset URLs matching our
-    criteria (JPEG, largest version available)
-    """
+    From a P1 resources list, pick best image URL per file.
 
-    assets = []
+    Prefers the largest JPEG variant per file. If no JPEGs exist, falls back
+    to the largest GIF. Also returns the item resource URL when available.
+
+    Args:
+        resources: The ``resources`` array from the P1 response.
+
+    Returns:
+        A tuple of ``(asset_urls, item_resource_url)``.
+    """
+    assets: List[str] = []
     try:
         item_resource_url = resources[0]["url"] or ""
     except (IndexError, KeyError):
         item_resource_url = ""
 
     for resource in resources:
-        # The JSON response for each file is a list of available image versions
-        # we will attempt to save the highest resolution jpg, falling back to
-        # to the highest resolution gif if there are none
-
+        # Each "file" contains a set of variants. Select the largest preferred
+        # type per file.
         for item_file in resource.get("files", []):
-            candidates = []
-            backup_candidates = []
+            candidates: List[Tuple[str, int]] = []
+            backup_candidates: List[Tuple[str, int]] = []
 
             for variant in item_file:
-
                 if any(i for i in ("url", "height", "width") if i not in variant):
                     continue
 
@@ -365,8 +450,7 @@ def get_asset_urls_from_item_resources(resources):
                 width = variant["width"]
                 mimetype = variant.get("mimetype")
 
-                # We prefer jpgs, but if there are none,
-                # we'll fallback to gifs
+                # Prefer JPEG; if none exist use GIF.
                 if mimetype == "image/jpeg":
                     candidates.append((url, height * width))
                 elif mimetype == "image/gif":
@@ -411,8 +495,8 @@ def download_and_set_item_thumbnail(
     Download an image from url and save it to item.thumbnail_image.
 
     The image is validated with Pillow. The function will not set a new
-    thumbnail_image if one already exists, unless `force=True`. Filename
-    is stable per item and inferred from Content-Type or URL, with a safe fallback.
+    thumbnail_image if one already exists unless ``force=True``. Filename is
+    stable per item and inferred from Content-Type or URL with a safe fallback.
 
     Args:
         item: The Item instance to modify and save.
@@ -428,7 +512,7 @@ def download_and_set_item_thumbnail(
         ValueError: If the image is invalid.
         requests.RequestException: Network errors during download.
     """
-    # Lock the row briefly to avoid pointless work if someone else is already writing.
+    # Lock the row briefly to avoid pointless work if someone else is writing.
     with transaction.atomic():
         locked = (
             Item.objects.select_for_update(of=("self",))
@@ -470,9 +554,8 @@ def download_and_set_item_thumbnail(
     # Decide file extension. Try header, URL, then Pillow.
     url_path = urlparse(url).path
     ext = _guess_extension(content_type, url_path)
-    # If we got a blank of bin extension, that probably means we couldn't
-    # figure out what the correct extension was, so we look at the file directly
-    # and default to 'jpg' if nothing else
+    # If we got a blank or .bin extension we could not infer it from headers
+    # or URL. Inspect bytes with Pillow, default to jpg.
     if ext in (".bin", ""):
         try:
             buf.seek(0)

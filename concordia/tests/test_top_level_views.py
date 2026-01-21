@@ -2,10 +2,8 @@
 Tests for for the top-level & “CMS” views
 """
 
-from smtplib import SMTPException
 from unittest.mock import patch
 
-from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
@@ -80,82 +78,11 @@ class TopLevelViewTests(
         self.assertEqual(context["firstslide"].headline, slide.headline)
         slide.delete()
 
-    def test_contact_us_get(self):
+    def test_contact_us_redirect(self):
         response = self.client.get(reverse("contact"))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertUncacheable(response)
-        self.assertTemplateUsed(response, "contact.html")
-
-    def test_contact_us_with_referrer(self):
-        test_http_referrer = "http://foo/bar"
-
-        response = self.client.get(
-            reverse("contact"), headers={"referer": test_http_referrer}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertUncacheable(response)
-        self.assertTemplateUsed(response, "contact.html")
-
-        self.assertEqual(
-            response.context["form"].initial["referrer"], test_http_referrer
-        )
-
-    def test_contact_us_as_a_logged_in_user(self):
-        """
-        The contact form should pre-fill your email address if you're logged in
-        """
-
-        self.login_user()
-
-        response = self.client.get(reverse("contact"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertUncacheable(response)
-        self.assertTemplateUsed(response, "contact.html")
-
-        self.assertEqual(response.context["form"].initial["email"], self.user.email)
-
-    def test_contact_us_post(self):
-        post_data = {
-            "email": "nobody@example.com",
-            "subject": "Problem found",
-            "link": "http://www.loc.gov/nowhere",
-            "story": "Houston, we got a problem",
-        }
-
-        response = self.client.post(reverse("contact"), post_data)
-
         self.assertEqual(response.status_code, 302)
-        self.assertUncacheable(response)
-
-        with patch("django.core.mail.EmailMultiAlternatives.send") as mock:
-            mock.side_effect = SMTPException()
-            response = self.client.post(reverse("contact"), post_data)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertUncacheable(response)
-        messages = [str(message) for message in get_messages(response.wsgi_request)]
-        self.assertIn(
-            "Your message could not be sent. Our support team has been notified.",
-            messages,
-        )
-
-    def test_contact_us_post_invalid(self):
-        post_data = {
-            "email": "nobody@",
-            "subject": "Problem found",
-            "story": "Houston, we got a problem",
-        }
-
-        response = self.client.post(reverse("contact"), post_data)
-
-        self.assertEqual(response.status_code, 200)
-
-        self.assertEqual(
-            {"email": ["Enter a valid email address."]}, response.context["form"].errors
-        )
+        self.assertEqual(response["Location"], "https://ask.loc.gov/crowd")
 
     def test_simple_page(self):
         s = SimplePage.objects.create(

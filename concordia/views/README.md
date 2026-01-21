@@ -6,7 +6,6 @@ such as `views.campaigns`. Also includes some basic views.
 ### Class-based Views
 
 -   **HomeView** - A `ListView` displaying featured campaigns on the homepage
--   **ContactUsView** - A `FormView` allowing users to send contact messages
 
 ### Function-based Views
 

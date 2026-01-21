@@ -172,15 +172,53 @@ urlpatterns = [
         views.simple_pages.simple_page,
         name="simple-page-spanish",
     ),
-    path("for-educators/", views.simple_pages.simple_page, name="for-educators"),
-    path("for-staff/", views.simple_pages.simple_page, name="for-staff"),
-    path("resources/", views.simple_pages.simple_page, name="resources"),
+    path(
+        "for-educators/",
+        views.simple_pages.simple_page,
+        name="for-educators",
+    ),
+    path(
+        "for-staff/",
+        views.simple_pages.simple_page,
+        name="for-staff",
+    ),
+    path(
+        "resources/",
+        RedirectView.as_view(
+            pattern_name="guidelines", permanent=True, query_string=True
+        ),
+        name="resources",
+    ),
+    path(
+        "service/",
+        views.simple_pages.simple_page,
+        name="service",
+    ),
+    path(
+        "guidelines/",
+        views.simple_pages.simple_page,
+        name="guidelines",
+    ),
+    path(
+        "programs/",
+        views.simple_pages.simple_page,
+        name="programs",
+    ),
     path(
         "latest/",
         RedirectView.as_view(pattern_name="about", permanent=True, query_string=True),
     ),
     path("questions/", views.simple_pages.simple_page, name="questions"),
-    path("contact/", views.ContactUsView.as_view(), name="contact"),
+    path(
+        "contact/",
+        RedirectView.as_view(url="https://ask.loc.gov/crowd"),
+        name="contact",
+    ),
+    path(
+        "help-center/",
+        RedirectView.as_view(pattern_name="welcome-guide"),
+        name="help-center",
+    ),
     path(
         "campaigns-topics/",
         views.campaigns.CampaignTopicListView.as_view(),

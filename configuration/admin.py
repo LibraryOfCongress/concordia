@@ -1,4 +1,7 @@
+from typing import Any
+
 from django.contrib import admin, messages
+from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
 from django.utils.html import format_html
 
@@ -7,18 +10,79 @@ from configuration.models import Configuration
 
 @admin.register(Configuration)
 class ConfigurationAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for the `Configuration` model.
+
+    Behavior:
+        - Displays the key, raw value, and description in the changelist.
+        - Provides a read-only `validated_value` field on the change form that
+          shows the interpreted value as returned by `Configuration.get_value`.
+        - Overrides `changeform_view` to add a two-step confirmation flow when
+          saving changes, including a preview of the parsed value. Also handles
+          an explicit cancel action by rebuilding the normal change form
+          context rather than delegating to the base implementation.
+    """
+
     list_display = ("key", "value", "description")
     readonly_fields = ("validated_value",)
 
-    def validated_value(self, obj):
+    def validated_value(self, obj: Configuration) -> str:
+        """
+        Render the parsed configuration value and explanatory text.
+
+        Notes:
+            This method does not alter the base `ModelAdmin` behavior. It is a
+            helper used by the change form to display both the interpreted
+            value from `Configuration.get_value()` and a short explanation
+            that this parsed value is what application code will consume.
+
+        Args:
+            obj (Configuration): The instance being edited.
+
+        Returns:
+            str: HTML-safe string produced by `format_html` containing the
+                parsed value and explanatory note.
+        """
         return format_html(
             "<div>{}</div><div style='color: #777; font-size: 0.9em;'>{}</div>",
             obj.get_value(),
             "This is the interpreted value based on the selected data type. "
-            "This value is what will be seen by the code that uses this configuration.",
+            "This value is what will be seen by the code that uses this "
+            "configuration.",
         )
 
-    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+    def changeform_view(
+        self,
+        request: HttpRequest,
+        object_id: str | None = None,
+        form_url: str = "",
+        extra_context: dict[str, Any] | None = None,
+    ) -> HttpResponse:
+        """
+        Override the base change form view to add a confirmation step.
+
+        Differences from the base implementation:
+            - On initial POST, validate the form and, if valid, render a
+              confirmation template that previews the parsed value produced by
+              `Configuration.get_value()`.
+            - On confirmation POST (`_confirm_update`), save the instance and
+              show a success message.
+            - On cancel POST (`cancel_update`), rebuild the standard change
+              form context manually and re-render the change form instead of
+              delegating to the base method (which would otherwise proceed with
+              the change because it is a POST).
+            - For all other flows, fall back to the base implementation.
+
+        Args:
+            request (HttpRequest): The current request.
+            object_id (str | None): Primary key of the object being edited.
+            form_url (str): Form action URL.
+            extra_context (dict[str, Any] | None): Extra template context.
+
+        Returns:
+            HttpResponse: Either the confirmation screen, the re-rendered
+                change form, or the default response from the base view.
+        """
         obj = self.get_object(request, object_id)
 
         if request.method == "POST":

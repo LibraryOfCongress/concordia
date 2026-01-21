@@ -1,5 +1,9 @@
-/* global $ Cookies screenfull Sentry */
-/* exported displayMessage displayHtmlMessage buildErrorMessage trackUIInteraction */
+import 'bootstrap';
+import Cookies from 'js-cookie';
+import $ from 'jquery';
+import screenfull from 'screenfull';
+import {Popover} from 'bootstrap';
+import * as Sentry from '@sentry/browser';
 
 (function () {
     /*
@@ -27,12 +31,17 @@
     });
 })();
 
-$(function () {
-    $('[data-toggle="popover"]').popover();
+document.addEventListener('DOMContentLoaded', () => {
+    const popoverTriggerList = document.querySelectorAll(
+        '[data-bs-toggle="popover"]',
+    );
+    for (const popoverTriggerElement of popoverTriggerList) {
+        new Popover(popoverTriggerElement);
+    }
 });
 
 // eslint-disable-next-line no-unused-vars
-function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+export function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errorMessage;
     // eslint-disable-next-line unicorn/prefer-ternary
@@ -44,7 +53,7 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errorMessage;
 }
 
-function displayHtmlMessage(level, message, uniqueId) {
+export function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
@@ -88,7 +97,7 @@ function displayHtmlMessage(level, message, uniqueId) {
     return $newMessage;
 }
 
-function displayMessage(level, message, uniqueId) {
+export function displayMessage(level, message, uniqueId) {
     return displayHtmlMessage(
         level,
         document.createTextNode(message),
@@ -116,7 +125,7 @@ function loadLegacyPolyfill(scriptUrl, callback) {
     document.body.append(script);
 }
 
-$(function () {
+document.addEventListener('DOMContent', () => {
     if (isOutdatedBrowser()) {
         var theMessage =
             'You are using an outdated browser. This website fully supports the current ' +
@@ -178,6 +187,45 @@ if (screenfull.isEnabled) {
         });
 }
 
+function appendAccountItem(link, $menu) {
+    if (link.type !== 'post') {
+        $('<a>')
+            .addClass('dropdown-item')
+            .attr('href', link.url)
+            .text(link.title)
+            .appendTo($menu);
+        return;
+    }
+
+    const csrfToken = Cookies.get('csrftoken');
+    const formId =
+        'nav-post-' + link.title.toLowerCase().replaceAll(/[^\da-z]+/g, '-');
+
+    const $form = $('<form>')
+        .attr({id: formId, method: 'post', action: link.url})
+        .css('display', 'none')
+        .appendTo(document.body);
+
+    // Django expects the hidden field name "csrfmiddlewaretoken"
+    $('<input>')
+        .attr({type: 'hidden', name: 'csrfmiddlewaretoken', value: csrfToken})
+        .appendTo($form);
+
+    if (link.fields) {
+        for (const [name, value] of Object.entries(link.fields)) {
+            $('<input>')
+                .attr({type: 'hidden', name: name, value: value})
+                .appendTo($form);
+        }
+    }
+
+    $('<button>')
+        .addClass('dropdown-item')
+        .attr({type: 'submit', form: formId})
+        .text(link.title)
+        .appendTo($menu);
+}
+
 $.ajax({
     url: '/account/ajax-status/',
     method: 'GET',
@@ -185,37 +233,29 @@ $.ajax({
     cache: true,
 }).done(function (data) {
     if (!data.username) {
+        $('.anonymous-only').removeClass('d-none');
+        $('.anonymous-only').addClass('d-lg-flex');
+        $('.authenticated-only').addClass('d-none');
         return;
     }
 
-    $('.anonymous-only').remove();
-    $('.authenticated-only').removeAttr('hidden');
-    if (data.links) {
-        var $accountDropdown = $('#topnav-account-dropdown');
-        $('<a>')
-            .addClass('nav-link fw-bold')
-            .attr({
-                id: 'topnav-account-dropdown-toggle',
-                'data-bs-toggle': 'dropdown',
-                'aria-haspopup': 'true',
-                'aria-expanded': 'false',
-            })
-            .text(data.username + ' ')
-            .prependTo($accountDropdown);
+    $('.anonymous-only').addClass('d-none');
+    $('.anonymous-only').removeClass('d-lg-flex');
+    $('.authenticated-only').removeClass('d-none');
+
+    var $toggle = $('#topnav-account-dropdown-toggle');
+    var $accountDropdownMenu = $('#topnav-account-dropdown-menu');
+    if (data.username) {
+        $toggle.empty().text(data.username + ' ');
         $('<span>')
             .addClass('fa fa-chevron-down text-primary')
-            .appendTo('#topnav-account-dropdown-toggle');
-        var $accountDropdownMenu = $('<div>');
-        $accountDropdownMenu
-            .addClass('dropdown-menu')
-            .attr('aria-labelledby', 'topnav-account-dropdown-toggle')
-            .appendTo($accountDropdown);
+            .appendTo($toggle);
+    }
+
+    if (data.links && $accountDropdownMenu.length > 0) {
+        $accountDropdownMenu.empty();
         for (const link of data.links) {
-            $('<a>')
-                .addClass('dropdown-item')
-                .attr('href', link.url)
-                .text(link.title)
-                .appendTo($accountDropdownMenu);
+            appendAccountItem(link, $accountDropdownMenu);
         }
     }
 });
@@ -231,7 +271,7 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
 );
 
 // eslint-disable-next-line no-unused-vars
-function debounce(function_, timeout = 300) {
+export function debounce(function_, timeout = 300) {
     // Based on https://www.freecodecamp.org/news/javascript-debounce-example/
     let timer;
     return (...arguments_) => {
@@ -272,64 +312,75 @@ var $copyUrlButton = $('.copy-url-button');
 var $facebookShareButton = $('.facebook-share-button');
 var $twitterShareButton = $('.twitter-share-button');
 
-$copyUrlButton.on('click', function (event) {
-    event.preventDefault();
+const copyUrlButton = document.querySelector('.copy-url-button');
+if (copyUrlButton) {
+    copyUrlButton.addEventListener('click', function (event) {
+        event.preventDefault();
 
-    // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
-    // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#Browser_compatibility
-    // We'll use the older document.execCommand("copy") interface which requires a text input:
-    var $clipboardInput = $('<input type="text">')
-        .val($copyUrlButton.attr('href'))
-        .insertAfter($copyUrlButton);
-    $clipboardInput.get(0).select();
+        // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
+        // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#Browser_compatibility
+        // We'll use the older document.execCommand("copy") interface which requires a text input:
+        var $clipboardInput = $('<input type="text">')
+            .val($copyUrlButton.attr('href'))
+            .insertAfter($copyUrlButton);
+        $clipboardInput.get(0).select();
 
-    var tooltipMessage = '';
+        var tooltipMessage = '';
 
-    trackShareInteraction($copyUrlButton, 'Link copy');
+        trackShareInteraction($copyUrlButton, 'Link copy');
 
-    try {
-        document.execCommand('copy');
-        // Show the tooltip with a success message
-        tooltipMessage = 'This link has been copied to your clipboard';
-        $copyUrlButton
-            .tooltip('dispose')
-            .tooltip({title: tooltipMessage})
-            .tooltip('show')
-            .on('shown.bs.tooltip', hideTooltipCallback);
-    } catch (error) {
-        if (typeof Sentry != 'undefined') {
-            Sentry.captureException(error);
+        try {
+            document.execCommand('copy');
+            // Show the tooltip with a success message
+            tooltipMessage = 'This link has been copied to your clipboard';
+            $copyUrlButton
+                .tooltip('dispose')
+                .tooltip({title: tooltipMessage})
+                .tooltip('show')
+                .on('shown.bs.tooltip', hideTooltipCallback);
+        } catch (error) {
+            if (Sentry !== 'undefined') {
+                Sentry.captureException(error);
+            }
+
+            // Display an error message in the tooltip
+            tooltipMessage =
+                '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
+            $copyUrlButton
+                .tooltip('dispose')
+                .tooltip({title: tooltipMessage, html: true})
+                .tooltip('show');
+            document
+                .querySelector('#dismiss-tooltip-button')
+                .addEventListener('click', function () {
+                    $copyUrlButton.tooltip('hide');
+                });
+        } finally {
+            $clipboardInput.remove();
         }
 
-        // Display an error message in the tooltip
-        tooltipMessage =
-            '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
-        $copyUrlButton
-            .tooltip('dispose')
-            .tooltip({title: tooltipMessage, html: true})
-            .tooltip('show');
-        $('#dismiss-tooltip-button').on('click', function () {
-            $copyUrlButton.tooltip('hide');
-        });
-    } finally {
-        $clipboardInput.remove();
-    }
+        return false;
+    });
+}
 
-    return false;
-});
+const fbShareButton = document.querySelector('.copy-url-button');
+if (fbShareButton) {
+    fbShareButton.addEventListener('click', function () {
+        trackShareInteraction($facebookShareButton, 'Facebook Share');
+        return true;
+    });
+}
 
-$facebookShareButton.on('click', function () {
-    trackShareInteraction($facebookShareButton, 'Facebook Share');
-    return true;
-});
-
-$twitterShareButton.on('click', function () {
-    trackShareInteraction($twitterShareButton, 'Twitter Share');
-    return true;
-});
+const xShareButton = document.querySelector('.twitter-share-button');
+if (xShareButton) {
+    xShareButton.addEventListener('click', function () {
+        trackShareInteraction($twitterShareButton, 'Twitter Share');
+        return true;
+    });
+}
 
 // eslint-disable-next-line no-unused-vars
-function trackUIInteraction(element, category, action, label) {
+export function trackUIInteraction(element, category, action, label) {
     if ('loc_ux_tracking' in window) {
         let loc_ux_tracking = window['loc_ux_tracking'];
         let data = [element, category, action, label];

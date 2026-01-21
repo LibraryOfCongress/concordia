@@ -1,3 +1,19 @@
+/**
+ * Controls the binarization threshold used by the image viewer filter.
+ *
+ * Behavior:
+ * - Number input and range slider stay in sync.
+ * - Up and down arrow buttons change the value by 1 within 0-255.
+ * - Reset sets the threshold to 0.
+ *
+ * Accessibility:
+ * - Inputs have associated labels with visually hidden text.
+ * - Increment and decrement buttons include hidden text for screen readers.
+ *
+ * @param {number} threshold - Current threshold value in the range 0-255.
+ * @param {Function} setThreshold - Setter to update the threshold.
+ * @returns {JSX.Element}
+ */
 export default function ThresholdFilterForm({threshold, setThreshold}) {
     const handleNumberChange = (e) => {
         setThreshold(parseInt(e.target.value, 10));

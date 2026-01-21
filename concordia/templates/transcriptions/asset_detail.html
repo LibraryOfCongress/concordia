@@ -32,18 +32,13 @@
             data-contact-url="https://ask.loc.gov/crowd"
     ></script>
 
-    {% include "fragments/import-map.html" %}
     <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
     <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
     {% if anonymous_user_validation_required %}
         <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
     {% endif %}
 
-    <script type="module" src="{% static 'js/contribute.js' %}"></script>
-    <script type="module" src="{% static 'js/viewer-split.js' %}"></script>
-    <script type="module" src="{% static 'js/guide.js' %}"></script>
-    <script type="module" src="{% static 'js/quick-tips-setup.js' %}"></script>
-    <script type="module" src="{% static 'js/ocr.js' %}"></script>
+    {{ block.super }}
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -76,11 +71,7 @@
                             <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-bs-placement="top" data-bs-trigger="focus click hover" title="When to use OCR"  data-bs-toggle="modal" data-bs-target="#ocr-help-modal">
                                 <span class="underline-link fw-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                             </a>
-                            {% if user.is_authenticated %}
-                                <a role="button" data-bs-placement="top" data-bs-trigger="click" title="Transcribe with OCR" data-bs-toggle="modal" data-bs-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                            {% else %}
-                                <a role="button" data-bs-placement="top" title='Log in to use "Transcribe with OCR"' id="ocr-transcription-link" class="btn btn-primary mx-1 disabled" disabled>Transcribe with OCR</a>
-                            {% endif %}
+                            <a role="button" data-bs-placement="top" data-bs-trigger="click" title="Transcribe with OCR" id="ocr-transcription-link" class="btn btn-primary mx-1" aria-disabled="true" href="#" tabindex="0" data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">Transcribe with OCR</a>
                         </div>
                     {% endif %}
                 </div>

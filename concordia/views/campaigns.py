@@ -376,7 +376,7 @@ class CampaignDetailView(APIDetailView):
         Serialize campaign context data for API responses.
 
         Adds:
-        - 'related_links': Resource title and URL pairs for the campaign.
+        - 'related_links': Helpful Link title and URL pairs for the campaign.
 
         Args:
             context (dict[str, Any]): The view context.
@@ -387,8 +387,8 @@ class CampaignDetailView(APIDetailView):
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
             {"title": title, "url": url}
-            for title, url in self.object.resource_set.values_list(
-                "title", "resource_url"
+            for title, url in self.object.helpfullink_set.values_list(
+                "title", "link_url"
             )
         ]
         return ctx

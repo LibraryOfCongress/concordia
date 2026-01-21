@@ -13,7 +13,7 @@ services:
     db:
         container_name: concordia_db
         restart: unless-stopped
-        image: postgres
+        image: postgres:15
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
             POSTGRES_USER: concordia

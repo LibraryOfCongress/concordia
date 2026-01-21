@@ -77,6 +77,19 @@ Resources:
             Port: 80
             Protocol: HTTP
             VpcId: !Ref VpcId
+            Matcher:
+                HttpCode: '200,301' # Add this line for success codes
+            Tags:
+                - Key: Project
+                  Value: Concordia
+                - Key: Department
+                  Value: OCIO
+                - Key: ArcherID
+                  Value: LIB-361
+                - Key: Environment
+                  Value: Development
+                - Key: StackManaged
+                  Value: crowd-dev-searchproxy
 
     SubdomainListenerRule:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -112,33 +125,65 @@ Resources:
                     - Ref: EnvName
             ContainerDefinitions:
                 - Name: sigv4proxy
+                  Image: public.ecr.aws/aws-observability/aws-sigv4-proxy:1.10
                   Cpu: 256
                   Memory: 512
-                  Image: public.ecr.aws/aws-observability/aws-sigv4-proxy:1.10
-                  Command:
-                      - --host
-                      - !Select
-                        - 1
-                        - !Split
-                          - '://'
-                          - !FindInMap
-                            - EnvironmentMapping
-                            - OpensearchEndpoint
-                            - Ref: EnvName
-                      - --region
-                      - !Ref AWS::Region
-                      - --port
-                      - '80'
-                      - --upstream-port
-                      - '443'
+                  Essential: true
+                  PortMappings:
+                      - ContainerPort: 80
+                        Protocol: tcp
                   LogConfiguration:
                       LogDriver: awslogs
                       Options:
                           awslogs-group: !Ref 'DashboardLogsGroup'
                           awslogs-region: !Ref 'AWS::Region'
                           awslogs-stream-prefix: ConcordiaDashboardProxy
-                  PortMappings:
-                      - ContainerPort: 80
+                  Environment:
+                      - Name: OPENSEARCH_ENDPOINT
+                        Value:
+                            Fn::FindInMap:
+                                - EnvironmentMapping
+                                - OpensearchEndpoint
+                                - Ref: EnvName
+                  Command:
+                      - --name
+                      - es
+                      - --region
+                      - !Ref AWS::Region
+                      - --host
+                      - !Select
+                        - 1
+                        - !Split
+                          - '://'
+                          - !FindInMap [
+                                EnvironmentMapping,
+                                OpensearchEndpoint,
+                                !Ref EnvName,
+                            ]
+                      - --port
+                      - '0.0.0.0:80'
+                      - --sign-host
+                      - !Select
+                        - 1
+                        - !Split
+                          - '://'
+                          - !FindInMap [
+                                EnvironmentMapping,
+                                OpensearchEndpoint,
+                                !Ref EnvName,
+                            ]
+                      - --no-verify-ssl
+            Tags:
+                - Key: Project
+                  Value: Concordia
+                - Key: Department
+                  Value: OCIO
+                - Key: ArcherID
+                  Value: LIB-361
+                - Key: Environment
+                  Value: Development
+                - Key: StackManaged
+                  Value: crowd-dev-searchproxy
 
     DashboardService:
         Type: AWS::ECS::Service
@@ -166,3 +211,15 @@ Resources:
                 - ContainerName: 'sigv4proxy'
                   ContainerPort: 80
                   TargetGroupArn: !Ref DashboardTargetGroup
+            EnableExecuteCommand: true
+            Tags:
+                - Key: Project
+                  Value: Concordia
+                - Key: Department
+                  Value: OCIO
+                - Key: ArcherID
+                  Value: LIB-361
+                - Key: Environment
+                  Value: Development
+                - Key: StackManaged
+                  Value: crowd-dev-searchproxy
