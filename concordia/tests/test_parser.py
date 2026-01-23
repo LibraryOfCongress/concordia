@@ -37,7 +37,7 @@ HTML = (
     <meta property="og:image" content="%s"/>
   </head>
   <body></body>
-</html"""
+</html>"""
     % IMAGE
 )
 
