@@ -115,8 +115,22 @@ for performance:
                                        rel="nofollow">Tag</a>
                                 </div>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if PATH_LEVEL_1 == 'resources' %}active{% endif %}" href="{% url 'resources' %}">Resources</a>
+                            <li id="resources-dropdown" class="nav-item dropdown nav-dropdown">
+                                <a id="resources-dropdown" class="nav-link
+                                                                  {% if PATH_LEVEL_1 == 'resources' %}active{% endif %}"
+                                   href="{% url 'resources' %}" rel="nofollow" data-bs-toggle="dropdown" aria-haspopup="true"
+                                   aria-expanded="false">Resources <span class="fa fa-chevron-down text-primary"></span></a>
+                                <div class="dropdown-menu"
+                                     aria-labelledby="topnav-resources-dropdown-toggle">
+                                    <a class="dropdown-item" href="{% url 'guidelines' %}"
+                                       rel="nofollow">Community Guidelines</a>
+                                    <a class="dropdown-item" href="{% url 'programs' %}"
+                                       rel="nofollow">Programs</a>
+                                    <a class="dropdown-item" href="{% url 'for-educators' %}"
+                                       rel="nofollow">Resources for Educators</a>
+                                    <a class="dropdown-item" href="{% url 'service' %}"
+                                       rel="nofollow">Documenting Service</a>
+                                </div>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link"

@@ -31,15 +31,12 @@ RSS = """<?xml version="1.0" encoding="UTF-8"?>
     LINK,
 )
 IMAGE = "https://blogs.loc.gov/thesignal/files/2025/05/loc-2017698702.png"
-HTML = (
-    """<html>
+HTML = """<html>
   <head>
     <meta property="og:image" content="%s"/>
   </head>
   <body></body>
-</html"""
-    % IMAGE
-)
+</html>""" % IMAGE
 
 
 class ParserTestCase(TestCase):
