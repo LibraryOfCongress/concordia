@@ -5,7 +5,7 @@
 <div class="row mt-4">
     {% include "fragments/standard-pagination.html" %}
 </div>
-<form class="container form date-filter pb-1 mb-2">
+<form class="container form date-filter pb-1 mb-2" method="get">
     <div class="d-flex flex-row">
         <span class="fw-bold me-1">Date: </span>Select Range
     </div>
@@ -92,10 +92,10 @@
                 <div data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign/Item <span class="fa fa-chevron-down"></span></div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
                     {% if campaign %}
-                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:campaign %}">Show All</a>
+                        <a class="dropdown-item border-bottom border-primary filter-link" href="?{% qs_alter request.GET tab='recent' delete:campaign %}">Show All</a>
                     {% endif %}
                     {% for recent_campaign in recent_campaigns %}
-                        <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign.pk == recent_campaign.pk %} fw-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
+                        <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign.pk == recent_campaign.pk %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
                             {{ recent_campaign.title }}
                         </a>
                     {% endfor %}
@@ -105,18 +105,18 @@
                 <div data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution <span class="fa fa-chevron-down"></span></div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
                     {% if activity %}
-                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:activity %}">Show All</a>
+                        <a class="dropdown-item border-bottom border-primary filter-link" href="?{% qs_alter request.GET tab='recent' delete:activity %}">Show All</a>
                     {% endif %}
-                    <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} fw-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' delete:page %}">Reviewed</a>
-                    <a class="dropdown-item{% if activity == 'transcribed' %} fw-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' delete:page %}">Transcribed</a>
+                    <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET activity='reviewed' delete:page %}">Reviewed</a>
+                    <a class="dropdown-item{% if activity == 'transcribed' %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET activity='transcribed' delete:page %}">Transcribed</a>
                 </div>
             </th>
             <th>
                 <div data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Current Status <span class="fa fa-chevron-down"></span></div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
-                    <a class="dropdown-item border-bottom border-primary{% if 'in_progress' in status_list %} fw-bold{% endif %}" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
-                    <a class="dropdown-item border-bottom border-primary{% if 'submitted' in status_list %} fw-bold{% endif %}" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
-                    <a class="dropdown-item{% if 'completed' in status_list %} fw-bold{% endif %}" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'in_progress' in status_list %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'submitted' in status_list %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
+                    <a class="dropdown-item{% if 'completed' in status_list %} fw-bold{% endif %} filter-link" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
                 </div>
             </th>
         </tr>

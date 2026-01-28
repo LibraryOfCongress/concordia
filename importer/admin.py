@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.db.models import Count, F, Max, Q
+from django.db.models import Count, F, Max, Q, QuerySet
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from concordia.admin.filters import (
@@ -21,11 +22,22 @@ from .models import (
 
 
 @admin.action(description="Retry import")
-def retry_download_task(modeladmin, request, queryset):
+def retry_download_task(
+    modeladmin: admin.ModelAdmin,
+    request: HttpRequest,
+    queryset: QuerySet[ImportItemAsset],
+) -> None:
     """
-    Queue an asset download task for another attempt
-    """
+    Queue the asset download Celery task again for selected rows.
 
+    Args:
+        modeladmin (admin.ModelAdmin): Admin class invoking the action.
+        request (HttpRequest): Current admin request.
+        queryset (QuerySet[ImportItemAsset]): Selected ImportItemAsset rows.
+
+    Returns:
+        None
+    """
     pks = queryset.values_list("pk", flat=True)
     for pk in pks:
         download_asset_task.delay(pk)
@@ -33,71 +45,118 @@ def retry_download_task(modeladmin, request, queryset):
 
 
 class LastStartedFilter(NullableTimestampFilter):
+    """Filter by whether a task has a 'last_started' timestamp."""
+
     title = "Last Started"
     parameter_name = "last_started"
     lookup_labels = ("Unstarted", "Started")
 
 
 class CompletedFilter(NullableTimestampFilter):
+    """Filter by whether a task has a 'completed' timestamp."""
+
     title = "Completed"
     parameter_name = "completed"
     lookup_labels = ("Incomplete", "Completed")
 
 
 class FailedFilter(NullableTimestampFilter):
+    """Filter by whether a task has a 'failed' timestamp."""
+
     title = "Failed"
     parameter_name = "failed"
     lookup_labels = ("Has not failed", "Has failed")
 
 
 class ImportJobProjectListFilter(CampaignProjectListFilter):
+    """Project filter for ImportJob rows."""
+
     parameter_name = "project__in"
     related_filter_parameter = "project__campaign__id__exact"
     project_ref = "project_id"
 
 
 class ImportJobItemProjectListFilter(CampaignProjectListFilter):
+    """Project filter for ImportItem rows (via job)."""
+
     parameter_name = "job__project__in"
     related_filter_parameter = "job__project__campaign__id__exact"
     project_ref = "job__project_id"
 
 
 class ImportJobAssetProjectListFilter(CampaignProjectListFilter):
+    """Project filter for ImportItemAsset rows (via job)."""
+
     parameter_name = "import_item__job__project__in"
     related_filter_parameter = "import_item__job__project__campaign__id__exact"
     project_ref = "import_item__job__project_id"
 
 
 class ImportCampaignListFilter(CampaignListFilter):
-    def lookups(self, request, model_admin):
+    """Campaign filter that excludes retired campaigns."""
+
+    def lookups(
+        self,
+        request: HttpRequest,
+        model_admin: admin.ModelAdmin,
+    ) -> list[tuple[int | str, str]]:
+        """
+        Provide (id, title) choices for non-retired campaigns.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            model_admin (admin.ModelAdmin): Admin class in use.
+
+        Returns:
+            list[tuple[int | str, str]]: Campaign id/title pairs.
+        """
         queryset = Campaign.objects.exclude(status=Campaign.Status.RETIRED)
-        return queryset.values_list("id", "title").order_by("title")
+        return list(queryset.values_list("id", "title").order_by("title"))
 
 
 class ImportJobCampaignListFilter(ImportCampaignListFilter):
+    """Campaign filter for ImportJob rows."""
+
     parameter_name = "project__campaign"
     status_filter_parameter = "project__campaign__status"
 
 
 class ImportItemCampaignListFilter(ImportCampaignListFilter):
+    """Campaign filter for ImportItem rows (via job)."""
+
     parameter_name = "job__project__campaign"
     status_filter_parameter = "job__project__campaign__status"
 
 
 class ImportItemAssetCampaignListFilter(ImportCampaignListFilter):
+    """Campaign filter for ImportItemAsset rows (via job)."""
+
     parameter_name = "import_item__job__project__campaign"
     status_filter_parameter = "import_item__job__project__campaign__status"
 
 
 class BatchFilter(admin.SimpleListFilter):
+    """Compact batch filter showing recent/incomplete and last complete batches."""
+
     title = _("Batch")
     parameter_name = "batch"
 
-    def lookups(self, request, model_admin):
+    def lookups(
+        self,
+        request: HttpRequest,
+        model_admin: admin.ModelAdmin,
+    ) -> list[tuple[str, str]]:
         """
-        Show up to five batches with incomplete jobs, plus the currently filtered batch,
-        and the most recent fully complete batch. Fill with more completed batches if
-        there are fewer than five batches shown.
+        Show up to five batches with incomplete jobs, plus the currently filtered
+        batch, and the most recent fully complete batch. Fill with more completed
+        batches if there are fewer than five batches shown.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            model_admin (admin.ModelAdmin): Admin class in use.
+
+        Returns:
+            list[tuple[str, str]]: (value, label) pairs for batch selection.
         """
         queryset = model_admin.get_queryset(request)
 
@@ -155,7 +214,21 @@ class BatchFilter(admin.SimpleListFilter):
 
         return [(batch, batch[:12] + "...") for batch in batch_choices]
 
-    def queryset(self, request, queryset):
+    def queryset(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet,
+    ) -> QuerySet:
+        """
+        Filter the queryset to a specific batch when a value is selected.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            queryset (QuerySet): Base queryset for the changelist.
+
+        Returns:
+            QuerySet: Filtered queryset limited to the chosen batch.
+        """
         batch_value = self.value()
         if batch_value:
             return queryset.filter(batch=batch_value)
@@ -163,6 +236,13 @@ class BatchFilter(admin.SimpleListFilter):
 
 
 class TaskStatusModelAdmin(admin.ModelAdmin):
+    """
+    Base ModelAdmin for task-like models with standard readonly fields.
+
+    Also adds human-friendly timestamp display properties (e.g., "3 minutes
+    ago") for common lifecycle fields.
+    """
+
     readonly_fields = (
         "created",
         "modified",
@@ -178,7 +258,22 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
     )
 
     @staticmethod
-    def generate_natural_timestamp_display_property(field_name):
+    def generate_natural_timestamp_display_property(field_name: str):
+        """
+        Build a `naturaltime` display function for a timestamp field.
+
+        The returned function is suitable for inclusion in `list_display`.
+        It sets `short_description` and `admin_order_field` to match the
+        provided field.
+
+        Args:
+            field_name (str): Name of the timestamp field on the model.
+
+        Returns:
+            callable: A function that takes an object and returns a
+            human-readable string (or `None` when unset).
+        """
+
         def inner(obj):
             try:
                 value = getattr(obj, field_name)
@@ -194,6 +289,13 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
         return inner
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize and attach dynamic display_* timestamp helpers.
+
+        For each known timestamp field, a `display_<field>` method is created
+        that renders a human-friendly relative time and can be used in
+        `list_display`.
+        """
         for field_name in (
             "created",
             "modified",
@@ -212,6 +314,8 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
 
 @admin.register(ImportJob)
 class ImportJobAdmin(TaskStatusModelAdmin):
+    """Admin configuration for `ImportJob`."""
+
     readonly_fields = TaskStatusModelAdmin.readonly_fields + (
         "project",
         "created_by",
@@ -238,6 +342,8 @@ class ImportJobAdmin(TaskStatusModelAdmin):
 
 @admin.register(ImportItem)
 class ImportItemAdmin(TaskStatusModelAdmin):
+    """Admin configuration for `ImportItem`."""
+
     readonly_fields = TaskStatusModelAdmin.readonly_fields + ("job", "item")
 
     list_display = (
@@ -261,6 +367,8 @@ class ImportItemAdmin(TaskStatusModelAdmin):
 
 @admin.register(ImportItemAsset)
 class ImportItemAssetAdmin(TaskStatusModelAdmin):
+    """Admin configuration for `ImportItemAsset`."""
+
     readonly_fields = TaskStatusModelAdmin.readonly_fields + (
         "import_item",
         "asset",
@@ -290,6 +398,8 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
 
 @admin.register(VerifyAssetImageJob)
 class VerifyAssetImageJobAdmin(TaskStatusModelAdmin):
+    """Admin configuration for `VerifyAssetImageJob`."""
+
     readonly_fields = TaskStatusModelAdmin.readonly_fields + ("asset", "batch")
     list_display = (
         "display_created",
@@ -311,6 +421,8 @@ class VerifyAssetImageJobAdmin(TaskStatusModelAdmin):
 
 @admin.register(DownloadAssetImageJob)
 class DownloadAssetImageJobAdmin(TaskStatusModelAdmin):
+    """Admin configuration for `DownloadAssetImageJob`."""
+
     readonly_fields = TaskStatusModelAdmin.readonly_fields + ("asset", "batch")
     list_display = (
         "display_created",

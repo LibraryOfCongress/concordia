@@ -25,19 +25,20 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 @locked_task
 def populate_next_transcribable_for_campaign(self, campaign_id):
     """
-    Populate the cache table of next transcribable assets for a given campaign.
+    Populate the cache of next transcribable assets for a campaign.
 
-    This task checks how many transcribable assets are still needed for the campaign,
-    finds eligible assets, and inserts them into the NextTranscribableCampaignAsset
-    table up to the target count.
+    This task checks how many transcribable assets are still needed for the
+    campaign, finds eligible assets and inserts them into the
+    NextTranscribableCampaignAsset table up to the target count.
 
-    Only a single instance of the task will run at a time for a particular campaign_id,
-    using the cache locking system to avoid duplication. This can be overriden with
-    the `force` kwarg, which is stripped out by the decorator and not passed to the
-    task itself. See the `locked_task` documentation for more information.
+    Only a single instance of the task runs at a time for a particular
+    campaign_id by using the cache locking system to avoid duplication. This
+    can be overridden with the `force` kwarg, which is stripped out by the
+    decorator and not passed to the task itself. See the `locked_task`
+    documentation for more information.
 
     Args:
-        campaign_id (int): The primary key of the Campaign to process.
+        campaign_id: Primary key of the campaign to process.
     """
     try:
         campaign = Campaign.objects.get(id=campaign_id)
@@ -93,19 +94,20 @@ def populate_next_transcribable_for_campaign(self, campaign_id):
 @locked_task
 def populate_next_transcribable_for_topic(self, topic_id):
     """
-    Populate the cache table of next transcribable assets for a given topic.
+    Populate the cache of next transcribable assets for a topic.
 
-    This task checks how many transcribable assets are still needed for the topic,
-    finds eligible assets, and inserts them into the NextTranscribableTopicAsset table
-    up to the target count.
+    This task checks how many transcribable assets are still needed for the
+    topic, finds eligible assets and inserts them into the
+    NextTranscribableTopicAsset table up to the target count.
 
-    Only a single instance of the task will run at a time for a particular topic_id,
-    using the cache locking system to avoid duplication. This can be overriden with
-    the `force` kwarg, which is stripped out by the decorator and not passed to the
-    task itself. See the `locked_task` documentation for more information.
+    Only a single instance of the task runs at a time for a particular topic_id
+    by using the cache locking system to avoid duplication. This can be
+    overridden with the `force` kwarg, which is stripped out by the decorator
+    and not passed to the task itself. See the `locked_task` documentation for
+    more information.
 
     Args:
-        topic_id (int): The primary key of the Topic to process.
+        topic_id: Primary key of the topic to process.
     """
     try:
         topic = Topic.objects.get(id=topic_id)
@@ -156,15 +158,16 @@ def populate_next_transcribable_for_topic(self, topic_id):
 @locked_task
 def clean_next_transcribable_for_campaign(self, campaign_id):
     """
-    Removes invalid cached transcribable assets for a campaign and repopulates the
-    cache.
+    Remove invalid cached transcribable assets for a campaign then repopulate
+    the cache.
 
     Invalid assets include those that are reserved or no longer eligible for
-    transcription based on their transcription status. After cleaning, the corresponding
-    populate task is queued to restore the cache to the target count.
+    transcription based on their transcription status. After cleaning, the
+    corresponding populate task is queued to restore the cache to the target
+    count.
 
     Args:
-        campaign_id (int): The ID of the campaign to clean.
+        campaign_id: Primary key of the campaign to clean.
     """
 
     for next_asset in find_invalid_next_transcribable_campaign_assets(campaign_id):
@@ -182,14 +185,16 @@ def clean_next_transcribable_for_campaign(self, campaign_id):
 @locked_task
 def clean_next_transcribable_for_topic(self, topic_id):
     """
-    Removes invalid cached transcribable assets for a topic and repopulates the cache.
+    Remove invalid cached transcribable assets for a topic then repopulate the
+    cache.
 
     Invalid assets include those that are reserved or no longer eligible for
-    transcription based on their transcription status. After cleaning, the corresponding
-    populate task is queued to restore the cache to the target count.
+    transcription based on their transcription status. After cleaning, the
+    corresponding populate task is queued to restore the cache to the target
+    count.
 
     Args:
-        topic_id (int): The ID of the topic to clean.
+        topic_id: Primary key of the topic to clean.
     """
 
     for next_asset in find_invalid_next_transcribable_topic_assets(topic_id):

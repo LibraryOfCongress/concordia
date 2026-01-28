@@ -56,29 +56,31 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
     """
     Display details for a single asset and handle missing assets.
 
-    Handles GET and POST requests by retrieving the published Asset matching
-    the campaign, project and item.
+    This view handles `GET` and `POST` requests by retrieving the published
+    `Asset` that matches the campaign, project and item.
 
-    Uses AnonymousUserValidationCheckMixin for anonymous-user validation and
-    APIDetailView for API-driven detail behavior. Overrides dispatch to log
-    and redirect to the parent campaign page if the asset is not found.
+    It uses `AnonymousUserValidationCheckMixin` for anonymous-user validation
+    and `APIDetailView` for API-driven detail behavior. It overrides
+    `dispatch` to log and redirect to the parent campaign page if the asset
+    is not found.
 
     Attributes:
         template_name (str): Template used to render the asset detail page.
-
-    Returns:
-        HttpResponse: Renders the asset detail template with context, or issues
-            a redirect response to the campaign page when the asset is missing.
     """
 
     template_name = "transcriptions/asset_detail.html"
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def dispatch(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         try:
             return super().dispatch(request, *args, **kwargs)
         except Http404:
             structured_logger.info(
-                "AssetDetailView: asset not found, redirecting to campaign page.",
+                "AssetDetailView: asset not found, redirecting to campaign " "page.",
                 event_code="asset_detail_not_found_redirect",
                 user=request.user,
                 campaign_slug=self.kwargs.get("campaign_slug"),
@@ -106,32 +108,51 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
         """
         Build the context for the asset detail template.
 
-        Constructs a dictionary with the following entries:
+        Constructs a dictionary with the entries described in the context
+        format.
 
         Context Format:
-            - `asset` (Asset): The Asset instance being viewed.
-            - `item` (Item): Parent Item of the asset.
-            - `project` (Project): Parent Project of the item.
-            - `campaign` (Campaign): Campaign containing the project.
-            - `transcription` (Transcription | None): Latest transcription or None.
-            - `next_open_asset_url` (str): URL to the next transcribable asset.
-            - `next_review_asset_url` (str): URL to the next reviewable asset.
-            - `transcription_status` (str): One of the keys from TranscriptionStatus.
-            - `activity_mode` (str): `"transcribe"` or `"review"`, based on status.
-            - `disable_ocr` (bool): Whether OCR should be disabled for this asset.
-            - `previous_asset_url` (str | None): URL to the previous asset, if any.
+            - `asset` (Asset): Asset instance being viewed.
+            - `item` (Item): Parent item of the asset.
+            - `project` (Project): Parent project of the item.
+            - `campaign` (Campaign): Campaign that contains the project.
+            - `transcription` (Transcription | None): Latest transcription or
+              `None`.
+            - `next_open_asset_url` (str): URL to the next transcribable
+              asset.
+            - `next_review_asset_url` (str): URL to the next reviewable
+              asset.
+            - `transcription_status` (str): One of the keys from
+              `TranscriptionStatus`.
+            - `activity_mode` (str): `"transcribe"` or `"review"`, based on
+              the transcription status.
+            - `disable_ocr` (bool): Whether OCR should be disabled for this
+              asset.
+            - `previous_asset_url` (str | None): URL to the previous asset, if
+              any.
             - `next_asset_url` (str | None): URL to the next asset, if any.
-            - `asset_navigation` (list[tuple[int, str]]): Sequence/slug pairs for nav.
-            - `thumbnail_url` (str): URL of the asset's thumbnail image.
-            - `current_asset_url` (str): Absolute URL of this asset detail view.
-            - `tags` (list[str]): Sorted list of tag values applied to the asset.
-            - `registered_contributors` (int): Number of users who contributed.
-            - `cards` (list[Card]): Tutorial cards for the campaign or default set.
-            - `guides` (QuerySet[dict[str, Any]] | None): Tutorial guide entries.
-            - `languages` (list[tuple[str, str]]): Supported language code/name pairs.
+            - `asset_navigation` (list[tuple[int, str]]): Sequence and slug
+              pairs for navigation.
+            - `thumbnail_url` (str): URL of the asset thumbnail image.
+            - `current_asset_url` (str): Absolute URL of this asset detail
+              view.
+            - `tags` (list[str]): Sorted tag values applied to the asset.
+            - `registered_contributors` (int): Number of users who have
+              contributed to the asset.
+            - `cards` (list[Card]): Tutorial cards for the campaign or the
+              default card set.
+            - `guides` (QuerySet[dict[str, Any]] | None): Tutorial guide
+              entries.
+            - `languages` (list[tuple[str, str]]): Supported language
+              code and name pairs.
             - `undo_available` (bool): Whether a rollback is possible.
             - `redo_available` (bool): Whether a rollforward is possible.
-            - `turnstile_form` (TurnstileForm): Form for the Turnstile widget.
+            - `turnstile_form` (TurnstileForm): Form for the Turnstile
+              widget.
+
+        Args:
+            **kwargs (Any): Additional keyword arguments passed to the
+                superclass implementation.
 
         Returns:
             dict[str, Any]: Context data for rendering the asset detail page.
@@ -177,9 +198,9 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
             ),
         )
 
-        # We'll handle the case where an item with no transcriptions should be
-        # shown as status=not_started here so the logic doesn't need to be repeated in
-        # templates:
+        # We handle the case where an item with no transcriptions should be
+        # shown as status=not_started here so the logic does not need to be
+        # repeated in templates.
         if transcription:
             for choice_key, choice_value in TranscriptionStatus.CHOICE_MAP.items():
                 if choice_value == transcription.status:
@@ -294,26 +315,31 @@ class AssetDetailView(AnonymousUserValidationCheckMixin, APIDetailView):
 
 
 def redirect_to_next_asset(
-    asset: Asset | None, mode: str, request: HttpRequest, user: User
+    asset: Asset | None,
+    mode: str,
+    request: HttpRequest,
+    user: User,
 ) -> HttpResponseRedirect:
     """
-    Redirects the user to the appropriate asset view or the homepage if no asset is
-    available.
+    Redirect the user to the appropriate asset view or the homepage.
 
-    If an asset is found, a reservation is created for it and the asset is removed
-    from the relevant caching tables. The user is then redirected to the transcription
-    page for that asset.
+    If an asset is found, this helper creates a reservation for it and
+    removes the asset from the relevant caching tables. The user is then
+    redirected to the transcription page for that asset.
 
-    If no asset is provided, redirects to the homepage with an informational message.
+    If no asset is provided, it redirects to the homepage and adds an
+    informational message.
 
     Args:
-        asset (Asset or None): The asset to redirect to, or None if unavailable.
-        mode (str): Either "transcribe" or "review", used for messaging.
-        request (HttpRequest): The request initiating the redirect.
-        user (User): The user being redirected.
+        asset (Asset | None): Asset to redirect to, or `None` if no asset is
+            available.
+        mode (str): Either `"transcribe"` or `"review"`, used for messaging.
+        request (HttpRequest): Request that initiated the redirect.
+        user (User): User being redirected.
 
     Returns:
-        HttpResponseRedirect: Redirect to the asset or homepage.
+        HttpResponseRedirect: Redirect to the asset detail page or the
+        homepage.
     """
     structured_logger.info(
         "Starting redirect to next asset.",
@@ -324,14 +350,12 @@ def redirect_to_next_asset(
     )
     reservation_token = get_or_create_reservation_token(request)
     if asset:
-        # We previously created reservations for transcriptions
-        # but not reviews. This created a race condition
-        # with the next asset caching system because the
-        # non-reserved asset could be added into the cache
-        # table between when the user was redirected and
-        # when they made their own reservation, resulting in
-        # that asset being added to the caching system and
-        # possibly being sent to another user
+        # We previously created reservations for transcriptions but not
+        # reviews. This created a race condition with the next asset caching
+        # system because the non-reserved asset could be added into the cache
+        # table between when the user was redirected and when they made their
+        # own reservation. That could result in the asset being added to the
+        # caching system and sent to another user.
         res = AssetTranscriptionReservation(
             asset=asset, reservation_token=reservation_token
         )
@@ -356,7 +380,7 @@ def redirect_to_next_asset(
         structured_logger.warning(
             "No available asset to redirect to.",
             event_code="redirect_next_asset_empty",
-            reason="There were no eligible assets found to assign to the user.",
+            reason=("There were no eligible assets found to assign to the user."),
             reason_code="no_asset_available",
             asset=asset,
             user=user,
@@ -368,20 +392,30 @@ def redirect_to_next_asset(
 
 
 @ratelimit(
-    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+    key="header:cf-connecting-ip",
+    rate=next_asset_rate,
+    group="next_asset",
+    block=True,
 )
 @never_cache
 @atomic
-def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedirect:
+def redirect_to_next_reviewable_asset(
+    request: HttpRequest,
+) -> HttpResponseRedirect:
     """
-    Attempts to redirect the user to a reviewable asset from any active reviewable
+    Redirect the user to a reviewable asset from any active reviewable
     campaign.
 
-    Iterates through campaigns marked as next-reviewable, falling back to others if
-    needed. Skips campaigns with no eligible assets. Uses asset caching where possible.
+    This view iterates through campaigns marked as next-reviewable, then
+    falls back to other active campaigns if needed. It skips campaigns with
+    no eligible assets and uses asset caching when possible.
+
+    Args:
+        request (HttpRequest): Incoming HTTP request.
 
     Returns:
-        HttpResponseRedirect: Redirect to the selected asset or homepage.
+        HttpResponseRedirect: Redirect to the selected asset or the
+        homepage.
     """
     structured_logger.info(
         "Entered redirect_to_next_reviewable_asset view.",
@@ -425,7 +459,7 @@ def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedir
             structured_logger.error(
                 "Failed to retrieve next reviewable campaign by ID.",
                 event_code="redirect_reviewable_campaign_missing",
-                reason="Reviewable campaign with specified ID not found",
+                reason=("Reviewable campaign with specified ID was not found."),
                 reason_code="reviewable_campaign_not_found",
                 user=user,
                 campaign_id=campaign_id,
@@ -472,20 +506,30 @@ def redirect_to_next_reviewable_asset(request: HttpRequest) -> HttpResponseRedir
 
 
 @ratelimit(
-    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+    key="header:cf-connecting-ip",
+    rate=next_asset_rate,
+    group="next_asset",
+    block=True,
 )
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRedirect:
+def redirect_to_next_transcribable_asset(
+    request: HttpRequest,
+) -> HttpResponseRedirect:
     """
-    Attempts to redirect the user to a transcribable asset from any active transcription
+    Redirect the user to a transcribable asset from any active transcription
     campaign.
 
-    Iterates through campaigns marked as next-transcribable, falling back to others if
-    needed. Skips campaigns with no eligible assets. Uses asset caching where possible.
+    This view iterates through campaigns marked as next-transcribable, then
+    falls back to other active campaigns if needed. It skips campaigns with
+    no eligible assets and uses asset caching when possible.
+
+    Args:
+        request (HttpRequest): Incoming HTTP request.
 
     Returns:
-        HttpResponseRedirect: Redirect to the selected asset or homepage.
+        HttpResponseRedirect: Redirect to the selected asset or the
+        homepage.
     """
     structured_logger.info(
         "Entered redirect_to_next_transcribable_asset view.",
@@ -524,7 +568,7 @@ def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRe
             structured_logger.error(
                 "Next transcribable campaign ID not found.",
                 event_code="redirect_transcribable_campaign_missing",
-                reason="Transcribable campaign with specified ID not found",
+                reason=("Transcribable campaign with specified ID was not found."),
                 reason_code="transcribable_campaign_not_found",
                 user=request.user,
                 campaign_id=campaign_id,
@@ -556,7 +600,7 @@ def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRe
             else:
                 logger.info("No transcribable assets found in %s", campaign)
                 structured_logger.info(
-                    "No transcribable assets found in campaign (fallback loop).",
+                    "No transcribable assets found in campaign (fallback " "loop).",
                     event_code="redirect_transcribable_campaign_empty_fallback",
                     user=request.user,
                     campaign=campaign,
@@ -580,27 +624,38 @@ def redirect_to_next_transcribable_asset(request: HttpRequest) -> HttpResponseRe
 
 
 @ratelimit(
-    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+    key="header:cf-connecting-ip",
+    rate=next_asset_rate,
+    group="next_asset",
+    block=True,
 )
 @never_cache
 @atomic
 def redirect_to_next_reviewable_campaign_asset(
-    request: HttpRequest, *, campaign_slug: str
+    request: HttpRequest,
+    *,
+    campaign_slug: str,
 ) -> HttpResponseRedirect:
     """
-    Redirects the user to the next reviewable asset within a specified campaign.
+    Redirect the user to the next reviewable asset within a campaign.
 
-    Accepts optional query parameters to influence prioritization:
-    - project: Current project slug
-    - item: Current item_id (NOT item.id but item.item_id)
-    - asset: ID of the most recently reviewed asset
+    This view redirects within a specific campaign, which may be listed or
+    unlisted. It can use optional query parameters to influence which asset
+    is prioritized.
+
+    Request Parameters:
+        project (str): Current project slug.
+        item (str): Current item identifier. This is `item_id`, not the item
+            primary key.
+        asset (int): ID of the most recently reviewed asset.
 
     Args:
-        request (HttpRequest): The incoming request.
+        request (HttpRequest): Incoming HTTP request.
         campaign_slug (str): Slug for the target campaign.
 
     Returns:
-        HttpResponseRedirect: Redirect to the selected asset or homepage.
+        HttpResponseRedirect: Redirect to the selected asset or the
+        homepage.
     """
     structured_logger.info(
         "Entered redirect_to_next_reviewable_campaign_asset view.",
@@ -628,9 +683,9 @@ def redirect_to_next_reviewable_campaign_asset(
     else:
         user = request.user
 
-    # We pass request.user instead of user here to maintain pre-existing behavior
-    # (though it's probably unintended)
-    # TODO: Re-evaluate whether we should pass in user instead
+    # We pass request.user instead of user here to maintain pre-existing
+    # behavior (though it is probably unintended).
+    # TODO: Re-evaluate whether we should pass in user instead.
     asset = find_next_reviewable_campaign_asset(
         campaign, request.user, project_slug, item_id, asset_pk
     )
@@ -640,33 +695,44 @@ def redirect_to_next_reviewable_campaign_asset(
         user=user,
         request_user=request.user,
         asset=asset,
-        campaign=campaign,  # We log campaign because asset might be None
+        campaign=campaign,  # We log campaign because asset might be None.
     )
     return redirect_to_next_asset(asset, "review", request, user)
 
 
 @ratelimit(
-    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+    key="header:cf-connecting-ip",
+    rate=next_asset_rate,
+    group="next_asset",
+    block=True,
 )
 @never_cache
 @atomic
 def redirect_to_next_transcribable_campaign_asset(
-    request: HttpRequest, *, campaign_slug: str
+    request: HttpRequest,
+    *,
+    campaign_slug: str,
 ) -> HttpResponseRedirect:
     """
-    Redirects the user to the next transcribable asset within a specified campaign.
+    Redirect the user to the next transcribable asset within a campaign.
 
-    Accepts optional query parameters to influence prioritization:
-    - project: Current project slug
-    - item: Current item_id (NOT item.id but item.item_id)
-    - asset: ID of the most recently transcribed asset
+    This view redirects within a specific campaign, which may be listed or
+    unlisted. It can use optional query parameters to influence which asset
+    is prioritized.
+
+    Request Parameters:
+        project (str): Current project slug.
+        item (str): Current item identifier. This is `item_id`, not the item
+            primary key.
+        asset (int): ID of the most recently transcribed asset.
 
     Args:
-        request (HttpRequest): The incoming request.
+        request (HttpRequest): Incoming HTTP request.
         campaign_slug (str): Slug for the target campaign.
 
     Returns:
-        HttpResponseRedirect: Redirect to the selected asset or homepage.
+        HttpResponseRedirect: Redirect to the selected asset or the
+        homepage.
     """
     structured_logger.info(
         "Entered redirect_to_next_transcribable_campaign_asset view.",
@@ -702,33 +768,44 @@ def redirect_to_next_transcribable_campaign_asset(
         event_code="redirect_transcribable_campaign_success",
         user=user,
         asset=asset,
-        campaign=campaign,  # We log campaign because asset may be None
+        campaign=campaign,  # We log campaign because asset may be None.
     )
     return redirect_to_next_asset(asset, "transcribe", request, user)
 
 
 @ratelimit(
-    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+    key="header:cf-connecting-ip",
+    rate=next_asset_rate,
+    group="next_asset",
+    block=True,
 )
 @never_cache
 @atomic
 def redirect_to_next_reviewable_topic_asset(
-    request: HttpRequest, *, topic_slug: str
+    request: HttpRequest,
+    *,
+    topic_slug: str,
 ) -> HttpResponseRedirect:
     """
-    Redirects the user to the next reviewable asset within a specified topic.
+    Redirect the user to the next reviewable asset within a topic.
 
-    Accepts optional query parameters to influence prioritization:
-    - project: Current project slug
-    - item: Current item_id (NOT item.id but item.item_id)
-    - asset: ID of the most recently reviewed asset
+    This view redirects within a specific topic, which may be listed or
+    unlisted. It can use optional query parameters to influence which asset
+    is prioritized.
+
+    Request Parameters:
+        project (str): Current project slug.
+        item (str): Current item identifier. This is `item_id`, not the item
+            primary key.
+        asset (int): ID of the most recently reviewed asset.
 
     Args:
-        request (HttpRequest): The incoming request.
+        request (HttpRequest): Incoming HTTP request.
         topic_slug (str): Slug for the target topic.
 
     Returns:
-        HttpResponseRedirect: Redirect to the selected asset or homepage.
+        HttpResponseRedirect: Redirect to the selected asset or the
+        homepage.
     """
     structured_logger.info(
         "Entered redirect_to_next_reviewable_topic_asset view.",
@@ -756,9 +833,9 @@ def redirect_to_next_reviewable_topic_asset(
     else:
         user = request.user
 
-    # We pass request.user instead of user here to maintain pre-existing behavior
-    # (though it's probably unintended)
-    # TODO: Re-evaluate whether we should pass in user instead
+    # We pass request.user instead of user here to maintain pre-existing
+    # behavior (though it is probably unintended).
+    # TODO: Re-evaluate whether we should pass in user instead.
     asset = find_next_reviewable_topic_asset(
         topic, request.user, project_slug, item_id, asset_pk
     )
@@ -775,27 +852,38 @@ def redirect_to_next_reviewable_topic_asset(
 
 
 @ratelimit(
-    key="header:cf-connecting-ip", rate=next_asset_rate, group="next_asset", block=True
+    key="header:cf-connecting-ip",
+    rate=next_asset_rate,
+    group="next_asset",
+    block=True,
 )
 @never_cache
 @atomic
 def redirect_to_next_transcribable_topic_asset(
-    request: HttpRequest, *, topic_slug: str
+    request: HttpRequest,
+    *,
+    topic_slug: str,
 ) -> HttpResponseRedirect:
     """
-    Redirects the user to the next transcribable asset within a specified topic.
+    Redirect the user to the next transcribable asset within a topic.
 
-    Accepts optional query parameters to influence prioritization:
-    - project: Current project slug
-    - item: Current item_id (NOT item.id but item.item_id)
-    - asset: ID of the most recently transcribed asset
+    This view redirects within a specific topic, which may be listed or
+    unlisted. It can use optional query parameters to influence which asset
+    is prioritized.
+
+    Request Parameters:
+        project (str): Current project slug.
+        item (str): Current item identifier. This is `item_id`, not the item
+            primary key.
+        asset (int): ID of the most recently transcribed asset.
 
     Args:
-        request (HttpRequest): The incoming request.
+        request (HttpRequest): Incoming HTTP request.
         topic_slug (str): Slug for the target topic.
 
     Returns:
-        HttpResponseRedirect: Redirect to the selected asset or homepage.
+        HttpResponseRedirect: Redirect to the selected asset or the
+        homepage.
     """
     structured_logger.info(
         "Entered redirect_to_next_transcribable_topic_asset view.",

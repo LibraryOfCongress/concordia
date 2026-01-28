@@ -12,7 +12,8 @@ import boto3
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, TextField, Value
+from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.http import (
     HttpRequest,
@@ -61,7 +62,12 @@ def get_latest_transcription_data(
         .values("text")
     )
 
-    assets = asset_qs.annotate(latest_transcription=Subquery(latest_trans_subquery[:1]))
+    assets = asset_qs.annotate(
+        latest_transcription=Coalesce(
+            Subquery(latest_trans_subquery[:1]),
+            Value("", output_field=TextField()),
+        )
+    )
     return assets
 
 
@@ -80,7 +86,11 @@ def get_tag_values(asset_qs: QuerySet[Asset]) -> QuerySet[Asset]:
         QuerySet[Asset]: The input queryset annotated with ``tag_values``.
     """
     assets = asset_qs.annotate(
-        tag_values=StringAgg("userassettagcollection__tags__value", "; ")
+        tag_values=StringAgg(
+            "userassettagcollection__tags__value",
+            "; ",
+            default=Value("", output_field=TextField()),
+        )
     )
     return assets
 

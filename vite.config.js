@@ -10,6 +10,7 @@ export default defineConfig({
             input: {
                 main: './src/main.js',
                 about: './src/about.js',
+                profile: './src/profile.js',
             },
             output: {
                 entryFileNames: 'js/[name].js',

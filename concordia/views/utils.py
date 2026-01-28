@@ -39,14 +39,13 @@ def _get_pages(request: HttpRequest) -> QuerySet:
     activity = request.GET.get("activity", None)
 
     if activity == "transcribed":
-        q = Q(user=user)
+        q = Q(transcription__user=user)
     elif activity == "reviewed":
-        q = Q(reviewed_by=user)
+        q = Q(transcription__reviewed_by=user)
     else:
-        q = Q(user=user) | Q(reviewed_by=user)
-    transcriptions = Transcription.objects.filter(q)
+        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
+    assets = Asset.objects.filter(q)
 
-    assets = Asset.objects.filter(transcription__in=transcriptions)
     status_list = request.GET.getlist("status")
     if status_list and status_list != []:
         if "completed" not in status_list:

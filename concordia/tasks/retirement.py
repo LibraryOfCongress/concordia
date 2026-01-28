@@ -16,6 +16,26 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 
 @celery_app.task(ignore_result=True)
 def retire_campaign(campaign_id):
+    """
+    Start the retirement workflow for a campaign.
+
+    This task:
+
+    * Loads the `Campaign` for ``campaign_id``.
+    * Creates or retrieves the related `CampaignRetirementProgress` row.
+    * For a new progress row, calculates and stores total counts of projects,
+      items and assets.
+    * Marks the campaign status as ``RETIRED`` if it is not already.
+    * Enqueues `remove_next_project` to begin cascading removal of projects,
+      items and assets.
+
+    Args:
+        campaign_id: Primary key of the `Campaign` to retire.
+
+    Returns:
+        CampaignRetirementProgress: The progress object tracking this
+            retirement run.
+    """
     # Entry point to the retirement process
     campaign = Campaign.objects.get(id=campaign_id)
     logger.debug("Retiring %s (%s)", campaign, campaign.id)
@@ -48,6 +68,19 @@ def retire_campaign(campaign_id):
 
 @celery_app.task(ignore_result=True)
 def project_removal_success(project_id, campaign_id):
+    """
+    Record successful removal of a project and queue the next project.
+
+    This task updates the associated `CampaignRetirementProgress` row by:
+
+    * Incrementing ``projects_removed``.
+    * Appending a project entry to ``removal_log``.
+    * Enqueuing `remove_next_project` to continue campaign retirement.
+
+    Args:
+        project_id: Primary key of the project that was just deleted.
+        campaign_id: Primary key of the parent `Campaign`.
+    """
     logger.debug("Updating progress for campaign %s", campaign_id)
     logger.debug("Project id %s", project_id)
     with transaction.atomic():
@@ -68,6 +101,18 @@ def project_removal_success(project_id, campaign_id):
 
 @celery_app.task(ignore_result=True)
 def remove_next_project(campaign_id):
+    """
+    Remove the next project in a campaign or mark retirement complete.
+
+    This task attempts to fetch the first remaining project in the campaign.
+    If a project exists, it enqueues `remove_next_item` to begin removing that
+    project's items. If no projects remain, it marks the related
+    `CampaignRetirementProgress` as complete and sets ``completed_on``.
+
+    Args:
+        campaign_id: Primary key of the `Campaign` whose projects are being
+            retired.
+    """
     campaign = Campaign.objects.get(id=campaign_id)
     logger.debug("Removing projects for %s (%s)", campaign, campaign.id)
     try:
@@ -90,6 +135,20 @@ def remove_next_project(campaign_id):
 
 @celery_app.task(ignore_result=True)
 def item_removal_success(item_id, campaign_id, project_id):
+    """
+    Record successful removal of an item and queue the next item.
+
+    This task updates the associated `CampaignRetirementProgress` row by:
+
+    * Incrementing ``items_removed``.
+    * Appending an item entry to ``removal_log``.
+    * Enqueuing `remove_next_item` to continue removing items from the project.
+
+    Args:
+        item_id: Primary key of the item that was just deleted.
+        campaign_id: Primary key of the parent `Campaign`.
+        project_id: Primary key of the parent `Project`.
+    """
     logger.debug("Updating progress for campaign %s", campaign_id)
     logger.debug("Item id %s", item_id)
     with transaction.atomic():
@@ -110,6 +169,18 @@ def item_removal_success(item_id, campaign_id, project_id):
 
 @celery_app.task(ignore_result=True)
 def remove_next_item(project_id):
+    """
+    Remove the next item in a project or delete the project if empty.
+
+    This task attempts to fetch the first remaining item for the given
+    project. If an item exists, it enqueues `remove_next_assets` to delete
+    that item's assets. If no items remain, it deletes the project and
+    enqueues `project_removal_success`.
+
+    Args:
+        project_id: Primary key of the `Project` whose items are being
+            removed.
+    """
     project = Project.objects.get(id=project_id)
     logger.debug("Removing items for %s (%s)", project, project.id)
     try:
@@ -127,6 +198,20 @@ def remove_next_item(project_id):
 
 @celery_app.task(ignore_result=True)
 def assets_removal_success(asset_ids, campaign_id, item_id):
+    """
+    Record successful removal of a batch of assets and queue the next batch.
+
+    This task updates the associated `CampaignRetirementProgress` row by:
+
+    * Incrementing ``assets_removed`` by the number of asset IDs.
+    * Appending an entry for each asset to ``removal_log``.
+    * Enqueuing `remove_next_assets` to continue deleting assets for the item.
+
+    Args:
+        asset_ids: Iterable of primary keys for assets just deleted.
+        campaign_id: Primary key of the parent `Campaign`.
+        item_id: Primary key of the parent `Item`.
+    """
     logger.debug("Updating progress for campaign %s", campaign_id)
     logger.debug("Asset ids %s", asset_ids)
     with transaction.atomic():
@@ -148,6 +233,17 @@ def assets_removal_success(asset_ids, campaign_id, item_id):
 
 @celery_app.task(ignore_result=True)
 def remove_next_assets(item_id):
+    """
+    Remove assets for an item in small batches or delete the item.
+
+    This task fetches all remaining assets for the given item. If no assets
+    remain, it deletes the item and enqueues `item_removal_success`.
+    Otherwise, it deletes up to ten assets with a Celery chord of
+    `delete_asset` tasks, using `assets_removal_success` as the callback.
+
+    Args:
+        item_id: Primary key of the `Item` whose assets are being removed.
+    """
     item = Item.objects.get(id=item_id)
     campaign_id = item.project.campaign.id
     logger.debug("Removing assets for %s (%s)", item, item.id)
@@ -169,6 +265,24 @@ def remove_next_assets(item_id):
 
 @celery_app.task
 def delete_asset(asset_id):
+    """
+    Delete a single asset and its storage image.
+
+    This task:
+
+    * Loads the `Asset` for the given primary key.
+    * Deletes the associated ``storage_image`` file from storage.
+    * Deletes the asset record itself.
+
+    It returns the ID of the deleted asset so callers such as Celery chords
+    can record which assets were removed.
+
+    Args:
+        asset_id: Primary key of the `Asset` to delete.
+
+    Returns:
+        int: The ID of the deleted asset.
+    """
     asset = Asset.objects.get(id=asset_id)
     asset_id = asset.id
     logger.debug("Deleting asset %s (%s)", asset, asset_id)

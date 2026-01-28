@@ -12,7 +12,12 @@ structured_logger = ConcordiaLogger.get_logger(__name__)
 
 @celery_app.task
 def create_opensearch_indices():
-    """Create the opensearch indices, if they don't already exist."""
+    """
+    Create OpenSearch indices if they do not already exist.
+
+    This task invokes the ``opensearch index create`` management command with
+    ``verbosity=2``, ``force=True`` and ``ignore_error=True``.
+    """
     call_command(
         "opensearch", "index", "create", verbosity=2, force=True, ignore_error=True
     )
@@ -20,13 +25,23 @@ def create_opensearch_indices():
 
 @celery_app.task
 def delete_opensearch_indices():
-    """Delete opensearch indices - index and data (a.k.a. documents)."""
+    """
+    Delete OpenSearch indices and their stored documents.
+
+    This task invokes the ``opensearch index delete`` management command with
+    ``force=True`` and ``ignore_error=True``.
+    """
     call_command("opensearch", "index", "delete", force=True, ignore_error=True)
 
 
 @celery_app.task
 def rebuild_opensearch_indices():
-    """Deletes, then creates opensearch indices."""
+    """
+    Rebuild all OpenSearch indices.
+
+    This task invokes the ``opensearch index rebuild`` management command with
+    ``verbosity=2``, ``force=True`` and ``ignore_error=True``.
+    """
     call_command(
         "opensearch", "index", "rebuild", verbosity=2, force=True, ignore_error=True
     )
@@ -35,9 +50,12 @@ def rebuild_opensearch_indices():
 @celery_app.task
 def populate_opensearch_users_indices():
     """
-    Populate the "users" OpenSearch index. This function loads the indices
-    in Opensearch as defined in the UserDocument class to make it searchable
-    and accessible for queries in the Opensearch Dashboards.
+    Populate the ``users`` OpenSearch index.
+
+    This task invokes the ``opensearch document index`` management command for
+    the ``users`` index with ``--force`` and ``--parallel`` so user documents
+    defined by the `UserDocument` mapping are indexed and searchable in
+    OpenSearch Dashboards.
     """
     call_command(
         "opensearch", "document", "index", "--indices", "users", "--force", "--parallel"
@@ -47,9 +65,12 @@ def populate_opensearch_users_indices():
 @celery_app.task
 def populate_opensearch_assets_indices():
     """
-    Populate the "assets" OpenSearch index. This function loads the indices
-    in Opensearch as defined in the AssetDocument class to make it searchable
-    and accessible for queries in the Opensearch Dashboards.
+    Populate the ``assets`` OpenSearch index.
+
+    This task invokes the ``opensearch document index`` management command for
+    the ``assets`` index with ``--force`` and ``--parallel`` so asset documents
+    defined by the `AssetDocument` mapping are indexed and searchable in
+    OpenSearch Dashboards.
     """
     call_command(
         "opensearch",
@@ -65,8 +86,10 @@ def populate_opensearch_assets_indices():
 @celery_app.task
 def populate_opensearch_indices():
     """
-    Populate the OpenSearch index with all documents.
-    --force - stops interactive confirmation prompt.
-    --parallel - invokes opensearch in parallel mode.
+    Populate all OpenSearch document indices.
+
+    This task invokes the ``opensearch document index`` management command with
+    ``--force`` to skip interactive confirmation and ``--parallel`` to index
+    documents in parallel.
     """
     call_command("opensearch", "document", "index", "--force", "--parallel")

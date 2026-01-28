@@ -59,15 +59,11 @@ jobs:
                   # Optional - x64 or x86 architecture, defaults to x64
                   architecture: 'x64'
 
-            - name: Install Python Dependencies and Retrieve Version Number
-              id: python-build
+            - name: Get version from Git
               run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install -U setuptools
-                  pip3 install -U setuptools-scm
-
-                  FULL_VERSION_NUMBER="$(python3 -m setuptools_scm)"
-                  echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -d '+' -f 1)" >> $GITHUB_ENV
+                  # Get latest version tag number (e.g. main was tagged in GitHub for this Release)
+                  FULL_VERSION_NUMBER="$(git describe --tags `git rev-list --tags --max-count=1`)"
+                  echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v4

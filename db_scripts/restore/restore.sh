@@ -32,7 +32,7 @@ RETURNCODE=$?
 echo $RETURNCODE
 
 if [ $RETURNCODE = 0 ] && [ $ENV_NAME = "test" ]; then
-    ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[1])')"
+    ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[2])')"
 
     # If a feature branch env is running the number of services in the test cluster increases.
     NUMBER_OF_SERVICES="$(aws ecs list-services --region us-east-1 --cluster crowd-test | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(len(Parameter))')"
@@ -47,6 +47,6 @@ if [ $RETURNCODE = 0 ] && [ $ENV_NAME = "test" ]; then
     aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE}
     aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE_2}
 elif [ $RETURNCODE = 0 ]; then
-    ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[1])')"
+    ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python3 -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[2])')"
     aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE}
 fi

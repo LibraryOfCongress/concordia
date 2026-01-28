@@ -187,6 +187,45 @@ if (screenfull.isEnabled) {
         });
 }
 
+function appendAccountItem(link, $menu) {
+    if (link.type !== 'post') {
+        $('<a>')
+            .addClass('dropdown-item')
+            .attr('href', link.url)
+            .text(link.title)
+            .appendTo($menu);
+        return;
+    }
+
+    const csrfToken = Cookies.get('csrftoken');
+    const formId =
+        'nav-post-' + link.title.toLowerCase().replaceAll(/[^\da-z]+/g, '-');
+
+    const $form = $('<form>')
+        .attr({id: formId, method: 'post', action: link.url})
+        .css('display', 'none')
+        .appendTo(document.body);
+
+    // Django expects the hidden field name "csrfmiddlewaretoken"
+    $('<input>')
+        .attr({type: 'hidden', name: 'csrfmiddlewaretoken', value: csrfToken})
+        .appendTo($form);
+
+    if (link.fields) {
+        for (const [name, value] of Object.entries(link.fields)) {
+            $('<input>')
+                .attr({type: 'hidden', name: name, value: value})
+                .appendTo($form);
+        }
+    }
+
+    $('<button>')
+        .addClass('dropdown-item')
+        .attr({type: 'submit', form: formId})
+        .text(link.title)
+        .appendTo($menu);
+}
+
 $.ajax({
     url: '/account/ajax-status/',
     method: 'GET',
@@ -194,37 +233,29 @@ $.ajax({
     cache: true,
 }).done(function (data) {
     if (!data.username) {
+        $('.anonymous-only').removeClass('d-none');
+        $('.anonymous-only').addClass('d-lg-flex');
+        $('.authenticated-only').addClass('d-none');
         return;
     }
 
-    $('.anonymous-only').remove();
-    $('.authenticated-only').removeAttr('hidden');
-    if (data.links) {
-        var $accountDropdown = $('#topnav-account-dropdown');
-        $('<a>')
-            .addClass('nav-link fw-bold')
-            .attr({
-                id: 'topnav-account-dropdown-toggle',
-                'data-bs-toggle': 'dropdown',
-                'aria-haspopup': 'true',
-                'aria-expanded': 'false',
-            })
-            .text(data.username + ' ')
-            .prependTo($accountDropdown);
+    $('.anonymous-only').addClass('d-none');
+    $('.anonymous-only').removeClass('d-lg-flex');
+    $('.authenticated-only').removeClass('d-none');
+
+    var $toggle = $('#topnav-account-dropdown-toggle');
+    var $accountDropdownMenu = $('#topnav-account-dropdown-menu');
+    if (data.username) {
+        $toggle.empty().text(data.username + ' ');
         $('<span>')
             .addClass('fa fa-chevron-down text-primary')
-            .appendTo('#topnav-account-dropdown-toggle');
-        var $accountDropdownMenu = $('<div>');
-        $accountDropdownMenu
-            .addClass('dropdown-menu')
-            .attr('aria-labelledby', 'topnav-account-dropdown-toggle')
-            .appendTo($accountDropdown);
+            .appendTo($toggle);
+    }
+
+    if (data.links && $accountDropdownMenu.length > 0) {
+        $accountDropdownMenu.empty();
         for (const link of data.links) {
-            $('<a>')
-                .addClass('dropdown-item')
-                .attr('href', link.url)
-                .text(link.title)
-                .appendTo($accountDropdownMenu);
+            appendAccountItem(link, $accountDropdownMenu);
         }
     }
 });

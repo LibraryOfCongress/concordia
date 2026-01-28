@@ -6,22 +6,27 @@ from io import BytesIO
 from unittest import mock
 
 from django.contrib.messages import get_messages
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.timezone import now
 
 from concordia.admin.views import SerializedObjectView
-from concordia.models import Campaign, Project
+from concordia.models import Campaign, Project, TranscriptionStatus
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
     create_asset,
     create_campaign,
     create_card,
+    create_item,
     create_project,
     create_site_report,
+    create_transcription,
 )
+from concordia.utils import get_anonymous_user
 from importer.tests.utils import create_import_asset
 
 
@@ -521,6 +526,87 @@ class TestAdminBulkImportView(CreateTestUsers, TestCase):
             )
 
 
+class TestAdminBulkChangeAssetStatus(CreateTestUsers, TestCase):
+    def setUp(self):
+        item = create_item()
+        self.assets = [
+            create_asset(item=item),
+            create_asset(item=item, slug="test-asset-2"),
+            create_asset(item=item, slug="test-asset-3"),
+            create_asset(item=item, slug="test-asset-4"),
+        ]
+        # Seed with existing transcriptions
+        self.accepted_transcription = create_transcription(
+            asset=self.assets[0], accepted=now()
+        )
+        self.rejected_transcription = create_transcription(
+            asset=self.assets[1], rejected=now()
+        )
+        self.submitted_transcription = create_transcription(asset=self.assets[2])
+        self.accepted_transcription2 = create_transcription(
+            asset=self.assets[3], accepted=now()
+        )
+        anon = get_anonymous_user()
+        self.spreadsheet_data = [
+            {
+                "asset__slug": self.assets[0].slug,
+                "New Status": "submitted",
+                "user": anon.id,
+            },
+            {
+                "asset__slug": self.assets[1].slug,
+                "New Status": "completed",
+                "user": anon.id,
+            },
+            {
+                "asset__slug": self.assets[2].slug,
+                "New Status": "completed",
+                "user": anon.id,
+            },
+            {
+                "asset__slug": self.assets[3].slug,
+                "New Status": "in_progress",
+                "user": anon.id,
+            },
+        ]
+
+    def test_admin_bulk_change_asset_status(self):
+        self.login_user(is_staff=True, is_superuser=True)
+
+        fake_file = SimpleUploadedFile(
+            "test.xlsx", b"x", content_type="application/vnd.ms-excel"
+        )
+        post_data = {"spreadsheet_file": fake_file}
+
+        with mock.patch(
+            "concordia.admin.views.slurp_excel", autospec=True
+        ) as slurp_mock:
+            slurp_mock.return_value = self.spreadsheet_data
+
+            path = reverse("admin:bulk-change")
+            response = self.client.post(path, data=post_data)
+            for asset in self.assets:
+                asset.refresh_from_db()
+            self.assertEqual(response.status_code, 200)
+            slurp_mock.assert_called()
+            self.assertEqual(
+                self.assets[0].transcription_status,
+                TranscriptionStatus.SUBMITTED,
+            )
+            self.assertEqual(
+                self.assets[1].transcription_status,
+                TranscriptionStatus.COMPLETED,
+            )
+            self.assertEqual(
+                self.assets[2].transcription_status,
+                TranscriptionStatus.COMPLETED,
+            )
+            self.assertEqual(
+                self.assets[3].transcription_status,
+                TranscriptionStatus.IN_PROGRESS,
+            )
+
+
 class TestAdminBulkImportReview(CreateTestUsers, TestCase):
     def setUp(self):
         self.login_user(is_staff=True, is_superuser=True)
@@ -579,7 +665,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
             messages = [str(message) for message in get_messages(response.wsgi_request)]
             self.assertEqual(len(messages), 3)
             self.assertEqual(messages[0], "Fetch test message")
-            self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+            self.assertEqual(messages[1], "Total Asset Count:1")
             self.assertEqual(messages[2], "All Processes Completed")
 
     def test_missing_field(self):
@@ -610,7 +696,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], "Skipping row 0: missing fields ['Campaign']")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_empty_field(self):
@@ -648,7 +734,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
                 "(Campaign, Project, Import URLs) is empty",
             )
             self.assertEqual(messages[1], "Fetch test message")
-            self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+            self.assertEqual(messages[2], "Total Asset Count:1")
             self.assertEqual(messages[3], "All Processes Completed")
 
     def test_all_empty_fields(self):
@@ -678,7 +764,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 3)
         self.assertEqual(messages[0], "Fetch test message")
-        self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[1], "Total Asset Count:1")
         self.assertEqual(messages[2], "All Processes Completed")
 
     def test_empty_campaign_slug(self):
@@ -708,7 +794,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 3)
         self.assertEqual(messages[0], "Fetch test message")
-        self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[1], "Total Asset Count:1")
         self.assertEqual(messages[2], "All Processes Completed")
 
     def test_bad_campaign_slug(self):
@@ -739,7 +825,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], "Campaign slug doesn't match pattern.")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_empty_project_slug(self):
@@ -770,7 +856,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 3)
         self.assertEqual(messages[0], "Fetch test message")
-        self.assertEqual(messages[1], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[1], "Total Asset Count:1")
         self.assertEqual(messages[2], "All Processes Completed")
 
     def test_bad_project_slug(self):
@@ -801,7 +887,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], "Project slug doesn't match pattern.")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_bad_url(self):
@@ -832,7 +918,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(len(messages), 4)
         self.assertEqual(messages[0], f"Skipping unrecognized URL value: {bad_url}")
         self.assertEqual(messages[1], "Fetch test message")
-        self.assertEqual(messages[2], "Total Asset\xa0Count:1")
+        self.assertEqual(messages[2], "Total Asset Count:1")
         self.assertEqual(messages[3], "All Processes Completed")
 
     def test_large_number_urls(self):
@@ -864,7 +950,7 @@ class TestAdminBulkImportReview(CreateTestUsers, TestCase):
         self.assertEqual(messages[0], "Fetch test message")
         self.assertEqual(messages[1], "Fetch test message")
         # This count is weird because we mock the fetch_all_urls function
-        self.assertEqual(messages[2], "Total Asset\xa0Count:2")
+        self.assertEqual(messages[2], "Total Asset Count:2")
         self.assertEqual(messages[3], "All Processes Completed")
 
 

@@ -15,7 +15,7 @@
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-    <div class="container bg-main profile-page">
+    <div class="container bg-main profile-page" data-active-tab="{{ active_tab }}">
         <ul class="nav nav-tabs mb-4" id="nav-tab" role="tablist">
             <li class="nav-item">
                 <a class="nav-link fw-bold{% if active_tab == 'contributions' %} active{% endif %}" aria-selected="{% if active_tab == 'contributions' %}true{% else %}false{% endif %}" id="contributions-tab" data-bs-toggle="tab" data-bs-target="#contributions" type="button" role="tab">My Contributions</a>
@@ -206,49 +206,9 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.esm.js"></script>
     <script nomodule src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.js"></script>
     {{ block.super }}
-    <script src="{% static 'js/campaign-selection.js' %}"></script>
-    <script src="{% static 'js/recent-pages.js' %}"></script>
-    <script type="text/javascript">
-        function sortDateAscending() {
-            var urlParameters = new URLSearchParams(window.location.search);
-            urlParameters.set('order_by', 'date-ascending');
-            getPages('?' + urlParameters.toString());
-        }
-
-        function sortDateDescending() {
-            var urlParameters = new URLSearchParams(window.location.search);
-            urlParameters.set('order_by', 'date-descending');
-            getPages('?' + urlParameters.toString());
-        }
-        $(document).ready(function() {
-            {% if active_tab and active_tab == "recent" %}
-                getPages();
-            {% endif %}
-            if (window.location.hash != "") {
-                $('a[href="' + window.location.hash + '"]').click();
-                if (window.location.hash == "#recent") {
-                    getPages();
-                }
-            }
-        });
-        // Disable form submissions, if there are invalid fields
-        (function() {
-            'use strict';
-            window.addEventListener('load', function() {
-                // Fetch all the forms we want to apply custom Bootstrap validation styles to
-                var forms = document.getElementsByClassName('needs-validation');
-                // Loop over them and prevent submission
-                var validation = Array.prototype.filter.call(forms, function(form) {
-                    form.addEventListener('submit', function(event) {
-                        $('#validation-confirmation').hide();
-                        if (form.checkValidity() === false) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-                        form.classList.add('was-validated');
-                    }, false);
-                });
-            }, false);
-        })();
-    </script>
+    {% if LOCAL_DEV %}
+        <script type="module" src="http://localhost:5173/static/src/profile.js"></script>
+    {% else %}
+        <script type="module" src="{% static 'js/profile.js' %}"></script>
+    {% endif %}
 {% endblock body_scripts %}

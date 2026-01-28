@@ -19,9 +19,29 @@ ENV_MAPPING = {"development": "DEV", "test": "TEST", "staging": "STAGE"}
 
 
 @celery_app.task(ignore_result=True)
-def unusual_activity(ignore_env=False):
+def unusual_activity(ignore_env: bool = False) -> None:
     """
-    Locate pages that were improperly transcribed or reviewed.
+    Send an email report about suspect transcription or review activity.
+
+    By default this task runs only when ``CONCORDIA_ENVIRONMENT`` is
+    set to ``"production"``. Setting ``ignore_env`` to true forces the
+    report to be generated in other environments and adds an
+    environment tag to the subject line.
+
+    The report includes:
+
+    * Transcriptions flagged by ``transcribe_incidents`` in the past day
+    * Reviews flagged by ``review_incidents`` in the past day
+
+    Both plain text and HTML versions of the report are rendered from
+    templates and emailed to the monitoring recipients.
+
+    Args:
+        ignore_env: Generate and send the report even if the current
+            environment is not production.
+
+    Returns:
+        None
     """
     # Don't bother running unless we're in the prod env
     if settings.CONCORDIA_ENVIRONMENT == "production" or ignore_env:

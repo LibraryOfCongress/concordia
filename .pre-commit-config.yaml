@@ -17,7 +17,7 @@ repos:
       hooks:
           - id: djhtml
     - repo: https://github.com/ambv/black
-      rev: 24.4.2
+      rev: 26.1.0
       hooks:
           - id: black
             language_version: python3.12
@@ -85,6 +85,7 @@ repos:
       rev: 1.7.6
       hooks:
           - id: bandit
+            args: ["-x", "locustfile.py"]
     - repo: local
       hooks:
         - id: readme-symbol-check

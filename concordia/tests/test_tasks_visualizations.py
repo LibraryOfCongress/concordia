@@ -68,8 +68,9 @@ class VisualizationCacheTasksTests(TestCase):
         self.assertEqual(overview["total_counts"], [1, 1, 1, 1])
 
     def test_populate_daily_activity_visualization_cache(self):
-        date1 = (timezone.now() - timedelta(days=2)).date()
-        date2 = (timezone.now() - timedelta(days=1)).date()
+        today = timezone.localdate()
+        date1 = today - timedelta(days=2)
+        date2 = today - timedelta(days=1)
 
         sr1 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
@@ -105,8 +106,9 @@ class VisualizationCacheTasksTests(TestCase):
         self.assertEqual(reviews["data"][-2:], [1, 2])
 
     def test_negative_daily_saved_clamps_to_zero(self):
-        date1 = (timezone.now() - timedelta(days=2)).date()
-        date2 = (timezone.now() - timedelta(days=1)).date()
+        today = timezone.localdate()
+        date1 = today - timedelta(days=2)
+        date2 = today - timedelta(days=1)
 
         sr1 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
@@ -277,8 +279,9 @@ class VisualizationCacheTasksTests(TestCase):
 
     def test_daily_activity_upload_failure_with_prior_url_falls_back(self):
         # Build reports so new data will not be all zeros (ensures "changed" path)
-        date1 = (timezone.now() - timedelta(days=2)).date()
-        date2 = (timezone.now() - timedelta(days=1)).date()
+        today = timezone.localdate()
+        date1 = today - timedelta(days=2)
+        date2 = today - timedelta(days=1)
         sr1 = SiteReport.objects.create(
             report_name=SiteReport.ReportName.TOTAL,
             transcriptions_saved=3,
