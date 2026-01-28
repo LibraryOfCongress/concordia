@@ -18,7 +18,7 @@
         "react-bootstrap": "^2.10.10",
         "react-dom": "^19.1.0",
         "react-redux": "^9.2.0",
-        "react-router-dom": "^6.30.1",
+        "react-router-dom": "^6.30.3",
         "screenfull": "^6.0.2",
         "split.js": "^1.6.5"
     },
