@@ -21,7 +21,7 @@ kombu = "==5.5.4"
 django-flags = "==5.0.14"
 sentry-sdk = "==2.32.0"
 channels = { extras = ["daphne"], version = "==4.2.2" }
-channels-redis = "==4.2.1"
+channels-redis = "==4.3.0"
 more-itertools = "==10.7.0"
 nh3 = "==0.2.21"
 django-admin-multiple-choice-list-filter = "==0.1.1"
