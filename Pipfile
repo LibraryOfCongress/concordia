@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 gunicorn = "==23.0.0"
 celery = { extras = ["redis"], version = "==5.5.3" }
-requests = "==2.32.4"
+requests = "==2.32.5"
 django-tinymce = "==4.1.0"
 whitenoise = "==6.9.0"
 openpyxl = "==3.1.5"
