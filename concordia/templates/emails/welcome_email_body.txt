@@ -4,7 +4,7 @@ To help you get started, we recommend reading the Welcome Guide <https://crowd.l
 
 Once you have a handle on the transcription guidelines, explore the different collections available under “Campaigns” <https://crowd.loc.gov/campaigns-topics/> using the top navigation on any page.
 
-Let us know what you find once you dig in! Share your experience or questions with the community managers and other volunteers on our discussion space on History Hub <https://historyhub.history.gov/community/crowd-loc>.
+Let us know what you find once you dig in! Share your experience or questions with the community managers and other volunteers on our discussion space on Discourse <https://forum.crowd.loc.gov>.
 
 Happy transcribing!
 The By the People team
