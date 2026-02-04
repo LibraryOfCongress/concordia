@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4cbc73297f331519876daac16a85b220f80a1d173368692cf611e8b149909da6"
+            "sha256": "c1fb6c8941df9835252579198a0293a4d23f415eda80fe6974b5c1013fc9ab1b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -49,11 +49,11 @@
         },
         "asgiref": {
             "hashes": [
-                "sha256:13acff32519542a1736223fb79a715acdebe24286d98e8b164a73085f40da2c4",
-                "sha256:1db9021efadb0d9512ce8ffaf72fcef601c7b73a8807a1bb2ef143dc6b14846d"
+                "sha256:5f184dc43b7e763efe848065441eac62229c9f7b0475f41f80e207a114eda4ce",
+                "sha256:e8667a091e69529631969fd45dc268fa79b99c92c5fcdda727757e52146ec133"
             ],
             "markers": "python_version >= '3.9'",
-            "version": "==3.11.0"
+            "version": "==3.11.1"
         },
         "attrs": {
             "hashes": [
@@ -763,12 +763,12 @@
         },
         "django": {
             "hashes": [
-                "sha256:16b5ccfc5e8c27e6c0561af551d2ea32852d7352c67d452ae3e76b4f6b2ca495",
-                "sha256:3a4ea88a70370557ab1930b332fd2887a9f48654261cdffda663fef5976bb00a"
+                "sha256:7f2d292ad8b9ee35e405d965fbbad293758b858c34bbf7f3df551aeeac6f02d3",
+                "sha256:e7130df33ada9ab5e5e929bc19346a20fe383f5454acb2cc004508f242ee92c0"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.10'",
-            "version": "==5.2.9"
+            "version": "==5.2.11"
         },
         "django-admin-multiple-choice-list-filter": {
             "hashes": [
@@ -3177,14 +3177,6 @@
                 "sha256:feec40075be03a04501a973d81f633735b4b69f98b05450592310c0f401a4e0d"
             ],
             "version": "==0.4.0"
-        },
-        "django": {
-            "hashes": [
-                "sha256:16b5ccfc5e8c27e6c0561af551d2ea32852d7352c67d452ae3e76b4f6b2ca495",
-                "sha256:3a4ea88a70370557ab1930b332fd2887a9f48654261cdffda663fef5976bb00a"
-            ],
-            "markers": "python_version >= '3.10'",
-            "version": "==5.2.9"
         },
         "django-debug-toolbar": {
             "hashes": [
