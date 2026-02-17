@@ -9,10 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
         xLabel: 'Date',
         yLabel: 'Transcriptions + Reviews',
         buildDataset: (payload) => {
+            const colors = ['#002347', '#FAAC1D'];
+
+            const datasets = payload.transcription_datasets.map((ds, index) => ({
+                ...ds,
+                backgroundColor: colors[index],
+                borderColor: colors[index],
+            }));
+
             return {
                 data: {
                     labels: payload.labels,
-                    datasets: payload.transcription_datasets,
+                    datasets: datasets,
                 },
                 options: {
                     scales: {
