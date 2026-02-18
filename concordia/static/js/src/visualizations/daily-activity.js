@@ -11,11 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
         buildDataset: (payload) => {
             const colors = ['#911C42', '#BFBBDD'];
 
-            const datasets = payload.transcription_datasets.map((ds, index) => ({
-                ...ds,
-                backgroundColor: colors[index],
-                borderColor: colors[index],
-            }));
+            const datasets = payload.transcription_datasets.map(
+                (ds, index) => ({
+                    ...ds,
+                    backgroundColor: colors[index],
+                    borderColor: '#000',
+                    borderWidth: 1.5,
+                }),
+            );
 
             return {
                 data: {
