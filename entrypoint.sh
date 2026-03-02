@@ -20,7 +20,9 @@ if [ -v SENTRY_BACKEND_DSN ]; then
 fi
 
 echo "Running collectstatic"
-./manage.py collectstatic --clear --noinput -v0
+# --no-post-process - vite will hash and compress at build time
+# - remove --clear to relieve I/O pressure for fargarte start ups
+./manage.py collectstatic --noinput --no-post-process -v0
 
 echo "Running Django ASGI server"
 daphne -b 0.0.0.0 -p 80 concordia.asgi:application

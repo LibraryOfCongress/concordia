@@ -1,7 +1,7 @@
 import os
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
+from .settings_template import DJANGO_VITE, INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
@@ -30,6 +30,13 @@ LOGGING["loggers"] = {
 }
 
 DEBUG = True
+
+# Toggle this to True only when you run 'npm run dev' - vite dev server
+# Otherwise, it will look for the manifest.json in /dist/
+USE_VITE_DEV_SERVER = os.getenv("USE_VITE_DEV_SERVER", "false").lower() == "true"
+
+DJANGO_VITE["default"]["dev_mode"] = USE_VITE_DEV_SERVER
+DJANGO_VITE["default"]["dev_server_port"] = 5173
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]  # nosec
 
