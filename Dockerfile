@@ -110,10 +110,11 @@ RUN npm install --silent --global npm@10 && npm install --silent
 
 # Additional JS build step for Vite.
 # - Build legacy (gulp css...) and modern assets (Vite)
-# - This ensures concordia/static/dist is populated with hashed and compressed files.
+# - This populates concordia/static/dist with hashed and compressed files.
 RUN npx gulp build && npm run build
 
-# CREATE LOG DIRECTORY (Required for Django logging initialization needed for collecstatic)
+# Create Log Directory
+# - Required for Django logging initialization when running collecstatic.
 RUN mkdir -p /app/logs
 
 # Install Python dependencies into the system environment using Pipenv and

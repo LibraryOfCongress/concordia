@@ -55,8 +55,7 @@ STATICFILES_FINDERS = [
 STATICFILES_DIRS = [
     # Vite's new home (JS/Manifest)
     os.path.join(SITE_ROOT_DIR, "concordia", "static", "dist"),
-    # Gulp's home (where base.css lives)
-    # Based on your gulpfile .dest('static/'), this is likely:
+    # Gulp's home (where base.css lives), based on gulpfile .dest('static/')
     os.path.join(SITE_ROOT_DIR, "static"),
     # Standard Admin assets
     os.path.join(SITE_ROOT_DIR, "concordia", "static", "admin"),
@@ -430,8 +429,7 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        # We use the basic Compressed backend because Vite handled the Hashing.
-        # This prevents the 2-minute startup delay.
+        # Use the basic Compressed backend because Vite handled hashing and compression.
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
     "assets": {
@@ -445,7 +443,6 @@ STORAGES = {
 DJANGO_VITE = {
     "default": {
         "dev_mode": DEBUG,
-        # Remove the '.vite' segment from the path
         "manifest_path": os.path.join(
             SITE_ROOT_DIR, "concordia", "static", "dist", "manifest.json"
         ),
