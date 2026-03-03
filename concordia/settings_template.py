@@ -53,7 +53,12 @@ STATICFILES_FINDERS = [
 ]
 
 STATICFILES_DIRS = [
+    # Vite's new home (JS/Manifest)
+    os.path.join(SITE_ROOT_DIR, "concordia", "static", "dist"),
+    # Gulp's home (where base.css lives), based on gulpfile .dest('static/')
     os.path.join(SITE_ROOT_DIR, "static"),
+    # Standard Admin assets
+    os.path.join(SITE_ROOT_DIR, "concordia", "static", "admin"),
 ]
 
 NPM_FILE_PATTERNS = {
@@ -129,6 +134,7 @@ INSTALLED_APPS = [
     "channels",
     "django_admin_multiple_choice_list_filter",
     "tinymce",
+    "django_vite",
 ]
 
 MIDDLEWARE = [
@@ -174,6 +180,7 @@ TEMPLATES = [
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
+                "django_vite": "django_vite.templatetags.django_vite",
             },
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
@@ -422,7 +429,8 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # Use the basic Compressed backend because Vite handled hashing and compression.
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
     "assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -431,7 +439,16 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
 }
-WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
+
+DJANGO_VITE = {
+    "default": {
+        "dev_mode": DEBUG,
+        "manifest_path": os.path.join(
+            SITE_ROOT_DIR, "concordia", "static", "dist", "manifest.json"
+        ),
+        "static_url_prefix": "",
+    }
+}
 
 PASSWORD_RESET_TIMEOUT = 604800
 ACCOUNT_ACTIVATION_DAYS = 7

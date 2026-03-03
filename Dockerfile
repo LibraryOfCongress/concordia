@@ -89,8 +89,8 @@ ENV LANGUAGE=en_US.UTF-8
 # Python runtime settings:
 # - unbuffered output for log visibility in containers
 # - add /app to PYTHONPATH for module resolution
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
 # Default Django settings module for container runtime (can be overridden).
 ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-concordia.settings_docker}
@@ -105,14 +105,27 @@ COPY . /app
 
 # Front-end build and asset pipeline:
 # - update npm to a known major version
-# - install JS dependencies (production-only) and build assets via gulp
-RUN npm install --silent --global npm@10 && npm install --silent --omit=dev && npx gulp build
+# - Install all JS dependencies (including devDependencies for plugins)
+RUN npm install --silent --global npm@10 && npm install --silent
+
 # Additional JS build step for Vite.
-RUN npm run build
+# - Build legacy (gulp css...) and modern assets (Vite)
+# - This populates concordia/static/dist with hashed and compressed files.
+RUN npx gulp build && npm run build
+
+# Create Log Directory
+# - Required for Django logging initialization when running collecstatic.
+RUN mkdir -p /app/logs
 
 # Install Python dependencies into the system environment using Pipenv and
-# remove Pipenv cache to reduce image size.
-RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
+# - Bake static files into the image (Fast, no post-processing)
+# - remove Pipenv cache to reduce image size.
+RUN pipenv install --system --dev --deploy && \
+    python manage.py collectstatic --no-input --no-post-process && \
+    rm -rf ~/.cache/
+
+# - Clean up node artifacts to reduce image size
+RUN rm -rf node_modules && rm -rf ~/.cache/
 
 # Container listens on port 80.
 EXPOSE 80
