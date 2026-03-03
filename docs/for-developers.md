@@ -204,7 +204,7 @@ delete the local container so it will be rebuilt the next time you run
 1) Collect Django static files:
 
     ```bash
-    pipenv run ./manage.py collectstatic
+    pipenv run ./manage.py collectstatic --no-post-process
     ```
 
 ##### Start the application server
