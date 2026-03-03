@@ -105,15 +105,24 @@ COPY . /app
 
 # Front-end build and asset pipeline:
 # - update npm to a known major version
-# - install JS dependencies (production-only) and build assets via gulp
-RUN npm install --silent --global npm@10 && npm install --silent --omit=dev && npx gulp build
+# - Install all JS dependencies (including devDependencies for plugins)
+RUN npm install --silent --global npm@10 && npm install --silent
+
 # Additional JS build step for Vite.
-# - This ensures concordia/static/ is populated with hashed and compressed files.
-RUN npm run build
+# - Build legacy (gulp css...) and modern assets (Vite)
+# - This ensures concordia/static/dist is populated with hashed and compressed files.
+RUN npx gulp build && npm run build
+
 
 # Install Python dependencies into the system environment using Pipenv and
-# remove Pipenv cache to reduce image size.
-RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
+# - Bake static files into the image (Fast, no post-processing)
+# - remove Pipenv cache to reduce image size.
+RUN pipenv install --system --dev --deploy && \
+    python manage.py collectstatic --no-input --no-post-process && \
+    rm -rf ~/.cache/
+
+# - Clean up node artifacts to reduce image size
+RUN rm -rf node_modules && rm -rf ~/.cache/
 
 # Container listens on port 80.
 EXPOSE 80

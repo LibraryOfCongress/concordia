@@ -19,10 +19,5 @@ if [ -v SENTRY_BACKEND_DSN ]; then
     echo "from sentry_sdk import capture_message;capture_message('This is a test event');" | ./manage.py shell
 fi
 
-echo "Running collectstatic"
-# --no-post-process - vite will hash and compress at build time
-# - remove --clear to relieve I/O pressure for fargarte start ups
-./manage.py collectstatic --noinput --no-post-process -v0
-
 echo "Running Django ASGI server"
 daphne -b 0.0.0.0 -p 80 concordia.asgi:application

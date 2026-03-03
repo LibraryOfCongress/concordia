@@ -64,6 +64,8 @@ services:
     app:
         restart: unless-stopped
         build: .
+        env_file:
+            - .env
         environment: &django-environment
             WAIT_HOSTS: db:5432, redis:6379
             POSTGRESQL_HOST: db
