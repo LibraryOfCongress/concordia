@@ -89,8 +89,8 @@ ENV LANGUAGE=en_US.UTF-8
 # Python runtime settings:
 # - unbuffered output for log visibility in containers
 # - add /app to PYTHONPATH for module resolution
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
 # Default Django settings module for container runtime (can be overridden).
 ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-concordia.settings_docker}
@@ -113,6 +113,8 @@ RUN npm install --silent --global npm@10 && npm install --silent
 # - This ensures concordia/static/dist is populated with hashed and compressed files.
 RUN npx gulp build && npm run build
 
+# CREATE LOG DIRECTORY (Required for Django logging initialization needed for collecstatic)
+RUN mkdir -p /app/logs
 
 # Install Python dependencies into the system environment using Pipenv and
 # - Bake static files into the image (Fast, no post-processing)
