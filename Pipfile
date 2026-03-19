@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 gunicorn = "==23.0.0"
 celery = { extras = ["redis"], version = "==5.5.3" }
-requests = "==2.32.4"
 django-tinymce = "==4.1.0"
 whitenoise = "==6.9.0"
 openpyxl = "==3.1.5"
@@ -32,8 +31,6 @@ tesseract = "==0.1.3"
 pytesseract = "==0.3.13"
 django-redis = "==5.4.0"
 twisted = { extras = ["http2", "tls"], version = "==25.5.0" }
-hiredis = "==3.0.0"
-pyasn1 = "==0.6.2"
 pyleniumio = "==1.21.0"
 django-maintenance-mode = "==0.22.0"
 prometheus-client = "==0.21.0"
@@ -56,6 +53,9 @@ websocket-client = "<1.8.0"
 black = "*"
 django-vite = "~=3.1.0"
 django = "~=5.2.0"
+pyasn1 = "~=0.6.3"
+requests = "~=2.32.5"
+hiredis = "~=3.3.0"
 
 [dev-packages]
 invoke = "==2.2.0"
