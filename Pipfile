@@ -33,7 +33,7 @@ django-redis = "==5.4.0"
 twisted = { extras = ["http2", "tls"], version = "==25.5.0" }
 pyleniumio = "==1.21.0"
 django-maintenance-mode = "==0.22.0"
-prometheus-client = "==0.21.0"
+prometheus-client = "==0.24.1"
 xlsxwriter = "==3.2.5"
 psycopg2 = "==2.9.11"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
