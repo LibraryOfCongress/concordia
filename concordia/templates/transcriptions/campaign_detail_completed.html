@@ -36,21 +36,21 @@
                 <hr class="landing-divider" />
             </div>
         </div>
-        {% with campaign.resource_set.completed_transcription_links as resources %}
-            {% if resources %}
+        {% with campaign.helpfullink_set.completed_transcription_links as links %}
+            {% if links %}
                 <div class="row mt-2">
                     <div class="col-md-12">
                         <aside class="mb-3 mt-md-0 p-3 bg-light">
                             <h3 class="mb-3">Use Completed Transcriptions</h3>
                             <ul class="list-unstyled m-0">
-                                {% for resource in resources %}
+                                {% for link in links %}
                                     {% if forloop.last %}
                                         <li>
                                     {% else %}
                                         <li class="mb-3">
                                     {% endif %}
-                                    <a class="underline-link" href="{{ resource.resource_url }}" target="_blank" rel=noopener>{{ resource.title }}</a>
-                                    {% if 'loc.gov' not in resource.resource_url  %}
+                                    <a class="underline-link" href="{{ link.link_url }}" target="_blank" rel=noopener>{{ link.title }}</a>
+                                    {% if 'loc.gov' not in link.link_url  %}
                                         <i class="fa fa-external-link-alt"></i>
                                     {% endif %}
                                     </li>
@@ -95,21 +95,21 @@
                 {% endfor %}
             </div>
         </div>
-        {% with campaign.resource_set.related_links as resources %}
-            {% if resources %}
+        {% with campaign.helpfullink_set.related_links as links %}
+            {% if links %}
                 <div class="row mt-2">
                     <div class="col-md-12">
                         <aside class="mb-3 mt-md-0 p-3 bg-light">
                             <h3 class="mb-3">Helpful Links</h3>
                             <ul class="list-unstyled m-0">
-                                {% for resource in resources %}
+                                {% for link in links %}
                                     {% if forloop.last %}
                                         <li>
                                     {% else %}
                                         <li class="mb-3">
                                     {% endif %}
-                                    <a class="underline-link" href="{{ resource.resource_url }}" target="_blank" rel=noopener>{{ resource.title }}</a>
-                                    {% if 'loc.gov' not in resource.resource_url  %}
+                                    <a class="underline-link" href="{{ link.link_url }}" target="_blank" rel=noopener>{{ link.title }}</a>
+                                    {% if 'loc.gov' not in link.link_url  %}
                                         <i class="fa fa-external-link-alt"></i>
                                     {% endif %}
                                     </li>

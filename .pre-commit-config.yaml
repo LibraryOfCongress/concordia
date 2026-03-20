@@ -85,6 +85,7 @@ repos:
       rev: 1.7.6
       hooks:
           - id: bandit
+            args: ["-x", "locustfile.py"]
     - repo: local
       hooks:
         - id: readme-symbol-check

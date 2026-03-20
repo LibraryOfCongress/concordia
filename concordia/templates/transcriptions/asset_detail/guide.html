@@ -48,14 +48,14 @@
                         <h4>About this project</h4>
                         <p>{{ asset.item.project.description|safe }}</p>
                     {% endif %}
-                    {% if campaign.resource_set.related_links %}
+                    {% if campaign.helpfullink_set.related_links %}
                         <h5 class="pt-3">Helpful Links</h5>
                         <p>
                             <ul>
-                                {% for resource in campaign.resource_set.related_links %}
+                                {% for link in campaign.helpfullink_set.related_links %}
                                     <li class="mb-3">
-                                        <a href="{{ resource.resource_url }}" target="_blank" rel=noopener>
-                                            {{ resource.title }}{% if 'loc.gov' not in resource.resource_url %} <i class="fa fa-external-link-alt"></i>{% endif %}
+                                        <a href="{{ link.link_url }}" target="_blank" rel=noopener>
+                                            {{ link.title }}{% if 'loc.gov' not in link.link_url %} <i class="fa fa-external-link-alt"></i>{% endif %}
                                         </a>
                                     </li>
                                 {% endfor %}

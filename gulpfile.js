@@ -63,9 +63,16 @@ function scripts() {
     );
 }
 
+function vendor() {
+    return gulp
+        .src('node_modules/openseadragon/build/openseadragon/images/**/*')
+        .pipe(gulp.dest('static/openseadragon/images/'));
+}
+
 function watch() {
     gulp.watch(paths.scripts, scripts);
     gulp.watch(paths.styles, styles);
+    gulp.watch(paths.styles, vendor);
 }
 
 function clean() {
@@ -85,11 +92,12 @@ function clean() {
     );
 }
 
-var build = gulp.parallel(styles, scripts);
+var build = gulp.parallel(styles, scripts, vendor);
 
 exports.build = build;
 exports.clean = clean;
 exports.default = gulp.series(build, watch);
+exports.vendor = vendor;
 exports.scripts = scripts;
 exports.styles = styles;
 exports.watch = watch;

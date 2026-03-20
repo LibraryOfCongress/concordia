@@ -3,8 +3,9 @@
         "@axe-core/cli": "^4.11.0",
         "@puppeteer/browsers": "^2.10.13",
         "child_process": "^1.0.2",
-        "fancy-log": "^2.0.0",
-        "stylelint-value-no-unknown-custom-properties": "^6.0.1"
+        "stylelint-value-no-unknown-custom-properties": "^6.1.1",
+        "vite": "^8.0.0",
+        "vite-plugin-compression2": "^2.5.2"
     },
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
@@ -14,9 +15,10 @@
         "@sentry/core": "^10.3.0",
         "@sentry/tracing": "^7.120.4",
         "bootstrap": "^5.3.8",
-        "chart.js": "^4.5.0",
+        "chart.js": "^4.5.1",
         "chroma-js": "^3.1.2",
         "codemirror": "^5.65.19",
+        "fancy-log": "^2.0.0",
         "gulp": "^5.0.1",
         "gulp-rename": "^2.1.0",
         "gulp-sass": "^6.0.1",
@@ -30,8 +32,7 @@
         "sass": "^1.78.0",
         "screenfull": "^6.0.0",
         "split.js": "^1.6.2",
-        "urijs": "^1.19.11",
-        "vite": "^6.3.5"
+        "urijs": "^1.19.11"
     },
     "name": "concordia",
     "private": true,

@@ -1,13 +1,24 @@
 import os
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import INSTALLED_APPS
+from .settings_template import INSTALLED_APPS, STATIC_URL
 
 DEBUG = os.getenv("DEBUG", "").lower() == "true"
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
 INSTALLED_APPS += ["django_opensearch_dsl"]
+
+
+def whitenoise_immutable_file_test(static_url):
+    """
+    Determine if a file is immutable based on its URL.
+    Vite assets in the 'dist/' directory are hashed and safe to cache forever.
+    """
+    return static_url.startswith(f"{STATIC_URL}dist/")
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = whitenoise_immutable_file_test
 
 # Globally disable auto-syncing
 OPENSEARCH_DSL_AUTOSYNC = os.getenv("OPENSEARCH_DSL_AUTOSYNC", False)

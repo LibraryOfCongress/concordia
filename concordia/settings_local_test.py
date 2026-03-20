@@ -8,7 +8,7 @@ from .settings_template import DATABASES
 
 DEBUG = False
 
-DATABASES["default"]["PORT"] = "54323"
+DATABASES["default"]["PORT"] = "5432"
 
 CHANNEL_LAYERS = {
     "default": {

@@ -44,20 +44,11 @@ jobs:
                   # Optional - x64 or x86 architecture, defaults to x64
                   architecture: 'x64'
 
-            - name: Install Python Dependencies and Retrieve Version Number
-              id: python-build
+            - name: Get version from Git
               run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install -U setuptools
-                  pip3 install -U setuptools-scm
-
-                  echo "full_ver_num=$(echo "${FULL_VERSION_NUMBER}")" >> $GITHUB_ENV
-
+                  # Get latest version tag number (e.g. release was tagged in GitHub for this hot fix)
                   HOTFIX_VERSION_NUMBER="$(git describe --tags)"
                   echo "version_number=$(echo "${HOTFIX_VERSION_NUMBER}" | cut -d '-' -f 1 | cut -c 2- )" >> $GITHUB_ENV
-
-                  echo "full version number: $FULL_VERSION_NUMBER"
-                  echo "hot fix version number: $HOTFIX_VERSION_NUMBER"
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v4

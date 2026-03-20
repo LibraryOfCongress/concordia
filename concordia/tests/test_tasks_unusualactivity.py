@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest import mock
 
 from django.test import TestCase, override_settings
@@ -37,9 +37,7 @@ class UnusualActivityTaskTests(TestCase):
     )
     def test_runs_in_production_without_default_to(self):
         # Executes, builds subject without env suffix, and sends to one addr.
-        fixed_now_dt = timezone.make_aware(
-            datetime(2025, 1, 1, 12, 0), timezone=timezone.utc
-        )
+        fixed_now_dt = timezone.make_aware(datetime(2025, 1, 1, 12, 0), timezone=UTC)
         expected_one_day_ago = fixed_now_dt - timedelta(days=1)
 
         with (
@@ -107,9 +105,7 @@ class UnusualActivityTaskTests(TestCase):
         DEFAULT_TO_EMAIL="extra@example.com",
     )
     def test_ignore_env_appends_suffix_and_includes_default_to(self):
-        fixed_now_dt = timezone.make_aware(
-            datetime(2025, 1, 2, 9, 30), timezone=timezone.utc
-        )
+        fixed_now_dt = timezone.make_aware(datetime(2025, 1, 2, 9, 30), timezone=UTC)
         expected_one_day_ago = fixed_now_dt - timedelta(days=1)
 
         with (

@@ -1,5 +1,42 @@
+/**
+ * Viewer toolbar with layout, zoom, rotate, flip, filters, help and fullscreen.
+ *
+ * Purpose:
+ * - Provide a consistent control strip for the image viewer.
+ * - Emit layout events to the parent container.
+ * - Expose stable button ids so external code can bind OpenSeadragon actions.
+ *
+ * Integration:
+ * - The parent supplies handlers for layout changes and fullscreen:
+ *   onLayoutHorizontal, onLayoutVertical, toggleFullscreen.
+ * - Other buttons are bound by id at runtime by OpenSeadragon:
+ *   #viewer-home, #viewer-zoom-in, #viewer-zoom-out,
+ *   #viewer-rotate-left, #viewer-rotate-right, #viewer-flip.
+ * - Bootstrap attributes handle the filters collapse and keyboard help modal.
+ *
+ * Accessibility:
+ * - Buttons include title text. Icons add aria-label where needed.
+ *
+ * Usage:
+ * <ViewerControls
+ *   onLayoutHorizontal={() => setLayout('h')}
+ *   onLayoutVertical={() => setLayout('v')}
+ *   toggleFullscreen={handleFullscreen}
+ * />
+ */
+
 import React from 'react';
 
+/**
+ * @param {Object} props
+ * @param {function():void} props.onLayoutHorizontal
+ *   Switch to horizontal layout.
+ * @param {function():void} props.onLayoutVertical
+ *   Switch to vertical layout.
+ * @param {function():void} props.toggleFullscreen
+ *   Enter or exit fullscreen mode for the viewer.
+ * @returns {JSX.Element}
+ */
 export default function ViewerControls({
     onLayoutHorizontal,
     onLayoutVertical,

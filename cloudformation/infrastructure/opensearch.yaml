@@ -22,13 +22,13 @@ Parameters:
 
 Resources:
     ESCluster:
-        Type: AWS::Opensearch::Domain
+        Type: AWS::OpenSearchService::Domain
         Properties:
-            OpensearchClusterConfig:
+            ClusterConfig:
                 InstanceCount: 1
                 ZoneAwarenessEnabled: false
                 InstanceType: 'm7g.xlarge.search'
-            OpensearchVersion: '1.3'
+            EngineVersion: '1.3'
             EBSOptions:
                 EBSEnabled: true
                 Iops: 0
