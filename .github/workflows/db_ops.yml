@@ -1,0 +1,89 @@
+name: DB Operations Multi-Repo Pipeline
+
+on:
+    workflow_dispatch:
+        inputs:
+            action_type:
+                description: 'Action'
+                required: true
+                default: 'build_test'
+                type: choice
+                options:
+                    - build_test
+                    - promote_to_latest
+            operation:
+                description: 'Operation'
+                required: true
+                default: 'dump'
+                type: choice
+                options:
+                    - dump
+                    - restore
+
+env:
+    AWS_REGION: us-east-1
+    # Mapping the operation to the specific ECR Repo Name
+    DUMP_REPO: crowd-db-dump
+    RESTORE_REPO: crowd-db-restore
+
+jobs:
+    process:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+                  role-session-name: github_to_aws_deploy
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            # LOGIC: Determine Repo Name and Docker Stage Target
+            - name: Set Variables
+              id: vars
+              run: |
+                  if [[ "${{ github.event.inputs.operation }}" == "dump" ]]; then
+                    echo "REPO_NAME=${{ env.DUMP_REPO }}" >> $GITHUB_OUTPUT
+                    echo "STAGE_TARGET=dump" >> $GITHUB_OUTPUT
+                  else
+                    echo "REPO_NAME=${{ env.RESTORE_REPO }}" >> $GITHUB_OUTPUT
+                    echo "STAGE_TARGET=restore" >> $GITHUB_OUTPUT
+                  fi
+
+            # ACTION 1: BUILD AND PUSH 'test'
+            - name: Build and Push Test
+              if: ${{ github.event.inputs.action_type == 'build_test' }}
+              uses: docker/build-push-action@v5
+              with:
+                  # context: defines where the 'COPY' commands look for files
+                  context: ./db_scripts
+                  # file: path to the actual Dockerfile relative to repo root
+                  file: ./db_scripts/Dockerfile
+                  # target: tells Docker to stop at the 'dump' or 'restore' stage
+                  target: ${{ steps.vars.outputs.STAGE_TARGET }}
+                  push: true
+                  tags: ${{ steps.login-ecr.outputs.registry }}/${{ steps.vars.outputs.REPO_NAME }}:test
+
+            # ACTION 2: PROMOTE 'test' to 'latest'
+            - name: Promote Test to Latest
+              if: ${{ github.event.inputs.action_type == 'promote_to_latest' }}
+              run: |
+                  REPO=${{ steps.vars.outputs.REPO_NAME }}
+
+                  MANIFEST=$(aws ecr batch-get-image \
+                    --repository-name $REPO \
+                    --image-ids imageTag=test \
+                    --query 'images[0].imageManifest' \
+                    --output text)
+
+                  aws ecr put-image \
+                    --repository-name $REPO \
+                    --image-tag latest \
+                    --image-manifest "$MANIFEST"
