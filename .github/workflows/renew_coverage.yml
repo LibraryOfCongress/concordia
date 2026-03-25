@@ -10,7 +10,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Access Coverage Cache to Renew Expiration
-              uses: actions/cache@v4
+              uses: actions/cache@v5
               with:
                   path: coverage.txt
                   key: release-coverage
