@@ -2,6 +2,8 @@ name: 'CodeQL Advanced'
 
 on:
     workflow_dispatch:
+    push:
+        branches: [main, 'feature-*']
     pull_request:
         branches: [main, 'feature-*', release]
         paths-ignore:
