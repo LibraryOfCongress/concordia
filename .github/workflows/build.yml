@@ -27,15 +27,15 @@ jobs:
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Install node and npm
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: '20'
 
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Set up Python 3.12
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   # Semantic version range syntax or exact version of a Python version
                   python-version: '3.12'
