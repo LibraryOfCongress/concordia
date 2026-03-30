@@ -63,8 +63,8 @@ django-extensions = "==3.2.3"
 django-debug-toolbar = "==5.2.0"
 coverage = "==7.9.2"
 pre-commit = "==4.2.0"
-tblib = "==3.1.0"
 locust = "~=2.43"
+tblib = "~=3.2.0"
 
 [requires]
 python_version = "3.12"
