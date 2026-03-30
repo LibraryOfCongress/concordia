@@ -31,10 +31,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4
+              uses: aws-actions/configure-aws-credentials@v6
               with:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -60,7 +60,7 @@ jobs:
             # ACTION 1: BUILD AND PUSH 'test'
             - name: Build and Push Test
               if: ${{ github.event.inputs.action_type == 'build_test' }}
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@v7
               with:
                   # context: defines where the 'COPY' commands look for files
                   context: ./db_scripts

@@ -2,6 +2,8 @@ name: 'CodeQL Advanced'
 
 on:
     workflow_dispatch:
+    push:
+        branches: [main, 'feature-*']
     pull_request:
         branches: [main, 'feature-*', release]
         paths-ignore:
@@ -43,17 +45,17 @@ jobs:
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - if: matrix.language == 'python'
               name: Setup python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: '3.12'
 
             # Initializes the CodeQL tools for scanning.
             - name: Initialize CodeQL
-              uses: github/codeql-action/init@v3
+              uses: github/codeql-action/init@v4
               with:
                   languages: ${{ matrix.language }}
                   build-mode: ${{ matrix.build-mode }}
@@ -66,6 +68,6 @@ jobs:
                   pipenv install --dev --deploy
 
             - name: Perform CodeQL Analysis
-              uses: github/codeql-action/analyze@v3
+              uses: github/codeql-action/analyze@v4
               with:
                   category: '/language:${{matrix.language}}'
