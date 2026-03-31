@@ -28,7 +28,7 @@ pymemcache = "==4.0.0"
 weasyprint = "==68.0"
 tesseract = "==0.1.3"
 pytesseract = "==0.3.13"
-django-redis = "==5.4.0"
+django-redis = "==6.0.0"
 twisted = { extras = ["http2", "tls"], version = "==25.5.0" }
 pyleniumio = "==1.21.0"
 django-maintenance-mode = "==0.22.0"
