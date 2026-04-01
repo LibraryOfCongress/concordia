@@ -32,7 +32,6 @@ django-redis = "==6.0.0"
 twisted = { extras = ["http2", "tls"], version = "==25.5.0" }
 pyleniumio = "==1.21.0"
 django-maintenance-mode = "==0.22.0"
-prometheus-client = "==0.21.0"
 xlsxwriter = "==3.2.5"
 psycopg2 = "==2.9.11"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
@@ -55,6 +54,7 @@ pyasn1 = "~=0.6.3"
 requests = "~=2.32.5"
 hiredis = "~=3.3.0"
 django-celery-beat = "~=2.8.1"
+prometheus-client = "~=0.24.1"
 
 [dev-packages]
 invoke = "==2.2.0"
