@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a71905f6c82a97b4bb591f0e5267f5b005341f1c9ac039248666fb583c019353"
+            "sha256": "585c2993aca0f4e3b24101446acbfc239684b595419d154e95245715186e735d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -96,12 +96,12 @@
         },
         "aws-xray-sdk": {
             "hashes": [
-                "sha256:aab843c331af9ab9ba5cefb3a303832a19db186140894a523edafc024cc0493c",
-                "sha256:cfbe6feea3d26613a2a869d14c9246a844285c97087ad8f296f901633554ad94"
+                "sha256:422d62ad7d52e373eebb90b642eb1bb24657afe03b22a8df4a8b2e5108e278a3",
+                "sha256:794381b96e835314345068ae1dd3b9120bd8b4e21295066c37e8814dbb341365"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7'",
-            "version": "==2.14.0"
+            "version": "==2.15.0"
         },
         "axe-selenium-python": {
             "hashes": [
