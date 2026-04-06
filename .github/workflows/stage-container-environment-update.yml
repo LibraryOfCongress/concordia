@@ -83,7 +83,6 @@ jobs:
                   docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
                   docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
-
                   docker push $REGISTRY/concordia:$version_number
                   docker push $REGISTRY/concordia:$IMAGE_TAG
                   docker push $REGISTRY/concordia/importer:$version_number
