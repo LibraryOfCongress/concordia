@@ -89,13 +89,10 @@ jobs:
                   mkdir logs
                   touch ./logs/concordia-celery.log
 
-            - name: Build Frontend (Vite)
-              run: npm run build
-
-            - name: Build and Collect Static Files
+            - name: Bundle, Build (Vite) and Collect Static Files
               run: |
-                  npx gulp build
-                  pipenv run ./manage.py collectstatic --no-input
+                  npx gulp build && npm run build
+                  pipenv run ./manage.py collectstatic --no-input --no-post-process
 
             # - name: Install Chrome for Testing and Set Path
             #   run: |
@@ -220,6 +217,6 @@ jobs:
             # Post a comment on the PR with the coverage results
             - name: Comment Coverage Change on PR
               if: github.event_name == 'pull_request'
-              uses: mshick/add-pr-comment@v2
+              uses: mshick/add-pr-comment@v3
               with:
                   message-path: coverage_comment.txt
