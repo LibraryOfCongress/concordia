@@ -1,4 +1,4 @@
-name: 'Deploy container environment update to stage'
+name: 'Deploy image refresh to stage'
 
 on:
     workflow_dispatch:
