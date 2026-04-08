@@ -22,9 +22,9 @@
                 <p class="help-text anonymous-only text-center d-print-none">
                     Want to tag this page?
 
-                    <a href="{% url 'registration_register' %}">Register</a>
-                    or
-                    <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                    <a href="{% url 'registration_register' %}" class="mx-1">Register</a>
+                    <span class="text-muted">or</span>
+                    <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="mx-1">login</a>
                     to add tags.
                 </p>
             {% endif %}
