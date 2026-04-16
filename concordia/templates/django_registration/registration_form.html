@@ -38,5 +38,6 @@
 
 {% block body_scripts %}
     {{ block.super }}
-    <script src="{% static 'js/password-validation.js' %}"></script>
+    {% load django_vite %}
+    {% vite_asset 'concordia/static/js/src/password-validation.js' %}
 {% endblock body_scripts %}

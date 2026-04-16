@@ -1,7 +1,7 @@
 /* global CodeMirror prettier prettierPlugins django */
 
 (function ($) {
-    window.setupCodeMirror = function (textarea, flavor) {
+    var setupCodeMirror = function (textarea, flavor) {
         var converter;
         switch (flavor) {
             case 'html': {
@@ -129,4 +129,15 @@
                 }
             });
     };
+
+    // Auto-init logic (inside the IIFE)
+    $(document).ready(function () {
+        var textArea = document.getElementById('id_content');
+        if (textArea) {
+            setupCodeMirror(textArea, 'markdown');
+        }
+    });
+
+    // Explicitly export to window for external access
+    window.setupCodeMirror = setupCodeMirror;
 })(django.jQuery);

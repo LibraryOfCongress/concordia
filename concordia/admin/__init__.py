@@ -1727,7 +1727,7 @@ class CardFamilyAdmin(admin.ModelAdmin):
     inlines = (TutorialInline,)
 
     class Media:
-        js = ("admin/custom-inline.js",)
+        js = ("dist/js/admin_custom-HASH.js",)
 
 
 @admin.register(Guide)
