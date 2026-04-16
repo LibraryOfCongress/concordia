@@ -1,6 +1,9 @@
 /* global CodeMirror prettier prettierPlugins django */
 
 (function ($) {
+    /**
+     * Initializes CodeMirror with a side-by-side preview pane and Prettier support.
+     */
     var setupCodeMirror = function (textarea, flavor) {
         var converter;
         switch (flavor) {
@@ -130,14 +133,16 @@
             });
     };
 
-    // Auto-init logic (inside the IIFE)
+    // Auto-initialize specifically for the SimplePage 'body' field
     $(document).ready(function () {
-        var textArea = document.getElementById('id_content');
+        var textArea = document.getElementById('id_body');
+
         if (textArea) {
             setupCodeMirror(textArea, 'markdown');
+        } else {
+            console.warn(
+                'CodeMirror: Element #id_content not found on this page.',
+            );
         }
     });
-
-    // Explicitly export to window for external access
-    window.setupCodeMirror = setupCodeMirror;
 })(django.jQuery);
