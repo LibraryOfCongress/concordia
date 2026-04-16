@@ -1,4 +1,4 @@
-{% load static %}
+{% load static django_vite %}
 
 <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}">
 <link rel="stylesheet" href="{% static 'codemirror/addon/lint/lint.css' %}">
@@ -14,7 +14,7 @@
 
 <script src="{% static 'remarkable/dist/remarkable.min.js' %}"></script>
 
-<script src="{% static 'admin/editor-preview.js' %}"></script>
+{% vite_asset 'concordia/static/admin/editor-preview.js' %}
 
 <style>
     .form-row.codemirror-with-preview > div {

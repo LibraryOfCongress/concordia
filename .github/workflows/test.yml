@@ -91,7 +91,7 @@ jobs:
 
             - name: Bundle, Build (Vite) and Collect Static Files
               run: |
-                  npx gulp build && npm run build
+                  npm run build
                   pipenv run ./manage.py collectstatic --no-input --no-post-process
 
             # - name: Install Chrome for Testing and Set Path

@@ -1,7 +1,10 @@
 /* global CodeMirror prettier prettierPlugins django */
 
 (function ($) {
-    window.setupCodeMirror = function (textarea, flavor) {
+    /**
+     * Initializes CodeMirror with a side-by-side preview pane and Prettier support.
+     */
+    var setupCodeMirror = function (textarea, flavor) {
         var converter;
         switch (flavor) {
             case 'html': {
@@ -129,4 +132,17 @@
                 }
             });
     };
+
+    // Auto-initialize specifically for the SimplePage 'body' field
+    $(document).ready(function () {
+        var textArea = document.getElementById('id_body');
+
+        if (textArea) {
+            setupCodeMirror(textArea, 'markdown');
+        } else {
+            console.warn(
+                'CodeMirror: Element #id_content not found on this page.',
+            );
+        }
+    });
 })(django.jQuery);

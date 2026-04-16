@@ -29,6 +29,9 @@
         });
     }
 
+    // Vite
+    window.triggerChangeOnField = triggerChangeOnField;
+
     $(document).ready(function () {
         // https://stackoverflow.com/a/33937138/10320488
         window.ORIGINAL_dismissRelatedLookupPopup =

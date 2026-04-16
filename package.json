@@ -19,10 +19,6 @@
         "chroma-js": "^3.2.0",
         "codemirror": "^5.65.19",
         "fancy-log": "^2.0.0",
-        "gulp": "^5.0.1",
-        "gulp-rename": "^2.1.0",
-        "gulp-sass": "^6.0.1",
-        "gulp-sourcemaps": "^3.0.0",
         "jquery": "^3.5.1",
         "js-cookie": "^3.0.5",
         "openseadragon": "^5.0.1",
@@ -51,8 +47,9 @@
     "homepage": "https://github.com/LibraryOfCongress/concordia",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "copy-vendor": "mkdir -p concordia/static/openseadragon/images && cp -R node_modules/openseadragon/build/openseadragon/images/* concordia/static/openseadragon/images/",
+        "build": "npm run copy-vendor && vite build",
         "preview": "vite preview",
-        "postinstall": "cp node_modules/chroma-js/dist/chroma.min.cjs node_modules/chroma-js/dist/chroma.min.js"
+        "postinstall": "npm run copy-vendor"
     }
 }
