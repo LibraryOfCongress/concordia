@@ -115,8 +115,8 @@ You have to use the full container name because compose.yml is not referenced wh
 You will need to manually collect the static files before running the development server. This only needs to be done once after building the app container (and when changing static files in the future).
 
 ```bash
-npx gulp build
-python manage.py collectstatic
+npx vite build
+python manage.py collectstatic --no-post-process
 ```
 
 ### Launch the development server

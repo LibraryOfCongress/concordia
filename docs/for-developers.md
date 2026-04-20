@@ -170,26 +170,14 @@ delete the local container so it will be rebuilt the next time you run
     npm install
     ```
 
-1. In another terminal, start Gulp to watch for changes to the SCSS files and
-   compile them to CSS:
-
-    ```bash
-    npx gulp
-    ```
-
-    If you only want to compile them a single time without live updates:
-
-    ```bash
-    npx gulp build
-    ```
-
-1. We also need to bundle the js files with Vite. Similar to Gulp, you can use another terminal, start Vite to watch for issues when making changes to the bundled files:
+1. In another terminal, start Vite to watch for changes to the SCSS files and
+   compile them to CSS, and changes in the bundled, hased and compressed js files:
 
     ```bash
     npx vite
     ```
 
-    If you only want to bundle them a single time without live updates:
+    If you only want to build, bundle, and compress them a single time without live updates:
 
     ```bash
     npx vite build

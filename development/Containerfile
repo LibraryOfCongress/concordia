@@ -105,9 +105,9 @@ RUN touch /workspace/logs/concordia.log
 
 # Front-end build and asset pipeline:
 # - update npm to a known major version
-# - install JS dependencies (production-only) and build assets via gulp
-RUN npm install --silent  && npx gulp build
-# Additional JS build step for Vite.
+# - install JS dependencies (production-only)
+RUN npm install --silent
+# Additional JS build step for Vite - compile scss, bundle, hash, and compress js files.
 RUN npm run build
 
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
