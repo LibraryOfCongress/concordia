@@ -5,7 +5,7 @@
         "child_process": "^1.0.2",
         "sass-embedded": "^1.99.0",
         "stylelint-value-no-unknown-custom-properties": "^6.1.1",
-        "vite": "^8.0.5",
+        "vite": "^8.0.9",
         "vite-plugin-compression2": "^2.5.2"
     },
     "dependencies": {
