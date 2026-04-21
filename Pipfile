@@ -35,7 +35,6 @@ django-maintenance-mode = "==0.22.0"
 xlsxwriter = "==3.2.5"
 psycopg2 = "==2.9.11"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
-django-opensearch-dsl = "==0.7.0"
 django-structlog = {extras = ["celery"], version = "==9.1.1"}
 defusedxml = "==0.7.1"
 django-ninja = "==1.4.3"
@@ -56,6 +55,7 @@ prometheus-client = "~=0.25.0"
 aws-xray-sdk = "~=2.15.0"
 pre-commit = "~=4.5.1"
 django = "~=5.2.13"
+django-opensearch-dsl = "==0.8.0"
 
 [dev-packages]
 invoke = "==2.2.0"

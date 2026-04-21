@@ -103,7 +103,7 @@ class TagCollectionDocument(Document):
         model = UserAssetTagCollection
         fields = ["created_on", "updated_on"]
 
-    def get_queryset(self, filter_=None, exclude=None, count=None):
+    def get_queryset(self):
         return (
             super()
             .get_queryset()
@@ -162,7 +162,7 @@ class TranscriptionDocument(Document):
             "submitted",
         ]
 
-    def get_queryset(self, filter_=None, exclude=None, count=None):
+    def get_queryset(self):
         return (
             super()
             .get_queryset()
@@ -224,7 +224,7 @@ class AssetDocument(Document):
         model = Asset
         fields = ["published", "difficulty", "slug", "sequence", "year"]
 
-    def get_queryset(self, filter_=None, exclude=None, count=None):
+    def get_queryset(self):
         return (
             super()
             .get_queryset()
