@@ -36,7 +36,7 @@ xlsxwriter = "==3.2.5"
 psycopg2 = "==2.9.11"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-opensearch-dsl = "==0.7.0"
-django-structlog = {extras = ["celery"], version = "==9.1.1"}
+django-structlog = {extras = ["celery"], version = "==10.0.0"}
 defusedxml = "==0.7.1"
 django-ninja = "==1.4.3"
 urllib3 = "==2.6.3"
