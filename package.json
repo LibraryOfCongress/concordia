@@ -23,7 +23,7 @@
         "jquery": "^3.5.1",
         "js-cookie": "^3.0.5",
         "openseadragon": "^6.0.2",
-        "openseadragon-filtering": "^1.0.0",
+        "openseadragon-filters": "^2.2.0",
         "prettier": "^2.8.8",
         "remarkable": "^2.0.1",
         "screenfull": "^6.0.0",

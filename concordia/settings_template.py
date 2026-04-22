@@ -66,7 +66,7 @@ NPM_FILE_PATTERNS = {
     "split.js": ["dist/*"],
     "urijs": ["src/*"],
     "openseadragon": ["build/*"],
-    "openseadragon-filtering": ["openseadragon-filtering.js"],
+    "openseadragon-filters": ["dist/*", "index.js"],
     "codemirror": ["lib/*", "addon/*", "mode/*"],
     "prettier": ["*.js"],
     "remarkable": ["dist/*"],
