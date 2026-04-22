@@ -132,7 +132,9 @@ if (contributeContainer && seadragonViewer) {
                     // sometimes not work depending on
                     // the rotation, unless it's delayed.
                     // Less than 10ms didn't reliable work.
-                    seadragonViewer.viewport.zoomTo(1);
+                    // Adding ', null, true' ensures the zoom happens immediately
+                    // and doesn't conflict with the CSS flexbox resizing of the container.
+                    seadragonViewer.viewport.zoomTo(1, undefined, true);
                 }, 10);
             }
         });
@@ -146,7 +148,7 @@ if (contributeContainer && seadragonViewer) {
                 }
                 pageSplit = verticalSplit();
                 setTimeout(function () {
-                    seadragonViewer.viewport.zoomTo(1);
+                    seadragonViewer.viewport.zoomTo(1, undefined, true);
                 }, 10);
             }
         });
