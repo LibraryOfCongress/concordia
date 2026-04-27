@@ -32,8 +32,6 @@
             data-contact-url="https://ask.loc.gov/crowd"
     ></script>
 
-    <script module src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
-    <script module src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
     {% if anonymous_user_validation_required %}
         <script module src="{{ TURNSTILE_JS_API_URL }}"></script>
     {% endif %}

@@ -1,11 +1,18 @@
 import {debounce, displayHtmlMessage} from './base.js';
 import screenfull from 'screenfull';
 import OpenSeadragon from 'openseadragon';
+import {
+    initializeFiltering,
+    GAMMA,
+    INVERT,
+    THRESHOLDING,
+} from 'openseadragon-filters';
 
 const viewerElement = document.getElementById('viewer-data');
 
 let viewerData;
 let seadragonViewer;
+let filterPlugin;
 
 if (viewerElement) {
     viewerData = viewerElement.dataset;
@@ -36,6 +43,9 @@ if (viewerElement) {
         homeFillsView: false,
     });
 
+    // Initialize the filtering plugin
+    filterPlugin = initializeFiltering(seadragonViewer);
+
     // We need to define our own fullscreen function rather than using OpenSeadragon's
     // because the built-in fullscreen function overwrites the DOM with the viewer,
     // breaking our extra controls, such as the image filters.
@@ -50,6 +60,20 @@ if (viewerElement) {
                 screenfull.exit();
             } else {
                 screenfull.request(targetElement);
+            }
+        });
+        // Listen for fullscreen changes for proper flex container alinment
+        screenfull.on('change', () => {
+            let targetElement = document.querySelector(
+                fullscreenButton.dataset.target,
+            );
+            if (screenfull.isFullscreen) {
+                // Ensure the flex container takes full width of the screen
+                targetElement.style.width = '100vw';
+                targetElement.style.display = 'flex';
+            } else {
+                targetElement.style.width = '';
+                targetElement.style.display = '';
             }
         });
     }
@@ -93,7 +117,7 @@ let availableFilters = [
                 value >= 0 &&
                 value <= 5
             ) {
-                return OpenSeadragon.Filters.GAMMA(value);
+                return GAMMA(Number.parseFloat(value));
             }
         },
     },
@@ -103,7 +127,7 @@ let availableFilters = [
         getFilter: function () {
             let value = document.getElementById(this.inputId).checked;
             if (value) {
-                return OpenSeadragon.Filters.INVERT();
+                return INVERT();
             }
         },
     },
@@ -113,7 +137,7 @@ let availableFilters = [
         getFilter: function () {
             let value = document.getElementById(this.inputId).value;
             if (!Number.isNaN(value) && value > 0 && value <= 255) {
-                return OpenSeadragon.Filters.THRESHOLDING(value);
+                return THRESHOLDING(Number.parseInt(value));
             }
         },
     },
@@ -128,11 +152,15 @@ function updateFilters() {
         }
     }
 
-    seadragonViewer.setFilterOptions({
-        filters: {
-            processors: filters,
-        },
-    });
+    //  Call setFilterOptions on the plugin instance instead of the viewer
+
+    if (filterPlugin) {
+        filterPlugin.setFilterOptions({
+            filters: {
+                processors: filters,
+            },
+        });
+    }
 }
 
 if (viewerElement) {

@@ -19,24 +19,8 @@ import '../concordia/static/js/src/viewer-split.js';
 
 /*- Third-party */
 import OpenSeadragon from 'openseadragon';
-import 'openseadragon-filtering';
 
-OpenSeadragon.setString(
-    'prefixUrl',
-    "{% static 'openseadragon/build/openseadragon/images/' %}",
-);
-
-if (window.OpenSeadragon?.Filters && !OpenSeadragon.Filters) {
-    OpenSeadragon.Filters = window.OpenSeadragon.Filters;
-}
-
-if (
-    window.OpenSeadragon?.Viewer?.prototype.setFilterOptions &&
-    !OpenSeadragon.Viewer.prototype.setFilterOptions
-) {
-    OpenSeadragon.Viewer.prototype.setFilterOptions =
-        window.OpenSeadragon.Viewer.prototype.setFilterOptions;
-}
+window.OpenSeadragon = OpenSeadragon;
 
 if (setTutorialHeight) {
     window.setTutorialHeight = setTutorialHeight;

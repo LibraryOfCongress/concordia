@@ -18,6 +18,9 @@ export default defineConfig({
             ),
         },
     },
+    optimizeDeps: {
+        include: ['openseadragon', 'openseadragon-filters'],
+    },
     build: {
         // collectstatic ignores hidden files - so 'true' not enough
         manifest: 'manifest.json',
