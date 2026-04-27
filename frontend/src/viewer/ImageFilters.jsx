@@ -18,6 +18,7 @@
 
 import {useState, useEffect} from 'react';
 import OpenSeadragon from 'openseadragon';
+import {GAMMA, INVERT, THRESHOLDING} from 'openseadragon-filters';
 import debounce from 'lodash.debounce';
 
 import FilterTabNav from './FilterTabNav';
@@ -37,30 +38,33 @@ import ThresholdFilterForm from './ThresholdFilterForm';
  *   A ref to the active OpenSeadragon viewer. Must expose `setFilterOptions`.
  *
  * @example
- *   <ImageFilters osdViewerRef={viewerRef} />
+ *   <ImageFilters filterPluginRef={viewerRef} />
  */
-export default function ImageFilters({osdViewerRef}) {
+export default function ImageFilters({filterPluginRef}) {
     const [gamma, setGamma] = useState(1.0);
     const [invert, setInvert] = useState(false);
     const [threshold, setThreshold] = useState(0);
 
     // Debounced bridge to OSD filter pipeline
     const updateFilters = debounce(() => {
-        if (!osdViewerRef.current) return;
+        // Get the plugin instance from the ref
+        const plugin = filterPluginRef.current;
+        if (!plugin) return;
 
         const processors = [];
 
         if (gamma !== 1 && gamma >= 0 && gamma <= 5) {
-            processors.push(OpenSeadragon.Filters.GAMMA(gamma));
+            processors.push(GAMMA(gamma));
         }
         if (invert) {
-            processors.push(OpenSeadragon.Filters.INVERT());
+            processors.push(INVERT());
         }
         if (threshold > 0 && threshold <= 255) {
-            processors.push(OpenSeadragon.Filters.THRESHOLDING(threshold));
+            processors.push(THRESHOLDING(threshold));
         }
 
-        osdViewerRef.current.setFilterOptions({
+        //Call setFilterOptions on the PLUGIN
+        plugin.setFilterOptions({
             filters: {processors},
         });
     }, 100);
