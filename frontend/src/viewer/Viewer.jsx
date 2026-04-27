@@ -1,6 +1,6 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import OpenSeadragon from 'openseadragon';
-import 'openseadragon-filtering';
+import {initializeFiltering} from 'openseadragon-filters';
 import screenfull from 'screenfull';
 
 import {prefixUrl, contactUrl} from '../config.js';
@@ -22,7 +22,7 @@ import KeyboardHelpModal from './KeyboardHelpModal';
  * - Destroys the OSD instance during cleanup to avoid leaks
  *
  * Dependencies:
- * - Requires the "openseadragon-filtering" plugin to be imported once
+ * - Requires the "openseadragon-filters" plugin to be imported once
  * - Uses the "screenfull" library for fullscreen where available
  *
  * @param {string} imageUrl - Source image URL used by OpenSeadragon.
@@ -35,8 +35,30 @@ export default function Viewer({
     onLayoutHorizontal,
     onLayoutVertical,
 }) {
-    const viewerRef = useRef(null);
+    const viewerRef = useRef(null); // For OSD
+    const containerRef = useRef(null); // For Fullscreen wrapper
     const osdViewerRef = useRef(null);
+    const filterPluginRef = useRef(null);
+
+    // State to track fullscreen changes
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Add listener for fullscreen changes
+    useEffect(() => {
+        const handler = () => {
+            setIsFullscreen(screenfull.isFullscreen);
+        };
+
+        if (screenfull.isEnabled) {
+            screenfull.on('change', handler);
+        }
+
+        return () => {
+            if (screenfull.isEnabled) {
+                screenfull.off('change', handler);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (!viewerRef.current || !imageUrl) return;
@@ -79,10 +101,16 @@ export default function Viewer({
             alert(`Unable to display image. Contact us at ${contactUrl}`);
         });
 
+        // Initialize the plugin instance - filtering using the ESM method
+        filterPluginRef.current = initializeFiltering(osdViewerRef.current);
+
         return () => {
             if (osdViewerRef.current) {
                 osdViewerRef.current.destroy();
+                osdViewerRef.current = null;
             }
+            // Clear the plugin ref on unmount
+            filterPluginRef.current = null;
         };
     }, [imageUrl]);
 
@@ -92,24 +120,31 @@ export default function Viewer({
         if (screenfull.isFullscreen) {
             screenfull.exit();
         } else {
-            screenfull.request(viewerRef.current);
+            // Request fullscreen on the wrapper, not just the image
+            screenfull.request(containerRef.current);
         }
     };
 
     return (
-        <>
+        <div
+            ref={containerRef}
+            className={`d-flex flex-column h-100 w-100 ${
+                isFullscreen ? 'is-fullscreen' : ''
+            }`}
+            style={isFullscreen ? {backgroundColor: '#212529'} : {}}
+        >
             <ViewerControls
                 onLayoutHorizontal={onLayoutHorizontal}
                 onLayoutVertical={onLayoutVertical}
                 toggleFullscreen={toggleFullscreen}
             />
-            <ImageFilters osdViewerRef={osdViewerRef} />
+            <ImageFilters filterPluginRef={filterPluginRef} />
             <KeyboardHelpModal />
             <div
                 id="asset-image"
                 ref={viewerRef}
-                className="h-100 bg-dark d-print-none w-100"
+                className="flex-grow-1 bg-dark d-print-none w-100"
             ></div>
-        </>
+        </div>
     );
 }

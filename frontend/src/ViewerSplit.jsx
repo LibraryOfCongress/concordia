@@ -154,7 +154,7 @@ export default function ViewerSplit({assetData, onTranscriptionUpdate}) {
             saveDirection(dir);
             setTimeout(() => {
                 if (window.seadragonViewer?.viewport) {
-                    window.seadragonViewer.viewport.zoomTo(1);
+                    window.seadragonViewer.viewport.zoomTo(1, undefined, true);
                 }
             }, 10);
         }
