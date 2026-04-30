@@ -106,7 +106,7 @@ class TagCollectionDocument(Document):
     def get_queryset(self, *args, **kwargs):
         return (
             super()
-            .get_queryset()
+            .get_queryset(*args, **kwargs)
             .order_by("pk")
             .prefetch_related(
                 "asset__item", "asset__item__project", "asset__item__project__campaign"
@@ -165,7 +165,7 @@ class TranscriptionDocument(Document):
     def get_queryset(self, *args, **kwargs):
         return (
             super()
-            .get_queryset()
+            .get_queryset(*args, **kwargs)
             .order_by("pk")
             .prefetch_related(
                 "asset__item",
@@ -227,7 +227,7 @@ class AssetDocument(Document):
     def get_queryset(self, *args, **kwargs):
         return (
             super()
-            .get_queryset()
+            .get_queryset(*args, **kwargs)
             .order_by("pk")
             .prefetch_related(
                 "item",
