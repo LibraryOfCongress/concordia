@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-gunicorn = "==23.0.0"
+gunicorn = "==25.3.0"
 celery = { extras = ["redis"], version = "==5.5.3" }
 django-tinymce = "==4.1.0"
 whitenoise = "==6.9.0"
