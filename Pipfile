@@ -20,7 +20,7 @@ django-flags = "==5.0.14"
 sentry-sdk = "==2.57.0"
 channels = { extras = ["daphne"], version = "==4.2.2" }
 channels-redis = "==4.3.0"
-more-itertools = "==10.7.0"
+more-itertools = "==11.0.2"
 nh3 = "==0.3.4"
 django-admin-multiple-choice-list-filter = "==0.1.1"
 django-npm = "==1.0.1"
