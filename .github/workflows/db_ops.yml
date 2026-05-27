@@ -32,6 +32,8 @@ jobs:
         steps:
             - name: Checkout Code
               uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v6
@@ -49,13 +51,15 @@ jobs:
             - name: Set Variables
               id: vars
               run: |
-                  if [[ "${{ github.event.inputs.operation }}" == "dump" ]]; then
+                  if [[ "${GITHUB_EVENT_INPUTS_OPERATION}" == "dump" ]]; then
                     echo "REPO_NAME=${{ env.DUMP_REPO }}" >> $GITHUB_OUTPUT
                     echo "STAGE_TARGET=dump" >> $GITHUB_OUTPUT
                   else
                     echo "REPO_NAME=${{ env.RESTORE_REPO }}" >> $GITHUB_OUTPUT
                     echo "STAGE_TARGET=restore" >> $GITHUB_OUTPUT
                   fi
+              env:
+                  GITHUB_EVENT_INPUTS_OPERATION: ${{ github.event.inputs.operation }}
 
             # ACTION 1: BUILD AND PUSH 'test'
             - name: Build and Push Test
@@ -75,7 +79,7 @@ jobs:
             - name: Promote Test to Latest
               if: ${{ github.event.inputs.action_type == 'promote_to_latest' }}
               run: |
-                  REPO=${{ steps.vars.outputs.REPO_NAME }}
+                  REPO=${STEPS_VARS_OUTPUTS_REPO_NAME}
 
                   MANIFEST=$(aws ecr batch-get-image \
                     --repository-name $REPO \
@@ -87,3 +91,5 @@ jobs:
                     --repository-name $REPO \
                     --image-tag latest \
                     --image-manifest "$MANIFEST"
+              env:
+                  STEPS_VARS_OUTPUTS_REPO_NAME: ${{ steps.vars.outputs.REPO_NAME }}
