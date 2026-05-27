@@ -59,6 +59,8 @@ jobs:
 
             - name: Checkout repository
               uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
 
             - name: Set up Python 3.12
               uses: actions/setup-python@v6
@@ -197,9 +199,9 @@ jobs:
             - name: Generate Coverage Report Comment
               run: |
                   echo "**🛡 Test Coverage Report 🛡**" > coverage_comment.txt
-                  echo "- **Current PR Coverage:** ${{ env.PR_COVERAGE }}" >> coverage_comment.txt
-                  echo "- **Release Branch Coverage:** ${{ env.RELEASE_COVERAGE }}" >> coverage_comment.txt
-                  echo "- **${{ env.COVERAGE_CHANGE }}**" >> coverage_comment.txt
+                  echo "- **Current PR Coverage:** ${PR_COVERAGE}" >> coverage_comment.txt
+                  echo "- **Release Branch Coverage:** ${RELEASE_COVERAGE}" >> coverage_comment.txt
+                  echo "- **${COVERAGE_CHANGE}**" >> coverage_comment.txt
                   echo "- 📊 **[Download Full Coverage Report (Under "Artifacts")](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
                   echo "" >> coverage_comment.txt
                   echo "<details>" >> coverage_comment.txt

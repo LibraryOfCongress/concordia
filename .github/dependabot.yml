@@ -6,14 +6,24 @@
 version: 2
 updates:
     - package-ecosystem: 'github-actions' # See documentation for possible values
-      directory: '/workflows' # Location of package manifests
+      directory: '/' # Location of package manifests
+      groups:
+          github-actions:
+              patterns:
+                  - '*' # Group all Actions updates into a single larger pull request
       schedule:
           interval: 'weekly'
+      cooldown:
+          default-days: 7
     - package-ecosystem: 'npm' # See documentation for possible values
       directory: '/' # Location of package manifests
       schedule:
           interval: 'daily'
+      cooldown:
+          default-days: 7
     - package-ecosystem: 'pip' # See documentation for possible values
       directory: '/' # Location of package manifests
       schedule:
           interval: 'daily'
+      cooldown:
+          default-days: 7
