@@ -51,7 +51,7 @@ jobs:
             - name: Set Variables
               id: vars
               run: |
-                  if [[ "${{ GITHUB_EVENT_INPUTS_OPERATION }}" == "dump" ]]; then
+                  if [[ "${GITHUB_EVENT_INPUTS_OPERATION}" == "dump" ]]; then
                     echo "REPO_NAME=${{ env.DUMP_REPO }}" >> $GITHUB_OUTPUT
                     echo "STAGE_TARGET=dump" >> $GITHUB_OUTPUT
                   else
@@ -79,7 +79,7 @@ jobs:
             - name: Promote Test to Latest
               if: ${{ github.event.inputs.action_type == 'promote_to_latest' }}
               run: |
-                  REPO=${{ STEPS_VARS_OUTPUTS_REPO_NAME }}
+                  REPO=${STEPS_VARS_OUTPUTS_REPO_NAME}
 
                   MANIFEST=$(aws ecr batch-get-image \
                     --repository-name $REPO \
