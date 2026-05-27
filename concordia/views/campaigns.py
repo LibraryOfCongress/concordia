@@ -259,7 +259,7 @@ class CampaignTopicListView(TemplateView):
             Campaign.objects.published()
             .listed()
             .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
-            .order_by("ordering", "title")
+            .order_by("-completed_date")
         )
 
         return render(request, self.template_name, data)
