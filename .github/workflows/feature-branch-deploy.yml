@@ -40,7 +40,7 @@ jobs:
                   node-version: '20'
 
             - name: Checkout repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v6.0.2
               with:
                   ref: ${{ vars.FEATURE_BRANCH }}
                   fetch-depth: 0
