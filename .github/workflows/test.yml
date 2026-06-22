@@ -58,7 +58,7 @@ jobs:
                   node-version: '20'
 
             - name: Checkout repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v6.0.3
               with:
                   persist-credentials: false
 
@@ -219,6 +219,6 @@ jobs:
             # Post a comment on the PR with the coverage results
             - name: Comment Coverage Change on PR
               if: github.event_name == 'pull_request'
-              uses: mshick/add-pr-comment@v3
+              uses: mshick/add-pr-comment@v3.11.0
               with:
                   message-path: coverage_comment.txt
