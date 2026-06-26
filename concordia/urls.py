@@ -133,6 +133,7 @@ urlpatterns = [
     ),
     # End of help-center patterns
     path("get-started/", views.simple_pages.simple_page, name="welcome-guide"),
+    path("get-started/", views.simple_pages.simple_page, name="get-started"),
     path(
         "get-started/how-to-transcribe/",
         views.simple_pages.simple_page,
