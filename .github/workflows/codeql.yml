@@ -45,13 +45,13 @@ jobs:
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Checkout repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   persist-credentials: false
 
             - if: matrix.language == 'python'
               name: Setup python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v6.2.0
               with:
                   python-version: '3.12'
 
