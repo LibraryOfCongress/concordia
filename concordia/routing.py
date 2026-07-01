@@ -9,12 +9,13 @@ from . import consumers
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "concordia.settings")
 django_asgi_app = get_asgi_application()
+websocket_urlpatterns = [
+    path("ws/asset/asset_updates/", consumers.AssetConsumer.as_asgi()),
+]
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AuthMiddlewareStack(
-            URLRouter([path("ws/asset/asset_updates/", consumers.AssetConsumer)])
-        ),
+        "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
     }
 )
