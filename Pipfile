@@ -29,7 +29,7 @@ weasyprint = "==68.1"
 tesseract = "==0.1.3"
 pytesseract = "==0.3.13"
 django-redis = "==6.0.0"
-twisted = { extras = ["http2", "tls"], version = "==25.5.0" }
+twisted = { extras = ["http2", "tls"], version = "==26.4.0" }
 pyleniumio = "==1.21.0"
 django-maintenance-mode = "==0.22.0"
 xlsxwriter = "==3.2.5"
