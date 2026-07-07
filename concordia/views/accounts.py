@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.views import (
     LoginView,
     PasswordResetConfirmView,
@@ -18,7 +19,7 @@ from django.contrib.auth.views import (
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.forms import Form
@@ -149,14 +150,16 @@ def registration_rate(group: str, request: HttpRequest) -> Optional[str]:
 )
 class ConcordiaRegistrationView(RegistrationView):
     """
-    User registration view with rate limiting.
+    User registration view with rate limiting and multi-part MIME activation
+    email support.
 
     Extends
     [django_registration.views.RegistrationView](https://django-registration.readthedocs.io/en/stable/views.html#django_registration.views.RegistrationView)
-    to apply a POST-specific rate limit using the
+    overriding the default email transport mechanism to deliver unified plain-text and
+    anchor-wrapped HTML payloads and apply a POST-specific rate limit using the
     [django-ratelimit](https://django-ratelimit.readthedocs.io/en/stable/usage.html#ratelimit)
     decorator. This protects against abuse by restricting failed registration attempts
-    while  allowing valid submissions to proceed freely.
+    while allowing valid submissions to proceed freely.
 
     Attributes:
         form_class (Form): The form used to collect and validate user registration
@@ -168,6 +171,55 @@ class ConcordiaRegistrationView(RegistrationView):
     """
 
     form_class: Type[Form] = UserRegistrationForm
+
+    email_body_template: str = "django_registration/activation_email_body.txt"
+    email_html_body_template: str = "django_registration/activation_email_body.html"
+    email_subject_template: str = "django_registration/activation_email_subject.txt"
+
+    def send_activation_email(self, user: AbstractUser) -> None:
+        """Constructs and dispatches a multipart/alternative transactional email
+        template containing both structural HTML elements and plain-text fallbacks,
+        aligning with the established platform standard found in
+        concordia.handlers.user_successfully_activated.
+        """
+        activation_key: str = self.get_activation_key(user)
+        context: dict[str, Any] = self.get_email_context(activation_key)
+        context["user"] = user
+
+        # Resolve subject header line and strip internal linebreaks to isolate against
+        # header injection
+        subject: str = render_to_string(
+            template_name=self.email_subject_template,
+            context=context,
+            request=self.request,
+        )
+        subject = "".join(subject.splitlines())
+
+        # Render plain-text alternative payload
+        text_content: str = render_to_string(
+            template_name=self.email_body_template,
+            context=context,
+            request=self.request,
+        )
+
+        # Render structural HTML template payload containing hyperlinked text anchors
+        html_content: str = render_to_string(
+            template_name=self.email_html_body_template,
+            context=context,
+            request=self.request,
+        )
+
+        # Build multi-part transport envelope utilizing identical reply configurations
+        # as handlers.py
+        email = EmailMultiAlternatives(
+            subject=subject.rstrip(),
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email],
+            reply_to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send()
 
 
 @method_decorator(never_cache, name="dispatch")
