@@ -63,7 +63,7 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Python 3.12
-              uses: actions/setup-python@v6.2.0
+              uses: actions/setup-python@v6.3.0
               with:
                   python-version: '3.12'
                   architecture: 'x64'
@@ -133,7 +133,7 @@ jobs:
             # Cache coverage results if running on the release branch
             - name: Cache Release Coverage (if running on release branch)
               if: github.ref == 'refs/heads/release'
-              uses: actions/cache@v5.0.5
+              uses: actions/cache@v6.1.0
               with:
                   path: coverage.txt
                   key: release-coverage
@@ -148,7 +148,7 @@ jobs:
             # Download the stored release branch coverage for PR comparison, if it exists
             - name: Restore Release Coverage (if running on PR)
               if: github.event_name == 'pull_request'
-              uses: actions/cache@v5.0.5
+              uses: actions/cache@v6.1.0
               with:
                   path: coverage.txt
                   key: release-coverage
