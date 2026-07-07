@@ -7,7 +7,7 @@ https://{{ site }}{% url "django_registration_activate" activation_key %}
 
 Once your email is verified, your account will be active! As a registered user you can complete pages by reviewing other volunteers' transcriptions, see a history of your activity on your account profile page, and use the OCR tool.
 
-Check out our Get Started guide https://crowd.loc.gov/get-started/.
+Check out our Get Started guide: https://crowd.loc.gov/get-started/.
 
 Happy transcribing!
 The By the People team
