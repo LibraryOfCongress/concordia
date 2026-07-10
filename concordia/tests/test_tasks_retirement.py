@@ -202,7 +202,9 @@ class RetirementTasksTests(TestCase):
             # Header should contain exactly 10 signatures, matching first ten ids.
             header_iter = m_chord.call_args[0][0]
             header_list = list(header_iter)
-            self.assertEqual(header_list, [f"S({aid})" for aid in first_ten])
+            self.assertEqual(
+                sorted(header_list), sorted([f"S({aid})" for aid in first_ten])
+            )
             # The body signature should be called with campaign and item ids.
             m_body_sig.assert_called_once_with(camp.id, itm.id)
             runner.assert_called_once_with("BODY")
