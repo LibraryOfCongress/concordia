@@ -46,9 +46,9 @@ structlog.configure(
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
-DEFAULT_TO_EMAIL = "rsar@loc.gov"
+DEFAULT_TO_EMAIL = "jkue@loc.gov"
 CONCORDIA_DEVS = [
-    "rsar@loc.gov",
+    "jkue@loc.gov",
 ]
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]  # nosec

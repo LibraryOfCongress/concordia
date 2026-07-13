@@ -47,7 +47,7 @@ EMAIL_FILE_PATH = (
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 CONCORDIA_DEVS = [
-    "rsar@loc.gov",
+    "jkue@loc.gov",
 ]
 
 INSTALLED_APPS += ["django_opensearch_dsl"]
