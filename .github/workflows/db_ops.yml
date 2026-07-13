@@ -64,7 +64,7 @@ jobs:
             # ACTION 1: BUILD AND PUSH 'test'
             - name: Build and Push Test
               if: ${{ github.event.inputs.action_type == 'build_test' }}
-              uses: docker/build-push-action@v7.2.0
+              uses: docker/build-push-action@v7.3.0
               with:
                   # context: defines where the 'COPY' commands look for files
                   context: ./db_scripts
