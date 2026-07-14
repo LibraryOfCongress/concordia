@@ -5,7 +5,7 @@ from .settings_template import INSTALLED_APPS, STATIC_URL
 
 DEBUG = os.getenv("DEBUG", "").lower() == "true"
 
-EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 INSTALLED_APPS += ["django_opensearch_dsl"]
 
