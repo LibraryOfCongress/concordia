@@ -64,7 +64,7 @@ def unusual_activity(ignore_env: bool = False) -> None:
         html_body_template = loader.get_template("emails/unusual_activity.html")
         html_body_message = html_body_template.render(context)
 
-        to_email = ["rsar@loc.gov"]
+        to_email = ["jkue@loc.gov"]
         if settings.DEFAULT_TO_EMAIL:
             to_email.append(settings.DEFAULT_TO_EMAIL)
         message = EmailMultiAlternatives(

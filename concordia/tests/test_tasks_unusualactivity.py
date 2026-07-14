@@ -87,7 +87,7 @@ class UnusualActivityTaskTests(TestCase):
         args, kwargs = m_email.call_args
         self.assertEqual(kwargs["subject"], expected_subject)
         self.assertEqual(kwargs["from_email"], "noreply@example.com")
-        self.assertEqual(kwargs["to"], ["rsar@loc.gov"])
+        self.assertEqual(kwargs["to"], ["jkue@loc.gov"])
         self.assertEqual(kwargs["reply_to"], ["noreply@example.com"])
 
         txt_tmpl.render.assert_called_once()
@@ -154,7 +154,7 @@ class UnusualActivityTaskTests(TestCase):
         expected_subject = "Unusual User Activity Report for STAMP2 [TEST]"
         args, kwargs = m_email.call_args
         self.assertEqual(kwargs["subject"], expected_subject)
-        self.assertEqual(kwargs["to"], ["rsar@loc.gov", "extra@example.com"])
+        self.assertEqual(kwargs["to"], ["jkue@loc.gov", "extra@example.com"])
         self.assertEqual(kwargs["from_email"], "notify@example.com")
         self.assertEqual(kwargs["reply_to"], ["notify@example.com"])
 

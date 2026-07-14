@@ -48,8 +48,6 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "crowd@loc.gov")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 CONCORDIA_DEVS = [
     "jkue@loc.gov",
-    "jstegmaier@loc.gov",
-    "rsar@loc.gov",
 ]
 
 CSRF_COOKIE_SECURE = True
