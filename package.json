@@ -13,7 +13,7 @@
         "@fortawesome/fontawesome-free": "^7.1.0",
         "@popperjs/core": "^2.11.8",
         "@sentry/browser": "^10.59.0",
-        "@sentry/core": "^10.59.0",
+        "@sentry/core": "^10.63.0",
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.1",
         "chroma-js": "^3.2.0",
