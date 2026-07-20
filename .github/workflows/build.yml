@@ -27,7 +27,7 @@ jobs:
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Install node and npm
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@v7
               with:
                   node-version: '20'
 
