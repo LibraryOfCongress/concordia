@@ -1,0 +1,148 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block content %}
+    <div id="content-main" style="padding: 20px;">
+        <h2>Media Library Manager</h2>
+
+        <div style="margin-bottom: 30px; background: #262b33; padding: 15px; border-radius: 4px;">
+            <a class="button" href="{% url 'admin:concordia_concordiafile_add' %}?_popup=1" style="background: #264b73;">
+                ➕ Upload New Media File
+            </a>
+        </div>
+
+        <fieldset class="module aligned">
+            <h3>Existing Available Storage Assets</h3>
+            {% if available_files %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-top: 15px;">
+                    {% for file in available_files %}
+                        <div class="file-card" data-id="{{ file.id }}" style="background: #1e2229; border: 1px solid #363d4a; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #111418; border-radius: 2px;">
+                                <img src="{{ file.uploaded_file.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                            </div>
+                            <div style="margin-top: 8px;">
+                                <p style="font-size: 11px; margin: 0 0 8px 0; word-break: break-all; color: #adbac7;" title="{{ file.name }}">
+                                    {{ file.name|truncatechars:25 }}
+                                </p>
+                                <div style="display: flex; gap: 5px;">
+                                    <button type="button" class="button select-asset-btn"
+                                            data-url="{{ file.uploaded_file.url }}"
+                                            data-name="{{ file.name }}"
+                                            style="flex: 1; padding: 4px; font-size: 11px; background: #2e6930;">
+                                        Select
+                                    </button>
+                                    <button type="button" class="button delete-asset-btn"
+                                            data-id="{{ file.id }}"
+                                            data-url="{{ file.uploaded_file.url }}"
+                                            style="padding: 4px 8px; font-size: 11px; background: #b13636;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="padding: 15px; color: #8b949e;">No media objects currently indexed inside the storage schema.</p>
+            {% endif %}
+        </fieldset>
+    </div>
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", () => {
+        // Selection Logic
+            document.querySelectorAll(".select-asset-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const cleanUrl = btn.getAttribute("data-url").split("?")[0];
+                    const fileName = btn.getAttribute("data-name");
+                    if (window.opener && window.opener.tinymce_callback) {
+                        window.opener.tinymce_callback(cleanUrl, fileName);
+                    }
+                    window.close();
+                });
+            });
+
+        // Deletion & Real-time TinyMCE Synchronization Logic
+            document.querySelectorAll(".delete-asset-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    if (!confirm("Are you sure you want to permanently delete this file from S3 storage? This will instantly remove it from the active editor window.")) return;
+
+                    const rawFileId = btn.getAttribute("data-id");
+                    const targetUrl = btn.getAttribute("data-url").split("?")[0];
+                    const fileId = parseInt(rawFileId, 10);
+
+                    if (isNaN(fileId)) {
+                        console.error("Invalid structural identifier extracted from DOM component");
+                        return;
+                    }
+
+                    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+                    fetch('/admin/concordia/concordiafile/explicit-popup-delete/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ file_id: fileId })
+                    })
+                        .then(res => {
+                            if (!res.ok) {
+                                return res.json().then(errData => { throw new Error(errData.error || "Server rejection") });
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                        // 1. Evict structural visual card layout from the current popup grid view
+                                const targetCard = document.querySelector(`.file-card[data-id="${rawFileId}"]`);
+                                if (targetCard) {
+                                    targetCard.remove();
+                                }
+
+                        // 2. Clear out the active TinyMCE overlay dialog window if it matches the deleted asset
+                                if (window.opener && window.opener.tinymce) {
+                                    const activeEditor = window.opener.tinymce.activeEditor;
+                                    if (activeEditor) {
+                                // Close the primary image dialog modal window directly through the WindowManager API
+                                        if (activeEditor.windowManager) {
+                                            activeEditor.windowManager.close();
+                                        }
+
+                                // 3. Scan the parent editor content document and purge all corresponding DOM nodes
+                                        const doc = activeEditor.getDoc();
+                                        const images = doc.querySelectorAll('img');
+
+                                        images.forEach(img => {
+                                            if (img.src.split('?')[0] === targetUrl) {
+                                        // Handle structured figure elements containing captions/alignments securely
+                                                const enclosingFigure = img.closest('figure.image');
+                                                if (enclosingFigure) {
+                                                    enclosingFigure.remove();
+                                                } else {
+                                                    img.remove();
+                                                }
+                                            }
+                                        });
+
+                                // Force editor internal engine synchronization and notify listeners
+                                        activeEditor.nodeChanged();
+                                    }
+                                }
+
+                        // 4. Fully automate user workflow by closing this popup manager window
+                                window.close();
+                            } else {
+                                alert("Error removing asset: " + data.error);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Network communication failure:", err);
+                            alert("Failed to drop asset layout cleanly: " + err.message);
+                        });
+                });
+            });
+        });
+    </script>
+{% endblock %}

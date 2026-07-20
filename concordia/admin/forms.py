@@ -44,6 +44,9 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
     "h6",
     "hr",
     "section",
+    "figure",
+    "figcaption",
+    "img",
 }
 
 ALLOWED_ATTRIBUTES = {
@@ -53,6 +56,9 @@ ALLOWED_ATTRIBUTES = {
     "div": {"class", "id"},
     "span": {"class", "id"},
     "p": {"class", "id"},
+    "figure": {"class"},
+    "figcaption": {"class"},
+    "img": {"src", "alt", "title", "width", "height", "class", "style"},
 }
 
 
