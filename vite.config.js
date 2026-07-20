@@ -37,7 +37,7 @@ export default defineConfig({
                 // ADD the new standalone JS files
                 admin_custom: './concordia/static/admin/custom-inline.js',
                 admin_editor: './concordia/static/admin/editor-preview.js',
-                tinymce_picker: 'concordia/static/js/src/tinymce_picker.js',
+                tinymce_picker: 'concordia/static/js/src/tinymce-picker.js',
                 js_base: './concordia/static/js/src/base.js',
                 accessible_colors:
                     './concordia/static/js/src/modules/accessible-colors.js',
