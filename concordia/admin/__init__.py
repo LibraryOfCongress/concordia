@@ -280,7 +280,7 @@ class TinyMCEMediaMixin:
     """
 
     class Media:
-        js = ("js/src/tinymce_picker.js",)
+        js = ("js/src/tinymce-picker.js",)
 
 
 @admin.register(Campaign)

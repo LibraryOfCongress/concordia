@@ -18,7 +18,17 @@
                     {% for file in available_files %}
                         <div class="file-card" data-id="{{ file.id }}" style="background: #1e2229; border: 1px solid #363d4a; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between;">
                             <div style="height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #111418; border-radius: 2px;">
-                                <img src="{{ file.uploaded_file.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                            {# Strict identification of allowed image formats via template filters #}
+                                {% if file.uploaded_file.name.lower|slice:"-4:" == ".png" or file.uploaded_file.name.lower|slice:"-4:" == ".jpg" or file.uploaded_file.name.lower|slice:"-5:" == ".jpeg" or file.uploaded_file.name.lower|slice:"-4:" == ".gif" or file.uploaded_file.name.lower|slice:"-4:" == ".svg" or file.uploaded_file.name.lower|slice:"-5:" == ".webp" %}
+                                    <img src="{{ file.uploaded_file.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                                {% else %}
+                                    <div style="text-align: center; color: #8b949e; font-size: 24px; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                                        <span>📄</span>
+                                        <span style="font-size: 10px; text-transform: uppercase; background: #262b33; padding: 2px 6px; border-radius: 3px; color: #adbac7;">
+                                            {{ file.uploaded_file.name|slice:"-4:"|default:"FILE" }}
+                                        </span>
+                                    </div>
+                                {% endif %}
                             </div>
                             <div style="margin-top: 8px;">
                                 <p style="font-size: 11px; margin: 0 0 8px 0; word-break: break-all; color: #adbac7;" title="{{ file.name }}">
@@ -95,28 +105,23 @@
                         })
                         .then(data => {
                             if (data.success) {
-                        // 1. Evict structural visual card layout from the current popup grid view
                                 const targetCard = document.querySelector(`.file-card[data-id="${rawFileId}"]`);
                                 if (targetCard) {
                                     targetCard.remove();
                                 }
 
-                        // 2. Clear out the active TinyMCE overlay dialog window if it matches the deleted asset
                                 if (window.opener && window.opener.tinymce) {
                                     const activeEditor = window.opener.tinymce.activeEditor;
                                     if (activeEditor) {
-                                // Close the primary image dialog modal window directly through the WindowManager API
                                         if (activeEditor.windowManager) {
                                             activeEditor.windowManager.close();
                                         }
 
-                                // 3. Scan the parent editor content document and purge all corresponding DOM nodes
                                         const doc = activeEditor.getDoc();
                                         const images = doc.querySelectorAll('img');
 
                                         images.forEach(img => {
                                             if (img.src.split('?')[0] === targetUrl) {
-                                        // Handle structured figure elements containing captions/alignments securely
                                                 const enclosingFigure = img.closest('figure.image');
                                                 if (enclosingFigure) {
                                                     enclosingFigure.remove();
@@ -126,12 +131,9 @@
                                             }
                                         });
 
-                                // Force editor internal engine synchronization and notify listeners
                                         activeEditor.nodeChanged();
                                     }
                                 }
-
-                        // 4. Fully automate user workflow by closing this popup manager window
                                 window.close();
                             } else {
                                 alert("Error removing asset: " + data.error);
