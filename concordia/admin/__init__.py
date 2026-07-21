@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import zipfile
 from typing import Any
@@ -11,7 +12,13 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
 from django.db.models import Exists, OuterRef, QuerySet
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
 from django.template.response import TemplateResponse
@@ -266,8 +273,18 @@ class CustomListDisplayFieldsMixin:
             return ""
 
 
+class TinyMCEMediaMixin:
+    """
+    Mixin to automatically inject the custom S3 file picker asset
+    into any ModelAdmin form that renders a TinyMCE rich text widget.
+    """
+
+    class Media:
+        js = ("js/src/tinymce-picker.js",)
+
+
 @admin.register(Campaign)
-class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin, TinyMCEMediaMixin):
     """
     Admin configuration for `Campaign` objects.
 
@@ -590,7 +607,9 @@ class ConcordiaFileAdmin(admin.ModelAdmin):
         # do not want the querystring, so we remove it.
         # This looks hacky, but seems to be the least hacky way to do
         # this without a third-party library.
-        return obj.uploaded_file.url.split("?")[0]
+        if obj.uploaded_file and hasattr(obj.uploaded_file, "url"):
+            return obj.uploaded_file.url.split("?")[0]
+        return ""
 
     def get_fields(
         self,
@@ -620,6 +639,161 @@ class ConcordiaFileAdmin(admin.ModelAdmin):
             )
         return ("name", "uploaded_file")
 
+    def changelist_view(
+        self,
+        request: HttpRequest,
+        extra_context: dict[str, Any] | None = None,
+    ) -> HttpResponse:
+        """
+        Intercept the default changelist to provide a tailored picker experience
+        when executing within a modal popup frame.
+        """
+        if "_popup" in request.GET:
+            extra_context = extra_context or {}
+            extra_context["is_popup"] = True
+            # Fetch files ordered by newest to optimize the picker interface workflow
+            extra_context["available_files"] = self.get_queryset(request).order_by(
+                "-updated_on"
+            )
+            return render(
+                request,
+                "admin/concordia/concordiafile/popup_picker.html",
+                extra_context,
+            )
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def delete_model(self, request: HttpRequest, obj: ConcordiaFile) -> None:
+        """
+        Ensures the physical storage block is cleanly removed from the AWS S3 bucket
+        via the django-storages backend layer before dropping the metadata record.
+        """
+        storage = getattr(obj.uploaded_file, "storage", None)
+        file_name = getattr(obj.uploaded_file, "name", None)
+
+        super().delete_model(request, obj)
+
+        if storage and file_name:
+            try:
+                storage.delete(file_name)
+            except Exception as e:
+                logger.error(
+                    "S3 object elimination failure for key %s: %s", file_name, e
+                )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        opts = self.model._meta
+        custom_urls = [
+            path(
+                "explicit-popup-delete/",
+                self.admin_site.admin_view(self.explicit_popup_delete_view),
+                name=f"{opts.app_label}_{opts.model_name}_explicit_popup_delete",
+            ),
+        ]
+        return custom_urls + urls
+
+    @method_decorator(csrf_protect)
+    def explicit_popup_delete_view(self, request: HttpRequest) -> HttpResponse:
+        """
+        Securely handles single-file deletion directly from the interactive gallery UI.
+
+        Args:
+            request (HttpRequest): Secure POST request carrying the primary key target.
+
+        Returns:
+            JsonResponse: Result status indicator mapping execution success or failure.
+        """
+        if request.method != "POST":
+            return JsonResponse({"error": "Method not allowed"}, status=405)
+
+        try:
+            if not request.body:
+                return JsonResponse(
+                    {"error": "Malformed request payload: Body empty"}, status=400
+                )
+
+            data = json.loads(request.body)
+            file_id = data.get("file_id")
+
+            if not file_id:
+                return JsonResponse(
+                    {"error": "Required field 'file_id' missing"}, status=400
+                )
+
+            file_obj = ConcordiaFile.objects.get(pk=file_id)
+            storage = getattr(file_obj.uploaded_file, "storage", None)
+            file_name = getattr(file_obj.uploaded_file, "name", None)
+
+            # Purge from DB
+            file_obj.delete()
+
+            # Evict from AWS S3 bucket directly
+            if storage and file_name:
+                try:
+                    storage.delete(file_name)
+                except Exception as e:
+                    logger.error(
+                        "Gallery-triggered S3 purge failed for key %s: %s", file_name, e
+                    )
+
+            return JsonResponse({"success": True})
+        except ConcordiaFile.DoesNotExist:
+            return JsonResponse({"error": "Target file no longer exists"}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format in payload"}, status=400)
+        except Exception as e:
+            logger.exception(
+                "Unhandled system error in explicit_popup_delete_view: %s", e
+            )
+            return JsonResponse(
+                {"error": "Internal server configuration error"}, status=500
+            )
+
+    def response_add(
+        self,
+        request: HttpRequest,
+        obj: ConcordiaFile,
+        post_url_continue: str | None = None,
+    ) -> HttpResponse:
+        """
+        Determine the HTTP response after a successful object creation form submission.
+
+        If the object was created inside a TinyMCE popup window interface, this
+        intercepts the standard redirect and instead returns an inline JavaScript block
+        that passes the clean S3 URL and file name back to the editor session and closes
+        the window.
+
+        Args:
+            request (HttpRequest): Current admin request.
+            obj (ConcordiaFile): The newly created file instance.
+            post_url_continue (str | None): The URL to redirect to if "save and continue
+                editing" was selected.
+
+        Returns:
+            HttpResponse: An inline script payload if triggered via a popup context,
+                otherwise a standard administrative redirect response.
+        """
+        if "_popup" in request.POST or "_popup" in request.GET:
+            url_data = self.file_url(obj)
+            clean_s3_url_string = str(url_data).split("?")[0]
+
+            return HttpResponse(
+                format_html(
+                    """
+                    <script type="text/javascript">
+                        if (window.opener && window.opener.tinymce_callback) {{
+                            window.opener.tinymce_callback('{0}');
+                        }}
+                        window.close();
+                    </script>
+                    """,
+                    clean_s3_url_string,
+                    obj.name,
+                )
+            )
+
+        return super().response_add(request, obj, post_url_continue)
+
 
 class TopicProjectInline(admin.TabularInline):
     model = ProjectTopic
@@ -631,7 +805,7 @@ class TopicProjectInline(admin.TabularInline):
 
 
 @admin.register(Topic)
-class TopicAdmin(admin.ModelAdmin):
+class TopicAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
     form = TopicAdminForm
 
     inlines = [TopicProjectInline]
@@ -662,7 +836,7 @@ class ProjectTopicInline(admin.TabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin, TinyMCEMediaMixin):
     form = ProjectAdminForm
 
     inlines = [ProjectTopicInline]
@@ -808,7 +982,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 
 @admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
+class ItemAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
     form = ItemAdminForm
     list_display = ("title", "item_id", "campaign_title", "project", "published")
     list_display_links = ("title", "item_id")
@@ -1709,7 +1883,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 
 
 @admin.register(Card)
-class CardAdmin(admin.ModelAdmin):
+class CardAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
     form = CardAdminForm
     fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
     list_display = ["title", "display_heading", "created_on", "updated_on"]
@@ -1731,7 +1905,7 @@ class CardFamilyAdmin(admin.ModelAdmin):
 
 
 @admin.register(Guide)
-class GuideAdmin(admin.ModelAdmin):
+class GuideAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
     form = GuideAdminForm
 
 

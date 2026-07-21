@@ -531,11 +531,19 @@ TINYMCE_DEFAULT_CONFIG = {
     "referrer_policy": "origin",
     "skin": "oxide-dark",
     "content_css": "dark",
-    "plugins": "link lists searchreplace wordcount",
-    "browser_spellcheck": "true",
+    "plugins": "link lists searchreplace wordcount code image",
+    "browser_spellcheck": True,
     "newline_behavior": "linebreak",
-    "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
+    "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount | code | image",  # noqa: E501
+    "image_description": True,
+    "image_caption": True,
+    "image_title": True,
     "width": 624,
+    "file_picker_callback": "concordiaTinyMcePicker",
+    "file_picker_types": "image",
+    "convert_urls": False,
+    "relative_urls": False,
+    "remove_script_host": False,
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
 
