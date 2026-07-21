@@ -273,18 +273,8 @@ class CustomListDisplayFieldsMixin:
             return ""
 
 
-class TinyMCEMediaMixin:
-    """
-    Mixin to automatically inject the custom S3 file picker asset
-    into any ModelAdmin form that renders a TinyMCE rich text widget.
-    """
-
-    class Media:
-        js = ("js/src/tinymce-picker.js",)
-
-
 @admin.register(Campaign)
-class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin, TinyMCEMediaMixin):
+class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     """
     Admin configuration for `Campaign` objects.
 
@@ -805,7 +795,7 @@ class TopicProjectInline(admin.TabularInline):
 
 
 @admin.register(Topic)
-class TopicAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
+class TopicAdmin(admin.ModelAdmin):
     form = TopicAdminForm
 
     inlines = [TopicProjectInline]
@@ -836,7 +826,7 @@ class ProjectTopicInline(admin.TabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin, TinyMCEMediaMixin):
+class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     form = ProjectAdminForm
 
     inlines = [ProjectTopicInline]
@@ -982,7 +972,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin, TinyMCEMediaM
 
 
 @admin.register(Item)
-class ItemAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
+class ItemAdmin(admin.ModelAdmin):
     form = ItemAdminForm
     list_display = ("title", "item_id", "campaign_title", "project", "published")
     list_display_links = ("title", "item_id")
@@ -1883,7 +1873,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 
 
 @admin.register(Card)
-class CardAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
+class CardAdmin(admin.ModelAdmin):
     form = CardAdminForm
     fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
     list_display = ["title", "display_heading", "created_on", "updated_on"]
@@ -1905,7 +1895,7 @@ class CardFamilyAdmin(admin.ModelAdmin):
 
 
 @admin.register(Guide)
-class GuideAdmin(admin.ModelAdmin, TinyMCEMediaMixin):
+class GuideAdmin(admin.ModelAdmin):
     form = GuideAdminForm
 
 

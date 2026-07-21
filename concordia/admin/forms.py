@@ -1,6 +1,13 @@
+import json
+import logging
+from pathlib import Path
+
 import nh3
 from django import forms
+from django.conf import settings
 from django.core.cache import caches
+from django.forms import Media
+from django.utils.html import format_html
 from tinymce.widgets import TinyMCE
 
 from ..models import (
@@ -14,6 +21,8 @@ from ..models import (
     Topic,
     TranscriptionStatus,
 )
+
+logger = logging.getLogger(__name__)
 
 FRAGMENT_ALLOWED_TAGS = {
     "a",
@@ -60,6 +69,52 @@ ALLOWED_ATTRIBUTES = {
     "figcaption": {"class"},
     "img": {"src", "alt", "title", "width", "height", "class", "style"},
 }
+
+
+class TinyMCEMediaMixin:
+    """
+    Mixin to dynamically inject the custom S3 file picker asset into admin forms.
+
+    Resolves the Vite manifest entry point in containerized production (AWS Fargate)
+    and falls back cleanly to static source assets if manifest lookup fails.
+    """
+
+    @property
+    def media(self) -> Media:
+        js_url: str | None = None
+        manifest_path = Path(settings.DJANGO_VITE["default"]["manifest_path"])
+
+        if manifest_path.is_file():
+            try:
+                with manifest_path.open("r", encoding="utf-8") as f:
+                    manifest_data = json.load(f)
+
+                entry_key = "./concordia/static/js/src/tinymce-picker.js"
+                alt_entry_key = "concordia/static/js/src/tinymce-picker.js"
+
+                if entry_key in manifest_data:
+                    js_url = f"dist/{manifest_data[entry_key]['file']}"
+                elif alt_entry_key in manifest_data:
+                    js_url = f"dist/{manifest_data[alt_entry_key]['file']}"
+                elif "tinymce_picker" in manifest_data:
+                    js_url = f"dist/{manifest_data['tinymce_picker']['file']}"
+            except Exception as e:
+                logger.error("Failed to parse Vite manifest file", error=str(e))
+
+        if not js_url:
+            js_url = "js/src/tinymce-picker.js"
+
+        static_prefix = getattr(settings, "STATIC_URL", "/static/")
+        full_script_src = f"{static_prefix.rstrip('/')}/{js_url.lstrip('/')}"
+
+        base_media = super().media if hasattr(super(), "media") else Media()
+
+        # format_html returns a SafeString object natively
+        custom_js_tag = format_html(
+            '<script type="module" src="{}"></script>', full_script_src
+        )
+
+        return base_media + Media(js=[custom_js_tag])
 
 
 class AdminItemImportForm(forms.Form):
@@ -146,7 +201,7 @@ class SanitizedDescriptionAdminForm(forms.ModelForm):
         )
 
 
-class TopicAdminForm(SanitizedDescriptionAdminForm):
+class TopicAdminForm(TinyMCEMediaMixin, SanitizedDescriptionAdminForm):
     """
     Admin form for topics with sanitized rich-text descriptions.
     """
@@ -159,7 +214,7 @@ class TopicAdminForm(SanitizedDescriptionAdminForm):
         }
 
 
-class CampaignAdminForm(SanitizedDescriptionAdminForm):
+class CampaignAdminForm(TinyMCEMediaMixin, SanitizedDescriptionAdminForm):
     """
     Admin form for campaigns with sanitized rich-text descriptions.
     """
@@ -173,7 +228,7 @@ class CampaignAdminForm(SanitizedDescriptionAdminForm):
         fields = "__all__"
 
 
-class ProjectAdminForm(SanitizedDescriptionAdminForm):
+class ProjectAdminForm(TinyMCEMediaMixin, SanitizedDescriptionAdminForm):
     """
     Admin form for projects with sanitized rich-text descriptions.
     """
@@ -203,7 +258,7 @@ class ProjectTopicInlineForm(forms.ModelForm):
         fields = ["topic", "url_filter"]
 
 
-class ItemAdminForm(forms.ModelForm):
+class ItemAdminForm(TinyMCEMediaMixin, forms.ModelForm):
     """
     Admin form for items with a rich-text `description` field.
     """
@@ -214,7 +269,7 @@ class ItemAdminForm(forms.ModelForm):
         fields = "__all__"
 
 
-class CardAdminForm(forms.ModelForm):
+class CardAdminForm(TinyMCEMediaMixin, forms.ModelForm):
     """
     Admin form for tutorial cards with a rich-text `body_text` field.
     """
@@ -227,7 +282,7 @@ class CardAdminForm(forms.ModelForm):
         fields = "__all__"
 
 
-class GuideAdminForm(forms.ModelForm):
+class GuideAdminForm(TinyMCEMediaMixin, forms.ModelForm):
     """
     Admin form for guides with a rich-text `body` field.
     """
