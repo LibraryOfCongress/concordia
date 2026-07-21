@@ -1,6 +1,10 @@
 /**
  * Custom file picker callback for TinyMCE inside the Concordia admin panel.
  * Routes administrators directly to the interactive Media Library Manager overview.
+ *
+ * @param {Function} callback - TinyMCE callback function to pass back asset metadata.
+ * @param {string} value - Current value of the input field.
+ * @param {Object} meta - Metadata object containing filetype and control details.
  */
 function concordiaTinyMcePicker(callback, value, meta) {
     if (meta.filetype !== 'image') {
@@ -23,4 +27,10 @@ function concordiaTinyMcePicker(callback, value, meta) {
     );
 }
 
-window.concordiaTinyMcePicker = concordiaTinyMcePicker;
+// Bind directly to window and globalThis to guarantee exposure across ES Module bundler wrappers
+if (typeof window !== 'undefined') {
+    window.concordiaTinyMcePicker = concordiaTinyMcePicker;
+}
+if (typeof globalThis !== 'undefined') {
+    globalThis.concordiaTinyMcePicker = concordiaTinyMcePicker;
+}
