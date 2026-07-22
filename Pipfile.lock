@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "09a8cd2147404ebb2189b285a4ffa28073d44a9634bc79383c07a8f01d5c75b6"
+            "sha256": "48fa81369ab0602ca7fa201cf341eec3f8fff75564993418e85c79e68087f04e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -881,11 +881,11 @@
                 "celery"
             ],
             "hashes": [
-                "sha256:4e3fa4a930697fb9b649470e389419bb73b916a1ecf4f4bf2f8727f5cbfdb002",
-                "sha256:4f9db3cb7b308df6aa4afe1353d9c19d5bac757022ddbbb5c24f3d0d6a91a240"
+                "sha256:450842bfb03887fc14469570769e515d22ea67d753848a25cdbd05405382c090",
+                "sha256:812f61dea873e559511f42c0f3a7cdc36d4472f6cc15460565a97e5cbe06a76d"
             ],
             "markers": "python_version >= '3.10'",
-            "version": "==10.0.0"
+            "version": "==10.1.0"
         },
         "django-timezone-field": {
             "hashes": [
