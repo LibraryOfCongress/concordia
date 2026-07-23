@@ -258,23 +258,23 @@ class ProjectTopicInlineForm(forms.ModelForm):
         fields = ["topic", "url_filter"]
 
 
-class ItemAdminForm(TinyMCEMediaMixin, forms.ModelForm):
+class ItemAdminForm(TinyMCEMediaMixin, SanitizedDescriptionAdminForm):
     """
-    Admin form for items with a rich-text `description` field.
+    Admin form for items with sanitized rich-text `description` field.
     """
 
-    class Meta:
+    class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Item
         widgets = {"description": TinyMCE()}
         fields = "__all__"
 
 
-class CardAdminForm(TinyMCEMediaMixin, forms.ModelForm):
+class CardAdminForm(TinyMCEMediaMixin, SanitizedDescriptionAdminForm):
     """
-    Admin form for tutorial cards with a rich-text `body_text` field.
+    Admin form for tutorial cards with sanitized rich-text `body_text` field.
     """
 
-    class Meta:
+    class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Card
         widgets = {
             "body_text": TinyMCE(),
@@ -282,12 +282,12 @@ class CardAdminForm(TinyMCEMediaMixin, forms.ModelForm):
         fields = "__all__"
 
 
-class GuideAdminForm(TinyMCEMediaMixin, forms.ModelForm):
+class GuideAdminForm(TinyMCEMediaMixin, SanitizedDescriptionAdminForm):
     """
-    Admin form for guides with a rich-text `body` field.
+    Admin form for guides with sanitized rich-text `body` field.
     """
 
-    class Meta:
+    class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Guide
         widgets = {
             "body": TinyMCE(),
