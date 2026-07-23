@@ -544,6 +544,9 @@ TINYMCE_DEFAULT_CONFIG = {
     "convert_urls": False,
     "relative_urls": False,
     "remove_script_host": False,
+    # Disable drag-and-drop & paste-to-upload to enforce S3 img file uploads
+    "paste_data_images": False,
+    "paste_block_drop": True,
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
 
