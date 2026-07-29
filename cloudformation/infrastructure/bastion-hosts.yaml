@@ -67,6 +67,13 @@ Resources:
                     - Ref: EnvironmentName
             KeyName:
                 Ref: KeyPairName
+            BlockDeviceMappings:
+                - DeviceName: /dev/xvda
+                  Ebs:
+                      VolumeSize: 30
+                      VolumeType: gp3
+                      DeleteOnTermination: true
+                      Encrypted: true
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
                   DeviceIndex: '0'
@@ -122,6 +129,13 @@ Resources:
                     - Ref: EnvironmentName
             KeyName:
                 Ref: KeyPairName
+            BlockDeviceMappings:
+                - DeviceName: /dev/xvda
+                  Ebs:
+                      VolumeSize: 30
+                      VolumeType: gp3
+                      DeleteOnTermination: true
+                      Encrypted: true
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
                   DeviceIndex: '0'
