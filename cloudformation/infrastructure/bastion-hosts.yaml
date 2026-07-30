@@ -59,7 +59,7 @@ Resources:
                     - AWSRegionToAMI
                     - Ref: 'AWS::Region'
                     - 'AMI'
-            InstanceType: 't2.medium'
+            InstanceType: 't3.medium'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -121,7 +121,7 @@ Resources:
                     - AWSRegionToAMI
                     - Ref: 'AWS::Region'
                     - 'AMI'
-            InstanceType: 't2.medium'
+            InstanceType: 't3.medium'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
