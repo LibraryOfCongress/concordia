@@ -30,7 +30,7 @@ pytesseract = "==0.3.13"
 django-redis = "==6.0.0"
 twisted = { extras = ["http2", "tls"], version = "==26.4.0" }
 django-maintenance-mode = "==0.22.0"
-xlsxwriter = "==3.2.5"
+xlsxwriter = "==3.2.9"
 psycopg2 = "==2.9.11"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-structlog = {extras = ["celery"], version = "==10.1.0"}
