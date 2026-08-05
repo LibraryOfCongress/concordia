@@ -54,6 +54,8 @@ pre-commit = "~=4.5.1"
 django-opensearch-dsl = "==0.8.0"
 django = "~=5.2.0"
 django-celery-beat = "~=2.9.0"
+setuptools = "~=83.0"
+cryptography = "~=50.0"
 
 [dev-packages]
 django-extensions = "==3.2.3"
