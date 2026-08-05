@@ -30,6 +30,22 @@ jobs:
               run: |
                   pipx run pipfile-requirements Pipfile.lock > requirements.txt
 
+            - name: 'Show generated requirements'
+              run: |
+                  echo "---- requirements.txt (top 200 lines) ----"
+                  sed -n '1,200p' requirements.txt || true
+                  echo "---- end requirements ----"
+
+            - name: 'Debug: pip dry-run to show resolver errors'
+              run: |
+                  python -m venv .venv
+                  . .venv/bin/activate
+                  python -m pip install --upgrade pip
+                  pip --version
+                  python --version
+                  # Use --dry-run so we don't actually mutate environment; capture resolver output
+                  pip install --dry-run -r requirements.txt || true
+
             - uses: pypa/gh-action-pip-audit@v1.1.0
               with:
                   inputs: requirements.txt
