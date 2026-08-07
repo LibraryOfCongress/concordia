@@ -68,3 +68,8 @@ pyleniumio = "==1.21.0"
 
 [requires]
 python_version = "3.12"
+
+[pipenv]
+allow_prereleases = false
+cool-down-period = "7d"
+sort_pipfile = true
