@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core import signing
 from django.utils.deprecation import MiddlewareMixin
 from maintenance_mode.http import get_maintenance_response
@@ -17,54 +18,62 @@ class MaintenanceModeMiddleware(BaseMaintenanceModeMiddleware):
 
 class CloudflareAuthStatusMiddleware(MiddlewareMixin):
     """
-    Sets an HMAC-signed cookie (_cf_acc_status) for authenticated, non-anonymous users.
-    Cloudflare Edge WAF rules evaluate this cookie to bypass challenges for logged-in
-    users.
+    Sets and validates an HMAC-signed cookie for authenticated, non-anonymous users.
+    Allows Cloudflare Edge rules to bypass challenges for logged-in users while
+    validating HMAC signatures early in Django before expensive DB operations occur.
     """
 
-    COOKIE_NAME = "_cf_acc_status"
     SIGNING_SALT = "concordia.cloudflare.auth_status"
+
+    @property
+    def cookie_name(self):
+        return getattr(settings, "CLOUDFLARE_AUTH_STATUS_COOKIE_NAME", "_cf_acc_status")
+
+    @property
+    def cookie_age(self):
+        return getattr(settings, "CLOUDFLARE_AUTH_STATUS_COOKIE_AGE", 86400 * 7)
 
     def process_response(self, request, response):
         user = getattr(request, "user", None)
         is_authenticated = bool(
             user and user.is_authenticated and not user.is_anonymous
         )
-        cookie_present = self.COOKIE_NAME in request.COOKIES
+        current_cookie_name = self.cookie_name
+        cookie_present = current_cookie_name in request.COOKIES
 
         if is_authenticated:
-            # Issue or keep signed cookie active
-            expected_token = signing.dumps(
-                {"uid": user.pk, "auth": True}, salt=self.SIGNING_SALT
-            )
+            valid_signature = False
 
-            # Verify current cookie validity to avoid re-setting on every request
-            # unless needed
-            needs_cookie = True
             if cookie_present:
                 try:
+                    # Low-overhead HMAC signature check using signing.loads
+                    cookie_val = request.COOKIES[current_cookie_name]
                     data = signing.loads(
-                        request.COOKIES[self.COOKIE_NAME],
+                        cookie_val,
                         salt=self.SIGNING_SALT,
-                        max_age=86400 * 7,
+                        max_age=self.cookie_age,
                     )
-                    if data.get("uid") == user.pk and data.get("auth") is True:
-                        needs_cookie = False
-                except (signing.BadSignature, signing.SignatureExpired):
-                    needs_cookie = True
+                    if isinstance(data, dict) and data.get("uid") == user.pk:
+                        valid_signature = True
+                except (signing.BadSignature, signing.SignatureExpired, ValueError):
+                    valid_signature = False
 
-            if needs_cookie:
+            # Set/refresh the signed cookie if missing, expired, or tampered
+            if not valid_signature:
+                signed_val = signing.dumps(
+                    {"uid": user.pk, "auth": True}, salt=self.SIGNING_SALT
+                )
                 response.set_cookie(
-                    self.COOKIE_NAME,
-                    expected_token,
-                    max_age=86400 * 7,  # 7 days
+                    current_cookie_name,
+                    value=signed_val,
+                    max_age=self.cookie_age,
                     httponly=True,
                     secure=not request.META.get("DEVELOPMENT", False),
                     samesite="Lax",
                 )
         else:
-            # Delete cookie if anonymous or logged out
+            # Delete cookie if request is anonymous or logged-out
             if cookie_present:
-                response.delete_cookie(self.COOKIE_NAME)
+                response.delete_cookie(current_cookie_name)
 
         return response

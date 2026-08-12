@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import signing
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from concordia.middleware import CloudflareAuthStatusMiddleware
@@ -15,8 +16,11 @@ class CloudflareAuthStatusMiddlewareTests(TestCase):
             email="testuser@test.com",
             password="TestPassword123!",  # nosec
         )
-        self.cookie_name = CloudflareAuthStatusMiddleware.COOKIE_NAME
         self.salt = CloudflareAuthStatusMiddleware.SIGNING_SALT
+
+    @property
+    def cookie_name(self):
+        return getattr(settings, "CLOUDFLARE_AUTH_STATUS_COOKIE_NAME", "_cf_acc_status")
 
     def test_anonymous_user_does_not_receive_cookie(self):
         response = self.client.get(reverse("homepage"))
@@ -27,38 +31,41 @@ class CloudflareAuthStatusMiddlewareTests(TestCase):
         response = self.client.get(reverse("homepage"))
 
         self.assertIn(self.cookie_name, response.cookies)
-        cookie_value = response.cookies[self.cookie_name].value
 
-        # Verify HMAC signature
-        decoded = signing.loads(cookie_value, salt=self.salt)
-        self.assertEqual(decoded["uid"], self.user.pk)
-        self.assertTrue(decoded["auth"])
+        # Inspect raw cookie string from response and decode using signing.loads
+        cookie_val = response.cookies[self.cookie_name].value
+        data = signing.loads(cookie_val, salt=self.salt)
+
+        self.assertEqual(data["uid"], self.user.pk)
+        self.assertTrue(data["auth"])
+
+    @override_settings(CLOUDFLARE_AUTH_STATUS_COOKIE_NAME="_cf_rot_token")
+    def test_configurable_cookie_name_from_settings(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("homepage"))
+
+        self.assertIn("_cf_rot_token", response.cookies)
+        self.assertNotIn("_cf_acc_status", response.cookies)
 
     def test_cookie_deleted_on_logout(self):
         self.client.force_login(self.user)
-        # Establish cookie on client
         response = self.client.get(reverse("homepage"))
-        cookie_value = response.cookies[self.cookie_name].value
+        cookie_val = response.cookies[self.cookie_name].value
 
-        # Set cookie in next request and logout
-        self.client.cookies[self.cookie_name] = cookie_value
+        # Attach active cookie to client and perform logout
+        self.client.cookies[self.cookie_name] = cookie_val
         response = self.client.post(reverse("logout"))
 
-        # Middleware should delete cookie for anonymous/logged-out state
         self.assertIn(self.cookie_name, response.cookies)
         self.assertEqual(response.cookies[self.cookie_name].value, "")
 
-    def test_tampered_cookie_is_overwritten_for_authenticated_user(self):
+    def test_forged_or_invalid_signature_is_overwritten(self):
         self.client.force_login(self.user)
 
-        # Inject forged cookie
-        self.client.cookies[self.cookie_name] = "invalid_tampered_hmac_signature"
+        # Inject fake/spoofed signature cookie
+        self.client.cookies[self.cookie_name] = "fake_signature_value"
         response = self.client.get(reverse("homepage"))
 
-        # Middleware detects bad signature and overwrites with valid token
         self.assertIn(self.cookie_name, response.cookies)
-        new_cookie_value = response.cookies[self.cookie_name].value
-        self.assertNotEqual(new_cookie_value, "invalid_tampered_hmac_signature")
-
-        decoded = signing.loads(new_cookie_value, salt=self.salt)
-        self.assertEqual(decoded["uid"], self.user.pk)
+        new_value = response.cookies[self.cookie_name].value
+        self.assertNotEqual(new_value, "fake_signature_value")

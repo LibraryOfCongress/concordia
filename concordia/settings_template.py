@@ -409,6 +409,11 @@ AUTHENTICATION_BACKENDS = [
     "concordia.authentication_backends.EmailOrUsernameModelBackend"
 ]
 
+# Cloudflare Sitewide Managed Challenge
+CLOUDFLARE_AUTH_STATUS_COOKIE_NAME = os.environ.get(
+    "CLOUDFLARE_AUTH_STATUS_COOKIE_NAME", "_cf_acc_status"
+)
+
 # Turnstile settings
 TURNSTILE_JS_API_URL = os.environ.get(
     "TURNSTILE_JS_API_URL", "https://challenges.cloudflare.com/turnstile/v0/api.js"
