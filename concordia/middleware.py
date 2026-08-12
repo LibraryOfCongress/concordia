@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 from django.core import signing
 from django.utils.deprecation import MiddlewareMixin
@@ -6,7 +8,11 @@ from maintenance_mode.middleware import (
     MaintenanceModeMiddleware as BaseMaintenanceModeMiddleware,
 )
 
+from concordia.logging import ConcordiaLogger
+
 from .maintenance import need_maintenance_response
+
+structured_logger = ConcordiaLogger.get_logger(__name__)
 
 
 class MaintenanceModeMiddleware(BaseMaintenanceModeMiddleware):
@@ -46,33 +52,59 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
 
             if cookie_present:
                 try:
-                    # Low-overhead HMAC signature check using signing.loads
-                    cookie_val = request.COOKIES[current_cookie_name]
-                    data = signing.loads(
-                        cookie_val,
+                    # Low-overhead HMAC signature check using get_signed_cookie
+                    raw_val = request.get_signed_cookie(
+                        current_cookie_name,
                         salt=self.SIGNING_SALT,
                         max_age=self.cookie_age,
                     )
-                    if isinstance(data, dict) and data.get("uid") == user.pk:
-                        valid_signature = True
-                except (signing.BadSignature, signing.SignatureExpired, ValueError):
+                    if raw_val is not None:
+                        data = json.loads(raw_val)
+                        if isinstance(data, dict) and data.get("uid") == user.pk:
+                            valid_signature = True
+                        else:
+                            structured_logger.warning(
+                                "Cloudflare auth cookie payload is corrupt or"
+                                " invalid JSON.",
+                                event_code="cloudflare_auth_cookie_corrupt_payload",
+                                reason="Payload is not a valid dict or missing"
+                                " user ID.",
+                                reason_code="invalid_payload_structure",
+                                user=user,
+                            )
+                except signing.BadSignature:
+                    structured_logger.warning(
+                        "Cloudflare auth cookie failed signature validation.",
+                        event_code="cloudflare_auth_cookie_bad_signature",
+                        reason="HMAC signature did not match.",
+                        reason_code="signature_mismatch",
+                        user=user,
+                    )
+                    valid_signature = False
+                except (ValueError, json.JSONDecodeError):
+                    structured_logger.warning(
+                        "Cloudflare auth cookie payload is corrupt or invalid JSON.",
+                        event_code="cloudflare_auth_cookie_corrupt_payload",
+                        reason="Failed to parse cookie payload.",
+                        reason_code="invalid_json",
+                        user=user,
+                    )
                     valid_signature = False
 
-            # Set/refresh the signed cookie if missing, expired, or tampered
+            # Re-issue or set fresh signed cookie if invalid, missing, or expired
             if not valid_signature:
-                signed_val = signing.dumps(
-                    {"uid": user.pk, "auth": True}, salt=self.SIGNING_SALT
-                )
-                response.set_cookie(
+                payload = json.dumps({"uid": user.pk, "auth": True})
+                response.set_signed_cookie(
                     current_cookie_name,
-                    value=signed_val,
+                    value=payload,
+                    salt=self.SIGNING_SALT,
                     max_age=self.cookie_age,
                     httponly=True,
                     secure=not request.META.get("DEVELOPMENT", False),
                     samesite="Lax",
                 )
         else:
-            # Delete cookie if request is anonymous or logged-out
+            # Delete bypass cookie if request is anonymous or logged-out
             if cookie_present:
                 response.delete_cookie(current_cookie_name)
 
