@@ -25,7 +25,7 @@ if os.getenv("AWS"):
 
     cf_auth_cookie_name_json = get_secret("crowd/cloudflare/AuthCookieName")
     cf_auth_cookie_secret = json.loads(cf_auth_cookie_name_json)
-    CLOUDFLARE_AUTH_STATUS_COOKIE_NAME = cf_auth_cookie_secret(["CfAuthCookieName"])
+    CLOUDFLARE_AUTH_STATUS_COOKIE_NAME = cf_auth_cookie_secret("CfAuthCookieName")
 
     cf_turnstile_secret_json = get_secret("crowd/%s/Turnstile" % ENV_NAME)
     cf_turnstile_secret = json.loads(cf_turnstile_secret_json)
