@@ -24,22 +24,48 @@ class MaintenanceModeMiddleware(BaseMaintenanceModeMiddleware):
 
 class CloudflareAuthStatusMiddleware(MiddlewareMixin):
     """
-    Sets and validates an HMAC-signed cookie for authenticated, non-anonymous users.
-    Allows Cloudflare Edge rules to bypass challenges for logged-in users while
-    validating HMAC signatures early in Django before expensive DB operations occur.
+    Manage HMAC-signed cookies for authenticated users.
+
+    Validates and sets an HMAC-signed cookie on HTTP responses for authenticated,
+    non-anonymous users. Allows Cloudflare Edge WAF rules to bypass challenges
+    for verified users while checking signatures in Django before database access.
     """
 
     SIGNING_SALT = "concordia.cloudflare.auth_status"
 
     @property
     def cookie_name(self):
+        """
+        Return the configured Cloudflare authentication cookie name.
+
+        :return: Dynamic or default cookie name.
+        :rtype: str
+        """
         return getattr(settings, "CLOUDFLARE_AUTH_STATUS_COOKIE_NAME", "_cf_acc_status")
 
     @property
     def cookie_age(self):
+        """Return the maximum age in seconds for the authentication cookie.
+
+        :return: Cookie max age in seconds.
+        :rtype: int
+        """
         return getattr(settings, "CLOUDFLARE_AUTH_STATUS_COOKIE_AGE", 86400 * 7)
 
     def process_response(self, request, response):
+        """Verify request signature and attach or clear the edge bypass cookie.
+
+        If the user is authenticated, inspects the incoming signed cookie.
+        Re-issues a signed cookie if missing or invalid, or deletes the cookie
+        if the request is unauthenticated or logged out.
+
+        :param request: Incoming HTTP request object.
+        :type request: django.http.HttpRequest
+        :param response: Outgoing HTTP response object.
+        :type response: django.http.HttpResponse
+        :return: Modified HTTP response object with updated cookie headers.
+        :rtype: django.http.HttpResponse
+        """
         user = getattr(request, "user", None)
         is_authenticated = bool(
             user and user.is_authenticated and not user.is_anonymous
@@ -55,6 +81,7 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
                     # Low-overhead HMAC signature check using get_signed_cookie
                     raw_val = request.get_signed_cookie(
                         current_cookie_name,
+                        default=None,
                         salt=self.SIGNING_SALT,
                         max_age=self.cookie_age,
                     )
@@ -93,7 +120,7 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
 
             # Re-issue or set fresh signed cookie if invalid, missing, or expired
             if not valid_signature:
-                payload = json.dumps({"uid": user.pk, "auth": True})
+                payload = json.dumps({"uid": user.pk})
                 response.set_signed_cookie(
                     current_cookie_name,
                     value=payload,
@@ -103,9 +130,8 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
                     secure=not request.META.get("DEVELOPMENT", False),
                     samesite="Lax",
                 )
-        else:
+        elif cookie_present:
             # Delete bypass cookie if request is anonymous or logged-out
-            if cookie_present:
-                response.delete_cookie(current_cookie_name)
+            response.delete_cookie(current_cookie_name)
 
         return response
