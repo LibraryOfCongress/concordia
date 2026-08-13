@@ -146,6 +146,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "concordia.middleware.CloudflareAuthStatusMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_structlog.middlewares.RequestMiddleware",
@@ -407,6 +408,11 @@ PASSWORD_COMPLEXITY = {
 AUTHENTICATION_BACKENDS = [
     "concordia.authentication_backends.EmailOrUsernameModelBackend"
 ]
+
+# Cloudflare Sitewide Managed Challenge
+CLOUDFLARE_AUTH_STATUS_COOKIE_NAME = os.environ.get(
+    "CLOUDFLARE_AUTH_STATUS_COOKIE_NAME", "_cf_acc_status"
+)
 
 # Turnstile settings
 TURNSTILE_JS_API_URL = os.environ.get(
