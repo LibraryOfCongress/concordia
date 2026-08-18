@@ -41,7 +41,7 @@ Resources:
             AllocatedStorage: '20'
             AllowMajorVersionUpgrade: false
             AutoMinorVersionUpgrade: true
-            DBInstanceClass: db.t4g.medium
+            DBInstanceClass: db.t4g.large
             Port: '5432'
             PubliclyAccessible: false
             StorageType: gp3
