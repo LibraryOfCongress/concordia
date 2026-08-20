@@ -23,6 +23,10 @@ if os.getenv("AWS"):
 
     DATABASES["default"].update({"PASSWORD": postgres_secret["password"]})
 
+    cf_auth_cookie_secret_json = get_secret("crowd/cloudflare/AuthCookieName")
+    cf_auth_cookie_secret = json.loads(cf_auth_cookie_secret_json)
+    CLOUDFLARE_AUTH_STATUS_COOKIE_NAME = cf_auth_cookie_secret["CfAuthCookieName"]
+
     cf_turnstile_secret_json = get_secret("crowd/%s/Turnstile" % ENV_NAME)
     cf_turnstile_secret = json.loads(cf_turnstile_secret_json)
     TURNSTILE_SITEKEY = cf_turnstile_secret["TurnstileSiteKey"]
@@ -40,6 +44,8 @@ else:
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Added for custom Middleware Cloudflare
+SESSION_COOKIE_SECURE = True
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
