@@ -4,7 +4,6 @@ Validates Cloudflare authentication status cookie issuance, HMAC signature
 verification, setting overrides, and structured logging events.
 """
 
-import json
 from unittest.mock import patch
 
 from django.conf import settings
@@ -46,11 +45,7 @@ class CloudflareAuthStatusMiddlewareTests(TestCase):
         cookie_val = response.cookies[self.cookie_name].value
         self.client.cookies[self.cookie_name] = cookie_val
 
-        req = self.client.get(reverse("homepage")).wsgi_request
-        raw_data = req.get_signed_cookie(self.cookie_name, default=None, salt=self.salt)
-        self.assertIsNotNone(raw_data)
-
-        data = json.loads(raw_data)
+        data = signing.loads(cookie_val, salt=self.salt)
 
         self.assertEqual(data["uid"], self.user.pk)
 
@@ -104,9 +99,9 @@ class CloudflareAuthStatusMiddlewareTests(TestCase):
         self.client.force_login(self.user)
 
         corrupt_payload = "not_valid_json_payload"
-        # Match Django's internal salt prefixing (key+salt) to pass signature validation
-        signer = signing.get_cookie_signer(salt=self.cookie_name + self.salt)
-        signed_value = signer.sign(corrupt_payload)
+        # Sign a non-dict value so signature validation succeeds but payload
+        # validation fails.
+        signed_value = signing.dumps(corrupt_payload, salt=self.salt)
 
         # Attach the validly signed (but corrupt JSON) cookie to the client
         self.client.cookies[self.cookie_name] = signed_value

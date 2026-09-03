@@ -1,8 +1,5 @@
-import json
-
 from django.conf import settings
 from django.core import signing
-from django.utils.deprecation import MiddlewareMixin
 from maintenance_mode.http import get_maintenance_response
 from maintenance_mode.middleware import (
     MaintenanceModeMiddleware as BaseMaintenanceModeMiddleware,
@@ -22,9 +19,9 @@ class MaintenanceModeMiddleware(BaseMaintenanceModeMiddleware):
         return None
 
 
-class CloudflareAuthStatusMiddleware(MiddlewareMixin):
+class CloudflareAuthStatusMiddleware:
     """
-    Manage HMAC-signed cookies for authenticated users.
+    Manage base64-encode cookies for authenticated users.
 
     Validates and sets an HMAC-signed cookie on HTTP responses for authenticated,
     non-anonymous users. Allows Cloudflare Edge WAF rules to bypass challenges
@@ -32,6 +29,13 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
     """
 
     SIGNING_SALT = "concordia.cloudflare.auth_status"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return self.process_response(request, response)
 
     @property
     def cookie_name(self):
@@ -74,31 +78,33 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
         cookie_present = current_cookie_name in request.COOKIES
 
         if is_authenticated:
-            valid_signature = False
+            valid = False
 
             if cookie_present:
                 try:
-                    # Low-overhead HMAC signature check using get_signed_cookie
-                    raw_val = request.get_signed_cookie(
-                        current_cookie_name,
-                        default=None,
+                    data = signing.loads(
+                        request.COOKIES[current_cookie_name],
                         salt=self.SIGNING_SALT,
                         max_age=self.cookie_age,
                     )
-                    if raw_val is not None:
-                        data = json.loads(raw_val)
-                        if isinstance(data, dict) and data.get("uid") == user.pk:
-                            valid_signature = True
-                        else:
-                            structured_logger.warning(
-                                "Cloudflare auth cookie payload is corrupt or"
-                                " invalid JSON.",
-                                event_code="cloudflare_auth_cookie_corrupt_payload",
-                                reason="Payload is not a valid dict or missing"
-                                " user ID.",
-                                reason_code="invalid_payload_structure",
-                                user=user,
-                            )
+                    if isinstance(data, dict) and data.get("uid") == user.pk:
+                        valid = True
+                    else:
+                        structured_logger.warning(
+                            "Cloudflare auth cookie payload is corrupt or invalid.",
+                            event_code="cloudflare_auth_cookie_corrupt_payload",
+                            reason="Payload is not a dict or missing user ID.",
+                            reason_code="invalid_payload_structure",
+                            user=user,
+                        )
+                except signing.SignatureExpired:
+                    structured_logger.info(
+                        "Cloudflare auth cookie expired.",
+                        event_code="cloudflare_auth_cookie_expired",
+                        reason="Signature max_age exceeded.",
+                        reason_code="signature_expired",
+                        user=user,
+                    )
                 except signing.BadSignature:
                     structured_logger.warning(
                         "Cloudflare auth cookie failed signature validation.",
@@ -107,27 +113,15 @@ class CloudflareAuthStatusMiddleware(MiddlewareMixin):
                         reason_code="signature_mismatch",
                         user=user,
                     )
-                    valid_signature = False
-                except (ValueError, json.JSONDecodeError):
-                    structured_logger.warning(
-                        "Cloudflare auth cookie payload is corrupt or invalid JSON.",
-                        event_code="cloudflare_auth_cookie_corrupt_payload",
-                        reason="Failed to parse cookie payload.",
-                        reason_code="invalid_json",
-                        user=user,
-                    )
-                    valid_signature = False
-
             # Re-issue or set fresh signed cookie if invalid, missing, or expired
-            if not valid_signature:
-                payload = json.dumps({"uid": user.pk})
-                response.set_signed_cookie(
+            if not valid:
+                signed_value = signing.dumps({"uid": user.pk}, salt=self.SIGNING_SALT)
+                response.set_cookie(
                     current_cookie_name,
-                    value=payload,
-                    salt=self.SIGNING_SALT,
+                    value=signed_value,
                     max_age=self.cookie_age,
                     httponly=True,
-                    secure=not request.META.get("DEVELOPMENT", False),
+                    secure=not settings.DEBUG,
                     samesite="Lax",
                 )
         elif cookie_present:
