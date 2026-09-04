@@ -25,5 +25,8 @@ updates:
       directory: '/' # Location of package manifests
       schedule:
           interval: 'weekly'
+      allow:
+          - dependency-type: 'production'
+          - dependency-type: 'development'
       cooldown:
           default-days: 7
