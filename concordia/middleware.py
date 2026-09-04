@@ -21,7 +21,7 @@ class MaintenanceModeMiddleware(BaseMaintenanceModeMiddleware):
 
 class CloudflareAuthStatusMiddleware:
     """
-    Manage base64-encode cookies for authenticated users.
+    Set signed cookies for authenticated users to expedite bot-filtering.
 
     Validates and sets an HMAC-signed cookie on HTTP responses for authenticated,
     non-anonymous users. Allows Cloudflare Edge WAF rules to bypass challenges
