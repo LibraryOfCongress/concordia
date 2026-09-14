@@ -62,12 +62,14 @@ jobs:
               with:
                   persist-credentials: false
 
+            # Ensures cache key matches the Pipfile in the Pull Request and not main.
             - name: Set up Python 3.12
               uses: actions/setup-python@v7.0.0
               with:
                   python-version: '3.12'
                   architecture: 'x64'
                   cache: 'pipenv'
+                  cache-dependency-path: '**/Pipfile.lock'
 
             - name: Display Python version
               run: python -c "import sys; print(sys.version)"
