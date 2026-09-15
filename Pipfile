@@ -58,7 +58,7 @@ setuptools = "~=83.0"
 cryptography = "~=50.0"
 
 [dev-packages]
-django-extensions = "==3.2.3"
+django-extensions = "==4.1"
 django-debug-toolbar = "==6.3.0"
 coverage = "==7.15.0"
 locust = "~=2.43"
