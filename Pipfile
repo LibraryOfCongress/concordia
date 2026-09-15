@@ -8,7 +8,7 @@ celery = { extras = ["redis"], version = "==5.5.3" }
 django-tinymce = "==5.0.0"
 whitenoise = "==6.9.0"
 openpyxl = "==3.1.5"
-markdown = "==3.10"
+markdown = "==3.10.3"
 django-bootstrap5 = "==26.2"
 django-robots = "==6.1"
 setuptools-scm = "==9.2.2"
