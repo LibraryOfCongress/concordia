@@ -17,7 +17,7 @@ pylibmc = "==1.6.3"
 kombu = "==5.5.4"
 django-flags = "==5.2.0"
 sentry-sdk = "==2.69.1"
-channels = { extras = ["daphne"], version = "==4.2.2" }
+channels = { extras = ["daphne"], version = "==4.3.2" }
 channels-redis = "==4.3.0"
 more-itertools = "==11.1.0"
 nh3 = "==0.3.4"
