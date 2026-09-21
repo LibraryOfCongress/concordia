@@ -60,7 +60,7 @@ cryptography = "~=50.0"
 [dev-packages]
 django-extensions = "==4.1"
 django-debug-toolbar = "==6.3.0"
-coverage = "==7.15.0"
+coverage = "==7.16.1"
 locust = "~=2.43"
 tblib = "~=3.2.0"
 pre-commit = "~=4.5.1"
