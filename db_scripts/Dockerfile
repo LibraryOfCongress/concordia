@@ -7,7 +7,7 @@ RUN curl -fsO --output-dir /etc/pki/ca-trust/source/anchors/ http://crl.loc.gov/
 
 # Install tools once
 RUN dnf -y upgrade && \
-    dnf -y install postgresql15.x86_64 awscli-2.noarch && \
+    dnf -y install postgresql18.x86_64 awscli-2.noarch && \
     dnf -y clean all
 
 # Logic for Dump
