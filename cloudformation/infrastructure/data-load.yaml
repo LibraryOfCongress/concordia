@@ -93,7 +93,7 @@ Resources:
                       dnf -y upgrade --releasever=latest && break
                     done
                     while true; do
-                      dnf -y install --assumeyes postgresql15.x86_64 && break
+                      dnf -y install --assumeyes postgresql18.x86_64 && break
                     done
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass

@@ -103,7 +103,7 @@ Resources:
                       dnf -y install --assumeyes git && break
                     done
                     while true; do
-                      dnf -y install --assumeyes postgresql15.x86_64 && break
+                      dnf -y install --assumeyes postgresql18.x86_64 && break
                     done
                     while true; do
                       dnf -y install --assumeyes docker.x86_64 && break
