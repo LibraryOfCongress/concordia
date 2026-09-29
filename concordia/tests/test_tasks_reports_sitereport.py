@@ -298,15 +298,12 @@ class SiteReportAssetsStartedRollupTests(CreateTestUsers, TestCase):
                 report_name=SiteReport.ReportName.TOTAL,
                 campaign__isnull=True,
                 topic__isnull=True,
-                created_on__date=day2.date(),
             )
             .order_by("-created_on", "-pk")
             .first()
         )
         active_day2 = (
-            SiteReport.objects.filter(
-                campaign=active_campaign, created_on__date=day2.date()
-            )
+            SiteReport.objects.filter(campaign=active_campaign)
             .order_by("-created_on", "-pk")
             .first()
         )
