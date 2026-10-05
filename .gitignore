@@ -39,3 +39,4 @@ concordia/settings_test_*.py
 concordia/settings_loadtest_*.py
 version.txt
 static-files
+.envrc
