@@ -13,8 +13,8 @@
     {% flag_enabled 'SHOW_BANNER' as SHOW_BANNER %}
 
     {% if SHOW_BANNER and banner %}
-        <div id="homepage-contribute-container" class="container my-4">
-            <div class="px-default ms-md-3 mb-5">
+        <div id="homepage-contribute-container" class="container mt-4 mb-0">
+            <div class="px-default ms-md-3 mb-4">
                 <div class="alert {{ banner.alert_class }} alert-dismissible w-100 d-flex" id="banner-{{ banner.slug }}" role="alert">
                     <div id="banner-inner" class="d-flex flex-1 justify-content-center">
                         {% if banner.link %}
@@ -38,35 +38,6 @@
         </div>
     {% endif %}
 
-    <div id="homepage-contribute-container" class="container my-4">
-        <div class="px-default ms-md-3 mb-5">
-            <h2 class="text-center font-serif">Be a virtual volunteer!</h2>
-            <p class="text-center px-md-5 mx-md-5">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
-        </div>
-        <ul id="homepage-contribute-activities" class="list-unstyled row text-center">
-            <li class="col-sm px-4 mb-4">
-                <a class="text-dark" href="{% url 'get-started' %}">
-                    <img class="img-fluid" src="{% static 'img/homepage-search.svg' %}" alt="" width="200" height="200" loading="lazy">
-                    <h3 class="mt-3 text-uppercase">Get started</h3>
-                    <p id="homepage-activity-tag-help" class="m-0">Learn how to volunteer. Anyone can contribute!</p>
-                </a>
-            </li>
-            <li class="col-sm px-4 mb-4">
-                <a class="text-dark" href="{% url 'transcription-basic-rules' %}">
-                    <img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}" alt="" width="200" height="200" loading="lazy">
-                    <h3 class="mt-3 text-uppercase">Transcribe</h3>
-                    <p id="homepage-activity-transcribe-help" class="m-0">No account needed! Type what you see on the page.</p>
-                </a>
-            </li>
-            <li class="col-sm px-4 mb-4">
-                <a class="text-dark" href="{% url 'how-to-review' %}">
-                    <img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}" alt="" width="200" height="200" loading="lazy">
-                    <h3 class="mt-3 text-uppercase">Review</h3>
-                    <p id="homepage-activity-review-help" class="m-0">Review is the crucial final step! Register to edit and complete transcriptions.</p>
-                </a>
-            </li>
-        </ul>
-    </div>
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
     {% flag_enabled 'NEW_CAROUSEL_SLIDE' as NEW_CAROUSEL_SLIDE %}
     {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
@@ -177,21 +148,49 @@
             {% endif %}
         </div>
     {% endif %}
-    <div id="homepage-next-transcribable-links" class="container mt-5">
-        <div class="row align-items-center justify-content-md-center">
-            <h2 class="col-md-auto text-center text-nowrap px-5 py-3 m-0">Surprise me!</h2>
-            <ul class="col-md-auto row list-unstyled m-0">
-                <li class="col text-center text-bold px-5 py-3">
-                    <a href="{% url 'redirect-to-next-transcribable-asset' %}"><span class="d-block text-dark fw-bold">Jump into</span> <span class="d-block text-nowrap h2">a transcription</span></a>
-                </li>
-                <li class="col text-center text-bold px-5 py-3">
-                    <a href="{% url 'redirect-to-next-reviewable-asset' %}"><span class="d-block text-dark fw-bold">Jump into</span> <span class="d-block text-nowrap h2">a review</span></a>
-                </li>
-            </ul>
-        </div>
+
+    <div id="btp-program-mark" class="d-flex justify-content-center my-3">
+        <img src="{% static 'img/btp-program-mark-final.png' %}" class="img-fluid" width="300" height="200" alt="By The People with a magnifying glass on a page">
     </div>
-    <div id="homepage-campaign-list" class="container pt-2 mt-5 mb-4">
-        <h2 class="text-center font-serif mb-4">Campaigns: <small>Choose which collections to explore and transcribe</small></h2>
+
+    <div id="homepage-contribute-container" class="container mt-4 mb-0">
+        <div class="px-default ms-md-3 mb-4">
+            <h3 class="text-center font-serif">Be a virtual volunteer!</h3>
+            <p class="text-center px-md-5 mx-md-5" style="text-wrap: balance;">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
+        </div>
+        <ul id="homepage-contribute-activities" class="list-unstyled row text-center mb-0">
+            <li class="col-sm px-4 mb-3 mb-md-0">
+                <img class="img-fluid" src="{% static 'img/box-magnifying-glass.svg' %}" alt="Box with magnifying glass" width="100" height="100" loading="lazy">
+                <div class="my-2">
+                    <a class="text-primary text-decoration-underline fw-bold" href="{% url 'get-started' %}">Get Started</a>
+                </div>
+                <p id="homepage-activity-tag-help" class="m-0" style="text-wrap: balance;">
+                    <span class="d-block">Learn how to volunteer.</span>
+                    <span class="d-block">Anyone can contribute!</span>
+                </p>
+            </li>
+            <li class="col-sm px-4 mb-3 mb-md-0">
+                <img class="img-fluid" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="100" height="100" loading="lazy">
+                <div class="my-1">
+                    <a class="text-primary text-decoration-underline fw-bold" href="{% url 'transcription-basic-rules' %}">Transcribe</a>
+                </div>
+                <p id="homepage-activity-transcribe-help" class="m-0" style="text-wrap: balance;">
+                    <span class="d-block">No account needed! Type</span>
+                    <span class="d-block">what you see on the page.</span>
+                </p>
+            </li>
+            <li class="col-sm px-4 mb-3 mb-md-0">
+                <img class="img-fluid" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="100" height="100" loading="lazy">
+                <div class="my-1">
+                    <a class="text-primary text-decoration-underline fw-bold" href="{% url 'how-to-review' %}">Review</a>
+                </div>
+                <p id="homepage-activity-review-help" class="m-0" style="text-wrap: balance;">Review is the crucial final step! Register to edit and complete transcriptions.</p>
+            </li>
+        </ul>
+    </div>
+
+    <div id="homepage-campaign-list" class="container mt-5 mb-4">
+        <h4 class="text-center font-serif mb-4">Campaigns: <small class="text-muted">Choose which collections to explore and transcribe</small></h4>
         <ul class="list-unstyled row text-center">
             {% for campaign in campaigns|slice:":3" %}
                 <li class="col-sm mb-4">
