@@ -50,5 +50,10 @@
         "build": "npm run copy-vendor && vite build",
         "preview": "vite preview",
         "postinstall": "npm run copy-vendor"
+    },
+    "allowScripts": {
+        "@parcel/watcher@2.5.6": true,
+        "chromedriver@147.0.0": true,
+        "fsevents@2.3.3": true
     }
 }
