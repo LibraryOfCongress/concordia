@@ -1,14 +1,32 @@
 #homepage-contribute-container {
     #homepage-contribute-activities {
-        .homepage-activity-icon {
-            height: 100px;
-            width: auto;
-            object-fit: contain;
-        }
+        li {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
 
-        // Compensate for the transparent top padding in box-magnifying-glass.svg
-        li:first-child .homepage-activity-icon {
-            transform: translateY(4px);
+            .homepage-activity-icon {
+                width: 100px;
+                height: 100px;
+                object-fit: contain;
+            }
+
+            // Compensate for internal artboard whitespace in box-magnifying-glass.svg
+            &:first-child .homepage-activity-icon {
+                transform: translateY(4px);
+            }
+
+            // Standardize link container block box height to align text baselines
+            .homepage-activity-link-wrapper {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 2.25rem;
+            }
+
+            p {
+                width: 100%;
+            }
         }
     }
 }
