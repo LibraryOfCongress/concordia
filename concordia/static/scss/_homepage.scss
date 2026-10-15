@@ -1,0 +1,14 @@
+#homepage-contribute-container {
+    #homepage-contribute-activities {
+        .homepage-activity-icon {
+            height: 100px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        // Compensate for the transparent top padding in box-magnifying-glass.svg
+        li:first-child .homepage-activity-icon {
+            transform: translateY(4px);
+        }
+    }
+}

@@ -13,7 +13,7 @@
     {% flag_enabled 'SHOW_BANNER' as SHOW_BANNER %}
 
     {% if SHOW_BANNER and banner %}
-        <div id="homepage-contribute-container" class="container mt-4 mb-0">
+        <div id="homepage-banner-container" class="container mt-4 mb-0">
             <div class="px-default ms-md-3 mb-4">
                 <div class="alert {{ banner.alert_class }} alert-dismissible w-100 d-flex" id="banner-{{ banner.slug }}" role="alert">
                     <div id="banner-inner" class="d-flex flex-1 justify-content-center">
@@ -158,10 +158,10 @@
             <h3 class="text-center font-serif">Be a virtual volunteer!</h3>
             <p class="text-center px-md-5 mx-md-5" style="text-wrap: balance;">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
         </div>
-        <ul id="homepage-contribute-activities" class="list-unstyled row text-center mb-0">
-            <li class="col-sm px-4 mb-3 mb-md-0">
-                <img class="img-fluid" src="{% static 'img/box-magnifying-glass.svg' %}" alt="Box with magnifying glass" width="100" height="100" loading="lazy">
-                <div class="my-2">
+        <ul id="homepage-contribute-activities" class="list-unstyled row text-center mb-0 align-items-start">
+            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
+                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/box-magnifying-glass.svg' %}" alt="Box with magnifying glass" width="100" height="100" loading="lazy">
+                <div class="my-2 homepage-activity-link-wrapper">
                     <a class="text-primary text-decoration-underline fw-bold" href="{% url 'get-started' %}">Get Started</a>
                 </div>
                 <p id="homepage-activity-tag-help" class="m-0" style="text-wrap: balance;">
@@ -169,9 +169,9 @@
                     <span class="d-block">Anyone can contribute!</span>
                 </p>
             </li>
-            <li class="col-sm px-4 mb-3 mb-md-0">
-                <img class="img-fluid" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="100" height="100" loading="lazy">
-                <div class="my-1">
+            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
+                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="100" height="100" loading="lazy">
+                <div class="my-1 homepage-activity-link-wrapper">
                     <a class="text-primary text-decoration-underline fw-bold" href="{% url 'transcription-basic-rules' %}">Transcribe</a>
                 </div>
                 <p id="homepage-activity-transcribe-help" class="m-0" style="text-wrap: balance;">
@@ -179,9 +179,9 @@
                     <span class="d-block">what you see on the page.</span>
                 </p>
             </li>
-            <li class="col-sm px-4 mb-3 mb-md-0">
-                <img class="img-fluid" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="100" height="100" loading="lazy">
-                <div class="my-1">
+            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
+                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="100" height="100" loading="lazy">
+                <div class="my-1 homepage-activity-link-wrapper">
                     <a class="text-primary text-decoration-underline fw-bold" href="{% url 'how-to-review' %}">Review</a>
                 </div>
                 <p id="homepage-activity-review-help" class="m-0" style="text-wrap: balance;">Review is the crucial final step! Register to edit and complete transcriptions.</p>
