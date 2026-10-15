@@ -1,0 +1,32 @@
+#homepage-contribute-container {
+    #homepage-contribute-activities {
+        li {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            .homepage-activity-icon {
+                width: 100px;
+                height: 100px;
+                object-fit: contain;
+            }
+
+            // Compensate for internal artboard whitespace in box-magnifying-glass.svg
+            &:first-child .homepage-activity-icon {
+                transform: translateY(4px);
+            }
+
+            // Standardize link container block box height to align text baselines
+            .homepage-activity-link-wrapper {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 2.25rem;
+            }
+
+            p {
+                width: 100%;
+            }
+        }
+    }
+}
