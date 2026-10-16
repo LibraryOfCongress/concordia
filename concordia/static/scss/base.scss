@@ -84,6 +84,9 @@ $list-inline-padding: 12px;
 @import '../../../node_modules/bootstrap/scss/utilities';
 @import '../../../node_modules/bootstrap/scss/utilities/api';
 
+// Append partial scss files for Vite:
+@import 'variables';
+
 // navbar
 $navbar-toggler-font-size: 32px;
 $navbar-toggler-padding-y: 0;
@@ -1076,40 +1079,60 @@ body .disabled > .page-link {
     }
 }
 
-.carousel-item {
-    img {
-        background-color: $light;
-    }
-}
-
 .carousel-overlay {
-    padding: 10px 3rem 1rem;
+    padding: 10px 2rem 1rem;
 
     @include media-breakpoint-up(md) {
-        padding: 25px;
         background-color: white;
         position: absolute;
-        top: 50px;
-        left: 100px;
         width: 420px;
+        top: 25px;
+        left: 60px;
+        padding: 15px 20px;
 
         [data-overlay-position='top-right'] & {
             left: auto;
-            right: 100px;
+            right: 60px;
         }
     }
 
     @include media-breakpoint-down(md) {
         position: absolute;
-        top: 19px;
+        top: 15px;
     }
 
     .title {
-        font-size: 2.25rem;
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        font-size: 0.95rem;
+        line-height: 1.3;
+        margin-bottom: 0.75rem; // Gives just enough room for the button
     }
 }
 
 .carousel {
+    // Uniform height container across the whole app
+    .carousel-inner {
+        height: 283px !important;
+        overflow: hidden !important;
+    }
+
+    .carousel-item {
+        height: 100%;
+
+        // Image cropping logic so images never warp or stretch
+        img {
+            height: 100% !important;
+            width: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            background-color: $light;
+        }
+    }
+
     .carousel-control-next-icon {
         background-image: url('/static/img/slick-right-arrow.svg');
     }
