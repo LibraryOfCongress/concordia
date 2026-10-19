@@ -12,8 +12,9 @@
             }
 
             // Compensate for internal artboard whitespace in box-magnifying-glass.svg
+            // Scale down slightly to match colid squares
             &:first-child .homepage-activity-icon {
-                transform: translateY(4px);
+                transform: translateY(2px) scale(0.88);
             }
 
             // Standardize link container block box height to align text baselines
