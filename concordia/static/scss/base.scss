@@ -85,6 +85,7 @@ $list-inline-padding: 12px;
 @import '../../../node_modules/bootstrap/scss/utilities/api';
 
 // Append partial scss files for Vite:
+// stylelint-disable-next-line no-invalid-position-at-import-rule
 @import 'variables';
 
 // navbar
@@ -138,6 +139,9 @@ $alert-padding-x: 1rem;
 @import '../../../node_modules/bootstrap/scss/alert';
 @import '../../../node_modules/bootstrap/scss/close';
 @import '../../../node_modules/bootstrap/scss/carousel';
+
+// Append partial scss files for Vite:
+@import 'homepage';
 
 // progress
 $bg-completed: $blue;
