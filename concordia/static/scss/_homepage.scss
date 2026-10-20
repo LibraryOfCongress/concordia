@@ -31,3 +31,44 @@
         }
     }
 }
+
+#homepage-carousel {
+    height: 283px;
+
+    .carousel-inner {
+        height: 283px !important;
+        overflow: hidden !important;
+
+        .carousel-item {
+            height: 100%;
+
+            // Image cropping logic so images never warp or stretch
+            img {
+                height: 100% !important;
+                width: 100% !important;
+                object-fit: cover !important;
+                object-position: center !important;
+                background-color: $light;
+            }
+        }
+
+        .carousel-overlay {
+            padding: 10px 2rem 1rem;
+
+            @include media-breakpoint-up(md) {
+                top: 15px;
+            }
+
+            .title {
+                font-size: 1.75rem;
+                margin-bottom: 0.5rem;
+            }
+
+            p {
+                font-size: 0.95rem;
+                line-height: 1.3;
+                margin-bottom: 0.75rem; // room for button
+            }
+        }
+    }
+}
