@@ -56,7 +56,7 @@
             <div class="carousel-inner">
                 {% for slide in slides %}
                     <div class="carousel-item {% if forloop.first %} active {% endif %}" {% if slide.overlay_position == "right" %} data-overlay-position="top-right" {% endif %} data-bs-title="{{ slide.headline }}" data-hero-text="{{ slide.body }}" data-link-url="{{ slide.lets_go_url }}">
-                        <img class="d-block img-fluid" src="{{ MEDIA_URL }}{{ slide.carousel_image }}" alt="{{ slide.image_alt_text }}" width="1200" height="480">
+                        <img class="d-block img-fluid" src="{{ MEDIA_URL }}{{ slide.carousel_image }}" alt="{{ slide.image_alt_text }}">
                         <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
                             <h2 class="h1 title mb-1 fw-bold">{{ slide.headline }}</h2>
                             <p class="hero-text mx-auto">{{ slide.body }}</p>
@@ -159,7 +159,7 @@
             <p class="text-center px-md-5 mx-md-5" style="text-wrap: balance;">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
         </div>
         <ul id="homepage-contribute-activities" class="list-unstyled row text-center mb-0 align-items-start">
-            <li class="col-sm px-4 mt-3 mb-3 mb-md-0 d-flex flex-column align-items-center">
+            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
                 <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/box-magnifying-glass.svg' %}" alt="Box with magnifying glass" width="100" height="100" loading="lazy">
                 <div class="my-1 homepage-activity-link-wrapper">
                     <a class="text-primary text-decoration-underline fw-bold" href="{% url 'get-started' %}">Get Started</a>
@@ -170,7 +170,7 @@
                 </p>
             </li>
             <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
-                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="114" height="114" loading="lazy">
+                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="100" height="100" loading="lazy">
                 <div class="my-1 homepage-activity-link-wrapper">
                     <a class="text-primary text-decoration-underline fw-bold" href="{% url 'transcription-basic-rules' %}">Transcribe</a>
                 </div>
@@ -180,7 +180,7 @@
                 </p>
             </li>
             <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
-                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="114" height="114" loading="lazy">
+                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="100" height="100" loading="lazy">
                 <div class="my-1 homepage-activity-link-wrapper">
                     <a class="text-primary text-decoration-underline fw-bold" href="{% url 'how-to-review' %}">Review</a>
                 </div>

@@ -84,6 +84,10 @@ $list-inline-padding: 12px;
 @import '../../../node_modules/bootstrap/scss/utilities';
 @import '../../../node_modules/bootstrap/scss/utilities/api';
 
+// Append partial scss files for Vite:
+/* stylelint-disable-next-line no-invalid-position-at-import-rule */
+@import 'variables';
+
 // navbar
 $navbar-toggler-font-size: 32px;
 $navbar-toggler-padding-y: 0;
@@ -1076,22 +1080,16 @@ body .disabled > .page-link {
     }
 }
 
-.carousel-item {
-    img {
-        background-color: $light;
-    }
-}
-
 .carousel-overlay {
     padding: 10px 3rem 1rem;
 
     @include media-breakpoint-up(md) {
-        padding: 25px;
         background-color: white;
         position: absolute;
+        width: 420px;
         top: 50px;
         left: 100px;
-        width: 420px;
+        padding: 25px;
 
         [data-overlay-position='top-right'] & {
             left: auto;
@@ -2181,3 +2179,7 @@ figure.error-figure {
     margin-top: 0.25rem;
     font-size: 0.5rem;
 }
+
+// Append partial scss files for Vite:
+/* stylelint-disable-next-line no-invalid-position-at-import-rule */
+@import 'homepage';
