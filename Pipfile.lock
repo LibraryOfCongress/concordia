@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f47334707a9d3440c19341debec9c7d993e5f025d0ecece74f5c354628eb030e"
+            "sha256": "1145d41578a04a82d264d1f4ece41cafe0a513fb1c54bcfab37540f6d52bf46c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1996,21 +1996,21 @@
         },
         "setuptools": {
             "hashes": [
-                "sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670",
-                "sha256:f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73"
+                "sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc",
+                "sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.10'",
-            "version": "==84.0.0"
+            "version": "==84.2.1"
         },
         "setuptools-scm": {
             "hashes": [
-                "sha256:1c674ab4665686a0887d7e24c03ab25f24201c213e82ea689d2f3e169ef7ef57",
-                "sha256:30e8f84d2ab1ba7cb0e653429b179395d0c33775d54807fc5f1dd6671801aef7"
+                "sha256:82f34c3e3084fc2b57d397200637cc13f2338004052d2fee47baa5f0e902464e",
+                "sha256:a69f28bfc245608781205e912faae437c2b2165773afa4e7b979d77447a69dd2"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==9.2.2"
+            "version": "==10.3.4"
         },
         "six": {
             "hashes": [
@@ -2236,6 +2236,14 @@
             "index": "pypi",
             "markers": "python_version >= '3.10'",
             "version": "==2.8.0"
+        },
+        "vcs-versioning": {
+            "hashes": [
+                "sha256:22e9159288e2d8bca2fa6f6c31c34c9c66aec157f60e9e526f5d160d2516d60f",
+                "sha256:f8bebd1302ebc12e67ceb30fc7dd698ec969414b6fa43b30c3f14ac9b1e72c41"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==2.6.0"
         },
         "vine": {
             "hashes": [
