@@ -328,6 +328,16 @@ p a:hover,
     text-decoration: none;
 }
 
+// Simple page
+.heading-with-image {
+    margin-bottom: 1.5rem;
+    background-color: #f6f6f6;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .row > * {
     padding-left: 0;
     padding-right: 0;

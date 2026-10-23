@@ -7,6 +7,12 @@ $(function () {
         );
         $('.blog-content').toggle();
     });
+    $('.toggle-events').click(function (event) {
+        $('.accordion-icon', event.delegateTarget).toggleClass(
+            'fa-plus-square fa-minus-square',
+        );
+        $('.events-content').toggle();
+    });
     $('.toggle-publications').click(function (event) {
         $('.accordion-icon', event.delegateTarget).toggleClass(
             'fa-plus-square fa-minus-square',
