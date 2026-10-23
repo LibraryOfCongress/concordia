@@ -1067,6 +1067,11 @@ body .disabled > .page-link {
  * Homepage customizations
  */
 
+.main-homepage {
+    max-width: 1110px;
+    margin: 0 auto;
+}
+
 .play-pause-button {
     position: absolute;
     top: 5px;
