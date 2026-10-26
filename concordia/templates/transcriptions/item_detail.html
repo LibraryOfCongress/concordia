@@ -41,7 +41,7 @@
         {% include "fragments/transcription-progress-row.html" %}
         <div class="d-flex justify-content-between mt-4">
             <div>
-                <h3>Filter pages:</h2>
+                <h3>Filter pages:</h3>
             </div>
             {% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id as all_assets %}
             {% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.item_id as filtered_assets %}
@@ -67,13 +67,13 @@
                             <div class="d-grid">
                                 <a class="btn btn-sm btn-block {% if a.transcription_status != 'completed' %}btn-primary{% else %}btn-dark{% endif %}" href="{{ asset_detail_url }}">
                                     {% if a.transcription_status == 'submitted' %}
-                                        <span class="fas fa-list tx-submitted"></span>
+                                        <span class="fa-solid fa-rectangle-list tx-submitted text-white"></span>
                                         Review
                                     {% elif a.transcription_status == 'completed' %}
-                                        <span class="fas fa-check tx-completed"></span>
+                                        <span class="fa-solid fa-square-check tx-completed text-white"></span>
                                         Complete
                                     {% else %}
-                                        <span class="fas fa-edit tx-edit"></span>
+                                        <span class="fa-solid fa-square-pen tx-edit"></span>
                                         Transcribe
                                     {% endif %}
                                 </a>
@@ -92,7 +92,3 @@
         </div>
     </div>
 {% endblock main_content %}
-{% block body_scripts %}
-    {{ block.super }}
-    <script src="{% static 'js/filter-assets.js' %}"></script>
-{% endblock body_scripts %}
