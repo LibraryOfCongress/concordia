@@ -160,7 +160,7 @@
                                 {% if project.lowest_transcription_status == 'completed' %}
                                     <div class="card-actions">
                                         <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
-                                            <span class="fas fa-check tx-completed"></span>
+                                            <span class="fa-solid fa-square-check tx-completed text-white"></span>
                                             Complete
                                         </a>
                                     </div>
@@ -175,7 +175,3 @@
                 </div>
             </div>
 {% endblock main_content %}
-{% block body_scripts %}
-    {{ block.super }}
-    <script src="{% static 'js/filter-assets.js' %}"></script>
-{% endblock body_scripts %}
