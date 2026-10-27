@@ -9,205 +9,206 @@
 {% block extra_main_classes %}{% endblock %}
 
 {% block main_content %}
+    <div class="container-home">
+        {% flag_enabled 'SHOW_BANNER' as SHOW_BANNER %}
 
-    {% flag_enabled 'SHOW_BANNER' as SHOW_BANNER %}
-
-    {% if SHOW_BANNER and banner %}
-        <div id="homepage-banner-container" class="container mt-4 mb-0">
-            <div class="px-default ms-md-3 mb-4">
-                <div class="alert {{ banner.alert_class }} alert-dismissible w-100 d-flex" id="banner-{{ banner.slug }}" role="alert">
-                    <div id="banner-inner" class="d-flex flex-1 justify-content-center">
-                        {% if banner.link %}
-                            <a class="btn {{ banner.btn_class }}" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
-                                {{ banner.text }}
+        {% if SHOW_BANNER and banner %}
+            <div id="homepage-banner-container" class="container mt-4 mb-0">
+                <div class="px-default ms-md-3 mb-4">
+                    <div class="alert {{ banner.alert_class }} alert-dismissible w-100 d-flex" id="banner-{{ banner.slug }}" role="alert">
+                        <div id="banner-inner" class="d-flex flex-1 justify-content-center">
+                            {% if banner.link %}
+                                <a class="btn {{ banner.btn_class }}" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
+                                    {{ banner.text }}
+                                </a>
+                            {% else %}
+                                <table class="{{ banner.btn_class }} fw-bold">
+                                    <td class="align-middle">{{ banner.text }}</td>
+                                </table>
+                            {% endif %}
+                            <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <a type="button" data-bs-dismiss="alert" aria-label="Close">
+                                <span class="fas fa-times text-white"></span>
                             </a>
-                        {% else %}
-                            <table class="{{ banner.btn_class }} fw-bold">
-                                <td class="align-middle">{{ banner.text }}</td>
-                            </table>
-                        {% endif %}
-                        <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
-                    </div>
-                    <div class="d-flex justify-content-end">
-                        <a type="button" data-bs-dismiss="alert" aria-label="Close">
-                            <span class="fas fa-times text-white"></span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
-    {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
-    {% flag_enabled 'NEW_CAROUSEL_SLIDE' as NEW_CAROUSEL_SLIDE %}
-    {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
-
-    {% if CAROUSEL_CMS %}
-        <div id="homepage-carousel" class="carousel slide container">
-            <button type="button" id="play-pause-button" class="btn btn-primary play-pause-button" aria-label="pause">
-                <i class="fa fa-solid fa-pause"></i>
-            </button>
-            <div class="carousel-indicators d-none d-lg-flex">
-                {% for slide in slides %}
-                    <button type="button" data-bs-target="#homepage-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true" {% endif %}aria-label="Slide {{ forloop.counter }}"></button>
-                {% endfor %}
-            </div>
-
-            <div class="carousel-inner">
-                {% for slide in slides %}
-                    <div class="carousel-item {% if forloop.first %} active {% endif %}" {% if slide.overlay_position == "right" %} data-overlay-position="top-right" {% endif %} data-bs-title="{{ slide.headline }}" data-hero-text="{{ slide.body }}" data-link-url="{{ slide.lets_go_url }}">
-                        <img class="d-block img-fluid" src="{{ MEDIA_URL }}{{ slide.carousel_image }}" alt="{{ slide.image_alt_text }}">
-                        <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                            <h2 class="h1 title mb-1 fw-bold">{{ slide.headline }}</h2>
-                            <p class="hero-text mx-auto">{{ slide.body }}</p>
-                            <a class="btn btn-primary px-4" href="{{ slide.lets_go_url }}">LET'S GO!</a>
                         </div>
                     </div>
-                {% endfor %}
+                </div>
             </div>
-            <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </a>
-            <a class="carousel-control-next" href="#homepage-carousel" role="button" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </a>
+        {% endif %}
 
-        </div>
-    {% else %}
-        <div id="homepage-carousel" class="carousel slide container" data-bs-ride="carousel" data-bs-pause="hover">
-            <ol class="carousel-indicators d-none d-lg-flex">
-                <li data-bs-target="#homepage-carousel" data-bs-slide-to="0" class="active"></li>
-                <li data-bs-target="#homepage-carousel" data-bs-slide-to="1"></li>
-                <li data-bs-target="#homepage-carousel" data-bs-slide-to="2"></li>
-                <li data-bs-target="#homepage-carousel" data-bs-slide-to="3"></li>
-                {% if ADVERTISE_ACTIVITY_UI %}
-                    <li data-bs-target="#homepage-carousel" data-bs-slide-to="4"></li>
-                {% endif %}
-            </ol>
-            <div class="carousel-inner">
-                {% if NEW_CAROUSEL_SLIDE %}
-                    <div class="carousel-item active" data-bs-title="Join our cause!" data-hero-text="Women's suffrage review challenge August 12-19. Help complete pages and get to know the women who fought for change 100 years ago" data-link-url="{% url 'redirect-to-next-reviewable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/suffrage.jpg' %}" alt="Carrie Chapman Catt stands with protesters advocating for women's right to vote. Some protesters carry banners and shields with state names, including Wyoming, California, Kansas. Some women are dressed in white, wearing crowns and carrying musical instruments, and American flags.">
-                    </div>
-                    {% if ADVERTISE_ACTIVITY_UI %}
-                        <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Find your perfect page" data-hero-text="Log in or register to transcribe and review in our new way of browsing" data-link-url="{% url 'action-app' %}">
-                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/activity-ui.jpg' %}" alt="New crowdsourcing browse interface. Two rows of pages volunteers can choose from to review.">
-                        </div>
-                    {% endif %}
-                    <div class="carousel-item" data-bs-title="Walt Whitman at 200" data-hero-text="Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'walt-whitman' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/whitman.jpg' %}" alt="Walt Whitman in his younger years, a black and white engraving. Whitman with his right hand on his hip and his left in his pocket wearing a black rimmed hat.">
-                    </div>
-                    <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Review Now" data-hero-text="Approve or correct other volunteers' transcriptions to help them cross the finish line." data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="Close up of hand-written text of Mary Church Terrell's first speech to the NAACP">
-                    </div>
-                    <div class="carousel-item" data-bs-title="Where to start?" data-hero-text="Find instructions and help to get started in our Welcome Guide" data-link-url="{% url 'get-started' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
-                    </div>
-                {% else %}
-                    <div class="carousel-item active" data-bs-title="Walt Whitman at 200" data-hero-text="Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'walt-whitman' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/whitman.jpg' %}" alt="Walt Whitman in his younger years, a black and white engraving. Whitman with his right hand on his hip and his left in his pocket wearing a black rimmed hat.">
-                    </div>
-                    {% if ADVERTISE_ACTIVITY_UI %}
-                        <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Find your perfect page" data-hero-text="Log in or register to transcribe and review in our new way of browsing" data-link-url="{% url 'action-app' %}">
-                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/activity-ui.jpg' %}" alt="New crowdsourcing browse interface. Two rows of pages volunteers can choose from to review.">
-                        </div>
-                    {% endif %}
-                    <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Review Now" data-hero-text="Approve or correct other volunteers' transcriptions to help them cross the finish line." data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="Close up of hand-written text of Mary Church Terrell's first speech to the NAACP">
-                    </div>
-                    <div class="carousel-item" data-bs-title="Where to start?" data-hero-text="Find instructions and help to get started in our Welcome Guide" data-link-url="{% url 'get-started' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
-                    </div>
-                    <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Jump in!" data-hero-text="Transcription uncovers our shared history and makes documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="A crowd of young women cheering and waving handkerchiefs">
-                    </div>
-                {% endif %}
-            </div>
-            <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </a>
-            <a class="carousel-control-next" href="#homepage-carousel" role="button" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </a>
-            {% if NEW_CAROUSEL_SLIDE %}
-                <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                    <h1 class="title">Join our cause!</h1>
-                    <p class="hero-text mx-auto">Women's suffrage review challenge August 12-19. Help complete pages and get to know the women who fought for change 100 years ago</p>
-                    <a class="btn btn-primary btn-lg" href="{% url 'redirect-to-next-reviewable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">LET'S GO!</a>
-                </div>
-            {% else %}
-                <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                    <h1 class="title">Walt Whitman at 200</h1>
-                    <p class="hero-text mx-auto">Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself.</p>
-                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'walt-whitman' %}">LET'S GO!</a>
-                </div>
-            {% endif %}
-        </div>
-    {% endif %}
+        {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
+        {% flag_enabled 'NEW_CAROUSEL_SLIDE' as NEW_CAROUSEL_SLIDE %}
+        {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
 
-    <div id="btp-program-mark" class="d-flex justify-content-center my-3">
-        <img src="{% static 'img/btp-program-mark-final.png' %}" class="img-fluid" width="300" height="200" alt="By The People with a magnifying glass on a page">
-    </div>
+        {% if CAROUSEL_CMS %}
+            <div id="homepage-carousel" class="carousel slide container">
+                <button type="button" id="play-pause-button" class="btn btn-primary play-pause-button" aria-label="pause">
+                    <i class="fa fa-solid fa-pause"></i>
+                </button>
+                <div class="carousel-indicators d-none d-lg-flex">
+                    {% for slide in slides %}
+                        <button type="button" data-bs-target="#homepage-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true" {% endif %}aria-label="Slide {{ forloop.counter }}"></button>
+                    {% endfor %}
+                </div>
 
-    <div id="homepage-contribute-container" class="container mt-4 mb-0">
-        <div class="px-default ms-md-3 mb-4">
-            <h3 class="text-center font-serif">Be a virtual volunteer!</h3>
-            <p class="text-center px-md-5 mx-md-5" style="text-wrap: balance;">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
-        </div>
-        <ul id="homepage-contribute-activities" class="list-unstyled row text-center mb-0 align-items-start">
-            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
-                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/box-magnifying-glass.svg' %}" alt="Box with magnifying glass" width="100" height="100" loading="lazy">
-                <div class="my-1 homepage-activity-link-wrapper">
-                    <a class="text-primary text-decoration-underline fw-bold" href="{% url 'get-started' %}">Get Started</a>
-                </div>
-                <p id="homepage-activity-tag-help" class="m-0" style="text-wrap: balance;">
-                    <span class="d-block">Learn how to volunteer.</span>
-                    <span class="d-block">Anyone can contribute!</span>
-                </p>
-            </li>
-            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
-                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="100" height="100" loading="lazy">
-                <div class="my-1 homepage-activity-link-wrapper">
-                    <a class="text-primary text-decoration-underline fw-bold" href="{% url 'transcription-basic-rules' %}">Transcribe</a>
-                </div>
-                <p id="homepage-activity-transcribe-help" class="m-0" style="text-wrap: balance;">
-                    <span class="d-block">No account needed! Type</span>
-                    <span class="d-block">what you see on the page.</span>
-                </p>
-            </li>
-            <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
-                <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="100" height="100" loading="lazy">
-                <div class="my-1 homepage-activity-link-wrapper">
-                    <a class="text-primary text-decoration-underline fw-bold" href="{% url 'how-to-review' %}">Review</a>
-                </div>
-                <p id="homepage-activity-review-help" class="m-0" style="text-wrap: balance;">The crucial final step! Register to edit and complete transcriptions.</p>
-            </li>
-        </ul>
-    </div>
-
-    <div id="homepage-campaign-list" class="container mt-5 mb-4" style="padding: 0 7rem;">
-        <h4 class="text-center font-serif mb-4">Campaigns: <small class="text-muted">Choose which collections to explore and transcribe</small></h4>
-        <ul class="list-unstyled row text-center">
-            {% for campaign in campaigns|slice:":3" %}
-                <li class="col-sm mb-4">
-                    {% url 'transcriptions:campaign-detail' campaign.slug as campaign_url %}
-                    <a class="text-dark" href="{{ campaign_url }}">
-                        <div class="aspect-ratio-box">
-                            <div class="aspect-ratio-box-inner-wrapper">
-                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.image_alt_text }}" loading="lazy">
+                <div class="carousel-inner">
+                    {% for slide in slides %}
+                        <div class="carousel-item {% if forloop.first %} active {% endif %}" {% if slide.overlay_position == "right" %} data-overlay-position="top-right" {% endif %} data-bs-title="{{ slide.headline }}" data-hero-text="{{ slide.body }}" data-link-url="{{ slide.lets_go_url }}">
+                            <img class="d-block img-fluid" src="{{ MEDIA_URL }}{{ slide.carousel_image }}" alt="{{ slide.image_alt_text }}">
+                            <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
+                                <h2 class="h1 title mb-1 fw-bold">{{ slide.headline }}</h2>
+                                <p class="hero-text mx-auto">{{ slide.body }}</p>
+                                <a class="btn btn-primary px-4" href="{{ slide.lets_go_url }}">LET'S GO!</a>
                             </div>
                         </div>
-                        <span class="d-block h4 mt-2">{{ campaign.title }}</span>
-                    </a>
+                    {% endfor %}
+                </div>
+                <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#homepage-carousel" role="button" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </a>
+
+            </div>
+        {% else %}
+            <div id="homepage-carousel" class="carousel slide container" data-bs-ride="carousel" data-bs-pause="hover">
+                <ol class="carousel-indicators d-none d-lg-flex">
+                    <li data-bs-target="#homepage-carousel" data-bs-slide-to="0" class="active"></li>
+                    <li data-bs-target="#homepage-carousel" data-bs-slide-to="1"></li>
+                    <li data-bs-target="#homepage-carousel" data-bs-slide-to="2"></li>
+                    <li data-bs-target="#homepage-carousel" data-bs-slide-to="3"></li>
+                    {% if ADVERTISE_ACTIVITY_UI %}
+                        <li data-bs-target="#homepage-carousel" data-bs-slide-to="4"></li>
+                    {% endif %}
+                </ol>
+                <div class="carousel-inner">
+                    {% if NEW_CAROUSEL_SLIDE %}
+                        <div class="carousel-item active" data-bs-title="Join our cause!" data-hero-text="Women's suffrage review challenge August 12-19. Help complete pages and get to know the women who fought for change 100 years ago" data-link-url="{% url 'redirect-to-next-reviewable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/suffrage.jpg' %}" alt="Carrie Chapman Catt stands with protesters advocating for women's right to vote. Some protesters carry banners and shields with state names, including Wyoming, California, Kansas. Some women are dressed in white, wearing crowns and carrying musical instruments, and American flags.">
+                        </div>
+                        {% if ADVERTISE_ACTIVITY_UI %}
+                            <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Find your perfect page" data-hero-text="Log in or register to transcribe and review in our new way of browsing" data-link-url="{% url 'action-app' %}">
+                                <img class="d-block w-100" src="{% static 'img/homepage-carousel/activity-ui.jpg' %}" alt="New crowdsourcing browse interface. Two rows of pages volunteers can choose from to review.">
+                            </div>
+                        {% endif %}
+                        <div class="carousel-item" data-bs-title="Walt Whitman at 200" data-hero-text="Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'walt-whitman' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/whitman.jpg' %}" alt="Walt Whitman in his younger years, a black and white engraving. Whitman with his right hand on his hip and his left in his pocket wearing a black rimmed hat.">
+                        </div>
+                        <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Review Now" data-hero-text="Approve or correct other volunteers' transcriptions to help them cross the finish line." data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="Close up of hand-written text of Mary Church Terrell's first speech to the NAACP">
+                        </div>
+                        <div class="carousel-item" data-bs-title="Where to start?" data-hero-text="Find instructions and help to get started in our Welcome Guide" data-link-url="{% url 'get-started' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
+                        </div>
+                    {% else %}
+                        <div class="carousel-item active" data-bs-title="Walt Whitman at 200" data-hero-text="Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'walt-whitman' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/whitman.jpg' %}" alt="Walt Whitman in his younger years, a black and white engraving. Whitman with his right hand on his hip and his left in his pocket wearing a black rimmed hat.">
+                        </div>
+                        {% if ADVERTISE_ACTIVITY_UI %}
+                            <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Find your perfect page" data-hero-text="Log in or register to transcribe and review in our new way of browsing" data-link-url="{% url 'action-app' %}">
+                                <img class="d-block w-100" src="{% static 'img/homepage-carousel/activity-ui.jpg' %}" alt="New crowdsourcing browse interface. Two rows of pages volunteers can choose from to review.">
+                            </div>
+                        {% endif %}
+                        <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Review Now" data-hero-text="Approve or correct other volunteers' transcriptions to help them cross the finish line." data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="Close up of hand-written text of Mary Church Terrell's first speech to the NAACP">
+                        </div>
+                        <div class="carousel-item" data-bs-title="Where to start?" data-hero-text="Find instructions and help to get started in our Welcome Guide" data-link-url="{% url 'get-started' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
+                        </div>
+                        <div class="carousel-item" data-overlay-position="top-right" data-bs-title="Jump in!" data-hero-text="Transcription uncovers our shared history and makes documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="A crowd of young women cheering and waving handkerchiefs">
+                        </div>
+                    {% endif %}
+                </div>
+                <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#homepage-carousel" role="button" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </a>
+                {% if NEW_CAROUSEL_SLIDE %}
+                    <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
+                        <h1 class="title">Join our cause!</h1>
+                        <p class="hero-text mx-auto">Women's suffrage review challenge August 12-19. Help complete pages and get to know the women who fought for change 100 years ago</p>
+                        <a class="btn btn-primary btn-lg" href="{% url 'redirect-to-next-reviewable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">LET'S GO!</a>
+                    </div>
+                {% else %}
+                    <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
+                        <h1 class="title">Walt Whitman at 200</h1>
+                        <p class="hero-text mx-auto">Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself.</p>
+                        <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-campaign-asset' 'walt-whitman' %}">LET'S GO!</a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div id="btp-program-mark" class="d-flex justify-content-center my-3">
+            <img src="{% static 'img/btp-program-mark-final.png' %}" class="img-fluid" width="300" height="200" alt="By The People with a magnifying glass on a page">
+        </div>
+
+        <div id="homepage-contribute-container" class="container mt-4 mb-0">
+            <div class="px-default ms-md-3 mb-4">
+                <h3 class="text-center font-serif">Be a virtual volunteer!</h3>
+                <p class="text-center px-md-5 mx-md-5" style="text-wrap: balance;">Help transcribe Library of Congress documents. Volunteers create and review transcriptions to improve search, access, and discovery of these pages from history.</p>
+            </div>
+            <ul id="homepage-contribute-activities" class="list-unstyled row text-center mb-0 align-items-start">
+                <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
+                    <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/box-magnifying-glass.svg' %}" alt="Box with magnifying glass" width="100" height="100" loading="lazy">
+                    <div class="my-1 homepage-activity-link-wrapper">
+                        <a class="text-primary text-decoration-underline fw-bold" href="{% url 'get-started' %}">Get Started</a>
+                    </div>
+                    <p id="homepage-activity-tag-help" class="m-0" style="text-wrap: balance;">
+                        <span class="d-block">Learn how to volunteer.</span>
+                        <span class="d-block">Anyone can contribute!</span>
+                    </p>
                 </li>
-            {% endfor %}
-        </ul>
-        <div class="text-center">
-            <a class="btn btn-primary" href="{% url 'campaign-topic-list' %}" role="button">Browse All Campaigns</a>
+                <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
+                    <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-pen-solid-full.svg' %}" alt="Pencil in a box" width="100" height="100" loading="lazy">
+                    <div class="my-1 homepage-activity-link-wrapper">
+                        <a class="text-primary text-decoration-underline fw-bold" href="{% url 'transcription-basic-rules' %}">Transcribe</a>
+                    </div>
+                    <p id="homepage-activity-transcribe-help" class="m-0" style="text-wrap: balance;">
+                        <span class="d-block">No account needed! Type</span>
+                        <span class="d-block">what you see on the page.</span>
+                    </p>
+                </li>
+                <li class="col-sm px-4 mb-3 mb-md-0 d-flex flex-column align-items-center">
+                    <img class="img-fluid d-block mx-auto homepage-activity-icon" src="{% static 'img/square-check-solid-full.svg' %}" alt="Checkmark in a box" width="100" height="100" loading="lazy">
+                    <div class="my-1 homepage-activity-link-wrapper">
+                        <a class="text-primary text-decoration-underline fw-bold" href="{% url 'how-to-review' %}">Review</a>
+                    </div>
+                    <p id="homepage-activity-review-help" class="m-0" style="text-wrap: balance;">The crucial final step! Register to edit and complete transcriptions.</p>
+                </li>
+            </ul>
+        </div>
+
+        <div id="homepage-campaign-list" class="container mt-5 mb-4" style="padding: 0 7rem;">
+            <h4 class="text-center font-serif mb-4">Campaigns: <small class="text-muted">Choose which collections to explore and transcribe</small></h4>
+            <ul class="list-unstyled row text-center">
+                {% for campaign in campaigns|slice:":3" %}
+                    <li class="col-sm mb-4">
+                        {% url 'transcriptions:campaign-detail' campaign.slug as campaign_url %}
+                        <a class="text-dark" href="{{ campaign_url }}">
+                            <div class="aspect-ratio-box">
+                                <div class="aspect-ratio-box-inner-wrapper">
+                                    <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.image_alt_text }}" loading="lazy">
+                                </div>
+                            </div>
+                            <span class="d-block h4 mt-2">{{ campaign.title }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="text-center">
+                <a class="btn btn-primary" href="{% url 'campaign-topic-list' %}" role="button">Browse All Campaigns</a>
+            </div>
         </div>
     </div>
 {% endblock main_content %}
