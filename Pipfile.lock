@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "70759c8719c8bd2befbd8e7c053fcc0835b2e23448da25f898e6318b6011f435"
+            "sha256": "f7516732ad1908dbc79e6ec42573a1cc8d3ff00d69e54f127f156d2e4b1f0881"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -2074,12 +2074,12 @@
         },
         "setuptools-scm": {
             "hashes": [
-                "sha256:1c674ab4665686a0887d7e24c03ab25f24201c213e82ea689d2f3e169ef7ef57",
-                "sha256:30e8f84d2ab1ba7cb0e653429b179395d0c33775d54807fc5f1dd6671801aef7"
+                "sha256:82f34c3e3084fc2b57d397200637cc13f2338004052d2fee47baa5f0e902464e",
+                "sha256:a69f28bfc245608781205e912faae437c2b2165773afa4e7b979d77447a69dd2"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==9.2.2"
+            "version": "==10.3.4"
         },
         "six": {
             "hashes": [
@@ -2305,6 +2305,14 @@
             "index": "pypi",
             "markers": "python_version >= '3.10'",
             "version": "==2.8.0"
+        },
+        "vcs-versioning": {
+            "hashes": [
+                "sha256:22e9159288e2d8bca2fa6f6c31c34c9c66aec157f60e9e526f5d160d2516d60f",
+                "sha256:f8bebd1302ebc12e67ceb30fc7dd698ec969414b6fa43b30c3f14ac9b1e72c41"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==2.6.0"
         },
         "vine": {
             "hashes": [
