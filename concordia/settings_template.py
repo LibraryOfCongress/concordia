@@ -180,7 +180,6 @@ TEMPLATES = [
                 "concordia.turnstile.context_processors.turnstile_default_settings",
             ],
             "libraries": {
-                "staticfiles": "django.templatetags.static",
                 "django_vite": "django_vite.templatetags.django_vite",
             },
             "loaders": [
