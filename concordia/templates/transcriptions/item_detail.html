@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% load humanize %}
-{% load static %}
 {% load concordia_filtering_tags %}
 {% load concordia_media_tags %}
 {% load feature_flags %}
@@ -66,13 +65,13 @@
                             <div class="d-grid">
                                 <a class="btn btn-sm btn-block {% if a.transcription_status != 'completed' %}btn-primary{% else %}btn-dark{% endif %}" href="{{ asset_detail_url }}">
                                     {% if a.transcription_status == 'submitted' %}
-                                        <span class="fa-solid fa-rectangle-list tx-submitted text-white"></span>
+                                        <span class="fa-solid fa-list tx-submitted"></span>
                                         Review
                                     {% elif a.transcription_status == 'completed' %}
-                                        <span class="fa-solid fa-square-check tx-completed text-white"></span>
+                                        <span class="fa-solid fa-check tx-completed"></span>
                                         Complete
                                     {% else %}
-                                        <span class="fa-solid fa-square-pen tx-edit"></span>
+                                        <span class="fa-solid fa-pen-to-square tx-edit"></span>
                                         Transcribe
                                     {% endif %}
                                 </a>

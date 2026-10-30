@@ -18,4 +18,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-window.filterAssets = filterAssets;
+// window.filterAssets = filterAssets;
