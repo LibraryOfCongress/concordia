@@ -20,7 +20,7 @@
         "codemirror": "^5.65.19",
         "fancy-log": "^2.0.0",
         "jquery": "^3.5.1",
-        "js-cookie": "^3.0.7",
+        "js-cookie": "^3.0.8",
         "openseadragon": "^6.1.1",
         "openseadragon-filters": "^2.2.0",
         "prettier": "^2.8.8",
