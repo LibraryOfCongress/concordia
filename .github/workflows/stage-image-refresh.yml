@@ -38,7 +38,7 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Python 3.12
-              uses: actions/setup-python@v7.0.0
+              uses: actions/setup-python@v7.1.0
               with:
                   # Semantic version range syntax or exact version of a Python version
                   python-version: '3.12'
