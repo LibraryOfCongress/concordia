@@ -3,7 +3,7 @@ FROM python:3.12-slim-bookworm
 
 # Major Node.js version to install (e.g., 20, 22). This is used to select the
 # NodeSource APT repository "node_<major>.x".
-ARG NODE_MAJOR=20
+ARG NODE_MAJOR=26
 
 # Include a small "wait for dependencies" helper used by the container command.
 # This is downloaded at build time and placed at /wait.
