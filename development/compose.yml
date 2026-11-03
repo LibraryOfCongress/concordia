@@ -1,4 +1,3 @@
-version: '3.6'
 services:
     redis:
         container_name: concordia_redis
@@ -13,7 +12,7 @@ services:
     db:
         container_name: concordia_db
         restart: unless-stopped
-        image: postgres:15
+        image: postgres:18
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
             POSTGRES_USER: concordia
@@ -22,7 +21,7 @@ services:
             - 54323:5432
         volumes:
             - ../postgresql:/docker-entrypoint-initdb.d:z
-            - db_volume:/var/lib/postgresql/data/
+            - db_volume:/var/lib/postgresql/
 
     app:
         container_name: concordia_app
