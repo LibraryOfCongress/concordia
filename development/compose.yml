@@ -13,7 +13,6 @@ services:
         container_name: concordia_db
         restart: unless-stopped
         image: postgres:18
-        command: postgres -c max_wal_size=8GB -c checkpoint_timeout=15min
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
             POSTGRES_USER: concordia
