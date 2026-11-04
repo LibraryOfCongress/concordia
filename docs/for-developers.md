@@ -158,10 +158,10 @@ delete the local container so it will be rebuilt the next time you run
 
 ##### Install front end
 
-1. Install Node 26. If you're on MacOS, you can install it using brew:
+1. Install Node 20. If you're on MacOS, you can install it using brew:
 
     ```bash
-    brew install node@26
+    brew install node@12
     ```
 
 1. Use NPM to install our development tools:
