@@ -1,9 +1,9 @@
 # Base runtime: Debian 12 (bookworm) slim + Python 3.12.
 FROM python:3.12-slim-bookworm
 
-# Major Node.js version to install (e.g., 20, 22). This is used to select the
+# Major Node.js version to install (e.g., 20, 26). This is used to select the
 # NodeSource APT repository "node_<major>.x".
-ARG NODE_MAJOR=20
+ARG NODE_MAJOR=26
 
 # Include a small "wait for dependencies" helper used by the container command.
 # This is downloaded at build time and placed at /wait.
@@ -32,7 +32,7 @@ RUN curl -fso /etc/ssl/certs/LOC-ROOT-CA-1.crt http://crl.loc.gov/LOC-ROOT-CA-1.
 
 # Install Node.js via the NodeSource APT repository (manual setup; no setup
 # script). Debian bookworm ships Node 18; adding this repo allows installing a
-# newer major version (e.g., Node 20) via apt.
+# newer major version (e.g., Node 26) via apt.
 #
 # This step:
 # - creates a dedicated keyring directory under /etc/apt/keyrings
