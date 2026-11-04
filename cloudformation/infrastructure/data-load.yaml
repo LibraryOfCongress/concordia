@@ -21,11 +21,12 @@ Parameters:
         Type: String
         NoEcho: true
 
-Mappings:
-    AWSRegionToAMI:
-        us-east-1:
-            AMI: ami-04e5276ebb8451442
+    LatestAL2023AMI:
+        Description: Latest Amazon Linux 2023 AMI from SSM Parameter Store
+        Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+        Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64
 
+Mappings:
     EnvironmentMapping:
         IamInstanceProfileName:
             dev: crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
@@ -54,11 +55,7 @@ Resources:
             ResourceSignal:
                 Timeout: PT30M
         Properties:
-            ImageId:
-                Fn::FindInMap:
-                    - AWSRegionToAMI
-                    - Ref: 'AWS::Region'
-                    - 'AMI'
+            ImageId: !Ref LatestAL2023AMI
             InstanceType: 't3.medium'
             IamInstanceProfile:
                 Fn::FindInMap:
@@ -107,6 +104,7 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-DataLoadHost
+
 Outputs:
     StackName:
         Description: 'Stackname for the DataLoadHost'
