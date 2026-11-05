@@ -16,6 +16,7 @@ artifacts/
 !.cfnlintrc.yaml
 !.github
 !.dockerignore
+!.nvmrc
 .DS_Store
 docs/build
 env.ini
