@@ -55,5 +55,8 @@
         "@parcel/watcher@2.5.6": true,
         "chromedriver@147.0.0": true,
         "fsevents@2.3.3": true
+    },
+    "engines": {
+        "node": ">=26 <27"
     }
 }

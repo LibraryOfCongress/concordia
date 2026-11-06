@@ -1,9 +1,9 @@
 # Base runtime: Debian 12 (bookworm) slim + Python 3.12.
 FROM python:3.12-slim-bookworm
 
-# Major Node.js version to install (e.g., 20, 22). This is used to select the
+# Major Node.js version to install (e.g., 20, 26). This is used to select the
 # NodeSource APT repository "node_<major>.x".
-ARG NODE_MAJOR=20
+ARG NODE_MAJOR=26
 
 # Include a small "wait for dependencies" helper used by the container command.
 # This is downloaded at build time and placed at /wait.
@@ -32,7 +32,7 @@ RUN curl -fso /etc/ssl/certs/LOC-ROOT-CA-1.crt http://crl.loc.gov/LOC-ROOT-CA-1.
 
 # Install Node.js via the NodeSource APT repository (manual setup; no setup
 # script). Debian bookworm ships Node 18; adding this repo allows installing a
-# newer major version (e.g., Node 20) via apt.
+# newer major version (e.g., Node 26) via apt.
 #
 # This step:
 # - creates a dedicated keyring directory under /etc/apt/keyrings
@@ -77,8 +77,11 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
     # Tesseract
     tesseract-ocr tesseract-ocr-all \
-    # Node.js runtime (from NodeSource) and build tooling for native addons.
     nodejs && apt-get -qy autoremove && apt-get -qy autoclean
+
+# print the installed versions of Node.js and npm to build console to ensure
+# both tools are working properly.
+RUN node --version && npm --version
 
 # Generate and configure a UTF-8 locale for consistent string handling.
 RUN locale-gen en_US.UTF-8
@@ -103,16 +106,6 @@ RUN pip install --no-cache-dir pipenv
 WORKDIR /app
 COPY . /app
 
-# Front-end build and asset pipeline:
-# - update npm to a known major version
-# - Install all JS dependencies (including devDependencies for plugins)
-RUN npm install --silent --global npm@10 && npm install --silent
-
-# Additional JS build step for Vite.
-# - Build assets (Vite) complile scss, bundle, hash and compress js
-# - This populates concordia/static/dist with hashed and compressed files.
-RUN npm run build
-
 # Create Log Directory
 # - Required for Django logging initialization when running collecstatic.
 RUN mkdir -p /app/logs
@@ -121,11 +114,21 @@ RUN mkdir -p /app/logs
 # - Bake static files into the image (Fast, no post-processing)
 # - remove Pipenv cache to reduce image size.
 RUN pipenv install --system --dev --deploy && \
-    python manage.py collectstatic --no-input --no-post-process && \
     rm -rf ~/.cache/
 
+# Nothing currnetly runs axe or Selenium from built images, skip it.
+ENV CHROMEDRIVER_SKIP_DOWNLOAD=true
+
+# Front-end build and asset pipeline:
+# - Install all JS dependencies (including devDependencies for plugins)
+# - Ensure deterministic build, faster, and more secure builds.
+# - Build assets (Vite) complile scss, bundle, hash and compress js
+# - This populates concordia/static/dist with hashed and compressed files.
 # - Clean up node artifacts to reduce image size
-RUN rm -rf node_modules && rm -rf ~/.cache/
+RUN npm ci && \
+    npm run build && \
+    python manage.py collectstatic --no-input --no-post-process && \
+    rm -rf node_modules ~/.cache/
 
 # Container listens on port 80.
 EXPOSE 80
