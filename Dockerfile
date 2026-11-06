@@ -116,6 +116,9 @@ RUN mkdir -p /app/logs
 RUN pipenv install --system --dev --deploy && \
     rm -rf ~/.cache/
 
+# Nothing currnetly runs axe or Selenium from built images, skip it.
+ENV CHROMEDRIVER_SKIP_DOWNLOAD=true
+
 # Front-end build and asset pipeline:
 # - Install all JS dependencies (including devDependencies for plugins)
 # - Ensure deterministic build, faster, and more secure builds.
