@@ -61,7 +61,7 @@ coverage = "==7.16.1"
 django-debug-toolbar = "==6.3.0"
 django-extensions = "==4.1"
 locust = "~=2.43"
-pre-commit = "===4.6.2"
+pre-commit = "===4.7.0"
 pyleniumio = "==1.21.0"
 tblib = "~=3.2.0"
 
