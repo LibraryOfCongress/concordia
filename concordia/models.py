@@ -2270,7 +2270,6 @@ class KeyMetricsReport(models.Model):
     avg_visit_seconds = models.DecimalField(
         max_digits=8, decimal_places=2, blank=True, null=True
     )
-    transcriptions_added_to_loc_gov = models.IntegerField(blank=True, null=True)
     datasets_added_to_loc_gov = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -2298,7 +2297,6 @@ class KeyMetricsReport(models.Model):
         ("crowd_page_views", "Crowd.loc.gov page views"),
         ("crowd_unique_visitors", "Crowd.loc.gov unique visitors"),
         ("avg_visit_seconds", "Avg. crowd.loc.gov visit (in seconds)"),
-        ("transcriptions_added_to_loc_gov", "Transcriptions added to loc.gov"),
         ("datasets_added_to_loc_gov", "Datasets added to loc.gov"),
     )
 
@@ -2308,7 +2306,6 @@ class KeyMetricsReport(models.Model):
         "crowd_page_views",
         "crowd_unique_visitors",
         "avg_visit_seconds",
-        "transcriptions_added_to_loc_gov",
         "datasets_added_to_loc_gov",
     )
 
@@ -2578,7 +2575,6 @@ class KeyMetricsReport(models.Model):
             crowd_visits=Sum("crowd_visits"),
             crowd_page_views=Sum("crowd_page_views"),
             crowd_unique_visitors=Sum("crowd_unique_visitors"),
-            transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
             datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
         )
         avg_series = monthly_queryset.exclude(avg_visit_seconds__isnull=True).aggregate(
@@ -2619,7 +2615,6 @@ class KeyMetricsReport(models.Model):
             "crowd_visits",
             "crowd_page_views",
             "crowd_unique_visitors",
-            "transcriptions_added_to_loc_gov",
             "datasets_added_to_loc_gov",
         )
         for field_name in manual_fields:
@@ -2662,7 +2657,6 @@ class KeyMetricsReport(models.Model):
             crowd_visits=Sum("crowd_visits"),
             crowd_page_views=Sum("crowd_page_views"),
             crowd_unique_visitors=Sum("crowd_unique_visitors"),
-            transcriptions_added_to_loc_gov=Sum("transcriptions_added_to_loc_gov"),
             datasets_added_to_loc_gov=Sum("datasets_added_to_loc_gov"),
         )
         avg_series = monthly_qs.exclude(avg_visit_seconds__isnull=True).aggregate(
@@ -2698,7 +2692,6 @@ class KeyMetricsReport(models.Model):
             "crowd_visits",
             "crowd_page_views",
             "crowd_unique_visitors",
-            "transcriptions_added_to_loc_gov",
             "datasets_added_to_loc_gov",
         )
         for field in manual_fields:
