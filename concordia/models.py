@@ -512,7 +512,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
 
     card_family = models.ForeignKey(
-        CardFamily, on_delete=models.CASCADE, blank=True, null=True
+        CardFamily, on_delete=models.PROTECT, blank=True, null=True
     )
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
@@ -3144,8 +3144,8 @@ class TutorialCard(models.Model):
     Through model for ordering cards within a CardFamily tutorial.
     """
 
-    card = models.ForeignKey(Card, on_delete=models.CASCADE)
-    tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
+    card = models.ForeignKey(Card, on_delete=models.PROTECT)
+    tutorial = models.ForeignKey(CardFamily, on_delete=models.PROTECT)
     order = models.IntegerField(default=0)
 
     class Meta:
