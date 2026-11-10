@@ -512,7 +512,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
 
     card_family = models.ForeignKey(
-        CardFamily, on_delete=models.PROTECT, blank=True, null=True
+        CardFamily, on_delete=models.SET_NULL, blank=True, null=True
     )
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
@@ -3145,11 +3145,15 @@ class TutorialCard(models.Model):
     """
 
     card = models.ForeignKey(Card, on_delete=models.PROTECT)
-    tutorial = models.ForeignKey(CardFamily, on_delete=models.PROTECT)
+    tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
 
+    def __str__(self):
+        return f"{self.tutorial} / {self.card} (order {self.order})"
+
     class Meta:
-        verbose_name_plural = "cards"
+        verbose_name = "card placement"
+        verbose_name_plural = "card placements"
 
 
 class Guide(models.Model):
