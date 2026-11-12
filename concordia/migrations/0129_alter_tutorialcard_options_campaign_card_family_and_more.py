@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("concordia", "0129_remove_keymetricsreport_transcriptions_added_to_loc_gov"),
+        ("concordia", "0128_alter_campaignretirementprogress_options"),
     ]
 
     operations = [
