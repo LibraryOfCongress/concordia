@@ -2618,7 +2618,6 @@ class KeyMetricsReport(models.Model):
             "crowd_visits",
             "crowd_page_views",
             "crowd_unique_visitors",
-            "transcriptions_added_to_loc_gov",
             "datasets_added_to_loc_gov",
         )
         for field_name in manual_fields:
@@ -2696,7 +2695,6 @@ class KeyMetricsReport(models.Model):
             "crowd_visits",
             "crowd_page_views",
             "crowd_unique_visitors",
-            "transcriptions_added_to_loc_gov",
             "datasets_added_to_loc_gov",
         )
         for field in manual_fields:
