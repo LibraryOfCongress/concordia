@@ -407,6 +407,11 @@ class KeyMetricsReportAdminForm(forms.ModelForm):
                 "If blank, no average is used for quarterly or fiscal-year "
                 "rollups."
             ),
+            "transcriptions_added_to_loc_gov": (
+                "Optional. Leave blank if not known. "
+                "Blank values are not included in quarterly or fiscal-year "
+                "totals."
+            ),
             "datasets_added_to_loc_gov": (
                 "Optional. Leave blank if not known. "
                 "Blank values are not included in quarterly or fiscal-year "

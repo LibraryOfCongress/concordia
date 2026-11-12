@@ -2084,6 +2084,7 @@ class KeyMetricsReportAdmin(admin.ModelAdmin):
                     "crowd_page_views",
                     "crowd_unique_visitors",
                     "avg_visit_seconds",
+                    "transcriptions_added_to_loc_gov",
                     "datasets_added_to_loc_gov",
                 ),
             },
