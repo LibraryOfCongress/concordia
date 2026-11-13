@@ -31,7 +31,7 @@ django-robots = "==6.1"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-structlog = {extras = ["celery"], version = "==10.1.0"}
 django-tinymce = "==5.0.0"
-django-vite = "~=3.1.0"
+django-vite = "~=3.2.0"
 hiredis = "~=3.5.0"
 kombu = "==5.5.4"
 markdown = "==3.11.2"
