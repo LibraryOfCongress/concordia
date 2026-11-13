@@ -27,7 +27,7 @@ django-opensearch-dsl = "==0.8.0"
 django-ratelimit = "==4.1.0"
 django-redis = "==7.0.0"
 django-registration = "==3.4"
-django-robots = "==6.1"
+django-robots = "==7.0"
 django-storages = { extras = ["s3"], version = "==1.14.6" }
 django-structlog = {extras = ["celery"], version = "==10.1.0"}
 django-tinymce = "==5.0.0"
