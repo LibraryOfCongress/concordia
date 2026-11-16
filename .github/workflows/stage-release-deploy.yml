@@ -33,17 +33,6 @@ jobs:
             name: stage
 
         steps:
-            - name: Install system packages
-              run: |
-                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
-                  libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
-                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
-
-            - name: Install node and npm
-              uses: actions/setup-node@v7
-              with:
-                  node-version: '26'
-
             - name: Checkout repository
               uses: actions/checkout@v7
               with:
@@ -52,19 +41,11 @@ jobs:
                   fetch-tags: 'true'
                   persist-credentials: false
 
-            - name: Set up Python 3.12
-              uses: actions/setup-python@v7.1.0
-              with:
-                  # Semantic version range syntax or exact version of a Python version
-                  python-version: '3.12'
-                  # Optional - x64 or x86 architecture, defaults to x64
-                  architecture: 'x64'
-
             - name: Get version from Git
               run: |
                   # Get latest version tag number (e.g. main was tagged in GitHub for this Release)
-                  FULL_VERSION_NUMBER="$(git describe --tags `git rev-list --tags --max-count=1`)"
-                  echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
+                  FULL_VERSION_NUMBER="$(git describe --tags `git rev-list --tags --abbrev=0`)"
+                  echo "version_number=$(echo "${FULL_VERSION_NUMBER#v}" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v6.3.0
@@ -82,8 +63,7 @@ jobs:
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                   IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
-                  CLUSTER: ${{ secrets.CLUSTER }}
-                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
+
               run: |
                   docker build -t concordia .
                   docker build -t concordia/importer --file importer/Dockerfile .
@@ -103,4 +83,10 @@ jobs:
                   docker push $REGISTRY/concordia/celerybeat:$version_number
                   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
+            - name: Deploy to ECS
+              env:
+                  CLUSTER: ${{ secrets.CLUSTER }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
+
+              run: |
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
