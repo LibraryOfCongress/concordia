@@ -54,7 +54,7 @@ urllib3 = "==2.8.0"
 weasyprint = "==70.0"
 websocket-client = "<1.10.0"
 whitenoise = "==6.9.0"
-xlsxwriter = "==3.2.9"
+xlsxwriter = "==3.3.1"
 
 [dev-packages]
 coverage = "==7.16.1"
