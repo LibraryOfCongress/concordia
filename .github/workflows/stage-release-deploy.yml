@@ -45,7 +45,7 @@ jobs:
               run: |
                   # Get latest version tag number (e.g. main was tagged in GitHub for this Release)
                   FULL_VERSION_NUMBER="$(git describe --tags)"
-                  echo "version_number=$(echo "${FULL_VERSION_NUMBER#v})" >> $GITHUB_ENV
+                  echo "version_number=$(echo "${FULL_VERSION_NUMBER#v}") >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v6.3.0
