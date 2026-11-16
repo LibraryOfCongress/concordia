@@ -57,7 +57,7 @@ whitenoise = "==6.9.0"
 xlsxwriter = "==3.2.9"
 
 [dev-packages]
-coverage = "==7.16.1"
+coverage = "==7.17.2"
 django-debug-toolbar = "==6.3.0"
 django-extensions = "==4.1"
 locust = "~=2.43"
