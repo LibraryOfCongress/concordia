@@ -71,23 +71,13 @@ jobs:
                   IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
 
               run: |
-                  docker build --platform linux/amd64 -t concordia .
-                  docker build --platform linux/amd64 -t concordia/importer --file importer/Dockerfile .
-                  docker build --platform linux/amd64 -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia:$version_number -t $REGISTRY/concordia:$IMAGE_TAG .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia/importer:$version_number -t $REGISTRY/concordia/importer:$IMAGE_TAG --file importer/Dockerfile .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia/celerybeat:$version_number -t $REGISTRY/concordia/celerybeat:$IMAGE_TAG --file celerybeat/Dockerfile .
 
-                  docker tag concordia:latest $REGISTRY/concordia:$version_number
-                  docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
-                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
-                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
-                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
-                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
-
-                  docker push $REGISTRY/concordia:$version_number
-                  docker push $REGISTRY/concordia:$IMAGE_TAG
-                  docker push $REGISTRY/concordia/importer:$version_number
-                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
-                  docker push $REGISTRY/concordia/celerybeat:$version_number
-                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker push --all-tags $REGISTRY/concordia
+                  docker push --all-tags $REGISTRY/concordia/importer
+                  docker push --all-tags $REGISTRY/concordia/celerybeat
 
             - name: Deploy to ECS
               env:
