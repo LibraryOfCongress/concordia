@@ -22,7 +22,6 @@ env:
     AWS_REGION: us-east-1
 
 permissions:
-    id-token: write
     contents: read
 
 jobs:
@@ -44,8 +43,8 @@ jobs:
             - name: Get version from Git
               run: |
                   # Get latest version tag number (e.g. main was tagged in GitHub for this Release)
-                  FULL_VERSION_NUMBER="$(git describe --tags)"
-                  echo "version_number=$(echo "${FULL_VERSION_NUMBER#v}")" >> $GITHUB_ENV
+                  FULL_VERSION_NUMBER="$(git describe --tags `git rev-list --tags --max-count=1`)"
+                  echo "version_number=$(echo "${FULL_VERSION_NUMBER}")" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v6.3.0
@@ -53,7 +52,6 @@ jobs:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.AWS_REGION }}
-                  role-session-name: github_to_aws_deploy
 
             - name: Login to Amazon ECR
               id: login-ecr
@@ -65,28 +63,17 @@ jobs:
                   IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
 
               run: |
-                  docker build -t concordia .
-                  docker build -t concordia/importer --file importer/Dockerfile .
-                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia:$version_number -t $REGISTRY/concordia:$IMAGE_TAG .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia/importer:$version_number -t $REGISTRY/concordia/importer:$IMAGE_TAG --file importer/Dockerfile .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia/celerybeat:$version_number -t $REGISTRY/concordia/celerybeat:$IMAGE_TAG --file celerybeat/Dockerfile .
 
-                  docker tag concordia:latest $REGISTRY/concordia:$version_number
-                  docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
-                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
-                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
-                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
-                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
-
-                  docker push $REGISTRY/concordia:$version_number
-                  docker push $REGISTRY/concordia:$IMAGE_TAG
-                  docker push $REGISTRY/concordia/importer:$version_number
-                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
-                  docker push $REGISTRY/concordia/celerybeat:$version_number
-                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker push --all-tags $REGISTRY/concordia
+                  docker push --all-tags $REGISTRY/concordia/importer
+                  docker push --all-tags $REGISTRY/concordia/celerybeat
 
             - name: Deploy to ECS
               env:
                   CLUSTER: ${{ secrets.CLUSTER }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
-
               run: |
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE

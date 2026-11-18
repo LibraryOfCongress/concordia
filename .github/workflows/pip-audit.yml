@@ -16,6 +16,7 @@ on:
 
 jobs:
     pip-audit:
+        # Using runner with x64 architecture to match AWS Fargate default runtime environment
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7

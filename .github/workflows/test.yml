@@ -20,6 +20,7 @@ env:
 
 jobs:
     test:
+        # Using runner with x64 architecture to match AWS Fargate default runtime environment
         runs-on: ubuntu-latest
 
         services:
@@ -67,12 +68,8 @@ jobs:
               uses: actions/setup-python@v7.1.0
               with:
                   python-version: '3.12'
-                  architecture: 'x64'
                   cache: 'pipenv'
                   cache-dependency-path: '**/Pipfile.lock'
-
-            - name: Display Python version
-              run: python -c "import sys; print(sys.version)"
 
             - name: Install Python Dependencies
               run: |
