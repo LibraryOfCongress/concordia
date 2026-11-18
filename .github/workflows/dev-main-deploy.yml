@@ -22,7 +22,6 @@ env:
     AWS_REGION: us-east-1
 
 permissions:
-    id-token: write
     contents: read
 
 jobs:
@@ -50,7 +49,6 @@ jobs:
             - name: Retrieve Version Number for image tag
               run: |
                   pip3 install -U setuptools-scm
-
                   FULL_VERSION_NUMBER="$(python3 -m setuptools_scm)"
                   echo "version_number=${FULL_VERSION_NUMBER%%+*}" >> $GITHUB_ENV
 
