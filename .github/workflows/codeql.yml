@@ -45,6 +45,10 @@ jobs:
                   persist-credentials: false
 
             - if: matrix.language == 'python'
+              name: Install system packages
+              run: sudo apt-get update -qy && sudo apt-get install -qy libmemcached-dev
+
+            - if: matrix.language == 'python'
               name: Setup python
               uses: actions/setup-python@v7.1.0
               with:
@@ -54,7 +58,7 @@ jobs:
               name: Install Python dependencies
               run: |
                   pip install pipenv
-                  pipenv install --dev --deploy --system
+                  pipenv install --dev --deploy --system --verbose
 
             # Initializes the CodeQL tools for scanning.
             - name: Initialize CodeQL
