@@ -7,28 +7,17 @@ env:
     AWS_REGION: us-east-1
 
 permissions:
-    id-token: write
     contents: read
 
 jobs:
     deploy:
         name: Deploy Container Environment Update
+        # Using runner with x64 architecture to match AWS Fargate default runtime environment
         runs-on: ubuntu-latest
         environment:
             name: stage
 
         steps:
-            - name: Install system packages
-              run: |
-                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
-                  libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
-                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
-
-            - name: Install node and npm
-              uses: actions/setup-node@v7
-              with:
-                  node-version: '26'
-
             - name: Checkout repository
               uses: actions/checkout@v7
               with:
@@ -37,22 +26,14 @@ jobs:
                   fetch-tags: 'true'
                   persist-credentials: false
 
-            - name: Set up Python 3.12
-              uses: actions/setup-python@v7.1.0
-              with:
-                  # Semantic version range syntax or exact version of a Python version
-                  python-version: '3.12'
-                  # Optional - x64 or x86 architecture, defaults to x64
-                  architecture: 'x64'
-
             - name: Create image tags
               run: |
                   # Get latest version tag number (e.g. main was tagged in GitHub for this Release)
                   FULL_VERSION_NUMBER="$(git describe --tags `git rev-list --tags --max-count=1`)"
-                  echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )" >> $GITHUB_ENV
+                  echo "version_number=$(echo "${FULL_VERSION_NUMBER}")" >> $GITHUB_ENV
 
                   # Create image tag for image being being replaced/refreshed/updated
-                  echo "tag_stale_image=$(echo "${FULL_VERSION_NUMBER}" | cut -c2- )_$(date +%Y%m%dT%H%M%S)" >> $GITHUB_ENV
+                  echo "tag_stale_images=$(echo "${FULL_VERSION_NUMBER}_`date +%Y%m%dT%H%M%S`")" >> $GITHUB_ENV
 
             - name: configure aws credentials
               uses: aws-actions/configure-aws-credentials@v6.3.0
@@ -60,7 +41,6 @@ jobs:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.AWS_REGION }}
-                  role-session-name: github_to_aws_deploy
 
             - name: Login to Amazon ECR
               id: login-ecr
@@ -73,32 +53,27 @@ jobs:
                   CLUSTER: ${{ secrets.CLUSTER }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
-                  docker build -t concordia .
-                  docker build -t concordia/importer --file importer/Dockerfile .
-                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia:$version_number -t $REGISTRY/concordia:$IMAGE_TAG .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia/importer:$version_number -t $REGISTRY/concordia/importer:$IMAGE_TAG --file importer/Dockerfile .
+                  docker build --platform linux/amd64 -t $REGISTRY/concordia/celerybeat:$version_number -t $REGISTRY/concordia/celerybeat:$IMAGE_TAG --file celerybeat/Dockerfile .
 
-                  docker tag concordia:latest $REGISTRY/concordia:$version_number
-                  docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
-                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
-                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
-                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
-                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker push --all-tags $REGISTRY/concordia
+                  docker push --all-tags $REGISTRY/concordia/importer
+                  docker push --all-tags $REGISTRY/concordia/celerybeat
 
-                  docker push $REGISTRY/concordia:$version_number
-                  docker push $REGISTRY/concordia:$IMAGE_TAG
-                  docker push $REGISTRY/concordia/importer:$version_number
-                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
-                  docker push $REGISTRY/concordia/celerybeat:$version_number
-                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
-
+            - name: Deploy to ECS
+              env:
+                  CLUSTER: ${{ secrets.CLUSTER }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
+              run: |
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
 
-            - name: Tag existing images
+            - name: Tag existing production images
               env:
                   IT_TAG: ${{ secrets.IT_IMAGE_TAG }}
               run: |
 
-                  # Add a new tag to existing concordia images to preserve the history of images after final deployment
+                  # Add a new tag to the current production images before refreshed image final deployment to preserve image version history
                   # Tag concordia
                   APP_MANIFEST="$(aws ecr batch-get-image --repository-name concordia --image-ids imageTag=${IT_TAG} --output json | jq --raw-output --join-output '.images[0].imageManifest')"
                   aws ecr put-image --repository-name concordia --image-tag $tag_stale_image --image-manifest "$APP_MANIFEST"

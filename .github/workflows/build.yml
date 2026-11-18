@@ -17,6 +17,7 @@ on:
 jobs:
     build:
         name: Build
+        # Using runner with x64 architecture to match AWS Fargate default runtime environment
         runs-on: ubuntu-latest
 
         steps:
@@ -25,16 +26,8 @@ jobs:
               with:
                   persist-credentials: false
 
-            - name: Set up Python 3.12
-              uses: actions/setup-python@v7.1.0
-              with:
-                  # Semantic version range syntax or exact version of a Python version
-                  python-version: '3.12'
-                  # Optional - x64 or x86 architecture, defaults to x64
-                  architecture: 'x64'
-
             - name: build containers
               run: |
-                  docker build -t concordia .
-                  docker build -t concordia/importer --file importer/Dockerfile .
-                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker build --platform linux/amd64 -t concordia .
+                  docker build --platform linux/amd64 -t concordia/importer --file importer/Dockerfile .
+                  docker build --platform linux/amd64 -t concordia/celerybeat --file celerybeat/Dockerfile .
