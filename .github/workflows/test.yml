@@ -2,6 +2,17 @@ name: Test
 
 on:
     workflow_dispatch:
+    push:
+        branches: [main]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - search-proxy/**
+            - postgresql/**
     pull_request:
         branches: [main, 'feature-*', release]
         paths-ignore:
@@ -27,7 +38,7 @@ jobs:
             # Label used to access the service container
             postgres:
                 # Docker Hub image
-                image: postgres
+                image: postgres:18
                 # Provide the password for postgres
                 env:
                     POSTGRES_DB: concordia
@@ -43,12 +54,17 @@ jobs:
                     - 5432:5432
 
         steps:
-            - name: Remove Firefox
-              run: sudo apt-get purge firefox
+            # - name: Remove Firefox
+            #   run: sudo apt-get purge firefox
+
+            - name: Checkout repository
+              uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
 
             - name: Install system packages
               run: |
-                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
+                  sudo apt-get update -qy && sudo apt-get install -qy --no-install-recommends \
                   libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev \
                   tesseract-ocr tesseract-ocr-all
@@ -57,11 +73,7 @@ jobs:
               uses: actions/setup-node@v7
               with:
                   node-version: '26'
-
-            - name: Checkout repository
-              uses: actions/checkout@v7
-              with:
-                  persist-credentials: false
+                  cache: 'npm'
 
             # Ensures cache key matches the Pipfile in the Pull Request and not main.
             - name: Set up Python 3.12
@@ -73,12 +85,9 @@ jobs:
 
             - name: Install Python Dependencies
               run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install -U packaging
-                  pip3 install -U setuptools
                   pip3 install -U pipenv
                   pipenv install --dev --deploy
-                  pipenv install tblib # For parallel test debugging
+              #   pipenv install tblib # For parallel test debugging
 
             - name: Install Node Dependencies #and Add .bin to Path
               run:
@@ -124,18 +133,20 @@ jobs:
                   POSTGRES_PORT: 5432
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
-            # Store coverage results if running on the release branch
-            - name: Store Release Coverage (if running on release branch)
-              if: github.ref == 'refs/heads/release'
+            # Store coverage results on main - the default branch.
+            # All other branches can see the default branch cache.
+            # All other branch's cache, including release, is isolate to that branch.
+            - name: Store Main Coverage
+              if: github.ref == 'refs/heads/main'
               run: cp pr_coverage.txt coverage.txt
 
-            # Cache coverage results if running on the release branch
-            - name: Cache Release Coverage (if running on release branch)
-              if: github.ref == 'refs/heads/release'
-              uses: actions/cache@v6.1.0
+            # Cache main coverage as baseline
+            - name: Save Main Coverage Baseline
+              if: github.ref == 'refs/heads/main'
+              uses: actions/cache/save@v6.1.0
               with:
                   path: coverage.txt
-                  key: release-coverage
+                  key: main-coverage-${{ github.run_id }}
 
             # Upload full coverage report as an artifact
             - name: Upload Full Coverage Report
@@ -144,17 +155,16 @@ jobs:
                   name: coverage-report
                   path: coverage_report
 
-            # Download the stored release branch coverage for PR comparison, if it exists
-            - name: Restore Release Coverage (if running on PR)
+            # Download the stored main branch coverage for PR comparison, if it exists
+            - name: Restore Main Coverage
               if: github.event_name == 'pull_request'
-              uses: actions/cache@v6.1.0
+              uses: actions/cache/restore@v6.1.0
               with:
                   path: coverage.txt
-                  key: release-coverage
-                  restore-keys: |
-                      release-coverage
+                  key: main-coverage-${{ github.run_id }}
+                  restore-keys: main-coverage-
 
-            # Compare PR coverage against stored release coverage
+            # Compare PR coverage against stored main coverage
             - name: Compare Coverage (if running on PR)
               if: github.event_name == 'pull_request'
               run: |
@@ -168,30 +178,30 @@ jobs:
 
                   echo "PR Coverage: $PR_COVERAGE"
                   if [ -f "coverage.txt" ]; then
-                      RELEASE_COVERAGE=$(cat coverage.txt)
+                      MAIN_COVERAGE=$(cat coverage.txt)
                       COMPARISON_AVAILABLE=true
                   else
                       COMPARISON_AVAILABLE=false
-                      RELEASE_COVERAGE="N/A"
+                      MAIN_COVERAGE="N/A"
                   fi
 
                   if [ "$COMPARISON_AVAILABLE" = true ]; then
-                      # Strip '%' from PR_COVERAGE and RELEASE_COVERAGE for numerical comparison
+                      # Strip '%' from PR_COVERAGE and MAIN_COVERAGE for numerical comparison
                       PR_COVERAGE_NUM=${PR_COVERAGE%\%}
-                      RELEASE_COVERAGE_NUM=${RELEASE_COVERAGE%\%}
-                      if (( $(echo "$PR_COVERAGE_NUM > $RELEASE_COVERAGE_NUM" | bc -l) )); then
-                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE_NUM - $RELEASE_COVERAGE_NUM" | bc -l)%)!"
-                      elif (( $(echo "$PR_COVERAGE_NUM < $RELEASE_COVERAGE_NUM" | bc -l) )); then
-                          CHANGE="🔽 Coverage decreased (-$(echo "$RELEASE_COVERAGE_NUM - $PR_COVERAGE_NUM" | bc -l)%)!"
+                      MAIN_COVERAGE_NUM=${MAIN_COVERAGE%\%}
+                      if (( $(echo "$PR_COVERAGE_NUM > $MAIN_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE_NUM - $MAIN_COVERAGE_NUM" | bc -l)%)!"
+                      elif (( $(echo "$PR_COVERAGE_NUM < $MAIN_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔽 Coverage decreased (-$(echo "$MAIN_COVERAGE_NUM - $PR_COVERAGE_NUM" | bc -l)%)!"
                       else
                           CHANGE="✅ Coverage remained the same."
                       fi
                   else
-                      CHANGE="⚠️ No baseline coverage available from 'release' branch."
+                      CHANGE="⚠️ No baseline coverage available from 'main' branch."
                   fi
 
                   echo "COVERAGE_CHANGE=$CHANGE" >> $GITHUB_ENV
-                  printf "RELEASE_COVERAGE=%s\n" "$RELEASE_COVERAGE" >> $GITHUB_ENV
+                  printf "MAIN_COVERAGE=%s\n" "$MAIN_COVERAGE" >> $GITHUB_ENV
                   printf "PR_COVERAGE=%s\n" "$PR_COVERAGE" >> $GITHUB_ENV
 
             # Generate and store command for display on the Action UI and PR (if any)
@@ -199,7 +209,7 @@ jobs:
               run: |
                   echo "**🛡 Test Coverage Report 🛡**" > coverage_comment.txt
                   echo "- **Current PR Coverage:** ${PR_COVERAGE}" >> coverage_comment.txt
-                  echo "- **Release Branch Coverage:** ${RELEASE_COVERAGE}" >> coverage_comment.txt
+                  echo "- **Main Branch Coverage:** ${MAIN_COVERAGE}" >> coverage_comment.txt
                   echo "- **${COVERAGE_CHANGE}**" >> coverage_comment.txt
                   echo "- 📊 **[Download Full Coverage Report (Under "Artifacts")](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
                   echo "" >> coverage_comment.txt
