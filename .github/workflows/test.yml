@@ -57,6 +57,11 @@ jobs:
             # - name: Remove Firefox
             #   run: sudo apt-get purge firefox
 
+            - name: Checkout repository
+              uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+
             - name: Install system packages
               run: |
                   sudo apt-get update -qy && sudo apt-get install -qy --no-install-recommends \
@@ -68,11 +73,6 @@ jobs:
               with:
                   node-version: '26'
                   cache: 'npm'
-
-            - name: Checkout repository
-              uses: actions/checkout@v7
-              with:
-                  persist-credentials: false
 
             # Ensures cache key matches the Pipfile in the Pull Request and not main.
             - name: Set up Python 3.12
