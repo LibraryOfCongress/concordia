@@ -2,6 +2,17 @@ name: Test
 
 on:
     workflow_dispatch:
+    push:
+        branches: [main]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - search-proxy/**
+            - postgresql/**
     pull_request:
         branches: [main, 'feature-*', release]
         paths-ignore:
@@ -27,7 +38,7 @@ jobs:
             # Label used to access the service container
             postgres:
                 # Docker Hub image
-                image: postgres
+                image: postgres:18
                 # Provide the password for postgres
                 env:
                     POSTGRES_DB: concordia
@@ -43,20 +54,20 @@ jobs:
                     - 5432:5432
 
         steps:
-            - name: Remove Firefox
-              run: sudo apt-get purge firefox
+            # - name: Remove Firefox
+            #   run: sudo apt-get purge firefox
 
             - name: Install system packages
               run: |
-                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
+                  sudo apt-get update -qy && sudo apt-get install -qy --no-install-recommends \
                   libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
-                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev \
-                  tesseract-ocr tesseract-ocr-all
+                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Install node and npm
               uses: actions/setup-node@v7
               with:
                   node-version: '26'
+                  cache: 'npm'
 
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -73,12 +84,9 @@ jobs:
 
             - name: Install Python Dependencies
               run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install -U packaging
-                  pip3 install -U setuptools
                   pip3 install -U pipenv
                   pipenv install --dev --deploy
-                  pipenv install tblib # For parallel test debugging
+              #   pipenv install tblib # For parallel test debugging
 
             - name: Install Node Dependencies #and Add .bin to Path
               run:
@@ -124,18 +132,20 @@ jobs:
                   POSTGRES_PORT: 5432
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
-            # Store coverage results if running on the release branch
-            - name: Store Release Coverage (if running on release branch)
-              if: github.ref == 'refs/heads/release'
+            # Store coverage results on main - the default branch.
+            # All other branches can see the default branch cache.
+            # All other branch's cache, including release, is isolate to that branch.
+            - name: Store Main Coverage
+              if: github.ref == 'refs/heads/main'
               run: cp pr_coverage.txt coverage.txt
 
-            # Cache coverage results if running on the release branch
-            - name: Cache Release Coverage (if running on release branch)
-              if: github.ref == 'refs/heads/release'
-              uses: actions/cache@v6.1.0
+            # Cache main coverage as baseline
+            - name: Save Main Coverage Baseline
+              if: github.ref == 'refs/heads/main'
+              uses: actions/cache/save@v6.1.0
               with:
                   path: coverage.txt
-                  key: release-coverage
+                  key: main-coverage-${{ github.run_id }}
 
             # Upload full coverage report as an artifact
             - name: Upload Full Coverage Report
@@ -144,17 +154,16 @@ jobs:
                   name: coverage-report
                   path: coverage_report
 
-            # Download the stored release branch coverage for PR comparison, if it exists
-            - name: Restore Release Coverage (if running on PR)
+            # Download the stored main branch coverage for PR comparison, if it exists
+            - name: Restore Main Coverage
               if: github.event_name == 'pull_request'
-              uses: actions/cache@v6.1.0
+              uses: actions/cache/restore@v6.1.0
               with:
                   path: coverage.txt
-                  key: release-coverage
-                  restore-keys: |
-                      release-coverage
+                  key: main-coverage-${{ github.run_id }}
+                  restore-keys: main-coverage-
 
-            # Compare PR coverage against stored release coverage
+            # Compare PR coverage against stored main coverage
             - name: Compare Coverage (if running on PR)
               if: github.event_name == 'pull_request'
               run: |
