@@ -178,30 +178,30 @@ jobs:
 
                   echo "PR Coverage: $PR_COVERAGE"
                   if [ -f "coverage.txt" ]; then
-                      RELEASE_COVERAGE=$(cat coverage.txt)
+                      MAIN_COVERAGE=$(cat coverage.txt)
                       COMPARISON_AVAILABLE=true
                   else
                       COMPARISON_AVAILABLE=false
-                      RELEASE_COVERAGE="N/A"
+                      MAIN_COVERAGE="N/A"
                   fi
 
                   if [ "$COMPARISON_AVAILABLE" = true ]; then
-                      # Strip '%' from PR_COVERAGE and RELEASE_COVERAGE for numerical comparison
+                      # Strip '%' from PR_COVERAGE and MAIN_COVERAGE for numerical comparison
                       PR_COVERAGE_NUM=${PR_COVERAGE%\%}
-                      RELEASE_COVERAGE_NUM=${RELEASE_COVERAGE%\%}
-                      if (( $(echo "$PR_COVERAGE_NUM > $RELEASE_COVERAGE_NUM" | bc -l) )); then
-                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE_NUM - $RELEASE_COVERAGE_NUM" | bc -l)%)!"
-                      elif (( $(echo "$PR_COVERAGE_NUM < $RELEASE_COVERAGE_NUM" | bc -l) )); then
-                          CHANGE="🔽 Coverage decreased (-$(echo "$RELEASE_COVERAGE_NUM - $PR_COVERAGE_NUM" | bc -l)%)!"
+                      MAIN_COVERAGE_NUM=${MAIN_COVERAGE%\%}
+                      if (( $(echo "$PR_COVERAGE_NUM > $MAIN_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔼 Coverage increased (+$(echo "$PR_COVERAGE_NUM - $MAIN_COVERAGE_NUM" | bc -l)%)!"
+                      elif (( $(echo "$PR_COVERAGE_NUM < $MAIN_COVERAGE_NUM" | bc -l) )); then
+                          CHANGE="🔽 Coverage decreased (-$(echo "$MAIN_COVERAGE_NUM - $PR_COVERAGE_NUM" | bc -l)%)!"
                       else
                           CHANGE="✅ Coverage remained the same."
                       fi
                   else
-                      CHANGE="⚠️ No baseline coverage available from 'release' branch."
+                      CHANGE="⚠️ No baseline coverage available from 'main' branch."
                   fi
 
                   echo "COVERAGE_CHANGE=$CHANGE" >> $GITHUB_ENV
-                  printf "RELEASE_COVERAGE=%s\n" "$RELEASE_COVERAGE" >> $GITHUB_ENV
+                  printf "MAIN_COVERAGE=%s\n" "$MAIN_COVERAGE" >> $GITHUB_ENV
                   printf "PR_COVERAGE=%s\n" "$PR_COVERAGE" >> $GITHUB_ENV
 
             # Generate and store command for display on the Action UI and PR (if any)
@@ -209,7 +209,7 @@ jobs:
               run: |
                   echo "**🛡 Test Coverage Report 🛡**" > coverage_comment.txt
                   echo "- **Current PR Coverage:** ${PR_COVERAGE}" >> coverage_comment.txt
-                  echo "- **Release Branch Coverage:** ${RELEASE_COVERAGE}" >> coverage_comment.txt
+                  echo "- **Main Branch Coverage:** ${MAIN_COVERAGE}" >> coverage_comment.txt
                   echo "- **${COVERAGE_CHANGE}**" >> coverage_comment.txt
                   echo "- 📊 **[Download Full Coverage Report (Under "Artifacts")](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)**" >> coverage_comment.txt
                   echo "" >> coverage_comment.txt
