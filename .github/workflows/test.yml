@@ -67,7 +67,7 @@ jobs:
                   sudo apt-get update -qy && sudo apt-get install -qy --no-install-recommends \
                   libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev \
-                  tesseract-ocr
+                  tesseract-ocr tesseract-ocr-all
 
             - name: Install node and npm
               uses: actions/setup-node@v7
