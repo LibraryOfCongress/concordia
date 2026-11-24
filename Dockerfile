@@ -1,5 +1,5 @@
-# Base runtime: Debian 12 (bookworm) slim + Python 3.12.
-FROM python:3.12-slim-bookworm
+# Base runtime: Debian 13 (trixie) slim + Python 3.12.
+FROM python:3.12-slim-trixie
 
 # Major Node.js version to install (e.g., 20, 26). This is used to select the
 # NodeSource APT repository "node_<major>.x".
